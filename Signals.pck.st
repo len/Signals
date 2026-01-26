@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 26 January 2026 at 6:34:37 pm'!
+'From Cuis7.7 [latest update: #7797] on 26 January 2026 at 10:16:25 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 418!
+!provides: 'Signals' 1 419!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -48,6 +48,16 @@ ActiveModel subclass: #Module
 	category: 'Signals-Kernel'!
 !classDefinition: 'Module class' category: #'Signals-Kernel'!
 Module class
+	instanceVariableNames: ''!
+
+!classDefinition: #Chorus category: #'Signals-Effects'!
+Module subclass: #Chorus
+	instanceVariableNames: 'input outputLeft outputRight phase increment depth delayLine tap1 tap2 tap3 time mix'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Effects'!
+!classDefinition: 'Chorus class' category: #'Signals-Effects'!
+Chorus class
 	instanceVariableNames: ''!
 
 !classDefinition: #Clock category: #'Signals-Etc'!
@@ -388,16 +398,6 @@ Transform subclass: #Allpass
 	category: 'Signals-Effects'!
 !classDefinition: 'Allpass class' category: #'Signals-Effects'!
 Allpass class
-	instanceVariableNames: ''!
-
-!classDefinition: #Chorus category: #'Signals-Effects'!
-Transform subclass: #Chorus
-	instanceVariableNames: 'phase increment depth delayLine tap1 tap2 tap3 time mix'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Effects'!
-!classDefinition: 'Chorus class' category: #'Signals-Effects'!
-Chorus class
 	instanceVariableNames: ''!
 
 !classDefinition: #Comb category: #'Signals-Effects'!
@@ -2138,6 +2138,90 @@ sampleRate
 addToPatchMenu: aMenuMorph
 	self hasSubclasses ifTrue: [^ self].
 	aMenuMorph add: self name action: #addModuleInstantiating: argument: self! !
+
+!Chorus methodsFor: 'controlling' stamp: 'len 26/Jan/2026 17:46:23'!
+reset
+	phase := 0.0.
+	delayLine reset! !
+
+!Chorus methodsFor: 'controlling' stamp: 'len 26/Jan/2026 15:29:19'!
+update
+	increment := (self get: #speed) / self class controlRate * Float twoPi.
+	depth := self get: #depth.
+	time := self get: #time.
+	mix := self get: #mix! !
+
+!Chorus methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:46:23'!
+initialize
+	super initialize.
+	delayLine := DelayLine new: (self class sampleRate * 0.035 "35 ms max") ceiling.
+	tap1 := DelayLineTap on: delayLine.
+	tap2 := DelayLineTap on: delayLine.
+	tap3 := DelayLineTap on: delayLine.
+	self reset! !
+
+!Chorus methodsFor: 'initialization' stamp: 'len 26/Jan/2026 15:45:20'!
+initializeControls
+	super initializeControls.
+	self addTimeControl: #time min: 0.010 "10 ms" max: 0.025 "25 ms" value: 0.015 "15 ms".
+	self addSpeedControl: #speed min: 0.1 "Hz" max: 1.5 "Hz" value: 0.5 "Hz".
+	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
+	self addControl: #mix min: 0.0 max: 1.0 value: 0.5! !
+
+!Chorus methodsFor: 'processing' stamp: 'len 26/Jan/2026 22:10:13'!
+tick
+	| twoPi d1 d2 d3 dry |
+	outputLeft ifNil: [^ self].
+	input ifNil: [outputLeft atAllPut: 0.0. outputRight ifNotNil: [outputRight atAllPut: 0.0].^ self].
+	self update.
+	twoPi := Float twoPi.
+	d1 := (phase sin * depth * 0.002 "2 ms" + (time * 0.8)) * self class sampleRate.
+	d2 := ((twoPi/3.0 + phase) sin * depth * 0.002 "2 ms" + time) * self class sampleRate.
+	d3 := ((twoPi/1.5 + phase) sin * depth * 0.002 "2 ms" + (time * 1.2)) * self class sampleRate.
+	(phase := phase + increment) > twoPi ifTrue: [phase := phase - twoPi].
+	tap1 setDelayIncrement: (d1 - tap1 delay) / self class blockSize.
+	tap2 setDelayIncrement: (d2 - tap2 delay) / self class blockSize.
+	tap3 setDelayIncrement: (d3 - tap3 delay) / self class blockSize.
+	dry := 1.0 - mix.
+	outputRight isNil
+		ifTrue:
+			[1 to: input size do: [:i|
+				| in out |
+				delayLine write: (in := input at: i).
+				out := tap1 read + tap2 read + tap3 read / 3.0.
+				outputLeft at: i put: in * dry + (out * mix)]]
+		ifFalse:
+			[1 to: input size do: [:i|
+				| in v1 v2 v3 mid side |
+				delayLine write: (in := input at: i).
+				v1 := tap1 read.
+				v2 := tap2 read.
+				v3 := tap3 read.
+				mid := v1 + v2 + v3 / 3.0.
+				side := v1 - v3 * 0.5.
+				in := in * dry.
+				outputLeft at: i put: in + (mid + side * mix).
+				outputRight at: i put: in + (mid - side * mix)]]! !
+
+!Chorus methodsFor: 'tools' stamp: 'len 26/Jan/2026 22:13:56'!
+patchable
+	^ super patchable
+		addAudioInput: #setInput: label: 'In';
+		addAudioOutput: #setOutputLeft: label: 'Out L/M';
+		addAudioOutput: #setOutputRight: label: 'Out R';
+		yourself! !
+
+!Chorus methodsFor: 'wiring' stamp: 'len 26/Jan/2026 22:14:23'!
+setInput: aBuffer
+	input := aBuffer! !
+
+!Chorus methodsFor: 'wiring' stamp: 'len 26/Jan/2026 22:10:49'!
+setOutputLeft: aBuffer
+	outputLeft := aBuffer! !
+
+!Chorus methodsFor: 'wiring' stamp: 'len 26/Jan/2026 22:10:54'!
+setOutputRight: aBuffer
+	outputRight := aBuffer! !
 
 !Clock methodsFor: 'as yet unclassified' stamp: 'len 3/Dec/2025 15:42:01'!
 initialize
@@ -4210,55 +4294,6 @@ value: in
 	v := y * gain + in.
 	delayLine write: v.
 	^ y - (v * gain)! !
-
-!Chorus methodsFor: 'controlling' stamp: 'len 26/Jan/2026 17:46:23'!
-reset
-	phase := 0.0.
-	delayLine reset! !
-
-!Chorus methodsFor: 'controlling' stamp: 'len 26/Jan/2026 15:29:19'!
-update
-	increment := (self get: #speed) / self class controlRate * Float twoPi.
-	depth := self get: #depth.
-	time := self get: #time.
-	mix := self get: #mix! !
-
-!Chorus methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:46:23'!
-initialize
-	super initialize.
-	delayLine := DelayLine new: (self class sampleRate * 0.035 "35 ms max") ceiling.
-	tap1 := DelayLineTap on: delayLine.
-	tap2 := DelayLineTap on: delayLine.
-	tap3 := DelayLineTap on: delayLine.
-	self reset! !
-
-!Chorus methodsFor: 'initialization' stamp: 'len 26/Jan/2026 15:45:20'!
-initializeControls
-	super initializeControls.
-	self addTimeControl: #time min: 0.010 "10 ms" max: 0.025 "25 ms" value: 0.015 "15 ms".
-	self addSpeedControl: #speed min: 0.1 "Hz" max: 1.5 "Hz" value: 0.5 "Hz".
-	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
-	self addControl: #mix min: 0.0 max: 1.0 value: 0.5! !
-
-!Chorus methodsFor: 'processing' stamp: 'len 26/Jan/2026 17:46:23'!
-tick
-	| d1 d2 d3 twoPi |
-	output ifNil: [^ self].
-	input ifNil: [output atAllPut: 0.0. ^ self].
-	self update.
-	twoPi := Float twoPi.
-	d1 := (phase sin * depth * 0.002 "2 ms" + (time * 0.8)) * self class sampleRate.
-	d2 := ((twoPi/3.0 + phase) sin * depth * 0.002 "2 ms" + time) * self class sampleRate.
-	d3 := ((twoPi/1.5 + phase) sin * depth * 0.002 "2 ms" + (time * 1.2)) * self class sampleRate.
-	(phase := phase + increment) > twoPi ifTrue: [phase := phase - twoPi].
-	tap1 setDelayIncrement: (d1 - tap1 delay) / self class blockSize.
-	tap2 setDelayIncrement: (d2 - tap2 delay) / self class blockSize.
-	tap3 setDelayIncrement: (d3 - tap3 delay) / self class blockSize.
-	1 to: input size do: [:i|
-		| in out |
-		delayLine write: (in := input at: i).
-		out := tap1 read + tap2 read + tap3 read / 3.0.
-		output at: i put: in * (1.0 - mix) + (out * mix)]! !
 
 !Comb methodsFor: 'controlling' stamp: 'len 26/Jan/2026 17:15:47'!
 reset

@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 26 January 2026 at 5:29:09 pm'!
+'From Cuis7.7 [latest update: #7797] on 26 January 2026 at 6:18:53 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 416!
+!provides: 'Signals' 1 417!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -392,7 +392,7 @@ Allpass class
 
 !classDefinition: #Chorus category: #'Signals-Effects'!
 Transform subclass: #Chorus
-	instanceVariableNames: 'phase increment depth buffer tap1 tap2 tap3 time mix'
+	instanceVariableNames: 'phase increment depth delayLine tap1 tap2 tap3 time mix'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Effects'!
@@ -468,6 +468,16 @@ Transform subclass: #PitchShifter
 	category: 'Signals-Effects'!
 !classDefinition: 'PitchShifter class' category: #'Signals-Effects'!
 PitchShifter class
+	instanceVariableNames: ''!
+
+!classDefinition: #Vibrato category: #'Signals-Effects'!
+Transform subclass: #Vibrato
+	instanceVariableNames: 'phase increment depth delayLine tap time'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Effects'!
+!classDefinition: 'Vibrato class' category: #'Signals-Effects'!
+Vibrato class
 	instanceVariableNames: ''!
 
 !classDefinition: #Wavefolder category: #'Signals-Effects'!
@@ -1210,14 +1220,14 @@ Object subclass: #DelayLine
 DelayLine class
 	instanceVariableNames: ''!
 
-!classDefinition: #DelayTap category: #'Signals-Support'!
-Object subclass: #DelayTap
+!classDefinition: #DelayLineTap category: #'Signals-Support'!
+Object subclass: #DelayLineTap
 	instanceVariableNames: 'delayLine delay increment x1 y1'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Support'!
-!classDefinition: 'DelayTap class' category: #'Signals-Support'!
-DelayTap class
+!classDefinition: 'DelayLineTap class' category: #'Signals-Support'!
+DelayLineTap class
 	instanceVariableNames: ''!
 
 !classDefinition: #FFT category: #'Signals-Support'!
@@ -4180,11 +4190,11 @@ update
 	tap setDelayIncrement: (self get: #time) * self class sampleRate - tap delay / (self class sampleRate * 0.1). "slide over 100 ms to avoid phaser effect"
 	gain := self get: #gain! !
 
-!Allpass methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:18:20'!
+!Allpass methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:46:14'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (0.03 * self class sampleRate) ceiling.
-	tap := DelayTap on: delayLine.
+	tap := DelayLineTap on: delayLine.
 	gain := 0.0! !
 
 !Allpass methodsFor: 'initialization' stamp: 'len 14/Jan/2026 15:34:24'!
@@ -4201,10 +4211,10 @@ value: in
 	delayLine write: v.
 	^ y - (v * gain)! !
 
-!Chorus methodsFor: 'controlling' stamp: 'len 26/Jan/2026 15:29:03'!
+!Chorus methodsFor: 'controlling' stamp: 'len 26/Jan/2026 17:46:23'!
 reset
 	phase := 0.0.
-	buffer reset! !
+	delayLine reset! !
 
 !Chorus methodsFor: 'controlling' stamp: 'len 26/Jan/2026 15:29:19'!
 update
@@ -4213,13 +4223,13 @@ update
 	time := self get: #time.
 	mix := self get: #mix! !
 
-!Chorus methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:18:20'!
+!Chorus methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:46:23'!
 initialize
 	super initialize.
-	buffer := DelayLine new: (self class sampleRate * 0.035 "35 ms max") ceiling.
-	tap1 := DelayTap on: buffer.
-	tap2 := DelayTap on: buffer.
-	tap3 := DelayTap on: buffer.
+	delayLine := DelayLine new: (self class sampleRate * 0.035 "35 ms max") ceiling.
+	tap1 := DelayLineTap on: delayLine.
+	tap2 := DelayLineTap on: delayLine.
+	tap3 := DelayLineTap on: delayLine.
 	self reset! !
 
 !Chorus methodsFor: 'initialization' stamp: 'len 26/Jan/2026 15:45:20'!
@@ -4230,7 +4240,7 @@ initializeControls
 	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
 	self addControl: #mix min: 0.0 max: 1.0 value: 0.5! !
 
-!Chorus methodsFor: 'processing' stamp: 'len 26/Jan/2026 17:01:06'!
+!Chorus methodsFor: 'processing' stamp: 'len 26/Jan/2026 17:46:23'!
 tick
 	| d1 d2 d3 twoPi |
 	output ifNil: [^ self].
@@ -4246,7 +4256,7 @@ tick
 	tap3 setDelayIncrement: (d3 - tap3 delay) / self class blockSize.
 	1 to: input size do: [:i|
 		| in out |
-		buffer write: (in := input at: i).
+		delayLine write: (in := input at: i).
 		out := tap1 read + tap2 read + tap3 read / 3.0.
 		output at: i put: in * (1.0 - mix) + (out * mix)]! !
 
@@ -4263,11 +4273,11 @@ update
 	feedback := self get: #feedback.
 	damping := self get: #damping! !
 
-!Comb methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:18:20'!
+!Comb methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:46:14'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (0.5 * self class sampleRate) ceiling.
-	tap := DelayTap on: delayLine.
+	tap := DelayLineTap on: delayLine.
 	feedback := 0.0.
 	damping := 0.0.
 	x0 := 0.0! !
@@ -4385,11 +4395,11 @@ update
 	super update.
 	tap setDelayIncrement: (self get: #time) * self class sampleRate - tap delay / (self class sampleRate * 0.03) "slide over 30 ms"! !
 
-!Echo methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:18:20'!
+!Echo methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:46:14'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: self class sampleRate ceiling.
-	tap := DelayTap on: delayLine! !
+	tap := DelayLineTap on: delayLine! !
 
 !Echo methodsFor: 'initialization' stamp: 'len 14/Jan/2026 15:44:28'!
 initializeControls
@@ -4421,11 +4431,11 @@ update
 	feedback := self get: #feedback.
 	mix := self get: #mix! !
 
-!Flanger methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:18:20'!
+!Flanger methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:46:14'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (self class sampleRate * 0.005 "5 ms max") ceiling.
-	tap := DelayTap on: delayLine.
+	tap := DelayLineTap on: delayLine.
 	self reset! !
 
 !Flanger methodsFor: 'initialization' stamp: 'len 26/Jan/2026 15:46:05'!
@@ -4437,13 +4447,13 @@ initializeControls
 	self addControl: #feedback min: -0.8 max: 0.8 value: 0.5.
 	self addControl: #mix min: 0.0 max: 1.0 value: 0.5! !
 
-!Flanger methodsFor: 'processing' stamp: 'len 26/Jan/2026 17:09:06'!
+!Flanger methodsFor: 'processing' stamp: 'len 26/Jan/2026 17:38:59'!
 tick
 	| d |
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	self update.
-	d := (phase sin * depth * 0.002 "2 ms" + time) * self class sampleRate.
+	d := (phase sin * depth * 0.002 "2 ms" + time max: 0.0) * self class sampleRate.
 	(phase := phase + increment) > Float twoPi ifTrue: [phase := phase - Float twoPi].
 	tap setDelayIncrement: (d - tap delay) / self class blockSize.
 	1 to: input size do: [:i|
@@ -4583,6 +4593,45 @@ update
 	delayIncrement := (self get: #shift) semitonesToRatio.
 	delayLine1 setLength: length; setDelay: delayTime; setDelayIncrement: delayIncrement.
 	delayLine1 setLength: length; setDelay: length - delayTime; setDelayIncrement: delayIncrement! !
+
+!Vibrato methodsFor: 'controlling' stamp: 'len 26/Jan/2026 18:09:39'!
+reset
+	phase := 0.0.
+	delayLine reset! !
+
+!Vibrato methodsFor: 'controlling' stamp: 'len 26/Jan/2026 18:14:09'!
+update
+	increment := (self get: #speed) / self class controlRate * Float twoPi.
+	depth := self get: #depth.
+	time := self get: #time! !
+
+!Vibrato methodsFor: 'initialization' stamp: 'len 26/Jan/2026 18:15:10'!
+initialize
+	super initialize.
+	delayLine := DelayLine new: (self class sampleRate * 0.015 "15 ms max") ceiling.
+	tap := DelayLineTap on: delayLine.
+	self reset! !
+
+!Vibrato methodsFor: 'initialization' stamp: 'len 26/Jan/2026 18:14:17'!
+initializeControls
+	super initializeControls.
+	self addTimeControl: #time min: 0.002 "2 ms" max: 0.010 "10 ms" value: 0.005 "5 ms".
+	self addSpeedControl: #speed min: 3.0 "Hz" max: 8.0 "Hz" value: 5.0 "Hz".
+	self addControl: #depth min: 0.0 max: 1.0 value: 0.1! !
+
+!Vibrato methodsFor: 'processing' stamp: 'len 26/Jan/2026 18:13:43'!
+tick
+	| d twoPi |
+	output ifNil: [^ self].
+	input ifNil: [output atAllPut: 0.0. ^ self].
+	self update.
+	twoPi := Float twoPi.
+	d := (phase sin * depth * 0.002 "2 ms" + time) * self class sampleRate.
+	(phase := phase + increment) > twoPi ifTrue: [phase := phase - twoPi].
+	tap setDelayIncrement: (d - tap delay) / self class blockSize.
+	1 to: input size do: [:i|
+		delayLine write: (input at: i).
+		output at: i put: tap read]! !
 
 !Wavefolder methodsFor: 'accessing' stamp: 'len 27/Sep/2025 21:35:00'!
 gain: aNumber
@@ -10116,39 +10165,39 @@ write: in
 new: anInteger
 	^ self new initialize: anInteger! !
 
-!DelayTap methodsFor: 'accessing' stamp: 'len 26/Jan/2026 14:55:50'!
+!DelayLineTap methodsFor: 'accessing' stamp: 'len 26/Jan/2026 14:55:50'!
 delay
 	^ delay! !
 
-!DelayTap methodsFor: 'accessing' stamp: 'len 26/Jan/2026 14:55:50'!
+!DelayLineTap methodsFor: 'accessing' stamp: 'len 26/Jan/2026 14:55:50'!
 setDelay: aNumber
 	"Set a new delay time.."
 	delay := aNumber.
 	increment := 0.0! !
 
-!DelayTap methodsFor: 'accessing' stamp: 'len 26/Jan/2026 14:55:50'!
+!DelayLineTap methodsFor: 'accessing' stamp: 'len 26/Jan/2026 14:55:50'!
 setDelayIncrement: aNumber
 	"Set a delay increment. This is added to the delay time on every read."
 	increment := aNumber! !
 
-!DelayTap methodsFor: 'controlling' stamp: 'len 26/Jan/2026 15:06:11'!
+!DelayLineTap methodsFor: 'controlling' stamp: 'len 26/Jan/2026 15:06:11'!
 reset
 	x1 := y1 := 0! !
 
-!DelayTap methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:10:46'!
+!DelayLineTap methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:10:46'!
 setDelayLine: aDelayLine
 	delayLine := aDelayLine.
 	delay := delayLine length.
 	x1 := y1 := 0.
 	increment := 0.0! !
 
-!DelayTap methodsFor: 'processing' stamp: 'len 26/Jan/2026 17:10:21'!
+!DelayLineTap methodsFor: 'processing' stamp: 'len 26/Jan/2026 17:42:09'!
 read
 	| n i f a x |
 	delay := delay + increment.
 	delay >= (n := delayLine length) ifTrue: [delay := delay - n].
 	i := delayLine position - delay.
-	i > 1.0 ifFalse: [i := i + n].
+	i >= 1.0 ifFalse: [i := i + n].
 	f := i - (i := i truncated). "fractional and integer parts"
 	a := (1.0 - f) / (1.0 + f). "coefficient for the Thiran 1-pole filter"
 	x := delayLine at: i.
@@ -10156,7 +10205,7 @@ read
 	x1 := x.
 	^ y1! !
 
-!DelayTap class methodsFor: 'instance creation' stamp: 'len 26/Jan/2026 17:11:08'!
+!DelayLineTap class methodsFor: 'instance creation' stamp: 'len 26/Jan/2026 17:11:08'!
 on: aDelayLine
 	^ self new setDelayLine: aDelayLine! !
 

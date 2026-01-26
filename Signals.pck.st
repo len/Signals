@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 26 January 2026 at 6:18:53 pm'!
+'From Cuis7.7 [latest update: #7797] on 26 January 2026 at 6:34:37 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 417!
+!provides: 'Signals' 1 418!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -4770,6 +4770,10 @@ tick
 		output at: i put: (input at: i) * gain].
 	inputRM ifNotNil: [output *= inputRM]! !
 
+!Amp methodsFor: 'tools' stamp: 'len 26/Jan/2026 18:26:03'!
+panel
+	^ ControlPanel new addMorph: (SliderControlMorph control: (controls at: #gain))! !
+
 !Amp methodsFor: 'tools' stamp: 'len 22/Jan/2026 02:42:38'!
 patchable
 	| answer |
@@ -5223,11 +5227,11 @@ initializeControls
 	self addTimeControl: #hold min: 0.001 max: 10.0 value: 1.0.
 	self addTimeControl: #decay min: 0.001 max: 2.0 value: 0.5! !
 
-!AHD methodsFor: 'processing' stamp: 'len 29/Nov/2025 22:11:00'!
+!AHD methodsFor: 'processing' stamp: 'len 26/Jan/2026 18:31:39'!
 next
 	stage = #attack ifTrue:
 		["value := (1.0 - value) * factor + value." value := value + increment.
-		value >= 0.999 ifTrue: [stage := #hold. holding := (hold * self class controlRate) asInteger].
+		value >= 0.999 ifTrue: [value := 1.0. stage := #hold. holding := (hold * self class controlRate) asInteger].
 		^ value * velocity].
 	stage = #hold ifTrue:
 		[(holding := holding - 1) > 0 ifFalse: [stage := #decay. factor := 0.001 raisedTo: 1.0 / decay].
@@ -5271,11 +5275,11 @@ initializeControls
 	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01.
 	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0! !
 
-!AR methodsFor: 'processing' stamp: 'len 29/Nov/2025 21:57:00'!
+!AR methodsFor: 'processing' stamp: 'len 26/Jan/2026 18:32:20'!
 next
 	stage = #attack ifTrue:
 		["value := (1.0 - value) * factor + value." value := value + increment.
-		value >= 0.999 ifTrue: [stage := #sustain].
+		value >= 0.999 ifTrue: [value := 1.0. stage := #sustain].
 		^ value * velocity].
 	stage = #sustain ifTrue: [^ value * velocity].
 	stage = #release ifTrue:

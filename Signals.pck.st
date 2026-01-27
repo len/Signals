@@ -1,14 +1,18 @@
-'From Cuis7.7 [latest update: #7797] on 26 January 2026 at 10:16:25 pm'!
+'From Cuis7.7 [latest update: #7797] on 27 January 2026 at 3:37:39 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 419!
+!provides: 'Signals' 1 420!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
-SystemOrganization addCategory: #'Signals-Sources'!
+SystemOrganization addCategory: #'Signals-Oscillators'!
+SystemOrganization addCategory: #'Signals-Noise'!
+SystemOrganization addCategory: #'Signals-Samples'!
 SystemOrganization addCategory: #'Signals-Modulation'!
+SystemOrganization addCategory: #'Signals-Envelopes'!
 SystemOrganization addCategory: #'Signals-Levels'!
 SystemOrganization addCategory: #'Signals-Filters'!
-SystemOrganization addCategory: #'Signals-Effects'!
+SystemOrganization addCategory: #'Signals-VA Filters'!
+SystemOrganization addCategory: #'Signals-FX'!
 SystemOrganization addCategory: #'Signals-IO'!
 SystemOrganization addCategory: #'Signals-Tracker'!
 SystemOrganization addCategory: #'Signals-Morphic-Widgets'!
@@ -50,14 +54,64 @@ ActiveModel subclass: #Module
 Module class
 	instanceVariableNames: ''!
 
-!classDefinition: #Chorus category: #'Signals-Effects'!
-Module subclass: #Chorus
-	instanceVariableNames: 'input outputLeft outputRight phase increment depth delayLine tap1 tap2 tap3 time mix'
+!classDefinition: #EG category: #'Signals-Envelopes'!
+Module subclass: #EG
+	instanceVariableNames: 'velocity stage value factor increment attack'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Effects'!
-!classDefinition: 'Chorus class' category: #'Signals-Effects'!
-Chorus class
+	category: 'Signals-Envelopes'!
+!classDefinition: 'EG class' category: #'Signals-Envelopes'!
+EG class
+	instanceVariableNames: ''!
+
+!classDefinition: #AD category: #'Signals-Envelopes'!
+EG subclass: #AD
+	instanceVariableNames: 'decay'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Envelopes'!
+!classDefinition: 'AD class' category: #'Signals-Envelopes'!
+AD class
+	instanceVariableNames: ''!
+
+!classDefinition: #ADSR category: #'Signals-Envelopes'!
+EG subclass: #ADSR
+	instanceVariableNames: 'decay sustain release'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Envelopes'!
+!classDefinition: 'ADSR class' category: #'Signals-Envelopes'!
+ADSR class
+	instanceVariableNames: ''!
+
+!classDefinition: #AHD category: #'Signals-Envelopes'!
+EG subclass: #AHD
+	instanceVariableNames: 'hold holding decay'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Envelopes'!
+!classDefinition: 'AHD class' category: #'Signals-Envelopes'!
+AHD class
+	instanceVariableNames: ''!
+
+!classDefinition: #AR category: #'Signals-Envelopes'!
+EG subclass: #AR
+	instanceVariableNames: 'release'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Envelopes'!
+!classDefinition: 'AR class' category: #'Signals-Envelopes'!
+AR class
+	instanceVariableNames: ''!
+
+!classDefinition: #ASR category: #'Signals-Envelopes'!
+EG subclass: #ASR
+	instanceVariableNames: 'sustain release'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Envelopes'!
+!classDefinition: 'ASR class' category: #'Signals-Envelopes'!
+ASR class
 	instanceVariableNames: ''!
 
 !classDefinition: #Clock category: #'Signals-Etc'!
@@ -78,6 +132,16 @@ Module subclass: #Operator
 	category: 'Signals-Etc'!
 !classDefinition: 'Operator class' category: #'Signals-Etc'!
 Operator class
+	instanceVariableNames: ''!
+
+!classDefinition: #Chorus category: #'Signals-FX'!
+Module subclass: #Chorus
+	instanceVariableNames: 'input outputLeft outputRight phase increment depth delayLine tap1 tap2 tap3 time mix'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-FX'!
+!classDefinition: 'Chorus class' category: #'Signals-FX'!
+Chorus class
 	instanceVariableNames: ''!
 
 !classDefinition: #Filter category: #'Signals-Filters'!
@@ -110,26 +174,6 @@ Filter subclass: #HPF
 HPF class
 	instanceVariableNames: ''!
 
-!classDefinition: #Korg35HPF category: #'Signals-Filters'!
-Filter subclass: #Korg35HPF
-	instanceVariableNames: 's1 s2 s3 α α₀ K β₂ β₃ output'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Filters'!
-!classDefinition: 'Korg35HPF class' category: #'Signals-Filters'!
-Korg35HPF class
-	instanceVariableNames: ''!
-
-!classDefinition: #Korg35LPF category: #'Signals-Filters'!
-Filter subclass: #Korg35LPF
-	instanceVariableNames: 's1 s2 s3 α α₀ K β₂ β₃ output'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Filters'!
-!classDefinition: 'Korg35LPF class' category: #'Signals-Filters'!
-Korg35LPF class
-	instanceVariableNames: ''!
-
 !classDefinition: #LPF category: #'Signals-Filters'!
 Filter subclass: #LPF
 	instanceVariableNames: 'biquad output'
@@ -138,26 +182,6 @@ Filter subclass: #LPF
 	category: 'Signals-Filters'!
 !classDefinition: 'LPF class' category: #'Signals-Filters'!
 LPF class
-	instanceVariableNames: ''!
-
-!classDefinition: #MoogLPF category: #'Signals-Filters'!
-Filter subclass: #MoogLPF
-	instanceVariableNames: 'p r k y0 y1 y2 y3 y4 outputLP4 outputLP3 outputLP2 outputLP1'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Filters'!
-!classDefinition: 'MoogLPF class' category: #'Signals-Filters'!
-MoogLPF class
-	instanceVariableNames: ''!
-
-!classDefinition: #MoogLadder category: #'Signals-Filters'!
-Filter subclass: #MoogLadder
-	instanceVariableNames: 's1 s2 s3 s4 k g G'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Filters'!
-!classDefinition: 'MoogLadder class' category: #'Signals-Filters'!
-MoogLadder class
 	instanceVariableNames: ''!
 
 !classDefinition: #Notch category: #'Signals-Filters'!
@@ -170,16 +194,6 @@ Filter subclass: #Notch
 Notch class
 	instanceVariableNames: ''!
 
-!classDefinition: #OberheimSVF category: #'Signals-Filters'!
-Filter subclass: #OberheimSVF
-	instanceVariableNames: 's1 s2 g feedback alpha0 outputLP outputHP outputBP outputBPN'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Filters'!
-!classDefinition: 'OberheimSVF class' category: #'Signals-Filters'!
-OberheimSVF class
-	instanceVariableNames: ''!
-
 !classDefinition: #SVF category: #'Signals-Filters'!
 Filter subclass: #SVF
 	instanceVariableNames: 's1 s2 r g h outputLP outputHP outputBP outputBPN'
@@ -188,6 +202,56 @@ Filter subclass: #SVF
 	category: 'Signals-Filters'!
 !classDefinition: 'SVF class' category: #'Signals-Filters'!
 SVF class
+	instanceVariableNames: ''!
+
+!classDefinition: #Korg35HPF category: #'Signals-VA Filters'!
+Filter subclass: #Korg35HPF
+	instanceVariableNames: 's1 s2 s3 α α₀ K β₂ β₃ output'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-VA Filters'!
+!classDefinition: 'Korg35HPF class' category: #'Signals-VA Filters'!
+Korg35HPF class
+	instanceVariableNames: ''!
+
+!classDefinition: #Korg35LPF category: #'Signals-VA Filters'!
+Filter subclass: #Korg35LPF
+	instanceVariableNames: 's1 s2 s3 α α₀ K β₂ β₃ output'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-VA Filters'!
+!classDefinition: 'Korg35LPF class' category: #'Signals-VA Filters'!
+Korg35LPF class
+	instanceVariableNames: ''!
+
+!classDefinition: #MoogLPF category: #'Signals-VA Filters'!
+Filter subclass: #MoogLPF
+	instanceVariableNames: 'p r k y0 y1 y2 y3 y4 outputLP4 outputLP3 outputLP2 outputLP1'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-VA Filters'!
+!classDefinition: 'MoogLPF class' category: #'Signals-VA Filters'!
+MoogLPF class
+	instanceVariableNames: ''!
+
+!classDefinition: #MoogLadder category: #'Signals-VA Filters'!
+Filter subclass: #MoogLadder
+	instanceVariableNames: 's1 s2 s3 s4 k g G'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-VA Filters'!
+!classDefinition: 'MoogLadder class' category: #'Signals-VA Filters'!
+MoogLadder class
+	instanceVariableNames: ''!
+
+!classDefinition: #OberheimSVF category: #'Signals-VA Filters'!
+Filter subclass: #OberheimSVF
+	instanceVariableNames: 's1 s2 g feedback alpha0 outputLP outputHP outputBP outputBPN'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-VA Filters'!
+!classDefinition: 'OberheimSVF class' category: #'Signals-VA Filters'!
+OberheimSVF class
 	instanceVariableNames: ''!
 
 !classDefinition: #AudioIn category: #'Signals-IO'!
@@ -240,143 +304,143 @@ Generator subclass: #TunedGenerator
 TunedGenerator class
 	instanceVariableNames: ''!
 
-!classDefinition: #Multisample category: #'Signals-Sources'!
-TunedGenerator subclass: #Multisample
-	instanceVariableNames: 'keymap velocity sample'
-	classVariableNames: 'Library'
-	poolDictionaries: ''
-	category: 'Signals-Sources'!
-!classDefinition: 'Multisample class' category: #'Signals-Sources'!
-Multisample class
-	instanceVariableNames: ''!
-
-!classDefinition: #Oscillator category: #'Signals-Sources'!
+!classDefinition: #Oscillator category: #'Signals-Oscillators'!
 TunedGenerator subclass: #Oscillator
 	instanceVariableNames: 'phase frequency inputFM'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Sources'!
-!classDefinition: 'Oscillator class' category: #'Signals-Sources'!
+	category: 'Signals-Oscillators'!
+!classDefinition: 'Oscillator class' category: #'Signals-Oscillators'!
 Oscillator class
 	instanceVariableNames: ''!
 
-!classDefinition: #OPN category: #'Signals-Sources'!
+!classDefinition: #OPN category: #'Signals-Oscillators'!
 Oscillator subclass: #OPN
 	instanceVariableNames: 'wave'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Sources'!
-!classDefinition: 'OPN class' category: #'Signals-Sources'!
+	category: 'Signals-Oscillators'!
+!classDefinition: 'OPN class' category: #'Signals-Oscillators'!
 OPN class
 	instanceVariableNames: ''!
 
-!classDefinition: #Pulse category: #'Signals-Sources'!
+!classDefinition: #Pulse category: #'Signals-Oscillators'!
 Oscillator subclass: #Pulse
 	instanceVariableNames: 'width inputPWM'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Sources'!
-!classDefinition: 'Pulse class' category: #'Signals-Sources'!
+	category: 'Signals-Oscillators'!
+!classDefinition: 'Pulse class' category: #'Signals-Oscillators'!
 Pulse class
 	instanceVariableNames: ''!
 
-!classDefinition: #Saw category: #'Signals-Sources'!
+!classDefinition: #Saw category: #'Signals-Oscillators'!
 Oscillator subclass: #Saw
 	instanceVariableNames: 'shape'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Sources'!
-!classDefinition: 'Saw class' category: #'Signals-Sources'!
+	category: 'Signals-Oscillators'!
+!classDefinition: 'Saw class' category: #'Signals-Oscillators'!
 Saw class
 	instanceVariableNames: ''!
 
-!classDefinition: #Sine category: #'Signals-Sources'!
+!classDefinition: #Sine category: #'Signals-Oscillators'!
 Oscillator subclass: #Sine
 	instanceVariableNames: 'warp'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Sources'!
-!classDefinition: 'Sine class' category: #'Signals-Sources'!
+	category: 'Signals-Oscillators'!
+!classDefinition: 'Sine class' category: #'Signals-Oscillators'!
 Sine class
 	instanceVariableNames: ''!
 
-!classDefinition: #TriSawPulse category: #'Signals-Sources'!
+!classDefinition: #TriSawPulse category: #'Signals-Oscillators'!
 Oscillator subclass: #TriSawPulse
 	instanceVariableNames: 'shape'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Sources'!
-!classDefinition: 'TriSawPulse class' category: #'Signals-Sources'!
+	category: 'Signals-Oscillators'!
+!classDefinition: 'TriSawPulse class' category: #'Signals-Oscillators'!
 TriSawPulse class
 	instanceVariableNames: ''!
 
-!classDefinition: #Triangle category: #'Signals-Sources'!
+!classDefinition: #Triangle category: #'Signals-Oscillators'!
 Oscillator subclass: #Triangle
 	instanceVariableNames: 'shape'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Sources'!
-!classDefinition: 'Triangle class' category: #'Signals-Sources'!
+	category: 'Signals-Oscillators'!
+!classDefinition: 'Triangle class' category: #'Signals-Oscillators'!
 Triangle class
 	instanceVariableNames: ''!
 
-!classDefinition: #Wavetable category: #'Signals-Sources'!
+!classDefinition: #Wavetable category: #'Signals-Oscillators'!
 Oscillator subclass: #Wavetable
 	instanceVariableNames: 'waves position name smooth'
 	classVariableNames: 'Banks'
 	poolDictionaries: ''
-	category: 'Signals-Sources'!
-!classDefinition: 'Wavetable class' category: #'Signals-Sources'!
+	category: 'Signals-Oscillators'!
+!classDefinition: 'Wavetable class' category: #'Signals-Oscillators'!
 Wavetable class
 	instanceVariableNames: ''!
 
-!classDefinition: #Sample category: #'Signals-Sources'!
-TunedGenerator subclass: #Sample
-	instanceVariableNames: 'buffer baseRate loopEnd loopLength offset speed smooth warp cycle released position increment'
-	classVariableNames: 'Library'
-	poolDictionaries: ''
-	category: 'Signals-Sources'!
-!classDefinition: 'Sample class' category: #'Signals-Sources'!
-Sample class
-	instanceVariableNames: ''!
-
-!classDefinition: #Supersaw category: #'Signals-Sources'!
+!classDefinition: #Supersaw category: #'Signals-Oscillators'!
 TunedGenerator subclass: #Supersaw
 	instanceVariableNames: 'frequency phases frequencies centerGain sideGain'
 	classVariableNames: 'DetuneCurveLUT'
 	poolDictionaries: ''
-	category: 'Signals-Sources'!
-!classDefinition: 'Supersaw class' category: #'Signals-Sources'!
+	category: 'Signals-Oscillators'!
+!classDefinition: 'Supersaw class' category: #'Signals-Oscillators'!
 Supersaw class
 	instanceVariableNames: ''!
 
-!classDefinition: #VOSIM category: #'Signals-Sources'!
+!classDefinition: #VOSIM category: #'Signals-Oscillators'!
 TunedGenerator subclass: #VOSIM
 	instanceVariableNames: 'carrierPhase formant1Phase formant2Phase carrierFrequency formant1Frequency formant2Frequency carrierShape'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Sources'!
-!classDefinition: 'VOSIM class' category: #'Signals-Sources'!
+	category: 'Signals-Oscillators'!
+!classDefinition: 'VOSIM class' category: #'Signals-Oscillators'!
 VOSIM class
 	instanceVariableNames: ''!
 
-!classDefinition: #Dust category: #'Signals-Sources'!
+!classDefinition: #Multisample category: #'Signals-Samples'!
+TunedGenerator subclass: #Multisample
+	instanceVariableNames: 'keymap velocity sample'
+	classVariableNames: 'Library'
+	poolDictionaries: ''
+	category: 'Signals-Samples'!
+!classDefinition: 'Multisample class' category: #'Signals-Samples'!
+Multisample class
+	instanceVariableNames: ''!
+
+!classDefinition: #Sample category: #'Signals-Samples'!
+TunedGenerator subclass: #Sample
+	instanceVariableNames: 'buffer baseRate loopEnd loopLength offset speed smooth warp cycle released position increment'
+	classVariableNames: 'Library'
+	poolDictionaries: ''
+	category: 'Signals-Samples'!
+!classDefinition: 'Sample class' category: #'Signals-Samples'!
+Sample class
+	instanceVariableNames: ''!
+
+!classDefinition: #Dust category: #'Signals-Noise'!
 Generator subclass: #Dust
 	instanceVariableNames: 'frequency random'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Sources'!
-!classDefinition: 'Dust class' category: #'Signals-Sources'!
+	category: 'Signals-Noise'!
+!classDefinition: 'Dust class' category: #'Signals-Noise'!
 Dust class
 	instanceVariableNames: ''!
 
-!classDefinition: #Noise category: #'Signals-Sources'!
+!classDefinition: #Noise category: #'Signals-Noise'!
 Generator subclass: #Noise
 	instanceVariableNames: 'color state pinkState'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Sources'!
-!classDefinition: 'Noise class' category: #'Signals-Sources'!
+	category: 'Signals-Noise'!
+!classDefinition: 'Noise class' category: #'Signals-Noise'!
 Noise class
 	instanceVariableNames: ''!
 
@@ -390,103 +454,103 @@ Module subclass: #Transform
 Transform class
 	instanceVariableNames: ''!
 
-!classDefinition: #Allpass category: #'Signals-Effects'!
+!classDefinition: #Allpass category: #'Signals-FX'!
 Transform subclass: #Allpass
 	instanceVariableNames: 'delayLine tap gain'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Effects'!
-!classDefinition: 'Allpass class' category: #'Signals-Effects'!
+	category: 'Signals-FX'!
+!classDefinition: 'Allpass class' category: #'Signals-FX'!
 Allpass class
 	instanceVariableNames: ''!
 
-!classDefinition: #Comb category: #'Signals-Effects'!
+!classDefinition: #Comb category: #'Signals-FX'!
 Transform subclass: #Comb
 	instanceVariableNames: 'delayLine tap feedback damping x0'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Effects'!
-!classDefinition: 'Comb class' category: #'Signals-Effects'!
+	category: 'Signals-FX'!
+!classDefinition: 'Comb class' category: #'Signals-FX'!
 Comb class
 	instanceVariableNames: ''!
 
-!classDefinition: #Decimator category: #'Signals-Effects'!
+!classDefinition: #Decimator category: #'Signals-FX'!
 Transform subclass: #Decimator
 	instanceVariableNames: 'quantization downsample holdCount heldValue'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Effects'!
-!classDefinition: 'Decimator class' category: #'Signals-Effects'!
+	category: 'Signals-FX'!
+!classDefinition: 'Decimator class' category: #'Signals-FX'!
 Decimator class
 	instanceVariableNames: ''!
 
-!classDefinition: #Echo category: #'Signals-Effects'!
+!classDefinition: #Echo category: #'Signals-FX'!
 Transform subclass: #Echo
 	instanceVariableNames: 'delayLine tap'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Effects'!
-!classDefinition: 'Echo class' category: #'Signals-Effects'!
+	category: 'Signals-FX'!
+!classDefinition: 'Echo class' category: #'Signals-FX'!
 Echo class
 	instanceVariableNames: ''!
 
-!classDefinition: #Flanger category: #'Signals-Effects'!
+!classDefinition: #Flanger category: #'Signals-FX'!
 Transform subclass: #Flanger
 	instanceVariableNames: 'phase increment depth delayLine tap time feedback mix'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Effects'!
-!classDefinition: 'Flanger class' category: #'Signals-Effects'!
+	category: 'Signals-FX'!
+!classDefinition: 'Flanger class' category: #'Signals-FX'!
 Flanger class
 	instanceVariableNames: ''!
 
-!classDefinition: #Overdrive category: #'Signals-Effects'!
+!classDefinition: #Overdrive category: #'Signals-FX'!
 Transform subclass: #Overdrive
 	instanceVariableNames: 'drive pregain postgain'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Effects'!
-!classDefinition: 'Overdrive class' category: #'Signals-Effects'!
+	category: 'Signals-FX'!
+!classDefinition: 'Overdrive class' category: #'Signals-FX'!
 Overdrive class
 	instanceVariableNames: ''!
 
-!classDefinition: #Phaser category: #'Signals-Effects'!
+!classDefinition: #Phaser category: #'Signals-FX'!
 Transform subclass: #Phaser
 	instanceVariableNames: 'phase increment depth x1 y1 feedback lastOutput mix'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Effects'!
-!classDefinition: 'Phaser class' category: #'Signals-Effects'!
+	category: 'Signals-FX'!
+!classDefinition: 'Phaser class' category: #'Signals-FX'!
 Phaser class
 	instanceVariableNames: ''!
 
-!classDefinition: #PitchShifter category: #'Signals-Effects'!
+!classDefinition: #PitchShifter category: #'Signals-FX'!
 Transform subclass: #PitchShifter
 	instanceVariableNames: 'delayLine1 delayLine2'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Effects'!
-!classDefinition: 'PitchShifter class' category: #'Signals-Effects'!
+	category: 'Signals-FX'!
+!classDefinition: 'PitchShifter class' category: #'Signals-FX'!
 PitchShifter class
 	instanceVariableNames: ''!
 
-!classDefinition: #Vibrato category: #'Signals-Effects'!
+!classDefinition: #Vibrato category: #'Signals-FX'!
 Transform subclass: #Vibrato
 	instanceVariableNames: 'phase increment depth delayLine tap time'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Effects'!
-!classDefinition: 'Vibrato class' category: #'Signals-Effects'!
+	category: 'Signals-FX'!
+!classDefinition: 'Vibrato class' category: #'Signals-FX'!
 Vibrato class
 	instanceVariableNames: ''!
 
-!classDefinition: #Wavefolder category: #'Signals-Effects'!
+!classDefinition: #Wavefolder category: #'Signals-FX'!
 Transform subclass: #Wavefolder
 	instanceVariableNames: 'gain offset'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Effects'!
-!classDefinition: 'Wavefolder class' category: #'Signals-Effects'!
+	category: 'Signals-FX'!
+!classDefinition: 'Wavefolder class' category: #'Signals-FX'!
 Wavefolder class
 	instanceVariableNames: ''!
 
@@ -532,7 +596,7 @@ Amp class
 
 !classDefinition: #Crossfader category: #'Signals-Levels'!
 Module subclass: #Crossfader
-	instanceVariableNames: 'input1 input2 mix output'
+	instanceVariableNames: 'inputA inputB mix output'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Levels'!
@@ -542,7 +606,7 @@ Crossfader class
 
 !classDefinition: #Mixer category: #'Signals-Levels'!
 Module subclass: #Mixer
-	instanceVariableNames: 'input1 input2 gain1 gain2 output'
+	instanceVariableNames: 'inputA inputB gainA gainB output'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Levels'!
@@ -552,12 +616,22 @@ Mixer class
 
 !classDefinition: #Panner category: #'Signals-Levels'!
 Module subclass: #Panner
-	instanceVariableNames: 'input1 input2 pan output1 output2'
+	instanceVariableNames: 'inputA inputB pan outputLeft outputRight'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Levels'!
 !classDefinition: 'Panner class' category: #'Signals-Levels'!
 Panner class
+	instanceVariableNames: ''!
+
+!classDefinition: #StereoMatrix category: #'Signals-Levels'!
+Module subclass: #StereoMatrix
+	instanceVariableNames: 'inputA inputB outputLeft outputRight width balance aux'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Levels'!
+!classDefinition: 'StereoMatrix class' category: #'Signals-Levels'!
+StereoMatrix class
 	instanceVariableNames: ''!
 
 !classDefinition: #Attenuator category: #'Signals-Modulation'!
@@ -578,66 +652,6 @@ Module subclass: #Attenuverter
 	category: 'Signals-Modulation'!
 !classDefinition: 'Attenuverter class' category: #'Signals-Modulation'!
 Attenuverter class
-	instanceVariableNames: ''!
-
-!classDefinition: #EG category: #'Signals-Modulation'!
-Module subclass: #EG
-	instanceVariableNames: 'velocity stage value factor increment attack'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Modulation'!
-!classDefinition: 'EG class' category: #'Signals-Modulation'!
-EG class
-	instanceVariableNames: ''!
-
-!classDefinition: #AD category: #'Signals-Modulation'!
-EG subclass: #AD
-	instanceVariableNames: 'decay'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Modulation'!
-!classDefinition: 'AD class' category: #'Signals-Modulation'!
-AD class
-	instanceVariableNames: ''!
-
-!classDefinition: #ADSR category: #'Signals-Modulation'!
-EG subclass: #ADSR
-	instanceVariableNames: 'decay sustain release'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Modulation'!
-!classDefinition: 'ADSR class' category: #'Signals-Modulation'!
-ADSR class
-	instanceVariableNames: ''!
-
-!classDefinition: #AHD category: #'Signals-Modulation'!
-EG subclass: #AHD
-	instanceVariableNames: 'hold holding decay'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Modulation'!
-!classDefinition: 'AHD class' category: #'Signals-Modulation'!
-AHD class
-	instanceVariableNames: ''!
-
-!classDefinition: #AR category: #'Signals-Modulation'!
-EG subclass: #AR
-	instanceVariableNames: 'release'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Modulation'!
-!classDefinition: 'AR class' category: #'Signals-Modulation'!
-AR class
-	instanceVariableNames: ''!
-
-!classDefinition: #ASR category: #'Signals-Modulation'!
-EG subclass: #ASR
-	instanceVariableNames: 'sustain release'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Modulation'!
-!classDefinition: 'ASR class' category: #'Signals-Modulation'!
-ASR class
 	instanceVariableNames: ''!
 
 !classDefinition: #LFO category: #'Signals-Modulation'!
@@ -1334,6 +1348,24 @@ Controls can have different curves, e.g. linear (like a control to morph the wav
 !Module commentStamp: '<historical>' prior: 0!
 This is an abstract superclass for signal processing modules.!
 
+!EG commentStamp: '<historical>' prior: 0!
+Abstract superclass for envelope generators.!
+
+!AD commentStamp: '<historical>' prior: 0!
+Attack-Decay envelope generator.!
+
+!ADSR commentStamp: '<historical>' prior: 0!
+Attack-Decay-Sustain-Release envelope generator.!
+
+!AHD commentStamp: '<historical>' prior: 0!
+Attack-Hold-Decay envelope generator.!
+
+!AR commentStamp: '<historical>' prior: 0!
+Attack-Release envelope generator.!
+
+!ASR commentStamp: '<historical>' prior: 0!
+Attack-Sustain-Release envelope generator.!
+
 !Filter commentStamp: '<historical>' prior: 0!
 Abstract superclass for filters that allow modulation and independent control of cutoff frequency and Q.!
 
@@ -1343,14 +1375,20 @@ This is a second order (12 dB/Oct) band-pass filter based on a biquad.!
 !HPF commentStamp: '<historical>' prior: 0!
 This is a second order (12 dB/Oct) high-pass filter based on a biquad.!
 
+!LPF commentStamp: '<historical>' prior: 0!
+This is a second order (12 dB/Oct) low-pass filter based on a biquad.!
+
+!Notch commentStamp: '<historical>' prior: 0!
+This is a second order (12 dB/Oct) notch (band-stop) filter based on a biquad.!
+
+!SVF commentStamp: '<historical>' prior: 0!
+This is a state variable filter (SVF) with a 12 dB/Oct slope (2 poles). It has outputs for low-pass, high-pass, band-pass and normalized band-pass modes. Based on stmlib/dsp/filter.h by Emilie Gillet.!
+
 !Korg35HPF commentStamp: '<historical>' prior: 0!
 This is a virtual analog model of the Korg 35 high-pass 12 dB/Oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.!
 
 !Korg35LPF commentStamp: '<historical>' prior: 0!
 This is a virtual analog model of the Korg 35 low-pass 12 dB/Oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.!
-
-!LPF commentStamp: '<historical>' prior: 0!
-This is a second order (12 dB/Oct) low-pass filter based on a biquad.!
 
 !MoogLPF commentStamp: '<historical>' prior: 0!
 This is a low pass filter inspired by the classic Moog ladder filter. It's a low-pass 24 dB/Oct (4 poles) resonant filter.
@@ -1367,24 +1405,14 @@ This fix is based on Lorenzo Della Cioppa's correction to Pirkle's implementatio
 
 This is based on code from Faust https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 
-!Notch commentStamp: '<historical>' prior: 0!
-This is a second order (12 dB/Oct) notch (band-stop) filter based on a biquad.!
-
 !OberheimSVF commentStamp: '<historical>' prior: 0!
 This is a virtual analog model of the Oberheim state variable filter. It has outputs for low-pass, high-pass, band-pass and normalized band-pass modes. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section Figure 7.5.!
-
-!SVF commentStamp: '<historical>' prior: 0!
-This is a state variable filter (SVF) with a 12 dB/Oct slope (2 poles). It has outputs for low-pass, high-pass, band-pass and normalized band-pass modes. Based on stmlib/dsp/filter.h by Emilie Gillet.!
 
 !Generator commentStamp: '<historical>' prior: 0!
 A signal generator produces a stream of samples from a real-valued function of time (typically a mono audio signal). It is similar to a Stream, but its values are 32-bit floats. See subclasses.!
 
 !TunedGenerator commentStamp: '<historical>' prior: 0!
 A tuned generator is a signal generator with pitch, such as an oscillator. See subclasses.!
-
-!Multisample commentStamp: '<historical>' prior: 0!
-A multisample is the basis of a rompler (from "ROM" and "sampler"). It generates sounds from a set of recordings (samples) of an instrument for different keys and velocities. Given a MIDI key and velocity value, it chooses the sample closest to the desired key and velocity and repitches it by playing it faster or slower.
-!
 
 !Oscillator commentStamp: '<historical>' prior: 0!
 Abstract superclass for simple oscillators that can be defined by a single phase value that is incremented at sampling step.!
@@ -1410,9 +1438,6 @@ This is a virtual analog triangle oscillator that uses PolyBLAMP for antialiasin
 !Wavetable commentStamp: '<historical>' prior: 0!
 This is a wavetable oscillator inspired by classic wavetable synthesizers such as the PPG Wave and the Waldorf Microwave 1. The waves are typically small and low-resolution (e.g., 128 8-bit PCM samples), and this results in digital artifacts such as aliasing and imaging characteristic of the classic wavetable sound. By default, it uses the wavetables of the Microwave 1, but with linear interpolation between samples (smoothing on).!
 
-!Sample commentStamp: '<historical>' prior: 0!
-A sample is a recorded signal. It has a buffer of recorded samples, base sample rate that corresponds either to the original sampling rate or (in the case of samples with pitch) to middle C, a start position, and optional loop points. Samples can be played at different rates to produce different pitches.!
-
 !Supersaw commentStamp: 'len 5/Jan/2026 15:49:43' prior: 0!
 Emulation of the Roland JP-8000 and JP-8080 supersaw oscillator based on Adam Szabo's thesis [1]. It consists of 7 detuned saws. It is not a perfect emulation, e.g. it uses PolyBLEP saws to achieve antialiasing, instead of oversampling and applying a high pass filter as the original.
 
@@ -1420,6 +1445,13 @@ Emulation of the Roland JP-8000 and JP-8080 supersaw oscillator based on Adam Sz
 
 !VOSIM commentStamp: '<historical>' prior: 0!
 This is a VOSIM (VOcal SIMulation) oscillator based on the synthesis method developed by Kaegi and Tempelaars in the 1970s. The oscillator consists of two sine waves multiplied by and sync'ed to a carrier. Ported from plaits/dsp/oscillator/vosim_oscillator.h by Emilie Gillet.!
+
+!Multisample commentStamp: '<historical>' prior: 0!
+A multisample is the basis of a rompler (from "ROM" and "sampler"). It generates sounds from a set of recordings (samples) of an instrument for different keys and velocities. Given a MIDI key and velocity value, it chooses the sample closest to the desired key and velocity and repitches it by playing it faster or slower.
+!
+
+!Sample commentStamp: '<historical>' prior: 0!
+A sample is a recorded signal. It has a buffer of recorded samples, base sample rate that corresponds either to the original sampling rate or (in the case of samples with pitch) to middle C, a start position, and optional loop points. Samples can be played at different rates to produce different pitches.!
 
 !Noise commentStamp: '<historical>' prior: 0!
 A pink noise generator. The color parameter controls how much white noise is filtered to produce the output: at 0.0 it generates white noise, and at 1.0 it approximates pink noise.!
@@ -1449,29 +1481,41 @@ This is based on Squeak's original ReverbSound by John Maloney.!
 !Amp commentStamp: '<historical>' prior: 0!
 An amplifier just multiplies the input signal by a gain parameter, typically modulated by an envolope. When the gain parameter changes, the actual gain is varied smoothly by sample to avoid clicks or zipper noise.!
 
+!StereoMatrix commentStamp: '<historical>' prior: 0!
+Linear stereo transform based on a Mid/Side representation.
+
+This module takes two arbitrary audio inputs A and B and produces stereo outputs L and R using a fixed −6 dB Mid/Side normalization. It can be used as a conventional stereo width control, an MS decoder, or a general-purpose stereo spatializer, depending on how it is patched.
+
+Internally, the signal is converted to Mid and Side as:
+	• Mid  = (A + B) * 0.5
+	• Side = (A − B) * 0.5
+
+The −6 dB (* 0.5) normalization preserves headroom symmetry and predictable gain
+behavior when collapsing to mono or increasing width.
+
+Balance controls the relative energy between Mid and Side:
+	• Positive values emphasize the Mid (center)
+	• Negative values emphasize the Side (edges)
+	• Implemented as complementary gains applied to Mid and Side
+
+Width scales the Side component:
+	• Width = 0 → mono (Side muted)
+	• Width = 1 → nominal stereo
+	• Width > 1 → increased stereo width
+	• Width < 0 → inverted Side (special effects)
+
+After applying balance and width, the signal is decoded back to stereo:
+	• L = Mid + Side
+	• R = Mid − Side
+
+The module performs no dynamics processing or loudness compensation beyond the fixed −6 dB MS normalization; gain changes due to width or balance are explicit and intentional.
+!
+
 !Attenuator commentStamp: '<historical>' prior: 0!
 An attenuator scales a control signal by a number between 0 and 1. It is typically used to control modulation depth.!
 
 !Attenuverter commentStamp: '<historical>' prior: 0!
 An attenuverter is similar to an attenuator, but it can also invert the polarity of the signal. It scales a control signal by a number between -1 and 1. When the knob is at 12 o'clock the resulting signal is 0, and bellow that it is inverted.!
-
-!EG commentStamp: '<historical>' prior: 0!
-Abstract superclass for envelope generators.!
-
-!AD commentStamp: '<historical>' prior: 0!
-Attack-Decay envelope generator.!
-
-!ADSR commentStamp: '<historical>' prior: 0!
-Attack-Decay-Sustain-Release envelope generator.!
-
-!AHD commentStamp: '<historical>' prior: 0!
-Attack-Hold-Decay envelope generator.!
-
-!AR commentStamp: '<historical>' prior: 0!
-Attack-Release envelope generator.!
-
-!ASR commentStamp: '<historical>' prior: 0!
-Attack-Sustain-Release envelope generator.!
 
 !LFO commentStamp: '<historical>' prior: 0!
 Low frequency oscillator.!
@@ -2094,14 +2138,14 @@ tick
 is: aSymbol
 	^ aSymbol == #Module or: [super is: aSymbol]! !
 
-!Module methodsFor: 'tools' stamp: 'len 18/Jan/2026 02:12:34'!
+!Module methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:47:17'!
 edit
 	"Answer a panel with knobs for all the controls of this module.
 	This is typically more general than the panel obtained with #panel.
 	See also #panel and #view."
 	| panel |
 	panel := ControlPanel new.
-	controls keysAndValuesDo: [:name :control| panel addControl: control label: name capitalized].
+	controls keysAndValuesDo: [:name :control| panel addKnob: control label: name capitalized].
 	^ panel! !
 
 !Module methodsFor: 'tools' stamp: 'len 25/Nov/2025 15:12:00'!
@@ -2120,6 +2164,10 @@ patchable
 	controls ifNotEmpty: [answer body addMorph: self panel].
 	^ answer! !
 
+!Module methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:32:09'!
+title
+	^ self class name camelSeparatedWords! !
+
 !Module class methodsFor: 'constants' stamp: 'len 7/Dec/2025 00:24:13'!
 blockSize
 	"Answer the size of the input and output buffers.
@@ -2134,94 +2182,298 @@ controlRate
 sampleRate
 	^ AudioPlayer sampleRate! !
 
-!Module class methodsFor: 'tools' stamp: 'len 3/Dec/2025 01:49:00'!
-addToPatchMenu: aMenuMorph
-	self hasSubclasses ifTrue: [^ self].
-	aMenuMorph add: self name action: #addModuleInstantiating: argument: self! !
+!EG methodsFor: 'accessing' stamp: 'len 6/Jan/2026 18:33:45'!
+stage
+	^ stage! !
 
-!Chorus methodsFor: 'controlling' stamp: 'len 26/Jan/2026 17:46:23'!
+!EG methodsFor: 'accessing' stamp: 'len 6/Jan/2026 18:35:09'!
+value
+	^ value! !
+
+!EG methodsFor: 'controlling' stamp: 'len 29/Nov/2025 15:46:00'!
+gateOff
+	^ self! !
+
+!EG methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:37:22'!
+gateOn
+	self update.
+	stage := #attack.
+"	factor := 1.0 - (0.001 raisedTo: 1.0 / attack)"
+	increment := 1.0 / attack! !
+
+!EG methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:37:54'!
+modulateAttack: aNumber
+	self modulate: #attack by: aNumber! !
+
+!EG methodsFor: 'controlling' stamp: 'len 30/Nov/2025 02:15:00'!
 reset
-	phase := 0.0.
-	delayLine reset! !
+	stage := #idle.
+	value := 0.0! !
 
-!Chorus methodsFor: 'controlling' stamp: 'len 26/Jan/2026 15:29:19'!
+!EG methodsFor: 'controlling' stamp: 'len 28/Nov/2025 16:34:00'!
+setVelocity: aNumber
+	velocity := aNumber! !
+
+!EG methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:38:54'!
 update
-	increment := (self get: #speed) / self class controlRate * Float twoPi.
-	depth := self get: #depth.
-	time := self get: #time.
-	mix := self get: #mix! !
+	super update.
+	attack := (self get: #attack) * self class controlRate
+! !
 
-!Chorus methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:46:23'!
+!EG methodsFor: 'initialization' stamp: 'len 15/Jan/2026 19:14:09'!
 initialize
 	super initialize.
-	delayLine := DelayLine new: (self class sampleRate * 0.035 "35 ms max") ceiling.
-	tap1 := DelayLineTap on: delayLine.
-	tap2 := DelayLineTap on: delayLine.
-	tap3 := DelayLineTap on: delayLine.
-	self reset! !
+	self reset.
+	velocity := 0.5! !
 
-!Chorus methodsFor: 'initialization' stamp: 'len 26/Jan/2026 15:45:20'!
+!EG methodsFor: 'processing' stamp: 'len 29/Nov/2025 20:41:00'!
+next
+	^ self subclassResponsibility! !
+
+!EG methodsFor: 'processing' stamp: 'len 8/Dec/2025 22:33:48'!
+tick
+	self update.
+	stage = #idle ifFalse: [self triggerEvent: #output: with: self next]! !
+
+!AD methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:33:04'!
+modulateDecay: aNumber
+	self modulate: #decay by: aNumber! !
+
+!AD methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:39:13'!
+update
+	super update.
+	decay := (self get: #decay) * self class controlRate! !
+
+!AD methodsFor: 'initialization' stamp: 'len 28/Nov/2025 13:19:00'!
 initializeControls
 	super initializeControls.
-	self addTimeControl: #time min: 0.010 "10 ms" max: 0.025 "25 ms" value: 0.015 "15 ms".
-	self addSpeedControl: #speed min: 0.1 "Hz" max: 1.5 "Hz" value: 0.5 "Hz".
-	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
-	self addControl: #mix min: 0.0 max: 1.0 value: 0.5! !
+	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01.
+	self addTimeControl: #decay min: 0.001 max: 2.0 value: 0.5! !
 
-!Chorus methodsFor: 'processing' stamp: 'len 26/Jan/2026 22:10:13'!
-tick
-	| twoPi d1 d2 d3 dry |
-	outputLeft ifNil: [^ self].
-	input ifNil: [outputLeft atAllPut: 0.0. outputRight ifNotNil: [outputRight atAllPut: 0.0].^ self].
-	self update.
-	twoPi := Float twoPi.
-	d1 := (phase sin * depth * 0.002 "2 ms" + (time * 0.8)) * self class sampleRate.
-	d2 := ((twoPi/3.0 + phase) sin * depth * 0.002 "2 ms" + time) * self class sampleRate.
-	d3 := ((twoPi/1.5 + phase) sin * depth * 0.002 "2 ms" + (time * 1.2)) * self class sampleRate.
-	(phase := phase + increment) > twoPi ifTrue: [phase := phase - twoPi].
-	tap1 setDelayIncrement: (d1 - tap1 delay) / self class blockSize.
-	tap2 setDelayIncrement: (d2 - tap2 delay) / self class blockSize.
-	tap3 setDelayIncrement: (d3 - tap3 delay) / self class blockSize.
-	dry := 1.0 - mix.
-	outputRight isNil
-		ifTrue:
-			[1 to: input size do: [:i|
-				| in out |
-				delayLine write: (in := input at: i).
-				out := tap1 read + tap2 read + tap3 read / 3.0.
-				outputLeft at: i put: in * dry + (out * mix)]]
-		ifFalse:
-			[1 to: input size do: [:i|
-				| in v1 v2 v3 mid side |
-				delayLine write: (in := input at: i).
-				v1 := tap1 read.
-				v2 := tap2 read.
-				v3 := tap3 read.
-				mid := v1 + v2 + v3 / 3.0.
-				side := v1 - v3 * 0.5.
-				in := in * dry.
-				outputLeft at: i put: in + (mid + side * mix).
-				outputRight at: i put: in + (mid - side * mix)]]! !
+!AD methodsFor: 'processing' stamp: 'len 29/Nov/2025 20:43:00'!
+next
+	stage = #attack ifTrue:
+		["value := (1.0 - value) * factor + value." value := value + increment.
+		value >= 0.999 ifTrue: [stage := #decay. factor := 0.001 raisedTo: 1.0 / decay].
+		^ value * velocity].
+	stage = #decay ifTrue:
+		[value := value * factor.
+		value <= 0.001 ifTrue: [value := 0.0. stage := #idle]].
+	^ value * velocity! !
 
-!Chorus methodsFor: 'tools' stamp: 'len 26/Jan/2026 22:13:56'!
+!AD methodsFor: 'tools' stamp: 'len 23/Jan/2026 14:42:06'!
 patchable
-	^ super patchable
-		addAudioInput: #setInput: label: 'In';
-		addAudioOutput: #setOutputLeft: label: 'Out L/M';
-		addAudioOutput: #setOutputRight: label: 'Out R';
-		yourself! !
+	| answer display |
+	answer := PatchableMorph new model: self.
+	display := ADControlMorph new attack: (controls at: #attack); decay: (controls at: #decay).
+	answer body addMorph: display.
+	answer
+		addControlInput: #modulateAttack: label: 'A';
+		addControlInput: #modulateDecay: label: 'D';
+		addControlOutput: #output: label: 'Out'.
+	^ answer! !
 
-!Chorus methodsFor: 'wiring' stamp: 'len 26/Jan/2026 22:14:23'!
-setInput: aBuffer
-	input := aBuffer! !
+!ADSR methodsFor: 'controlling' stamp: 'len 6/Jan/2026 17:06:03'!
+gateOff
+	self update.
+	stage := #release.
+	factor := 0.001 raisedTo: 1.0 / release! !
 
-!Chorus methodsFor: 'wiring' stamp: 'len 26/Jan/2026 22:10:49'!
-setOutputLeft: aBuffer
-	outputLeft := aBuffer! !
+!ADSR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:33:11'!
+modulateDecay: aNumber
+	self modulate: #decay by: aNumber! !
 
-!Chorus methodsFor: 'wiring' stamp: 'len 26/Jan/2026 22:10:54'!
-setOutputRight: aBuffer
-	outputRight := aBuffer! !
+!ADSR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:33:33'!
+modulateRelease: aNumber
+	self modulate: #release by: aNumber! !
+
+!ADSR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:38:34'!
+update
+	| rate |
+	super update.
+	rate := self class controlRate.
+	decay := (self get: #decay) * rate.
+	sustain := self get: #sustain.
+	release := (self get: #release) * rate! !
+
+!ADSR methodsFor: 'initialization' stamp: 'len 6/Jan/2026 17:34:36'!
+initializeControls
+	super initializeControls.
+	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01.
+	self addTimeControl: #decay min: 0.001 max: 2.0 value: 0.5.
+	self addVolumeControl: #sustain value: 0.6.
+	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0! !
+
+!ADSR methodsFor: 'processing' stamp: 'len 28/Nov/2025 16:37:00'!
+next
+	stage = #attack ifTrue:
+		["value := (1.0 - value) * factor + value." value := value + increment.
+		value >= 0.999 ifTrue: [stage := #decay. factor := 0.001 raisedTo: 1.0 / decay].
+		^ value * velocity].
+	stage = #decay ifTrue:
+		[value := (value - sustain) * factor + sustain.
+		value - sustain <= 0.001 ifTrue: [sustain <= 0.001 "-60 dB" ifTrue: [value := 0.0. stage := #idle] ifFalse: [stage := #sustain]].
+		^ value * velocity].
+	stage = #sustain ifTrue: [^ value * velocity].
+	stage = #release ifTrue:
+		[value := value * factor.
+		value <= 0.001 ifTrue: [value := 0.0. stage := #idle]].
+	^ value * velocity! !
+
+!ADSR methodsFor: 'tools' stamp: 'len 23/Jan/2026 22:39:34'!
+patchable
+	| answer display |
+	answer := PatchableMorph new model: self.
+	display := ADSRControlMorph new attack: (controls at: #attack); decay: (controls at: #decay); sustain: (controls at: #sustain); release: (controls at: #release).
+	answer body addMorph: display.
+	answer
+		addControlInput: #modulateAttack: label: 'A';
+		addControlInput: #modulateDecay: label: 'D';
+		addControlInput: #modulateRelease: label: 'R';
+		addControlOutput: #output: label: 'Out'.
+	^ answer! !
+
+!AHD methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:33:15'!
+modulateDecay: aNumber
+	self modulate: #decay by: aNumber! !
+
+!AHD methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:34:21'!
+modulateHold: aNumber
+	self modulate: #hold by: aNumber! !
+
+!AHD methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:39:31'!
+update
+	| rate |
+	super update.
+	rate := self class controlRate.
+	hold := (self get: #hold) * rate.
+	decay := (self get: #decay) * rate! !
+
+!AHD methodsFor: 'initialization' stamp: 'len 28/Nov/2025 13:20:00'!
+initializeControls
+	super initializeControls.
+	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01.
+	self addTimeControl: #hold min: 0.001 max: 10.0 value: 1.0.
+	self addTimeControl: #decay min: 0.001 max: 2.0 value: 0.5! !
+
+!AHD methodsFor: 'processing' stamp: 'len 26/Jan/2026 18:31:39'!
+next
+	stage = #attack ifTrue:
+		["value := (1.0 - value) * factor + value." value := value + increment.
+		value >= 0.999 ifTrue: [value := 1.0. stage := #hold. holding := (hold * self class controlRate) asInteger].
+		^ value * velocity].
+	stage = #hold ifTrue:
+		[(holding := holding - 1) > 0 ifFalse: [stage := #decay. factor := 0.001 raisedTo: 1.0 / decay].
+		^ value * velocity].
+	stage = #decay ifTrue:
+		[value := value * factor.
+		value <= 0.001 ifTrue: [value := 0.0. stage := #idle]].
+	^ value * velocity! !
+
+!AHD methodsFor: 'tools' stamp: 'len 23/Jan/2026 22:33:25'!
+patchable
+	| answer display |
+	answer := PatchableMorph new model: self.
+	display := AHDControlMorph new attack: (controls at: #attack); hold: (controls at: #hold); decay: (controls at: #decay).
+	answer body addMorph: display.
+	answer
+		addControlInput: #modulateAttack: label: 'A';
+		addControlInput: #modulateHold: label: 'H';
+		addControlInput: #modulateDecay: label: 'D';
+		addControlOutput: #output: label: 'Out'.
+	^ answer! !
+
+!AR methodsFor: 'controlling' stamp: 'len 6/Jan/2026 18:32:04'!
+gateOff
+	self update.
+	stage := #release.
+	factor := 0.001 raisedTo: 1.0 / release! !
+
+!AR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:33:39'!
+modulateRelease: aNumber
+	self modulate: #release by: aNumber! !
+
+!AR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:39:44'!
+update
+	super update.
+	release := (self get: #release) * self class controlRate! !
+
+!AR methodsFor: 'initialization' stamp: 'len 28/Nov/2025 13:20:00'!
+initializeControls
+	super initializeControls.
+	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01.
+	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0! !
+
+!AR methodsFor: 'processing' stamp: 'len 26/Jan/2026 18:32:20'!
+next
+	stage = #attack ifTrue:
+		["value := (1.0 - value) * factor + value." value := value + increment.
+		value >= 0.999 ifTrue: [value := 1.0. stage := #sustain].
+		^ value * velocity].
+	stage = #sustain ifTrue: [^ value * velocity].
+	stage = #release ifTrue:
+		[value := value * factor.
+		value <= 0.001 ifTrue: [value := 0.0. stage := #idle]].
+	^ value * velocity! !
+
+!AR methodsFor: 'tools' stamp: 'len 23/Jan/2026 14:55:34'!
+patchable
+	| answer display |
+	answer := PatchableMorph new model: self.
+	display := ARControlMorph new attack: (controls at: #attack); release: (controls at: #release).
+	answer body addMorph: display.
+	answer
+		addControlInput: #modulateAttack: label: 'A';
+		addControlInput: #modulateRelease: label: 'R';
+		addControlOutput: #output: label: 'Out'.
+	^ answer! !
+
+!ASR methodsFor: 'controlling' stamp: 'len 6/Jan/2026 18:32:10'!
+gateOff
+	self update.
+	stage := #release.
+	factor := 0.001 raisedTo: 1.0 / release! !
+
+!ASR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:33:43'!
+modulateRelease: aNumber
+	self modulate: #release by: aNumber! !
+
+!ASR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:39:58'!
+update
+	super update.
+	sustain := self get: #sustain.
+	release := (self get: #release) * self class controlRate! !
+
+!ASR methodsFor: 'initialization' stamp: 'len 6/Jan/2026 17:34:20'!
+initializeControls
+	super initializeControls.
+	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01.
+	self addVolumeControl: #sustain value: 0.6.
+	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0! !
+
+!ASR methodsFor: 'processing' stamp: 'len 29/Nov/2025 22:00:00'!
+next
+	stage = #attack ifTrue:
+		["value := (1.0 - value) * factor + value." value := value + increment.
+		value >= 0.999 ifTrue: [stage := #sustain. value := sustain].
+		^ value * velocity].
+	stage = #sustain ifTrue: [^ value * velocity].
+	stage = #release ifTrue:
+		[value := value * factor.
+		value <= 0.001 ifTrue: [value := 0.0. stage := #idle]].
+	^ value * velocity! !
+
+!ASR methodsFor: 'tools' stamp: 'len 23/Jan/2026 14:54:57'!
+patchable
+	| answer display |
+	answer := PatchableMorph new model: self.
+	display := ASRControlMorph new attack: (controls at: #attack); sustain: (controls at: #sustain); release: (controls at: #release).
+	answer body addMorph: display.
+	answer
+		addControlInput: #modulateAttack: label: 'A';
+		addControlInput: #modulateRelease: label: 'R';
+		addControlOutput: #output: label: 'Out'.
+	^ answer! !
 
 !Clock methodsFor: 'as yet unclassified' stamp: 'len 3/Dec/2025 15:42:01'!
 initialize
@@ -2235,9 +2487,9 @@ initializeControls
 	super initializeControls.
 	self addControl: #tempo min: 20 max: 300 value: 120! !
 
-!Clock methodsFor: 'as yet unclassified' stamp: 'len 3/Dec/2025 15:51:55'!
+!Clock methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 14:48:12'!
 panel
-	^ ControlPanel new addControl: (controls at: #tempo) label: 'BPM'! !
+	^ ControlPanel new addKnob: (controls at: #tempo) label: 'BPM'! !
 
 !Clock methodsFor: 'as yet unclassified' stamp: 'len 8/Jan/2026 15:28:00'!
 patchable
@@ -2328,6 +2580,91 @@ tick
 !Operator methodsFor: 'as yet unclassified' stamp: 'len 2/Dec/2025 14:15:00'!
 trigger
 	triggered := true! !
+
+!Chorus methodsFor: 'controlling' stamp: 'len 26/Jan/2026 17:46:23'!
+reset
+	phase := 0.0.
+	delayLine reset! !
+
+!Chorus methodsFor: 'controlling' stamp: 'len 27/Jan/2026 02:04:21'!
+update
+	super update. 
+	increment := (self get: #speed) / self class controlRate * Float twoPi.
+	depth := self get: #depth.
+	time := self get: #time.
+	mix := self get: #mix! !
+
+!Chorus methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:46:23'!
+initialize
+	super initialize.
+	delayLine := DelayLine new: (self class sampleRate * 0.035 "35 ms max") ceiling.
+	tap1 := DelayLineTap on: delayLine.
+	tap2 := DelayLineTap on: delayLine.
+	tap3 := DelayLineTap on: delayLine.
+	self reset! !
+
+!Chorus methodsFor: 'initialization' stamp: 'len 26/Jan/2026 15:45:20'!
+initializeControls
+	super initializeControls.
+	self addTimeControl: #time min: 0.010 "10 ms" max: 0.025 "25 ms" value: 0.015 "15 ms".
+	self addSpeedControl: #speed min: 0.1 "Hz" max: 1.5 "Hz" value: 0.5 "Hz".
+	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
+	self addControl: #mix min: 0.0 max: 1.0 value: 0.5! !
+
+!Chorus methodsFor: 'processing' stamp: 'len 26/Jan/2026 22:10:13'!
+tick
+	| twoPi d1 d2 d3 dry |
+	outputLeft ifNil: [^ self].
+	input ifNil: [outputLeft atAllPut: 0.0. outputRight ifNotNil: [outputRight atAllPut: 0.0].^ self].
+	self update.
+	twoPi := Float twoPi.
+	d1 := (phase sin * depth * 0.002 "2 ms" + (time * 0.8)) * self class sampleRate.
+	d2 := ((twoPi/3.0 + phase) sin * depth * 0.002 "2 ms" + time) * self class sampleRate.
+	d3 := ((twoPi/1.5 + phase) sin * depth * 0.002 "2 ms" + (time * 1.2)) * self class sampleRate.
+	(phase := phase + increment) > twoPi ifTrue: [phase := phase - twoPi].
+	tap1 setDelayIncrement: (d1 - tap1 delay) / self class blockSize.
+	tap2 setDelayIncrement: (d2 - tap2 delay) / self class blockSize.
+	tap3 setDelayIncrement: (d3 - tap3 delay) / self class blockSize.
+	dry := 1.0 - mix.
+	outputRight isNil
+		ifTrue:
+			[1 to: input size do: [:i|
+				| in out |
+				delayLine write: (in := input at: i).
+				out := tap1 read + tap2 read + tap3 read / 3.0.
+				outputLeft at: i put: in * dry + (out * mix)]]
+		ifFalse:
+			[1 to: input size do: [:i|
+				| in v1 v2 v3 mid side |
+				delayLine write: (in := input at: i).
+				v1 := tap1 read.
+				v2 := tap2 read.
+				v3 := tap3 read.
+				mid := v1 + v2 + v3 / 3.0.
+				side := v1 - v3 * 0.5.
+				in := in * dry.
+				outputLeft at: i put: in + (mid + side * mix).
+				outputRight at: i put: in + (mid - side * mix)]]! !
+
+!Chorus methodsFor: 'tools' stamp: 'len 26/Jan/2026 22:13:56'!
+patchable
+	^ super patchable
+		addAudioInput: #setInput: label: 'In';
+		addAudioOutput: #setOutputLeft: label: 'Out L/M';
+		addAudioOutput: #setOutputRight: label: 'Out R';
+		yourself! !
+
+!Chorus methodsFor: 'wiring' stamp: 'len 26/Jan/2026 22:14:23'!
+setInput: aBuffer
+	input := aBuffer! !
+
+!Chorus methodsFor: 'wiring' stamp: 'len 26/Jan/2026 22:10:49'!
+setOutputLeft: aBuffer
+	outputLeft := aBuffer! !
+
+!Chorus methodsFor: 'wiring' stamp: 'len 26/Jan/2026 22:10:54'!
+setOutputRight: aBuffer
+	outputRight := aBuffer! !
 
 !Filter methodsFor: 'controlling' stamp: 'len 23/Nov/2025 18:19:00'!
 modulateFrequency: aNumber
@@ -2428,6 +2765,114 @@ tick
 !HPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:18:31'!
 updateFilterCoefficients
 	biquad hp: frequency / self class sampleRate Q: Q! !
+
+!LPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:24:58'!
+initialize
+	biquad := Biquad new.
+	super initialize! !
+
+!LPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:17:54'!
+patchable
+	^ super patchable
+		addAudioOutput: #setOutput: label: 'Out';
+		yourself! !
+
+!LPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:16:21'!
+reset
+	biquad reset! !
+
+!LPF methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 11:15:33'!
+tick
+	output ifNil: [^ self].
+	input ifNil: [output atAllPut: 0.0. ^ self].
+	biquad write: input read: output! !
+
+!LPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:15:05'!
+updateFilterCoefficients
+	biquad lp: frequency / self class sampleRate Q: Q! !
+
+!Notch methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:41:35'!
+initialize
+	biquad := Biquad new.
+	super initialize! !
+
+!Notch methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:41:35'!
+patchable
+	^ super patchable
+		addAudioOutput: #setOutput: label: 'Out';
+		yourself! !
+
+!Notch methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:41:35'!
+reset
+	biquad reset! !
+
+!Notch methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 11:15:37'!
+tick
+	output ifNil: [^ self].
+	input ifNil: [output atAllPut: 0.0. ^ self].
+	biquad write: input read: output! !
+
+!Notch methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:42:00'!
+updateFilterCoefficients
+	biquad bs: frequency / self class sampleRate Q: Q! !
+
+!SVF methodsFor: 'controlling' stamp: 'len 16/Oct/2025 19:38:00'!
+reset
+	s1 := s2 := 0.0! !
+
+!SVF methodsFor: 'controlling' stamp: 'len 20/Nov/2025 16:26:00'!
+updateFilterCoefficients
+	g := (Float pi * frequency) tan.
+	r := 1.0 / Q.
+	h := 1.0 / (1.0 + ((r + 1.0) * g))! !
+
+!SVF methodsFor: 'processing' stamp: 'len 27/Jan/2026 02:36:57'!
+tick
+	self update.
+	(outputLP isNil and: [outputHP isNil and: [outputBP isNil and: [outputBPN isNil]]]) ifTrue: [^ self].
+	input ifNil:
+		[outputLP ifNotNil: [outputLP atAllPut: 0.0].
+		outputHP ifNotNil: [outputHP atAllPut: 0.0].
+		outputBP ifNotNil: [outputBP atAllPut: 0.0].
+		outputBPN ifNotNil: [outputBPN atAllPut: 0.0].
+		^ self].
+	1 to: input size do: [:i|
+		| in hp bp lp |
+		in := input at: i.
+		hp := (in - (r * s1) - (g * s1) - s2) * h.
+		bp := g * hp + s1.
+		s1 := (g * hp + bp) gate.
+		lp := g * bp + s2.
+		s2 := (g * bp + lp) gate.
+		outputLP ifNotNil: [outputLP at: i put: lp].
+		outputHP ifNotNil: [outputHP at: i put: hp].
+		outputBP ifNotNil: [outputBP at: i put: bp].
+		outputBPN ifNotNil: [outputBPN at: i put: bp * r]]! !
+
+!SVF methodsFor: 'tools' stamp: 'len 21/Jan/2026 05:09:52'!
+patchable
+	^ super patchable
+		addAudioOutput: #setOutputLP: label: 'LP';
+		addAudioOutput: #setOutputHP: label: 'HP';
+		addAudioOutput: #setOutputBP: label: 'BP';
+		addAudioOutput: #setOutputBPN: label: 'BPN';
+		yourself! !
+
+!SVF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:46:39'!
+setOutputBP: aBuffer
+	outputBP := aBuffer! !
+
+!SVF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:46:43'!
+setOutputBPN: aBuffer
+	outputBPN := aBuffer! !
+
+!SVF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:46:35'!
+setOutputHP: aBuffer
+	outputHP := aBuffer! !
+
+!SVF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:46:30'!
+setOutputLP: aBuffer
+	outputLP := aBuffer! !
 
 !Korg35HPF methodsFor: 'controlling' stamp: 'len 16/Oct/2025 18:46:00'!
 reset
@@ -2543,31 +2988,6 @@ patchable
 setOutput: aBuffer
 	output := aBuffer! !
 
-!LPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:24:58'!
-initialize
-	biquad := Biquad new.
-	super initialize! !
-
-!LPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:17:54'!
-patchable
-	^ super patchable
-		addAudioOutput: #setOutput: label: 'Out';
-		yourself! !
-
-!LPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:16:21'!
-reset
-	biquad reset! !
-
-!LPF methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 11:15:33'!
-tick
-	output ifNil: [^ self].
-	input ifNil: [output atAllPut: 0.0. ^ self].
-	biquad write: input read: output! !
-
-!LPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:15:05'!
-updateFilterCoefficients
-	biquad lp: frequency / self class sampleRate Q: Q! !
-
 !MoogLPF methodsFor: 'controlling' stamp: 'len 22/Sep/2025 19:52:00'!
 reset
 	y0 := y1 := y2 := y3 := y4 := 0.0! !
@@ -2672,31 +3092,6 @@ value: in
 	lp4 := v4 + s4.
 	^ lp4! !
 
-!Notch methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:41:35'!
-initialize
-	biquad := Biquad new.
-	super initialize! !
-
-!Notch methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:41:35'!
-patchable
-	^ super patchable
-		addAudioOutput: #setOutput: label: 'Out';
-		yourself! !
-
-!Notch methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:41:35'!
-reset
-	biquad reset! !
-
-!Notch methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 11:15:37'!
-tick
-	output ifNil: [^ self].
-	input ifNil: [output atAllPut: 0.0. ^ self].
-	biquad write: input read: output! !
-
-!Notch methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:42:00'!
-updateFilterCoefficients
-	biquad bs: frequency / self class sampleRate Q: Q! !
-
 !OberheimSVF methodsFor: 'controlling' stamp: 'len 16/Oct/2025 19:49:00'!
 reset
 	s1 := s2 := 0.0! !
@@ -2759,64 +3154,6 @@ setOutputHP: aBuffer
 	outputHP := aBuffer! !
 
 !OberheimSVF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:39:30'!
-setOutputLP: aBuffer
-	outputLP := aBuffer! !
-
-!SVF methodsFor: 'controlling' stamp: 'len 16/Oct/2025 19:38:00'!
-reset
-	s1 := s2 := 0.0! !
-
-!SVF methodsFor: 'controlling' stamp: 'len 20/Nov/2025 16:26:00'!
-updateFilterCoefficients
-	g := (Float pi * frequency) tan.
-	r := 1.0 / Q.
-	h := 1.0 / (1.0 + ((r + 1.0) * g))! !
-
-!SVF methodsFor: 'processing' stamp: 'len 11/Jan/2026 21:50:24'!
-tick
-	self update.
-	(outputLP isNil and: [outputHP isNil and: [outputBP isNil and: [outputBPN isNil]]]) ifTrue: [^ self].
-	input ifNil:
-		[outputLP ifNotNil: [outputLP atAllPut: 0.0].
-		outputHP ifNotNil: [outputHP atAllPut: 0.0].
-		outputBP ifNotNil: [outputBP atAllPut: 0.0].
-		outputBPN ifNotNil: [outputBPN atAllPut: 0.0].
-		^ self].
-	1 to: input size do: [:i|
-		| in hp bp lp |
-		in := input at: i.
-		hp := (in - (r * s1) - (g * s1) - s2) * h.
-		bp := g * hp + s1.
-		s1 := (g * hp + bp) gate.
-		lp := g * bp + s2.
-		s2 := (g * bp + lp) gate.
-		outputLP ifNotNil: [outputLP at: i put: lp].
-		outputHP ifNotNil: [outputHP at: i put: hp].
-		outputBP ifNotNil: [outputBP at: i put: bp].
-		outputBPN ifNotNil: [outputBP at: i put: bp * r]]! !
-
-!SVF methodsFor: 'tools' stamp: 'len 21/Jan/2026 05:09:52'!
-patchable
-	^ super patchable
-		addAudioOutput: #setOutputLP: label: 'LP';
-		addAudioOutput: #setOutputHP: label: 'HP';
-		addAudioOutput: #setOutputBP: label: 'BP';
-		addAudioOutput: #setOutputBPN: label: 'BPN';
-		yourself! !
-
-!SVF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:46:39'!
-setOutputBP: aBuffer
-	outputBP := aBuffer! !
-
-!SVF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:46:43'!
-setOutputBPN: aBuffer
-	outputBPN := aBuffer! !
-
-!SVF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:46:35'!
-setOutputHP: aBuffer
-	outputHP := aBuffer! !
-
-!SVF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:46:30'!
 setOutputLP: aBuffer
 	outputLP := aBuffer! !
 
@@ -3125,97 +3462,6 @@ patchable
 		addControlInput: #modulatePitch: label: 'Pitch';
 		addAudioOutput: #setOutput: label: 'Out'.
 	^ answer! !
-
-!Multisample methodsFor: 'controlling' stamp: 'len 21/Jan/2026 04:38:16'!
-gateOff
-	sample ifNotNil: [sample gateOff]! !
-
-!Multisample methodsFor: 'controlling' stamp: 'len 21/Jan/2026 04:37:45'!
-gateOn
-	| samplesByVelocity |
-	samplesByVelocity := keymap at: note.
-	sample := (samplesByVelocity at: ((velocity * (samplesByVelocity size - 1)) truncated + 1 min: samplesByVelocity size)) copy reset.
-	sample gateOn! !
-
-!Multisample methodsFor: 'controlling' stamp: 'len 30/Nov/2025 02:15:00'!
-reset
-	sample ifNotNil: [sample reset]! !
-
-!Multisample methodsFor: 'controlling' stamp: 'len 2/Dec/2025 14:33:00'!
-setVelocity: aNumber
-	velocity := aNumber! !
-
-!Multisample methodsFor: 'copying' stamp: 'len 19/Jan/2026 19:51:44'!
-copy
-	^ super copy keymap: keymap! !
-
-!Multisample methodsFor: 'initialization' stamp: 'len 15/Jan/2026 19:14:25'!
-initialize
-	super initialize.
-	velocity := 0.5! !
-
-!Multisample methodsFor: 'initialization' stamp: 'len 20/Nov/2025 16:39:00'!
-keymap: anArray
-	keymap := anArray! !
-
-!Multisample methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:11:36'!
-read: aBuffer
-	sample ifNil: [^ aBuffer *= 0.0].
-	sample read: aBuffer.
-	aBuffer *= velocity! !
-
-!Multisample methodsFor: 'testing' stamp: 'len 20/Nov/2025 16:38:00'!
-atEnd
-	^ sample atEnd! !
-
-!Multisample methodsFor: 'tools' stamp: 'len 23/Jan/2026 23:56:35'!
-patchable
-	| answer |
-	answer := PatchableMorph new model: self.
-	answer body addMorph: self panel.
-	answer
-		addControlInput: #modulatePitch: label: 'Pitch';
-		addAudioOutput: #setOutput: label: 'Out'.
-	^ answer! !
-
-!Multisample class methodsFor: 'as yet unclassified' stamp: 'len 3/Dec/2025 02:07:00'!
-addToPatchMenu: aMenuMorph
-	^ self! !
-
-!Multisample class methodsFor: 'as yet unclassified' stamp: 'len 3/Dec/2025 02:12:00'!
-library
-	^ Library! !
-
-!Multisample class methodsFor: 'as yet unclassified' stamp: 'len 3/Dec/2025 02:07:00'!
-loadLibrary
-	"
-	MultiSample loadLibrary
-	"
-	
-	Library := Dictionary new.
-	Library at: 'Rhodes' put: self loadRhodes! !
-
-!Multisample class methodsFor: 'as yet unclassified' stamp: 'len 3/Dec/2025 00:09:00'!
-loadRhodes
-	| samples keymap |
-	samples := Dictionary new.
-	'/Users/len/Cuis/samples/jrhodes3' asDirectoryEntry files do: [:each|
-		| tokens sampledSound midiKey velocityLayer buffer |
-		tokens := each name findTokens: '_'.
-		midiKey := tokens first asNumber.
-		velocityLayer := tokens second asNumber.
-		sampledSound := each wavContents.
-		buffer := Float32Array new: sampledSound samples size.
-		1 to: buffer size do: [:i| buffer at: i put: (sampledSound samples at: i) / 32767.0].
-		(samples at: midiKey ifAbsentPut: [Dictionary new]) at: velocityLayer put: (Sample buffer: buffer)].
-	samples := samples collect: [:each| each associations sorted reversed collect: #value].
-	keymap := ((0 to: 127) collect: [:k|
-		| closestKey speedFactor closestSamples |
-		closestKey := samples keys detectMin: [:x| (x - k) abs].
-		speedFactor := k semitonesToHertz / closestKey semitonesToHertz.
-		closestSamples := samples at: closestKey.
-		closestSamples collect: [:each| each copy speed: each speed * speedFactor]]).
-	^ self new keymap: keymap! !
 
 !Oscillator methodsFor: 'controlling' stamp: 'len 24/Sep/2025 02:26:00'!
 reset
@@ -3702,6 +3948,316 @@ loadPPGWavetables
 		table := (1 to: table size / 256) collect: [:k| table copyFrom: k-1*256+1 to: k*256].
 		{table. (i-1) printString}])! !
 
+!Supersaw methodsFor: 'controlling' stamp: 'len 1/Dec/2025 19:37:00'!
+modulateDetune: aNumber
+	self modulate: #detune by: aNumber! !
+
+!Supersaw methodsFor: 'controlling' stamp: 'len 1/Dec/2025 15:32:00'!
+reset
+	super reset.
+	phases atAllPut: 0.0! !
+
+!Supersaw methodsFor: 'controlling' stamp: 'len 5/Jan/2026 17:24:02'!
+update
+	| detune detune2 detune3 mix normalization |
+	super update.
+	frequency := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
+	detune := self get: #detune.
+	"detune := DetuneCurveLUT at: (detune*1023.0 + 1.0) truncated."
+	mix := detune. "should use separate control #mix, but for now we just tie it to #detune"
+	detune := detune / self class sampleRate.
+	detune2 := detune * 0.5826491486398412 "0.66 raisedTo: 1.3".
+	detune3 := detune * 0.23662908360881574 "0.33 raisedTo: 1.3".
+	frequencies
+		at: 1 put: (frequency - detune) abs;
+		at: 2 put: (frequency - detune2) abs;
+		at: 3 put: (frequency - detune3) abs;
+		at: 4 put: frequency;
+		at: 5 put: frequency + detune3;
+		at: 6 put: frequency + detune2;
+		at: 7 put: frequency + detune.
+	centerGain := -0.55366 * mix + 0.99785.
+	sideGain := (-0.73764 * mix + 1.2841) * mix + 0.044372.
+	normalization := 1.0 / 7.0. "/ (sideGain * 6.0 + centerGain)".
+	centerGain := centerGain * normalization.
+	sideGain := sideGain * normalization! !
+
+!Supersaw methodsFor: 'controlling' stamp: 'len 5/Jan/2026 15:29:43'!
+update2
+	| detune detune2 detune3 |
+	super update.
+	frequency := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
+	detune := (self get: #detune) / self class sampleRate.
+	detune2 := detune * 0.5826491486398412 "0.66 raisedTo: 1.3".
+	detune3 := detune * 0.23662908360881574 "0.33 raisedTo: 1.3".
+	frequencies
+		at: 1 put: (frequency - detune) abs;
+		at: 2 put: (frequency - detune2) abs;
+		at: 3 put: (frequency - detune3) abs;
+		at: 4 put: frequency;
+		at: 5 put: frequency + detune3;
+		at: 6 put: frequency + detune2;
+		at: 7 put: frequency + detune! !
+
+!Supersaw methodsFor: 'controlling' stamp: 'len 5/Jan/2026 17:23:16'!
+update3
+	| detune mix normalization |
+	super update.
+	frequency := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
+	detune := self get: #detune.
+	"detune := DetuneCurveLUT at: (detune*1023.0 + 1.0) truncated."
+	mix := detune. "should use separate control #mix, but for now we just tie it to #detune"
+	detune := detune / self class sampleRate.
+	frequencies
+		at: 1 put: (frequency - (0.11002313*detune)) abs;
+		at: 2 put: (frequency - (0.06288439*detune)) abs;
+		at: 3 put: (frequency - (0.01952356*detune)) abs;
+		at: 4 put: frequency;
+		at: 5 put: frequency + (0.01991221*detune);
+		at: 6 put: frequency + (0.06216538*detune);
+		at: 7 put: frequency + (0.10745242*detune).
+	centerGain := -0.55366 * mix + 0.99785.
+	sideGain := (-0.73764 * mix + 1.2841) * mix + 0.044372.
+	normalization := 1.0 / 7.0. "/ (sideGain * 6.0 + centerGain)".
+	centerGain := centerGain * normalization.
+	sideGain := sideGain * normalization! !
+
+!Supersaw methodsFor: 'controlling' stamp: 'len 5/Jan/2026 17:24:07'!
+update4
+	| detune detune2 detune3 mix normalization |
+	super update.
+	frequency := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
+	detune := self get: #detune.
+	"detune := DetuneCurveLUT at: (detune*1023.0 + 1.0) truncated."
+	mix := detune. "should use separate control #mix, but for now we just tie it to #detune"
+	detune := detune / self class sampleRate.
+	detune2 := detune * 0.5826491486398412 "0.66 raisedTo: 1.3".
+	detune3 := detune * 0.23662908360881574 "0.33 raisedTo: 1.3".
+	frequencies
+		at: 1 put: (frequency - detune) abs;
+		at: 2 put: (frequency - detune2) abs;
+		at: 3 put: (frequency - detune3) abs;
+		at: 4 put: frequency;
+		at: 5 put: frequency + detune3;
+		at: 6 put: frequency + detune2;
+		at: 7 put: frequency + detune.
+	centerGain := -0.55366 * mix + 0.99785.
+	sideGain := (-0.73764 * mix + 1.2841) * mix + 0.044372.
+	normalization := 1.0 / 7.0. "/ (sideGain * 6.0 + centerGain)".
+	centerGain := centerGain * normalization.
+	sideGain := sideGain * normalization! !
+
+!Supersaw methodsFor: 'initialization' stamp: 'len 5/Jan/2026 16:45:38'!
+initialize
+	super initialize.
+	phases := Float32Array new: 7.
+	frequency := 0.01.
+	frequencies := (Float32Array new: 7) atAllPut: frequency.
+	centerGain := sideGain := 1.0 / 7.0! !
+
+!Supersaw methodsFor: 'initialization' stamp: 'len 4/Dec/2025 18:24:17'!
+initializeControls
+	super initializeControls.
+	(self addControl: #tune min: -48.0 max: 48.0 value: 0.0)  printer: #semitonesOffsetPrintString.
+	self addControl: #detune min: 0.0 max: 1.0 value: 0.001! !
+
+!Supersaw methodsFor: 'processing' stamp: 'len 5/Dec/2025 15:14:20'!
+next
+	| answer |
+	answer := self peek.
+	phases += frequencies.
+	1 to: 7 do: [:i| | t | (t := phases at: i) >= 1.0 ifTrue: [phases at: i put: t - t truncated]].
+	^ answer! !
+
+!Supersaw methodsFor: 'processing' stamp: 'len 5/Jan/2026 17:07:23'!
+peek
+	| answer |
+	answer := 0.0.
+	1 to: 7 do: [:i| answer := ((phases at: i) saw: (frequencies at: i)) * (i = 4 ifTrue: [centerGain] ifFalse: [sideGain]) + answer].
+	^ answer! !
+
+!Supersaw methodsFor: 'tools' stamp: 'len 23/Jan/2026 23:57:32'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body
+		addMorph: ((SupersawControlMorph control: (controls at: #detune)) phases: phases);
+		addMorph: self panel.
+	answer
+		addControlInput: #modulatePitch: label: 'Pitch';
+		addControlInput: #modulateDetune: label: 'Detune';
+		addAudioOutput: #setOutput: label: 'Out'.
+	^ answer! !
+
+!Supersaw class methodsFor: 'as yet unclassified' stamp: 'len 5/Jan/2026 15:58:53'!
+initialize
+	DetuneCurveLUT := Float32Array new: 1024.
+	1 to: 1024 do: [:i|
+		| x |
+		x := i - 1.0 / 1023.
+		DetuneCurveLUT at: i put:
+			((((((((((10028.7312891634 * x
+			- 50818.8652045924) * x
+			+ 111363.4808729368) * x
+			- 138150.6761080548) * x
+			+ 106649.6679158292) * x
+			- 53046.9642751875) * x
+			+ 17019.9518580080) * x
+			- 3425.0836591318) * x
+			+ 404.2703938388) * x
+			- 24.1878824391) * x
+			+ 0.6717417634) * x
+			+ 0.0030115596]! !
+
+!VOSIM methodsFor: 'controlling' stamp: 'len 2/Jan/2026 01:10:32'!
+update
+	| f1 f2 vowelIndex |
+	super update.
+	carrierFrequency := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
+	carrierShape := self get: #shape.
+	vowelIndex := ((self get: #vowel) * 15.0 + 1.0).
+	f1 := #[240.0 235.0 390.0 370.0 610.0 585.0 850.0 820.0 750.0 700.0 600.0 500.0 460.0 360.0 300.0 250.0] atSmooth: vowelIndex.
+	f2 := #[2400.0 2100.0 2300.0 1900.0 1900.0 1710.0 1610.0 1530.0 940.0 760.0 1170.0 700.0 1310.0 640.0 1390.0 595.0] atSmooth: vowelIndex.
+"	vowelIndex := (self get: #vowel) * 3.0 + 1.0.
+	f1 := #[270.0 730.0 570.0 300.0] atSmooth: vowelIndex.
+	f2 := #[2300.0 1090.0 840.0 870.0] atSmooth: vowelIndex."
+	formant1Frequency := f1 / self class sampleRate.
+	formant2Frequency := f2 / self class sampleRate! !
+
+!VOSIM methodsFor: 'initialization' stamp: 'len 4/Jan/2026 14:58:33'!
+initialize
+	super initialize.
+	carrierPhase := formant1Phase := formant2Phase := 0.0! !
+
+!VOSIM methodsFor: 'initialization' stamp: 'len 9/Dec/2025 15:12:13'!
+initializeControls
+	super initializeControls.
+	(self addControl: #tune min: -48.0 max: 48.0 value: 0.0) printer: #semitonesOffsetPrintString.
+	self addControl: #shape min: 0.0 max: 1.0 value: 0.0.
+	self addControl: #vowel min: 0.0 max: 1.0 value: 0.0! !
+
+!VOSIM methodsFor: 'processing' stamp: 'len 9/Dec/2025 15:36:02'!
+next
+	| answer |
+	answer := self peek.
+	carrierPhase := carrierPhase + carrierFrequency.
+	carrierPhase >= 1.0
+		ifTrue:
+			[| resetTime |
+			carrierPhase := carrierPhase - 1.0.
+			resetTime := carrierPhase / carrierFrequency.
+			formant1Phase := resetTime * formant1Frequency.
+			formant2Phase := resetTime * formant2Frequency]
+		ifFalse:
+			[formant1Phase := formant1Phase + formant1Frequency.
+			formant1Phase >= 1.0 ifTrue: [formant1Phase := formant1Phase - 1.0].
+			formant2Phase := formant2Phase + formant2Frequency.
+			formant2Phase >= 1.0 ifTrue: [formant2Phase := formant2Phase - 1.0]].
+	^ answer! !
+
+!VOSIM methodsFor: 'processing' stamp: 'len 9/Dec/2025 15:37:29'!
+peek
+	| carrier formant1 formant2 resetAmplitude resetPhase |
+	carrier := ((carrierPhase * 0.5 + 0.25) * Float twoPi) sin + 1.0.
+	resetPhase := 0.75 - (0.25 * carrierShape).
+	resetAmplitude := (resetPhase * Float twoPi) sin.
+	formant1 := ((formant1Phase + resetPhase) * Float twoPi) sin - resetAmplitude.
+	formant2 := ((formant2Phase + resetPhase) * Float twoPi) sin - resetAmplitude.
+	^ carrier * (formant1 + formant2) * 0.25 + resetAmplitude! !
+
+!VOSIM methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:48:37'!
+panel
+	^​ super panel
+		addKnob: (controls at: #shape) label: 'Shape';
+		addKnob: (controls at: #vowel) label: 'Vowel'! !
+
+!Multisample methodsFor: 'controlling' stamp: 'len 21/Jan/2026 04:38:16'!
+gateOff
+	sample ifNotNil: [sample gateOff]! !
+
+!Multisample methodsFor: 'controlling' stamp: 'len 21/Jan/2026 04:37:45'!
+gateOn
+	| samplesByVelocity |
+	samplesByVelocity := keymap at: note.
+	sample := (samplesByVelocity at: ((velocity * (samplesByVelocity size - 1)) truncated + 1 min: samplesByVelocity size)) copy reset.
+	sample gateOn! !
+
+!Multisample methodsFor: 'controlling' stamp: 'len 30/Nov/2025 02:15:00'!
+reset
+	sample ifNotNil: [sample reset]! !
+
+!Multisample methodsFor: 'controlling' stamp: 'len 2/Dec/2025 14:33:00'!
+setVelocity: aNumber
+	velocity := aNumber! !
+
+!Multisample methodsFor: 'copying' stamp: 'len 19/Jan/2026 19:51:44'!
+copy
+	^ super copy keymap: keymap! !
+
+!Multisample methodsFor: 'initialization' stamp: 'len 15/Jan/2026 19:14:25'!
+initialize
+	super initialize.
+	velocity := 0.5! !
+
+!Multisample methodsFor: 'initialization' stamp: 'len 20/Nov/2025 16:39:00'!
+keymap: anArray
+	keymap := anArray! !
+
+!Multisample methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:11:36'!
+read: aBuffer
+	sample ifNil: [^ aBuffer *= 0.0].
+	sample read: aBuffer.
+	aBuffer *= velocity! !
+
+!Multisample methodsFor: 'testing' stamp: 'len 20/Nov/2025 16:38:00'!
+atEnd
+	^ sample atEnd! !
+
+!Multisample methodsFor: 'tools' stamp: 'len 23/Jan/2026 23:56:35'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self panel.
+	answer
+		addControlInput: #modulatePitch: label: 'Pitch';
+		addAudioOutput: #setOutput: label: 'Out'.
+	^ answer! !
+
+!Multisample class methodsFor: 'as yet unclassified' stamp: 'len 3/Dec/2025 02:12:00'!
+library
+	^ Library! !
+
+!Multisample class methodsFor: 'as yet unclassified' stamp: 'len 3/Dec/2025 02:07:00'!
+loadLibrary
+	"
+	MultiSample loadLibrary
+	"
+	
+	Library := Dictionary new.
+	Library at: 'Rhodes' put: self loadRhodes! !
+
+!Multisample class methodsFor: 'as yet unclassified' stamp: 'len 3/Dec/2025 00:09:00'!
+loadRhodes
+	| samples keymap |
+	samples := Dictionary new.
+	'/Users/len/Cuis/samples/jrhodes3' asDirectoryEntry files do: [:each|
+		| tokens sampledSound midiKey velocityLayer buffer |
+		tokens := each name findTokens: '_'.
+		midiKey := tokens first asNumber.
+		velocityLayer := tokens second asNumber.
+		sampledSound := each wavContents.
+		buffer := Float32Array new: sampledSound samples size.
+		1 to: buffer size do: [:i| buffer at: i put: (sampledSound samples at: i) / 32767.0].
+		(samples at: midiKey ifAbsentPut: [Dictionary new]) at: velocityLayer put: (Sample buffer: buffer)].
+	samples := samples collect: [:each| each associations sorted reversed collect: #value].
+	keymap := ((0 to: 127) collect: [:k|
+		| closestKey speedFactor closestSamples |
+		closestKey := samples keys detectMin: [:x| (x - k) abs].
+		speedFactor := k semitonesToHertz / closestKey semitonesToHertz.
+		closestSamples := samples at: closestKey.
+		closestSamples collect: [:each| each copy speed: each speed * speedFactor]]).
+	^ self new keymap: keymap! !
+
 !Sample methodsFor: 'accessing' stamp: 'len 2/Jan/2026 14:42:45'!
 baseRate
 	^ baseRate! !
@@ -3942,234 +4498,6 @@ fromFileNamed: aString
 "	(i := samples findLast: [:x| x abs > 0.00316]) > 0 ifTrue: [samples := samples copyFrom: 1 to: i]."
 	^ self buffer: samples baseRate: reader sampleRate! !
 
-!Sample class methodsFor: 'tools' stamp: 'len 3/Dec/2025 01:58:00'!
-addToPatchMenu: aMenuMorph
-	^ self! !
-
-!Supersaw methodsFor: 'controlling' stamp: 'len 1/Dec/2025 19:37:00'!
-modulateDetune: aNumber
-	self modulate: #detune by: aNumber! !
-
-!Supersaw methodsFor: 'controlling' stamp: 'len 1/Dec/2025 15:32:00'!
-reset
-	super reset.
-	phases atAllPut: 0.0! !
-
-!Supersaw methodsFor: 'controlling' stamp: 'len 5/Jan/2026 17:24:02'!
-update
-	| detune detune2 detune3 mix normalization |
-	super update.
-	frequency := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
-	detune := self get: #detune.
-	"detune := DetuneCurveLUT at: (detune*1023.0 + 1.0) truncated."
-	mix := detune. "should use separate control #mix, but for now we just tie it to #detune"
-	detune := detune / self class sampleRate.
-	detune2 := detune * 0.5826491486398412 "0.66 raisedTo: 1.3".
-	detune3 := detune * 0.23662908360881574 "0.33 raisedTo: 1.3".
-	frequencies
-		at: 1 put: (frequency - detune) abs;
-		at: 2 put: (frequency - detune2) abs;
-		at: 3 put: (frequency - detune3) abs;
-		at: 4 put: frequency;
-		at: 5 put: frequency + detune3;
-		at: 6 put: frequency + detune2;
-		at: 7 put: frequency + detune.
-	centerGain := -0.55366 * mix + 0.99785.
-	sideGain := (-0.73764 * mix + 1.2841) * mix + 0.044372.
-	normalization := 1.0 / 7.0. "/ (sideGain * 6.0 + centerGain)".
-	centerGain := centerGain * normalization.
-	sideGain := sideGain * normalization! !
-
-!Supersaw methodsFor: 'controlling' stamp: 'len 5/Jan/2026 15:29:43'!
-update2
-	| detune detune2 detune3 |
-	super update.
-	frequency := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
-	detune := (self get: #detune) / self class sampleRate.
-	detune2 := detune * 0.5826491486398412 "0.66 raisedTo: 1.3".
-	detune3 := detune * 0.23662908360881574 "0.33 raisedTo: 1.3".
-	frequencies
-		at: 1 put: (frequency - detune) abs;
-		at: 2 put: (frequency - detune2) abs;
-		at: 3 put: (frequency - detune3) abs;
-		at: 4 put: frequency;
-		at: 5 put: frequency + detune3;
-		at: 6 put: frequency + detune2;
-		at: 7 put: frequency + detune! !
-
-!Supersaw methodsFor: 'controlling' stamp: 'len 5/Jan/2026 17:23:16'!
-update3
-	| detune mix normalization |
-	super update.
-	frequency := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
-	detune := self get: #detune.
-	"detune := DetuneCurveLUT at: (detune*1023.0 + 1.0) truncated."
-	mix := detune. "should use separate control #mix, but for now we just tie it to #detune"
-	detune := detune / self class sampleRate.
-	frequencies
-		at: 1 put: (frequency - (0.11002313*detune)) abs;
-		at: 2 put: (frequency - (0.06288439*detune)) abs;
-		at: 3 put: (frequency - (0.01952356*detune)) abs;
-		at: 4 put: frequency;
-		at: 5 put: frequency + (0.01991221*detune);
-		at: 6 put: frequency + (0.06216538*detune);
-		at: 7 put: frequency + (0.10745242*detune).
-	centerGain := -0.55366 * mix + 0.99785.
-	sideGain := (-0.73764 * mix + 1.2841) * mix + 0.044372.
-	normalization := 1.0 / 7.0. "/ (sideGain * 6.0 + centerGain)".
-	centerGain := centerGain * normalization.
-	sideGain := sideGain * normalization! !
-
-!Supersaw methodsFor: 'controlling' stamp: 'len 5/Jan/2026 17:24:07'!
-update4
-	| detune detune2 detune3 mix normalization |
-	super update.
-	frequency := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
-	detune := self get: #detune.
-	"detune := DetuneCurveLUT at: (detune*1023.0 + 1.0) truncated."
-	mix := detune. "should use separate control #mix, but for now we just tie it to #detune"
-	detune := detune / self class sampleRate.
-	detune2 := detune * 0.5826491486398412 "0.66 raisedTo: 1.3".
-	detune3 := detune * 0.23662908360881574 "0.33 raisedTo: 1.3".
-	frequencies
-		at: 1 put: (frequency - detune) abs;
-		at: 2 put: (frequency - detune2) abs;
-		at: 3 put: (frequency - detune3) abs;
-		at: 4 put: frequency;
-		at: 5 put: frequency + detune3;
-		at: 6 put: frequency + detune2;
-		at: 7 put: frequency + detune.
-	centerGain := -0.55366 * mix + 0.99785.
-	sideGain := (-0.73764 * mix + 1.2841) * mix + 0.044372.
-	normalization := 1.0 / 7.0. "/ (sideGain * 6.0 + centerGain)".
-	centerGain := centerGain * normalization.
-	sideGain := sideGain * normalization! !
-
-!Supersaw methodsFor: 'initialization' stamp: 'len 5/Jan/2026 16:45:38'!
-initialize
-	super initialize.
-	phases := Float32Array new: 7.
-	frequency := 0.01.
-	frequencies := (Float32Array new: 7) atAllPut: frequency.
-	centerGain := sideGain := 1.0 / 7.0! !
-
-!Supersaw methodsFor: 'initialization' stamp: 'len 4/Dec/2025 18:24:17'!
-initializeControls
-	super initializeControls.
-	(self addControl: #tune min: -48.0 max: 48.0 value: 0.0)  printer: #semitonesOffsetPrintString.
-	self addControl: #detune min: 0.0 max: 1.0 value: 0.001! !
-
-!Supersaw methodsFor: 'processing' stamp: 'len 5/Dec/2025 15:14:20'!
-next
-	| answer |
-	answer := self peek.
-	phases += frequencies.
-	1 to: 7 do: [:i| | t | (t := phases at: i) >= 1.0 ifTrue: [phases at: i put: t - t truncated]].
-	^ answer! !
-
-!Supersaw methodsFor: 'processing' stamp: 'len 5/Jan/2026 17:07:23'!
-peek
-	| answer |
-	answer := 0.0.
-	1 to: 7 do: [:i| answer := ((phases at: i) saw: (frequencies at: i)) * (i = 4 ifTrue: [centerGain] ifFalse: [sideGain]) + answer].
-	^ answer! !
-
-!Supersaw methodsFor: 'tools' stamp: 'len 23/Jan/2026 23:57:32'!
-patchable
-	| answer |
-	answer := PatchableMorph new model: self.
-	answer body
-		addMorph: ((SupersawControlMorph control: (controls at: #detune)) phases: phases);
-		addMorph: self panel.
-	answer
-		addControlInput: #modulatePitch: label: 'Pitch';
-		addControlInput: #modulateDetune: label: 'Detune';
-		addAudioOutput: #setOutput: label: 'Out'.
-	^ answer! !
-
-!Supersaw class methodsFor: 'as yet unclassified' stamp: 'len 5/Jan/2026 15:58:53'!
-initialize
-	DetuneCurveLUT := Float32Array new: 1024.
-	1 to: 1024 do: [:i|
-		| x |
-		x := i - 1.0 / 1023.
-		DetuneCurveLUT at: i put:
-			((((((((((10028.7312891634 * x
-			- 50818.8652045924) * x
-			+ 111363.4808729368) * x
-			- 138150.6761080548) * x
-			+ 106649.6679158292) * x
-			- 53046.9642751875) * x
-			+ 17019.9518580080) * x
-			- 3425.0836591318) * x
-			+ 404.2703938388) * x
-			- 24.1878824391) * x
-			+ 0.6717417634) * x
-			+ 0.0030115596]! !
-
-!VOSIM methodsFor: 'controlling' stamp: 'len 2/Jan/2026 01:10:32'!
-update
-	| f1 f2 vowelIndex |
-	super update.
-	carrierFrequency := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
-	carrierShape := self get: #shape.
-	vowelIndex := ((self get: #vowel) * 15.0 + 1.0).
-	f1 := #[240.0 235.0 390.0 370.0 610.0 585.0 850.0 820.0 750.0 700.0 600.0 500.0 460.0 360.0 300.0 250.0] atSmooth: vowelIndex.
-	f2 := #[2400.0 2100.0 2300.0 1900.0 1900.0 1710.0 1610.0 1530.0 940.0 760.0 1170.0 700.0 1310.0 640.0 1390.0 595.0] atSmooth: vowelIndex.
-"	vowelIndex := (self get: #vowel) * 3.0 + 1.0.
-	f1 := #[270.0 730.0 570.0 300.0] atSmooth: vowelIndex.
-	f2 := #[2300.0 1090.0 840.0 870.0] atSmooth: vowelIndex."
-	formant1Frequency := f1 / self class sampleRate.
-	formant2Frequency := f2 / self class sampleRate! !
-
-!VOSIM methodsFor: 'initialization' stamp: 'len 4/Jan/2026 14:58:33'!
-initialize
-	super initialize.
-	carrierPhase := formant1Phase := formant2Phase := 0.0! !
-
-!VOSIM methodsFor: 'initialization' stamp: 'len 9/Dec/2025 15:12:13'!
-initializeControls
-	super initializeControls.
-	(self addControl: #tune min: -48.0 max: 48.0 value: 0.0) printer: #semitonesOffsetPrintString.
-	self addControl: #shape min: 0.0 max: 1.0 value: 0.0.
-	self addControl: #vowel min: 0.0 max: 1.0 value: 0.0! !
-
-!VOSIM methodsFor: 'processing' stamp: 'len 9/Dec/2025 15:36:02'!
-next
-	| answer |
-	answer := self peek.
-	carrierPhase := carrierPhase + carrierFrequency.
-	carrierPhase >= 1.0
-		ifTrue:
-			[| resetTime |
-			carrierPhase := carrierPhase - 1.0.
-			resetTime := carrierPhase / carrierFrequency.
-			formant1Phase := resetTime * formant1Frequency.
-			formant2Phase := resetTime * formant2Frequency]
-		ifFalse:
-			[formant1Phase := formant1Phase + formant1Frequency.
-			formant1Phase >= 1.0 ifTrue: [formant1Phase := formant1Phase - 1.0].
-			formant2Phase := formant2Phase + formant2Frequency.
-			formant2Phase >= 1.0 ifTrue: [formant2Phase := formant2Phase - 1.0]].
-	^ answer! !
-
-!VOSIM methodsFor: 'processing' stamp: 'len 9/Dec/2025 15:37:29'!
-peek
-	| carrier formant1 formant2 resetAmplitude resetPhase |
-	carrier := ((carrierPhase * 0.5 + 0.25) * Float twoPi) sin + 1.0.
-	resetPhase := 0.75 - (0.25 * carrierShape).
-	resetAmplitude := (resetPhase * Float twoPi) sin.
-	formant1 := ((formant1Phase + resetPhase) * Float twoPi) sin - resetAmplitude.
-	formant2 := ((formant2Phase + resetPhase) * Float twoPi) sin - resetAmplitude.
-	^ carrier * (formant1 + formant2) * 0.25 + resetAmplitude! !
-
-!VOSIM methodsFor: 'tools' stamp: 'len 4/Jan/2026 14:59:07'!
-panel
-	^​ super panel
-		addControl: (controls at: #shape) label: 'Shape';
-		addControl: (controls at: #vowel) label: 'Vowel';
-		yourself! !
-
 !Dust methodsFor: 'accessing' stamp: 'len 29/Sep/2025 02:47:00'!
 frequency: aNumber
 	frequency := aNumber! !
@@ -4332,12 +4660,12 @@ value: in
 	delayLine write: in + (x0 * feedback).
 	^ out! !
 
-!Comb methodsFor: 'tools' stamp: 'len 14/Jan/2026 15:40:33'!
+!Comb methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:48:54'!
 panel
 	^ ControlPanel new
-		addControl: (controls at: #time) label: 'Time';
-		addControl: (controls at: #feedback) label: 'FB';
-		addControl: (controls at: #damping) label: 'Damp'! !
+		addKnob: (controls at: #time) label: 'Time';
+		addKnob: (controls at: #feedback) label: 'FB';
+		addKnob: (controls at: #damping) label: 'Damp'! !
 
 !Decimator methodsFor: 'controlling' stamp: 'len 16/Jan/2026 23:55:48'!
 modulateBR: aNumber
@@ -4398,11 +4726,11 @@ value: in
 	holdCount := holdCount - 1.
 	^ heldValue! !
 
-!Decimator methodsFor: 'tools' stamp: 'len 15/Jan/2026 21:10:00'!
+!Decimator methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:49:11'!
 panel
 	^​ ControlPanel new
-		addControl: (controls at: #quantization) label: 'BR';
-		addControl: (controls at: #downsample) label: 'SRR'! !
+		addKnob: (controls at: #quantization) label: 'BR';
+		addKnob: (controls at: #downsample) label: 'SRR'! !
 
 !Decimator methodsFor: 'tools' stamp: 'len 22/Jan/2026 02:42:38'!
 patchable
@@ -4458,8 +4786,9 @@ reset
 	delayLine reset.
 	tap reset! !
 
-!Flanger methodsFor: 'controlling' stamp: 'len 26/Jan/2026 15:27:18'!
+!Flanger methodsFor: 'controlling' stamp: 'len 27/Jan/2026 02:04:37'!
 update
+	super update.
 	increment := (self get: #speed) / self class controlRate * Float twoPi.
 	depth := self get: #depth.
 	time := self get: #time.
@@ -4561,8 +4890,9 @@ reset
 	x1 atAllPut: 0.0.
 	y1 atAllPut: 0.0! !
 
-!Phaser methodsFor: 'controlling' stamp: 'len 26/Jan/2026 13:32:38'!
+!Phaser methodsFor: 'controlling' stamp: 'len 27/Jan/2026 02:04:44'!
 update
+	super update.
 	increment := (self get: #speed) / self class sampleRate * Float twoPi.
 	depth := self get: #depth.
 	feedback := self get: #feedback.
@@ -4619,10 +4949,11 @@ initializeControls
 	self addTimeControl: #time min: 0.010 "10 ms" max: 0.160 "160 ms" value: 0.04 "40 ms".
 	self addTimeControl: #window min: 0.005 "5 ms" max: 0.080 "80 ms" value: 0.02 "20 ms"! !
 
-!PitchShifter methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 17:19:22'!
+!PitchShifter methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 02:04:52'!
 update
 "	window := self get: #window."
 	| delayIncrement delayTime length |
+	super update.
 	length := ((self get: #time) * self class sampleRate) rounded.
 	delayTime := length / 2.0.
 	delayIncrement := (self get: #shift) semitonesToRatio.
@@ -4634,8 +4965,9 @@ reset
 	phase := 0.0.
 	delayLine reset! !
 
-!Vibrato methodsFor: 'controlling' stamp: 'len 26/Jan/2026 18:14:09'!
+!Vibrato methodsFor: 'controlling' stamp: 'len 27/Jan/2026 02:05:00'!
 update
+	super update.
 	increment := (self get: #speed) / self class controlRate * Float twoPi.
 	depth := self get: #depth.
 	time := self get: #time! !
@@ -4805,9 +5137,9 @@ tick
 		output at: i put: (input at: i) * gain].
 	inputRM ifNotNil: [output *= inputRM]! !
 
-!Amp methodsFor: 'tools' stamp: 'len 26/Jan/2026 18:26:03'!
+!Amp methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:56:14'!
 panel
-	^ ControlPanel new addMorph: (SliderControlMorph control: (controls at: #gain))! !
+	^ ControlPanel new addVerticalSlider: (controls at: #gain)! !
 
 !Amp methodsFor: 'tools' stamp: 'len 22/Jan/2026 02:42:38'!
 patchable
@@ -4842,118 +5174,124 @@ update
 	super update.
 	mix := self get: #mix! !
 
-!Crossfader methodsFor: 'initialization' stamp: 'len 15/Jan/2026 20:35:47'!
+!Crossfader methodsFor: 'initialization' stamp: 'len 27/Jan/2026 15:35:09'!
 initializeControls
 	super initializeControls.
-	(self addControl: #mix min: 0.0 max: 1.0 value: 0.5) printer: [:x| (1.0 - x * 100.0) rounded printString, '% + ', (x * 100.0) rounded printString, '%']! !
+	(self addControl: #mix min: -1.0 max: 1.0 value: 0.0) printer: [:x| 'A ', (1.0 - x * 50.0) rounded printString, '% + B ', (1.0 + x * 50.0) rounded printString, '%']! !
 
-!Crossfader methodsFor: 'processing' stamp: 'len 13/Jan/2026 18:14:35'!
+!Crossfader methodsFor: 'processing' stamp: 'len 27/Jan/2026 15:31:02'!
 tick
+	| x |
 	self update.
 	output ifNil: [^ self].
-	input2 ifNil:
-		[input1 ifNil: [output atAllPut: 0.0. ^ self].
-		output replaceWith: input1.
-		output *= (1.0 - mix).
+	x := mix + 1.0 / 2.0.
+	inputB ifNil:
+		[inputA ifNil: [output atAllPut: 0.0. ^ self].
+		output replaceWith: inputA.
+		output *= (1.0 - x).
 		^ self].
-	input1 ifNil:
-		[output replaceWith: input2.
-		output *= mix.
+	inputA ifNil:
+		[output replaceWith: inputB.
+		output *= x.
 		^ self].
-	mix = 0.0 ifTrue: [output replaceWith: input1. ^ self].
-	mix = 1.0 ifTrue: [output replaceWith: input2. ^ self].
-	output replaceWith: input1.
-	output *= ((1.0 - mix) / mix).
-	output += input2.
-	output *= mix! !
+	x = 0.0 ifTrue: [output replaceWith: inputA. ^ self].
+	x = 1.0 ifTrue: [output replaceWith: inputB. ^ self].
+	output replaceWith: inputA.
+	output *= ((1.0 - x) / x).
+	output += inputB.
+	output *= x! !
 
-!Crossfader methodsFor: 'tools' stamp: 'len 22/Jan/2026 02:42:38'!
+!Crossfader methodsFor: 'tools' stamp: 'len 27/Jan/2026 15:19:30'!
+panel
+	^ ControlPanel new addKnob: (controls at: #mix)! !
+
+!Crossfader methodsFor: 'tools' stamp: 'len 27/Jan/2026 15:15:30'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
 	answer
-		addAudioInput: #setInput1: label: 'In 1';
-		addAudioInput: #setInput2: label: 'In 2';
+		addAudioInput: #setInputA: label: 'In A';
+		addAudioInput: #setInputB: label: 'In B';
 		addControlInput: #modulateMix: label: 'Mix';
 		addAudioOutput: #setOutput: label: 'Out'.
 	^ answer! !
 
-!Crossfader methodsFor: 'wiring' stamp: 'len 19/Nov/2025 12:32:00'!
-setInput1: aBuffer
-	input1 := aBuffer! !
+!Crossfader methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:17:08'!
+setInputA: aBuffer
+	inputA := aBuffer! !
 
-!Crossfader methodsFor: 'wiring' stamp: 'len 19/Nov/2025 12:33:00'!
-setInput2: aBuffer
-	input2 := aBuffer! !
+!Crossfader methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:17:13'!
+setInputB: aBuffer
+	inputB := aBuffer! !
 
 !Crossfader methodsFor: 'wiring' stamp: 'len 19/Nov/2025 12:33:00'!
 setOutput: aBuffer
 	output := aBuffer! !
 
-!Mixer methodsFor: 'controlling' stamp: 'len 10/Jan/2026 16:01:34'!
-modulateGain1: aNumber
-	self modulate: #gain1 by: aNumber! !
+!Mixer methodsFor: 'controlling' stamp: 'len 27/Jan/2026 15:18:03'!
+modulateGainA: aNumber
+	self modulate: #gainA by: aNumber! !
 
-!Mixer methodsFor: 'controlling' stamp: 'len 10/Jan/2026 16:01:39'!
-modulateGain2: aNumber
-	self modulate: #gain2 by: aNumber! !
+!Mixer methodsFor: 'controlling' stamp: 'len 27/Jan/2026 15:18:46'!
+modulateGainB: aNumber
+	self modulate: #gainB by: aNumber! !
 
-!Mixer methodsFor: 'controlling' stamp: 'len 10/Jan/2026 15:46:59'!
+!Mixer methodsFor: 'controlling' stamp: 'len 27/Jan/2026 15:18:34'!
 update
 	super update.
-	gain1 := self get: #gain1.
-	gain2 := self get: #gain2! !
+	gainA := self get: #gainA.
+	gainB := self get: #gainB! !
 
-!Mixer methodsFor: 'initialization' stamp: 'len 10/Jan/2026 15:42:38'!
+!Mixer methodsFor: 'initialization' stamp: 'len 27/Jan/2026 15:17:58'!
 initializeControls
 	super initializeControls.
-	self addVolumeControl: #gain1 value: 0.6; addVolumeControl: #gain2 value: 0.6! !
+	self addVolumeControl: #gainA value: 0.6; addVolumeControl: #gainB value: 0.6! !
 
-!Mixer methodsFor: 'processing' stamp: 'len 10/Jan/2026 15:55:32'!
+!Mixer methodsFor: 'processing' stamp: 'len 27/Jan/2026 15:18:34'!
 tick
 	self update.
 	output ifNil: [^ self].
-	gain2 = 0.0 ifTrue:
-		[gain1 = 0.0 ifTrue: [output atAllPut: 0.0. ^ self].
-		output replaceWith: input1.
-		gain1 = 1.0 ifFalse: [output *= gain1].
+	gainB = 0.0 ifTrue:
+		[gainA = 0.0 ifTrue: [output atAllPut: 0.0. ^ self].
+		output replaceWith: inputA.
+		gainA = 1.0 ifFalse: [output *= gainA].
 		^ self].
-	gain1 = 0.0 ifTrue:
-		[output replaceWith: input2.
-		gain2 = 1.0 ifFalse: [output *= gain2].
+	gainA = 0.0 ifTrue:
+		[output replaceWith: inputB.
+		gainB = 1.0 ifFalse: [output *= gainB].
 		^ self].
-	output replaceWith: input1.
-	output *= (gain1 / gain2).
-	output += input2.
-	output *= gain2! !
+	output replaceWith: inputA.
+	output *= (gainA / gainB).
+	output += inputB.
+	output *= gainB! !
 
-!Mixer methodsFor: 'tools' stamp: 'len 10/Jan/2026 15:45:30'!
+!Mixer methodsFor: 'tools' stamp: 'len 27/Jan/2026 15:18:20'!
 panel
 	^ ControlPanel new
-		addControl: (controls at: #gain1) label: '1';
-		addControl: (controls at: #gain2) label: '2'! !
+		addKnob: (controls at: #gainA);
+		addKnob: (controls at: #gainB)! !
 
-!Mixer methodsFor: 'tools' stamp: 'len 19/Jan/2026 19:27:55'!
+!Mixer methodsFor: 'tools' stamp: 'len 27/Jan/2026 15:15:30'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
 	answer
-		addAudioInput: #setInput1: label: 'In 1';
-		addAudioInput: #setInput2: label: 'In 2';
-"		addEventInput: #modulateGain1: label: 'Gain 1';
-		addEventInput: #modulateGain2: label: 'Gain 2';"
+		addAudioInput: #setInputA: label: 'In A';
+		addAudioInput: #setInputB: label: 'In B';
+"		addControlInput: #modulateGainA: label: 'Gain A';
+		addControlInput: #modulateGainB: label: 'Gain B';"
 		addAudioOutput: #setOutput: label: 'Out'.
 	^ answer! !
 
-!Mixer methodsFor: 'wiring' stamp: 'len 10/Jan/2026 15:40:01'!
-setInput1: aBuffer
-	input1 := aBuffer! !
+!Mixer methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:16:53'!
+setInputA: aBuffer
+	inputA := aBuffer! !
 
-!Mixer methodsFor: 'wiring' stamp: 'len 10/Jan/2026 15:40:08'!
-setInput2: aBuffer
-	input2 := aBuffer! !
+!Mixer methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:16:59'!
+setInputB: aBuffer
+	inputB := aBuffer! !
 
 !Mixer methodsFor: 'wiring' stamp: 'len 10/Jan/2026 15:56:05'!
 setOutput: aBuffer
@@ -4973,34 +5311,109 @@ initializeControls
 	super initializeControls.
 	(self addControl: #pan min: -1.0 max: 1.0 value: 0.0) printer: [:x| x abs < 0.01 ifTrue: ['Center'] ifFalse: [(x abs * 100.0) rounded printString, '% ', (x < 0.0 ifTrue: ['L'] ifFalse: ['R'])]]! !
 
-!Panner methodsFor: 'tools' stamp: 'len 22/Jan/2026 02:42:38'!
+!Panner methodsFor: 'tools' stamp: 'len 27/Jan/2026 15:05:19'!
+panel
+	^ ControlPanel new addKnob: (controls at: #pan)! !
+
+!Panner methodsFor: 'tools' stamp: 'len 27/Jan/2026 15:16:30'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
 	answer
-		addAudioInput: #setInput1: label: 'In 1';
-		addAudioInput: #setInput2: label: 'In 2';
+		addAudioInput: #setInputA: label: 'In A';
+		addAudioInput: #setInputB: label: 'In B';
 		addControlInput: #modulatePan: label: 'Pan';
-		addAudioOutput: #setOutput1: label: 'Out 1';
-		addAudioOutput: #setOutput2: label: 'Out 2'.
+		addAudioOutput: #setOutputLeft: label: 'Out L';
+		addAudioOutput: #setOutputRight: label: 'Out R'.
 	^ answer! !
 
-!Panner methodsFor: 'wiring' stamp: 'len 19/Nov/2025 19:38:00'!
-setInput1: aBuffer
-	input1 := aBuffer! !
+!Panner methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:15:55'!
+setInputA: aBuffer
+	inputA := aBuffer! !
 
-!Panner methodsFor: 'wiring' stamp: 'len 19/Nov/2025 19:38:00'!
-setInput2: aBuffer
-	input2 := aBuffer! !
+!Panner methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:16:03'!
+setInputB: aBuffer
+	inputB := aBuffer! !
 
-!Panner methodsFor: 'wiring' stamp: 'len 19/Nov/2025 19:38:00'!
-setOutput1: aBuffer
-	output1 := aBuffer! !
+!Panner methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:16:43'!
+setOutputLeft: aBuffer
+	outputLeft := aBuffer! !
 
-!Panner methodsFor: 'wiring' stamp: 'len 19/Nov/2025 19:38:00'!
-setOutput2: aBuffer
-	output2 := aBuffer! !
+!Panner methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:16:36'!
+setOutputRight: aBuffer
+	outputRight := aBuffer! !
+
+!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 02:18:51'!
+initialize
+	super initialize.
+	aux := Float32Array new: self class blockSize! !
+
+!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 01:51:45'!
+initializeControls
+	super initializeControls.
+	self addControl: #width min: -1.0 max: 2.0 value: 1.0.
+	self addControl: #balance min: -1.0 max: 1.0 value: 0.0
+! !
+
+!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 10:35:21'!
+modulateBalance: aNumber
+	self modulate: #balance by: aNumber! !
+
+!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 10:35:12'!
+modulateWidth: aNumber
+	self modulate: #width by: aNumber! !
+
+!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 10:58:05'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self panel.
+	answer
+		addAudioInput: #setInputA: label: 'In A';
+		addAudioInput: #setInputB: label: 'In B';
+"		addControlInput: #modulateWidth: label: 'WIdth';
+		addControlInput: #modulateBalance: label: 'Balance';"
+		addAudioOutput: #setOutputLeft: label: 'Out L';
+		addAudioOutput: #setOutputRight: label: 'Out R'.
+	^ answer! !
+
+!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 01:49:43'!
+setInputA: aBuffer
+	inputA := aBuffer! !
+
+!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 01:49:49'!
+setInputB: aBuffer
+	inputB := aBuffer! !
+
+!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 01:50:00'!
+setOutputLeft: aBuffer
+	outputLeft := aBuffer! !
+
+!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 01:50:09'!
+setOutputRight: aBuffer
+	outputRight := aBuffer! !
+
+!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 02:18:51'!
+tick
+	(inputA isNil or: [inputB isNil]) ifTrue: [^ self].
+	(outputLeft isNil or: [outputRight isNil]) ifTrue: [^ self].
+	self update.
+	outputLeft replaceWith: inputA.
+	outputLeft += inputB.
+	outputLeft *= ((1.0 + balance) * 0.5).
+	outputRight replaceWith: outputLeft.
+	aux replaceWith: inputA.
+	aux -= inputB.
+	aux *= ((1.0 - balance) * width * 0.5).
+	outputLeft += aux.
+	outputRight -= aux! !
+
+!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 01:52:51'!
+update
+	super update.
+	width := self get: #width.
+	balance := self get: #balance! !
 
 !Attenuator methodsFor: 'controlling' stamp: 'len 7/Jan/2026 16:52:27'!
 input: aNumber
@@ -5030,9 +5443,9 @@ tick
 	self update.
 	value = 0.0 ifFalse: [self triggerEvent: #output: with: value * amount. value := 0.0]! !
 
-!Attenuator methodsFor: 'tools' stamp: 'len 7/Jan/2026 17:00:59'!
+!Attenuator methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:53:48'!
 panel
-	^​ ControlPanel new addMorph: (KnobControlMorph control: (controls at: #amount))! !
+	^​ ControlPanel new addKnob: (controls at: #amount)! !
 
 !Attenuator methodsFor: 'tools' stamp: 'len 22/Jan/2026 02:51:22'!
 patchable
@@ -5073,9 +5486,9 @@ tick
 	self update.
 	value = 0.0 ifFalse: [self triggerEvent: #output: with: value * amount. value := 0.0]! !
 
-!Attenuverter methodsFor: 'tools' stamp: 'len 7/Jan/2026 16:58:36'!
+!Attenuverter methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:53:58'!
 panel
-	^​ ControlPanel new addMorph: (KnobControlMorph control: (controls at: #amount))! !
+	^​ ControlPanel new addKnob: (controls at: #amount)! !
 
 !Attenuverter methodsFor: 'tools' stamp: 'len 22/Jan/2026 02:42:38'!
 patchable
@@ -5085,299 +5498,6 @@ patchable
 	answer
 		addControlInput: #input: label: 'In';
 		addControlInput: #modulateAmount: label: 'Amount';
-		addControlOutput: #output: label: 'Out'.
-	^ answer! !
-
-!EG methodsFor: 'accessing' stamp: 'len 6/Jan/2026 18:33:45'!
-stage
-	^ stage! !
-
-!EG methodsFor: 'accessing' stamp: 'len 6/Jan/2026 18:35:09'!
-value
-	^ value! !
-
-!EG methodsFor: 'controlling' stamp: 'len 29/Nov/2025 15:46:00'!
-gateOff
-	^ self! !
-
-!EG methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:37:22'!
-gateOn
-	self update.
-	stage := #attack.
-"	factor := 1.0 - (0.001 raisedTo: 1.0 / attack)"
-	increment := 1.0 / attack! !
-
-!EG methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:37:54'!
-modulateAttack: aNumber
-	self modulate: #attack by: aNumber! !
-
-!EG methodsFor: 'controlling' stamp: 'len 30/Nov/2025 02:15:00'!
-reset
-	stage := #idle.
-	value := 0.0! !
-
-!EG methodsFor: 'controlling' stamp: 'len 28/Nov/2025 16:34:00'!
-setVelocity: aNumber
-	velocity := aNumber! !
-
-!EG methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:38:54'!
-update
-	super update.
-	attack := (self get: #attack) * self class controlRate
-! !
-
-!EG methodsFor: 'initialization' stamp: 'len 15/Jan/2026 19:14:09'!
-initialize
-	super initialize.
-	self reset.
-	velocity := 0.5! !
-
-!EG methodsFor: 'processing' stamp: 'len 29/Nov/2025 20:41:00'!
-next
-	^ self subclassResponsibility! !
-
-!EG methodsFor: 'processing' stamp: 'len 8/Dec/2025 22:33:48'!
-tick
-	self update.
-	stage = #idle ifFalse: [self triggerEvent: #output: with: self next]! !
-
-!AD methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:33:04'!
-modulateDecay: aNumber
-	self modulate: #decay by: aNumber! !
-
-!AD methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:39:13'!
-update
-	super update.
-	decay := (self get: #decay) * self class controlRate! !
-
-!AD methodsFor: 'initialization' stamp: 'len 28/Nov/2025 13:19:00'!
-initializeControls
-	super initializeControls.
-	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01.
-	self addTimeControl: #decay min: 0.001 max: 2.0 value: 0.5! !
-
-!AD methodsFor: 'processing' stamp: 'len 29/Nov/2025 20:43:00'!
-next
-	stage = #attack ifTrue:
-		["value := (1.0 - value) * factor + value." value := value + increment.
-		value >= 0.999 ifTrue: [stage := #decay. factor := 0.001 raisedTo: 1.0 / decay].
-		^ value * velocity].
-	stage = #decay ifTrue:
-		[value := value * factor.
-		value <= 0.001 ifTrue: [value := 0.0. stage := #idle]].
-	^ value * velocity! !
-
-!AD methodsFor: 'tools' stamp: 'len 23/Jan/2026 14:42:06'!
-patchable
-	| answer display |
-	answer := PatchableMorph new model: self.
-	display := ADControlMorph new attack: (controls at: #attack); decay: (controls at: #decay).
-	answer body addMorph: display.
-	answer
-		addControlInput: #modulateAttack: label: 'A';
-		addControlInput: #modulateDecay: label: 'D';
-		addControlOutput: #output: label: 'Out'.
-	^ answer! !
-
-!ADSR methodsFor: 'controlling' stamp: 'len 6/Jan/2026 17:06:03'!
-gateOff
-	self update.
-	stage := #release.
-	factor := 0.001 raisedTo: 1.0 / release! !
-
-!ADSR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:33:11'!
-modulateDecay: aNumber
-	self modulate: #decay by: aNumber! !
-
-!ADSR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:33:33'!
-modulateRelease: aNumber
-	self modulate: #release by: aNumber! !
-
-!ADSR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:38:34'!
-update
-	| rate |
-	super update.
-	rate := self class controlRate.
-	decay := (self get: #decay) * rate.
-	sustain := self get: #sustain.
-	release := (self get: #release) * rate! !
-
-!ADSR methodsFor: 'initialization' stamp: 'len 6/Jan/2026 17:34:36'!
-initializeControls
-	super initializeControls.
-	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01.
-	self addTimeControl: #decay min: 0.001 max: 2.0 value: 0.5.
-	self addVolumeControl: #sustain value: 0.6.
-	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0! !
-
-!ADSR methodsFor: 'processing' stamp: 'len 28/Nov/2025 16:37:00'!
-next
-	stage = #attack ifTrue:
-		["value := (1.0 - value) * factor + value." value := value + increment.
-		value >= 0.999 ifTrue: [stage := #decay. factor := 0.001 raisedTo: 1.0 / decay].
-		^ value * velocity].
-	stage = #decay ifTrue:
-		[value := (value - sustain) * factor + sustain.
-		value - sustain <= 0.001 ifTrue: [sustain <= 0.001 "-60 dB" ifTrue: [value := 0.0. stage := #idle] ifFalse: [stage := #sustain]].
-		^ value * velocity].
-	stage = #sustain ifTrue: [^ value * velocity].
-	stage = #release ifTrue:
-		[value := value * factor.
-		value <= 0.001 ifTrue: [value := 0.0. stage := #idle]].
-	^ value * velocity! !
-
-!ADSR methodsFor: 'tools' stamp: 'len 23/Jan/2026 22:39:34'!
-patchable
-	| answer display |
-	answer := PatchableMorph new model: self.
-	display := ADSRControlMorph new attack: (controls at: #attack); decay: (controls at: #decay); sustain: (controls at: #sustain); release: (controls at: #release).
-	answer body addMorph: display.
-	answer
-		addControlInput: #modulateAttack: label: 'A';
-		addControlInput: #modulateDecay: label: 'D';
-		addControlInput: #modulateRelease: label: 'R';
-		addControlOutput: #output: label: 'Out'.
-	^ answer! !
-
-!AHD methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:33:15'!
-modulateDecay: aNumber
-	self modulate: #decay by: aNumber! !
-
-!AHD methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:34:21'!
-modulateHold: aNumber
-	self modulate: #hold by: aNumber! !
-
-!AHD methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:39:31'!
-update
-	| rate |
-	super update.
-	rate := self class controlRate.
-	hold := (self get: #hold) * rate.
-	decay := (self get: #decay) * rate! !
-
-!AHD methodsFor: 'initialization' stamp: 'len 28/Nov/2025 13:20:00'!
-initializeControls
-	super initializeControls.
-	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01.
-	self addTimeControl: #hold min: 0.001 max: 10.0 value: 1.0.
-	self addTimeControl: #decay min: 0.001 max: 2.0 value: 0.5! !
-
-!AHD methodsFor: 'processing' stamp: 'len 26/Jan/2026 18:31:39'!
-next
-	stage = #attack ifTrue:
-		["value := (1.0 - value) * factor + value." value := value + increment.
-		value >= 0.999 ifTrue: [value := 1.0. stage := #hold. holding := (hold * self class controlRate) asInteger].
-		^ value * velocity].
-	stage = #hold ifTrue:
-		[(holding := holding - 1) > 0 ifFalse: [stage := #decay. factor := 0.001 raisedTo: 1.0 / decay].
-		^ value * velocity].
-	stage = #decay ifTrue:
-		[value := value * factor.
-		value <= 0.001 ifTrue: [value := 0.0. stage := #idle]].
-	^ value * velocity! !
-
-!AHD methodsFor: 'tools' stamp: 'len 23/Jan/2026 22:33:25'!
-patchable
-	| answer display |
-	answer := PatchableMorph new model: self.
-	display := AHDControlMorph new attack: (controls at: #attack); hold: (controls at: #hold); decay: (controls at: #decay).
-	answer body addMorph: display.
-	answer
-		addControlInput: #modulateAttack: label: 'A';
-		addControlInput: #modulateHold: label: 'H';
-		addControlInput: #modulateDecay: label: 'D';
-		addControlOutput: #output: label: 'Out'.
-	^ answer! !
-
-!AR methodsFor: 'controlling' stamp: 'len 6/Jan/2026 18:32:04'!
-gateOff
-	self update.
-	stage := #release.
-	factor := 0.001 raisedTo: 1.0 / release! !
-
-!AR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:33:39'!
-modulateRelease: aNumber
-	self modulate: #release by: aNumber! !
-
-!AR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:39:44'!
-update
-	super update.
-	release := (self get: #release) * self class controlRate! !
-
-!AR methodsFor: 'initialization' stamp: 'len 28/Nov/2025 13:20:00'!
-initializeControls
-	super initializeControls.
-	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01.
-	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0! !
-
-!AR methodsFor: 'processing' stamp: 'len 26/Jan/2026 18:32:20'!
-next
-	stage = #attack ifTrue:
-		["value := (1.0 - value) * factor + value." value := value + increment.
-		value >= 0.999 ifTrue: [value := 1.0. stage := #sustain].
-		^ value * velocity].
-	stage = #sustain ifTrue: [^ value * velocity].
-	stage = #release ifTrue:
-		[value := value * factor.
-		value <= 0.001 ifTrue: [value := 0.0. stage := #idle]].
-	^ value * velocity! !
-
-!AR methodsFor: 'tools' stamp: 'len 23/Jan/2026 14:55:34'!
-patchable
-	| answer display |
-	answer := PatchableMorph new model: self.
-	display := ARControlMorph new attack: (controls at: #attack); release: (controls at: #release).
-	answer body addMorph: display.
-	answer
-		addControlInput: #modulateAttack: label: 'A';
-		addControlInput: #modulateRelease: label: 'R';
-		addControlOutput: #output: label: 'Out'.
-	^ answer! !
-
-!ASR methodsFor: 'controlling' stamp: 'len 6/Jan/2026 18:32:10'!
-gateOff
-	self update.
-	stage := #release.
-	factor := 0.001 raisedTo: 1.0 / release! !
-
-!ASR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:33:43'!
-modulateRelease: aNumber
-	self modulate: #release by: aNumber! !
-
-!ASR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:39:58'!
-update
-	super update.
-	sustain := self get: #sustain.
-	release := (self get: #release) * self class controlRate! !
-
-!ASR methodsFor: 'initialization' stamp: 'len 6/Jan/2026 17:34:20'!
-initializeControls
-	super initializeControls.
-	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01.
-	self addVolumeControl: #sustain value: 0.6.
-	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0! !
-
-!ASR methodsFor: 'processing' stamp: 'len 29/Nov/2025 22:00:00'!
-next
-	stage = #attack ifTrue:
-		["value := (1.0 - value) * factor + value." value := value + increment.
-		value >= 0.999 ifTrue: [stage := #sustain. value := sustain].
-		^ value * velocity].
-	stage = #sustain ifTrue: [^ value * velocity].
-	stage = #release ifTrue:
-		[value := value * factor.
-		value <= 0.001 ifTrue: [value := 0.0. stage := #idle]].
-	^ value * velocity! !
-
-!ASR methodsFor: 'tools' stamp: 'len 23/Jan/2026 14:54:57'!
-patchable
-	| answer display |
-	answer := PatchableMorph new model: self.
-	display := ASRControlMorph new attack: (controls at: #attack); sustain: (controls at: #sustain); release: (controls at: #release).
-	answer body addMorph: display.
-	answer
-		addControlInput: #modulateAttack: label: 'A';
-		addControlInput: #modulateRelease: label: 'R';
 		addControlOutput: #output: label: 'Out'.
 	^ answer! !
 
@@ -5526,9 +5646,21 @@ patchable
 		addControlOutput: #output: label: 'Out'.
 	^ answer! !
 
-!ControlPanel methodsFor: 'building' stamp: 'len 4/Nov/2025 15:47:00'!
-addControl: aControl label: labelString
+!ControlPanel methodsFor: 'building' stamp: 'len 27/Jan/2026 14:58:32'!
+addHorizontalSlider: aControl
+	self addMorph: (SliderControlMorph control: aControl) transpose! !
+
+!ControlPanel methodsFor: 'building' stamp: 'len 27/Jan/2026 14:49:48'!
+addKnob: aControl
+	self addMorph: (KnobControlMorph control: aControl)! !
+
+!ControlPanel methodsFor: 'building' stamp: 'len 27/Jan/2026 14:43:54'!
+addKnob: aControl label: labelString
 	self addMorph: ((KnobControlMorph control: aControl) withLabel: labelString)! !
+
+!ControlPanel methodsFor: 'building' stamp: 'len 27/Jan/2026 14:58:36'!
+addVerticalSlider: aControl
+	self addMorph: (SliderControlMorph control: aControl)! !
 
 !ControlPanel methodsFor: 'drawing' stamp: 'len 25/Nov/2025 00:29:00'!
 drawOn: aCanvas
@@ -6012,10 +6144,11 @@ inactiveColor
 stepSize
 	^ 1.0 / 96.0! !
 
-!ControlMorph methodsFor: 'building' stamp: 'len 24/Nov/2025 19:18:00'!
+!ControlMorph methodsFor: 'building' stamp: 'len 27/Jan/2026 10:25:08'!
 withLabel: aString
 	^ LinearLayoutMorph newColumn
 		color: Color transparent;
+		gap: 4;
 		addMorph: self;
 		addMorph: (LabelMorph contents: aString fontSize: self defaultFontSize)! !
 
@@ -6027,10 +6160,13 @@ update: anObject
 handlesMouseScroll: anEvent
 	^ anEvent anyModifierKeyPressed not! !
 
-!ControlMorph methodsFor: 'events' stamp: 'len 19/Jan/2026 15:24:25'!
+!ControlMorph methodsFor: 'events' stamp: 'len 27/Jan/2026 15:00:59'!
 keyStroke: aKeyboardEvent
-	aKeyboardEvent isEsc
-		ifTrue: [control resetToDefault. aKeyboardEvent wasHandled: true. ^ self].
+	aKeyboardEvent isEsc ifTrue:
+		[aKeyboardEvent wasHandled: true.
+		control resetToDefault.
+		self wantsBalloon ifTrue: [self showBalloon: control printedBaseValue].
+		^ self].
 	(aKeyboardEvent isArrowUp or: [aKeyboardEvent isArrowRight]) ifTrue:
 		[aKeyboardEvent wasHandled: true.
 		self adjustControlBy: self stepSize * (aKeyboardEvent shiftPressed ifTrue: [0.01] ifFalse: [1.0]).
@@ -9138,22 +9274,22 @@ addModuleCopying: aModule
 addModuleInstantiating: aClass
 	self addMorph: aClass new patchable position: (self valueOfProperty: #lastMenuOpeningPosition)! !
 
-!PatchMorph methodsFor: 'menu' stamp: 'len 23/Jan/2026 17:45:06'!
+!PatchMorph methodsFor: 'menu' stamp: 'len 27/Jan/2026 14:42:05'!
 getMenu
 	| menu submenu |
 	self setProperty: #lastMenuOpeningPosition toValue: (self internalizeFromWorld: self activeHand morphPosition).
 	menu := MenuMorph new defaultTarget: self.
-	#('Sources' 'Modulation' 'Levels' 'Filters' 'Effects') do: [:subcategory|
+	#('Oscillators' 'Noise' 'Modulation' 'Envelopes' 'Levels' 'Filters' 'VA Filters' 'FX') do: [:subcategory|
 		submenu := MenuMorph new defaultTarget: self.
 		(SystemOrganization classesAt: 'Signals-', subcategory)
-			do: [:each| each addToPatchMenu: submenu].
+			do: [:each| each hasSubclasses ifFalse: [submenu add: each name camelSeparatedWords action: #addModuleInstantiating: argument: each]].
 		menu add: subcategory subMenu: submenu].
 
 	submenu := MenuMorph new defaultTarget: self.
 	submenu
-		add: 'Control Input' action: #addControlInput;
-"		add: 'Audio Input' action: #addModuleInstantiating: argument: AudioIn;"
-		add: 'Audio Output' action: #addModuleInstantiating: argument: AudioOut.
+		add: 'Control In' action: #addControlInput;
+"		add: 'Audio In' action: #addModuleInstantiating: argument: AudioIn;"
+		add: 'Audio Out' action: #addModuleInstantiating: argument: AudioOut.
 	menu add: 'I/O' subMenu: submenu.
 
 	submenu := MenuMorph new defaultTarget: self.
@@ -9173,23 +9309,7 @@ getMenu
 		aDict associationsDo: [:each| submenu add: each key action: #addModuleCopying: argument: each value].
 		menu add: 'Multisamples' subMenu: submenu].
 
-	^ menu
-
-"		add: 'Wavetable' target: [self addMorphUnderHand: Wavetable new view] action: #value;
-		add: 'MoogLPF' target: [self addMorphUnderHand: MoogLPF new view] action: #value;
-		add: 'Amp' target: [self addMorphUnderHand: Amp new view] action: #value;
-		add: 'ADSR' target: [self addMorphUnderHand: ADSR new view] action: #value;
-		add: 'LFO' target: [self addMorphUnderHand: LFO new view] action: #value;
-		add: 'Noise' target: [self addMorphUnderHand: Noise new view] action: #value;
-		add: '2-Mixer' target: [self addMorphUnderHand: Mixer new view] action: #value;
-		add: '3-Mixer' target: [self addMorphUnderHand: (Mixer new: 3) view] action: #value;
-		add: 'Clock' target: [self addMorphUnderHand: Clock new view] action: #value;
-		add: 'Oscilloscope' target: [self addMorphUnderHand: OscilloscopeMorph new view] action: #value;
-		add: 'Spectrogram' target: [self addMorphUnderHand: SpectrogramMorph new view] action: #value;
-		add: 'Spectrum Analyzer' target: [self addMorphUnderHand: SpectrumAnalyzerMorph new view] action: #value;
-		add: 'Keyboard' target: [self addMorphUnderHand: PianoKeyboardMorph new view] action: #value;
-		add: 'Audio Output' target: [self addMorphUnderHand: AudioOutput new view] action: #value;
-		yourself"! !
+	^ menu! !
 
 !PatchMorph methodsFor: 'stepping' stamp: 'len 9/Nov/2025 22:13:00'!
 wantsSteps
@@ -9246,10 +9366,10 @@ body
 model
 	^ model! !
 
-!PatchableMorph methodsFor: 'accessing' stamp: 'len 22/Jan/2026 02:42:38'!
+!PatchableMorph methodsFor: 'accessing' stamp: 'len 27/Jan/2026 14:32:11'!
 model: anObject
 	model := anObject.
-	(model isKindOf: Module) ifTrue: [self setTitle: model class printString]! !
+	(model isKindOf: Module) ifTrue: [self setTitle: model title]! !
 
 !PatchableMorph methodsFor: 'accessing' stamp: 'len 20/Nov/2025 22:01:00'!
 patch
@@ -11721,6 +11841,17 @@ rms
 !Float32Array methodsFor: '*signals' stamp: 'len 29/Sep/2025 02:40:00'!
 softclip
 	1 to: self size do: [:i| self at: i put: (self at: i) softclip]! !
+
+!CharacterSequence methodsFor: '*signals' stamp: 'len 27/Jan/2026 14:36:17'!
+camelSeparatedWords
+	| r w ch |
+	r := self readStream.
+	w := '' writeStream.
+	[r atEnd] whileFalse:
+		[w nextPut: (ch := r next).
+		(ch isUppercase not and: [r atEnd not and: [r peek isUppercase]]) ifTrue: [w space]].
+	^ w contents
+! !
 
 !Number methodsFor: '*signals' stamp: 'len 13/Oct/2025 15:56:00'!
 centsToRatio

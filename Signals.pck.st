@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 27 January 2026 at 3:37:39 pm'!
+'From Cuis7.7 [latest update: #7797] on 27 January 2026 at 4:41:26 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 420!
+!provides: 'Signals' 1 421!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -36,7 +36,7 @@ AudioBuffer class
 
 !classDefinition: #Control category: #'Signals-Kernel'!
 ActiveModel subclass: #Control
-	instanceVariableNames: 'min max curve base modulation lastValue printer default'
+	instanceVariableNames: 'min max curve base modulation lastValue printer default label'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Kernel'!
@@ -1946,6 +1946,10 @@ initialize
 	modulation := 0.0.
 	curve := #linear! !
 
+!Control methodsFor: 'printing' stamp: 'len 27/Jan/2026 16:28:29'!
+label: aString
+	label := aString! !
+
 !Control methodsFor: 'printing' stamp: 'len 11/Dec/2025 16:22:16'!
 printOn: aStream
 	| v |
@@ -1953,12 +1957,13 @@ printOn: aStream
 	printer ifNotNil: [aStream nextPutAll: (printer value: v). ^ self].
 	v isNumber ifTrue: [v printOn: aStream fractionDigits: 2] ifFalse: [aStream print: v]! !
 
-!Control methodsFor: 'printing' stamp: 'len 4/Dec/2025 15:05:09'!
+!Control methodsFor: 'printing' stamp: 'len 27/Jan/2026 16:34:37'!
 printedBaseValue
-	| v |
-	v := self baseValue.
-	printer ifNotNil: [^ printer value: v].
-	^​v isNumber ifTrue: [v printStringFractionDigits: 2] ifFalse: [v asString]! !
+	^ printer ifNil: [self baseValue printStringFractionDigits: 2] ifNotNil: [printer value: self baseValue]! !
+
+!Control methodsFor: 'printing' stamp: 'len 27/Jan/2026 16:34:28'!
+printedBaseValueWithLabel
+	^ (label ifNil: [''] ifNotNil: [label, ': ']), self printedBaseValue! !
 
 !Control methodsFor: 'printing' stamp: 'len 4/Dec/2025 14:41:33'!
 printer: aSymbol
@@ -2044,21 +2049,21 @@ update
 	Subclasses with internal state that depends on the controls should implement this method."
 	controls do: [:each| each apply]! !
 
-!Module methodsFor: 'controls and modulations' stamp: 'len 12/Nov/2025 15:06:00'!
+!Module methodsFor: 'controls and modulations' stamp: 'len 27/Jan/2026 16:32:55'!
 addControl: aSymbol min: min max: max value: defaultValue
-	^ controls at: aSymbol put: (Control min: min max: max value: defaultValue)! !
+	^ controls at: aSymbol put: ((Control min: min max: max value: defaultValue) label: aSymbol asPlainString capitalized)! !
 
 !Module methodsFor: 'controls and modulations' stamp: 'len 4/Dec/2025 14:41:16'!
 addFrequencyControl: aSymbol value: defaultValue
 	^ (self addControl: aSymbol min: 0 semitonesToHertz max: 127 semitonesToHertz value: defaultValue) printer: #hertzPrintString! !
 
-!Module methodsFor: 'controls and modulations' stamp: 'len 1/Dec/2025 14:44:00'!
+!Module methodsFor: 'controls and modulations' stamp: 'len 27/Jan/2026 16:33:14'!
 addLogControl: aSymbol min: min max: max value: defaultValue
-	^ controls at: aSymbol put: (Control min: min max: max curve: #exp value: defaultValue)! !
+	^ controls at: aSymbol put: ((Control min: min max: max curve: #exp value: defaultValue) label: aSymbol asPlainString capitalized)! !
 
-!Module methodsFor: 'controls and modulations' stamp: 'len 16/Jan/2026 14:47:19'!
+!Module methodsFor: 'controls and modulations' stamp: 'len 27/Jan/2026 16:33:22'!
 addQuadraticControl: aSymbol min: min max: max value: defaultValue
-	^ controls at: aSymbol put: (Control min: min max: max curve: #quadratic value: defaultValue)! !
+	^ controls at: aSymbol put: ((Control min: min max: max curve: #quadratic value: defaultValue) label: aSymbol asPlainString capitalized)! !
 
 !Module methodsFor: 'controls and modulations' stamp: 'len 26/Jan/2026 15:39:30'!
 addSpeedControl: aSymbol min: min max: max value: defaultValue
@@ -2716,105 +2721,121 @@ patchable
 setInput: aBuffer
 	input := aBuffer! !
 
-!BPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:24:46'!
-initialize
-	biquad := Biquad new.
-	super initialize! !
-
-!BPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:18:45'!
-patchable
-	^ super patchable
-		addAudioOutput: #setOutput: label: 'Out';
-		yourself! !
-
-!BPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:18:45'!
+!BPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:18:45'!
 reset
 	biquad reset! !
 
-!BPF methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 11:15:10'!
-tick
-	output ifNil: [^ self].
-	input ifNil: [output atAllPut: 0.0. ^ self].
-	biquad write: input read: output! !
-
-!BPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:19:02'!
+!BPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:19:02'!
 updateFilterCoefficients
 	biquad bp: frequency / self class sampleRate Q: Q! !
 
-!HPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:24:53'!
+!BPF methodsFor: 'initialization' stamp: 'len 25/Jan/2026 22:24:46'!
 initialize
 	biquad := Biquad new.
 	super initialize! !
 
-!HPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:18:06'!
-patchable
-	^ super patchable
-		addAudioOutput: #setOutput: label: 'Out';
-		yourself! !
-
-!HPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:18:06'!
-reset
-	biquad reset! !
-
-!HPF methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 11:15:24'!
+!BPF methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:15:10'!
 tick
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	biquad write: input read: output! !
 
-!HPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:18:31'!
+!BPF methodsFor: 'tools' stamp: 'len 25/Jan/2026 22:18:45'!
+patchable
+	^ super patchable
+		addAudioOutput: #setOutput: label: 'Out';
+		yourself! !
+
+!BPF methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:40:16'!
+setOutput: aBuffer
+	output := aBuffer! !
+
+!HPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:18:06'!
+reset
+	biquad reset! !
+
+!HPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:18:31'!
 updateFilterCoefficients
 	biquad hp: frequency / self class sampleRate Q: Q! !
 
-!LPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:24:58'!
+!HPF methodsFor: 'initialization' stamp: 'len 25/Jan/2026 22:24:53'!
 initialize
 	biquad := Biquad new.
 	super initialize! !
 
-!LPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:17:54'!
-patchable
-	^ super patchable
-		addAudioOutput: #setOutput: label: 'Out';
-		yourself! !
-
-!LPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:16:21'!
-reset
-	biquad reset! !
-
-!LPF methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 11:15:33'!
+!HPF methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:15:24'!
 tick
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	biquad write: input read: output! !
 
-!LPF methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:15:05'!
+!HPF methodsFor: 'tools' stamp: 'len 25/Jan/2026 22:18:06'!
+patchable
+	^ super patchable
+		addAudioOutput: #setOutput: label: 'Out';
+		yourself! !
+
+!HPF methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:40:21'!
+setOutput: aBuffer
+	output := aBuffer! !
+
+!LPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:16:21'!
+reset
+	biquad reset! !
+
+!LPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:15:05'!
 updateFilterCoefficients
 	biquad lp: frequency / self class sampleRate Q: Q! !
 
-!Notch methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:41:35'!
+!LPF methodsFor: 'initialization' stamp: 'len 25/Jan/2026 22:24:58'!
 initialize
 	biquad := Biquad new.
 	super initialize! !
 
-!Notch methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:41:35'!
-patchable
-	^ super patchable
-		addAudioOutput: #setOutput: label: 'Out';
-		yourself! !
-
-!Notch methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:41:35'!
-reset
-	biquad reset! !
-
-!Notch methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 11:15:37'!
+!LPF methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:15:33'!
 tick
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	biquad write: input read: output! !
 
-!Notch methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 22:42:00'!
+!LPF methodsFor: 'tools' stamp: 'len 25/Jan/2026 22:17:54'!
+patchable
+	^ super patchable
+		addAudioOutput: #setOutput: label: 'Out';
+		yourself! !
+
+!LPF methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:40:25'!
+setOutput: aBuffer
+	output := aBuffer! !
+
+!Notch methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:41:35'!
+reset
+	biquad reset! !
+
+!Notch methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:42:00'!
 updateFilterCoefficients
 	biquad bs: frequency / self class sampleRate Q: Q! !
+
+!Notch methodsFor: 'initialization' stamp: 'len 25/Jan/2026 22:41:35'!
+initialize
+	biquad := Biquad new.
+	super initialize! !
+
+!Notch methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:15:37'!
+tick
+	output ifNil: [^ self].
+	input ifNil: [output atAllPut: 0.0. ^ self].
+	biquad write: input read: output! !
+
+!Notch methodsFor: 'tools' stamp: 'len 25/Jan/2026 22:41:35'!
+patchable
+	^ super patchable
+		addAudioOutput: #setOutput: label: 'Out';
+		yourself! !
+
+!Notch methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:40:32'!
+setOutput: aBuffer
+	output := aBuffer! !
 
 !SVF methodsFor: 'controlling' stamp: 'len 16/Oct/2025 19:38:00'!
 reset
@@ -6160,12 +6181,12 @@ update: anObject
 handlesMouseScroll: anEvent
 	^ anEvent anyModifierKeyPressed not! !
 
-!ControlMorph methodsFor: 'events' stamp: 'len 27/Jan/2026 15:00:59'!
+!ControlMorph methodsFor: 'events' stamp: 'len 27/Jan/2026 16:34:58'!
 keyStroke: aKeyboardEvent
 	aKeyboardEvent isEsc ifTrue:
 		[aKeyboardEvent wasHandled: true.
 		control resetToDefault.
-		self wantsBalloon ifTrue: [self showBalloon: control printedBaseValue].
+		self wantsBalloon ifTrue: [self showBalloon: control printedBaseValueWithLabel].
 		^ self].
 	(aKeyboardEvent isArrowUp or: [aKeyboardEvent isArrowRight]) ifTrue:
 		[aKeyboardEvent wasHandled: true.
@@ -6192,9 +6213,9 @@ keyboardFocusChange: aBoolean
 requiresVectorCanvas
 	^ true! !
 
-!ControlMorph methodsFor: 'halos and balloon help' stamp: 'len 12/Jan/2026 15:53:51'!
+!ControlMorph methodsFor: 'halos and balloon help' stamp: 'len 27/Jan/2026 16:34:52'!
 balloonText
-	^ control printedBaseValue! !
+	^ control printedBaseValueWithLabel! !
 
 !ControlMorph methodsFor: 'initialization' stamp: 'len 20/Nov/2025 21:51:00'!
 initialize
@@ -6202,12 +6223,12 @@ initialize
 	self control:​ Control new.
 	color := self defaultColor! !
 
-!ControlMorph methodsFor: 'private' stamp: 'len 16/Jan/2026 19:00:47'!
+!ControlMorph methodsFor: 'private' stamp: 'len 27/Jan/2026 16:34:48'!
 adjustControlBy: aNumber
 	control basePosition: control basePosition + aNumber.
 	control apply.
 	self redrawNeeded.
-	self wantsBalloon ifTrue: [self showBalloon: control printedBaseValue]! !
+	self wantsBalloon ifTrue: [self showBalloon: control printedBaseValueWithLabel]! !
 
 !ControlMorph methodsFor: 'drawing' stamp: 'len 14/Jan/2026 16:57:23'!
 drawFocusIndicatorOn: aCanvas
@@ -6592,7 +6613,7 @@ drawOn: aCanvas
 maximumSegmentWidth
 	^ self morphWidth / 2.0! !
 
-!ADControlMorph methodsFor: 'events' stamp: 'len 23/Jan/2026 14:46:31'!
+!ADControlMorph methodsFor: 'events' stamp: 'len 27/Jan/2026 16:35:11'!
 mouseScroll: anEvent localPosition: localEventPosition
 	| a step control |
 	a := attack basePosition * self maximumSegmentWidth.
@@ -6601,7 +6622,7 @@ mouseScroll: anEvent localPosition: localEventPosition
 	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
 	localEventPosition x < a ifTrue: [control := attack] ifFalse: [control := decay].
 	control basePosition: control basePosition + step.
-	self showBalloon: control printedBaseValue! !
+	self showBalloon: control printedBaseValueWithLabel! !
 
 !ADSRControlMorph methodsFor: 'initialization' stamp: 'len 24/Oct/2025 16:41:00'!
 decay: aControl
@@ -6654,7 +6675,7 @@ drawOn: aCanvas
 maximumSegmentWidth
 	^ self morphWidth / 3.0! !
 
-!ADSRControlMorph methodsFor: 'events' stamp: 'len 23/Jan/2026 22:38:29'!
+!ADSRControlMorph methodsFor: 'events' stamp: 'len 27/Jan/2026 16:35:23'!
 mouseScroll: anEvent localPosition: localEventPosition
 	| step w a d s r control |
 	step := self stepSize.
@@ -6662,7 +6683,7 @@ mouseScroll: anEvent localPosition: localEventPosition
 	anEvent isVertical ifTrue:
 		[anEvent direction = #up ifTrue: [step := step negated].
 		sustain basePosition: sustain basePosition + step.
-		self showBalloon: sustain printedBaseValue.
+		self showBalloon: sustain printedBaseValueWithLabel.
 		^ self].
 	w := self maximumSegmentWidth.
 	a := attack basePosition * w.
@@ -6672,7 +6693,7 @@ mouseScroll: anEvent localPosition: localEventPosition
 	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
 	control := localEventPosition x < a ifTrue: [attack] ifFalse: [localEventPosition x < (s/2.0 + a + d) ifTrue: [decay] ifFalse: [step := step negated. release]].
 	control basePosition: control basePosition + step.
-	self showBalloon: control printedBaseValue! !
+	self showBalloon: control printedBaseValueWithLabel! !
 
 !AHDControlMorph methodsFor: 'initialization' stamp: 'len 18/Jan/2026 18:30:32'!
 decay: aControl
@@ -6710,7 +6731,7 @@ drawOn: aCanvas
 maximumSegmentWidth
 	^ self morphWidth / 3.0! !
 
-!AHDControlMorph methodsFor: 'events' stamp: 'len 23/Jan/2026 22:32:33'!
+!AHDControlMorph methodsFor: 'events' stamp: 'len 27/Jan/2026 16:35:30'!
 mouseScroll: anEvent localPosition: localEventPosition
 	| a h step control |
 	a := attack basePosition * self maximumSegmentWidth.
@@ -6720,7 +6741,7 @@ mouseScroll: anEvent localPosition: localEventPosition
 	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
 	control := localEventPosition x < a ifTrue: [attack] ifFalse: [localEventPosition x < (a + h) ifTrue: [hold] ifFalse: [decay]].
 	control basePosition: control basePosition + step.
-	self showBalloon: control printedBaseValue! !
+	self showBalloon: control printedBaseValueWithLabel! !
 
 !ARControlMorph methodsFor: 'drawing' stamp: 'len 18/Jan/2026 18:58:48'!
 drawOn: aCanvas
@@ -6740,7 +6761,7 @@ drawOn: aCanvas
 maximumSegmentWidth
 	^ self morphWidth / 2.0! !
 
-!ARControlMorph methodsFor: 'events' stamp: 'len 23/Jan/2026 14:55:24'!
+!ARControlMorph methodsFor: 'events' stamp: 'len 27/Jan/2026 16:35:35'!
 mouseScroll: anEvent localPosition: localEventPosition
 	| a step control |
 	a := attack basePosition * self maximumSegmentWidth.
@@ -6749,7 +6770,7 @@ mouseScroll: anEvent localPosition: localEventPosition
 	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
 	localEventPosition x < a ifTrue: [control := attack] ifFalse: [control := release].
 	control basePosition: control basePosition + step.
-	self showBalloon: control printedBaseValue! !
+	self showBalloon: control printedBaseValueWithLabel! !
 
 !ARControlMorph methodsFor: 'initialization' stamp: 'len 18/Jan/2026 18:31:14'!
 release: aControl
@@ -6793,7 +6814,7 @@ drawOn: aCanvas
 maximumSegmentWidth
 	^ self morphWidth / 2.0! !
 
-!ASRControlMorph methodsFor: 'events' stamp: 'len 23/Jan/2026 14:54:17'!
+!ASRControlMorph methodsFor: 'events' stamp: 'len 27/Jan/2026 16:35:41'!
 mouseScroll: anEvent localPosition: localEventPosition
 	| step w a s r control |
 	step := self stepSize.
@@ -6810,7 +6831,7 @@ mouseScroll: anEvent localPosition: localEventPosition
 	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
 	localEventPosition x < (s/2.0 + a) ifTrue: [control := attack] ifFalse: [control := release. step := step negated].
 	control basePosition: control basePosition + step.
-	self showBalloon: control printedBaseValue! !
+	self showBalloon: control printedBaseValueWithLabel! !
 
 !XYControlMorph methodsFor: 'accessing' stamp: 'len 6/Dec/2025 14:26:58'!
 controlX: aControl
@@ -6878,19 +6899,19 @@ initialize
 	super initialize.
 	color := self defaultColor! !
 
-!XYControlMorph methodsFor: 'private' stamp: 'len 6/Dec/2025 14:27:10'!
+!XYControlMorph methodsFor: 'private' stamp: 'len 27/Jan/2026 16:35:47'!
 adjustXBy: aNumber
 	controlX basePosition: controlX basePosition + aNumber.
 	controlX apply.
 	self redrawNeeded.
-	self showBalloon: controlX printedBaseValue! !
+	self showBalloon: controlX printedBaseValueWithLabel! !
 
-!XYControlMorph methodsFor: 'private' stamp: 'len 6/Dec/2025 14:27:17'!
+!XYControlMorph methodsFor: 'private' stamp: 'len 27/Jan/2026 16:35:52'!
 adjustYBy: aNumber
 	controlY basePosition: controlY basePosition + aNumber.
 	controlY apply.
 	self redrawNeeded.
-	self showBalloon: controlY printedBaseValue! !
+	self showBalloon: controlY printedBaseValueWithLabel! !
 
 !FilterControlMorph methodsFor: 'accessing' stamp: 'len 6/Dec/2025 14:28:10'!
 Q: aControl
@@ -6933,9 +6954,9 @@ drawOn: aCanvas
 			cubicBezierTo: p2 control1: p1 + (δ*1) control2: p2 - δ;
 			cubicBezierTo: p3 control1: p2 + δ control2: f @ y - (δ*1.5)]! !
 
-!FilterControlMorph methodsFor: 'halos and balloon help' stamp: 'len 12/Jan/2026 15:55:12'!
+!FilterControlMorph methodsFor: 'halos and balloon help' stamp: 'len 27/Jan/2026 16:39:02'!
 balloonText
-	^ controlX printedBaseValue, ', Q ', controlY printedBaseValue! !
+	^ controlX printedBaseValueWithLabel, ', ', controlY printedBaseValueWithLabel! !
 
 !FilterControlMorph methodsFor: 'initialization' stamp: 'len 17/Jan/2026 16:57:32'!
 initialize

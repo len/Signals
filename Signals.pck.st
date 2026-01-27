@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 27 January 2026 at 4:41:26 pm'!
+'From Cuis7.7 [latest update: #7797] on 27 January 2026 at 10:31:45 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 421!
+!provides: 'Signals' 1 423!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -892,6 +892,16 @@ XYControlMorph subclass: #LFOControlMorph
 	category: 'Signals-Morphic-Controls'!
 !classDefinition: 'LFOControlMorph class' category: #'Signals-Morphic-Controls'!
 LFOControlMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #StereoMatrixControlMorph category: #'Signals-Morphic-Controls'!
+XYControlMorph subclass: #StereoMatrixControlMorph
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'StereoMatrixControlMorph class' category: #'Signals-Morphic-Controls'!
+StereoMatrixControlMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #PinMorph category: #'Signals-Morphic-Patches'!
@@ -2049,21 +2059,21 @@ update
 	Subclasses with internal state that depends on the controls should implement this method."
 	controls do: [:each| each apply]! !
 
-!Module methodsFor: 'controls and modulations' stamp: 'len 27/Jan/2026 16:32:55'!
+!Module methodsFor: 'controls and modulations' stamp: 'len 27/Jan/2026 16:47:43'!
 addControl: aSymbol min: min max: max value: defaultValue
-	^ controls at: aSymbol put: ((Control min: min max: max value: defaultValue) label: aSymbol asPlainString capitalized)! !
+	^ controls at: aSymbol put: ((Control min: min max: max value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
 
 !Module methodsFor: 'controls and modulations' stamp: 'len 4/Dec/2025 14:41:16'!
 addFrequencyControl: aSymbol value: defaultValue
 	^ (self addControl: aSymbol min: 0 semitonesToHertz max: 127 semitonesToHertz value: defaultValue) printer: #hertzPrintString! !
 
-!Module methodsFor: 'controls and modulations' stamp: 'len 27/Jan/2026 16:33:14'!
+!Module methodsFor: 'controls and modulations' stamp: 'len 27/Jan/2026 16:47:56'!
 addLogControl: aSymbol min: min max: max value: defaultValue
-	^ controls at: aSymbol put: ((Control min: min max: max curve: #exp value: defaultValue) label: aSymbol asPlainString capitalized)! !
+	^ controls at: aSymbol put: ((Control min: min max: max curve: #exp value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
 
-!Module methodsFor: 'controls and modulations' stamp: 'len 27/Jan/2026 16:33:22'!
+!Module methodsFor: 'controls and modulations' stamp: 'len 27/Jan/2026 16:47:59'!
 addQuadraticControl: aSymbol min: min max: max value: defaultValue
-	^ controls at: aSymbol put: ((Control min: min max: max curve: #quadratic value: defaultValue) label: aSymbol asPlainString capitalized)! !
+	^ controls at: aSymbol put: ((Control min: min max: max curve: #quadratic value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
 
 !Module methodsFor: 'controls and modulations' stamp: 'len 26/Jan/2026 15:39:30'!
 addSpeedControl: aSymbol min: min max: max value: defaultValue
@@ -2725,19 +2735,20 @@ setInput: aBuffer
 reset
 	biquad reset! !
 
-!BPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:19:02'!
+!BPF methodsFor: 'controlling' stamp: 'len 27/Jan/2026 21:52:21'!
 updateFilterCoefficients
-	biquad bp: frequency / self class sampleRate Q: Q! !
+	biquad bp: frequency Q: Q! !
 
 !BPF methodsFor: 'initialization' stamp: 'len 25/Jan/2026 22:24:46'!
 initialize
 	biquad := Biquad new.
 	super initialize! !
 
-!BPF methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:15:10'!
+!BPF methodsFor: 'processing' stamp: 'len 27/Jan/2026 19:35:38'!
 tick
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
+	self update.
 	biquad write: input read: output! !
 
 !BPF methodsFor: 'tools' stamp: 'len 25/Jan/2026 22:18:45'!
@@ -2754,19 +2765,20 @@ setOutput: aBuffer
 reset
 	biquad reset! !
 
-!HPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:18:31'!
+!HPF methodsFor: 'controlling' stamp: 'len 27/Jan/2026 21:52:27'!
 updateFilterCoefficients
-	biquad hp: frequency / self class sampleRate Q: Q! !
+	biquad hp: frequency Q: Q! !
 
 !HPF methodsFor: 'initialization' stamp: 'len 25/Jan/2026 22:24:53'!
 initialize
 	biquad := Biquad new.
 	super initialize! !
 
-!HPF methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:15:24'!
+!HPF methodsFor: 'processing' stamp: 'len 27/Jan/2026 19:35:22'!
 tick
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
+	self update.
 	biquad write: input read: output! !
 
 !HPF methodsFor: 'tools' stamp: 'len 25/Jan/2026 22:18:06'!
@@ -2783,19 +2795,20 @@ setOutput: aBuffer
 reset
 	biquad reset! !
 
-!LPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:15:05'!
+!LPF methodsFor: 'controlling' stamp: 'len 27/Jan/2026 21:52:32'!
 updateFilterCoefficients
-	biquad lp: frequency / self class sampleRate Q: Q! !
+	biquad lp: frequency Q: Q! !
 
 !LPF methodsFor: 'initialization' stamp: 'len 25/Jan/2026 22:24:58'!
 initialize
 	biquad := Biquad new.
 	super initialize! !
 
-!LPF methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:15:33'!
+!LPF methodsFor: 'processing' stamp: 'len 27/Jan/2026 19:35:45'!
 tick
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
+	self update.
 	biquad write: input read: output! !
 
 !LPF methodsFor: 'tools' stamp: 'len 25/Jan/2026 22:17:54'!
@@ -2812,19 +2825,20 @@ setOutput: aBuffer
 reset
 	biquad reset! !
 
-!Notch methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:42:00'!
+!Notch methodsFor: 'controlling' stamp: 'len 27/Jan/2026 21:52:39'!
 updateFilterCoefficients
-	biquad bs: frequency / self class sampleRate Q: Q! !
+	biquad bs: frequency Q: Q! !
 
 !Notch methodsFor: 'initialization' stamp: 'len 25/Jan/2026 22:41:35'!
 initialize
 	biquad := Biquad new.
 	super initialize! !
 
-!Notch methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:15:37'!
+!Notch methodsFor: 'processing' stamp: 'len 27/Jan/2026 19:35:50'!
 tick
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
+	self update.
 	biquad write: input read: output! !
 
 !Notch methodsFor: 'tools' stamp: 'len 25/Jan/2026 22:41:35'!
@@ -5365,57 +5379,33 @@ setOutputLeft: aBuffer
 setOutputRight: aBuffer
 	outputRight := aBuffer! !
 
-!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 02:18:51'!
+!StereoMatrix methodsFor: 'controlling' stamp: 'len 27/Jan/2026 10:35:21'!
+modulateBalance: aNumber
+	self modulate: #balance by: aNumber! !
+
+!StereoMatrix methodsFor: 'controlling' stamp: 'len 27/Jan/2026 10:35:12'!
+modulateWidth: aNumber
+	self modulate: #width by: aNumber! !
+
+!StereoMatrix methodsFor: 'controlling' stamp: 'len 27/Jan/2026 01:52:51'!
+update
+	super update.
+	width := self get: #width.
+	balance := self get: #balance! !
+
+!StereoMatrix methodsFor: 'initialization' stamp: 'len 27/Jan/2026 02:18:51'!
 initialize
 	super initialize.
 	aux := Float32Array new: self class blockSize! !
 
-!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 01:51:45'!
+!StereoMatrix methodsFor: 'initialization' stamp: 'len 27/Jan/2026 01:51:45'!
 initializeControls
 	super initializeControls.
 	self addControl: #width min: -1.0 max: 2.0 value: 1.0.
 	self addControl: #balance min: -1.0 max: 1.0 value: 0.0
 ! !
 
-!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 10:35:21'!
-modulateBalance: aNumber
-	self modulate: #balance by: aNumber! !
-
-!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 10:35:12'!
-modulateWidth: aNumber
-	self modulate: #width by: aNumber! !
-
-!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 10:58:05'!
-patchable
-	| answer |
-	answer := PatchableMorph new model: self.
-	answer body addMorph: self panel.
-	answer
-		addAudioInput: #setInputA: label: 'In A';
-		addAudioInput: #setInputB: label: 'In B';
-"		addControlInput: #modulateWidth: label: 'WIdth';
-		addControlInput: #modulateBalance: label: 'Balance';"
-		addAudioOutput: #setOutputLeft: label: 'Out L';
-		addAudioOutput: #setOutputRight: label: 'Out R'.
-	^ answer! !
-
-!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 01:49:43'!
-setInputA: aBuffer
-	inputA := aBuffer! !
-
-!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 01:49:49'!
-setInputB: aBuffer
-	inputB := aBuffer! !
-
-!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 01:50:00'!
-setOutputLeft: aBuffer
-	outputLeft := aBuffer! !
-
-!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 01:50:09'!
-setOutputRight: aBuffer
-	outputRight := aBuffer! !
-
-!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 02:18:51'!
+!StereoMatrix methodsFor: 'processing' stamp: 'len 27/Jan/2026 02:18:51'!
 tick
 	(inputA isNil or: [inputB isNil]) ifTrue: [^ self].
 	(outputLeft isNil or: [outputRight isNil]) ifTrue: [^ self].
@@ -5430,11 +5420,35 @@ tick
 	outputLeft += aux.
 	outputRight -= aux! !
 
-!StereoMatrix methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 01:52:51'!
-update
-	super update.
-	width := self get: #width.
-	balance := self get: #balance! !
+!StereoMatrix methodsFor: 'tools' stamp: 'len 27/Jan/2026 10:58:05'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self panel.
+	answer
+		addAudioInput: #setInputA: label: 'In A';
+		addAudioInput: #setInputB: label: 'In B';
+"		addControlInput: #modulateWidth: label: 'WIdth';
+		addControlInput: #modulateBalance: label: 'Balance';"
+		addAudioOutput: #setOutputLeft: label: 'Out L';
+		addAudioOutput: #setOutputRight: label: 'Out R'.
+	^ answer! !
+
+!StereoMatrix methodsFor: 'wiring' stamp: 'len 27/Jan/2026 01:49:43'!
+setInputA: aBuffer
+	inputA := aBuffer! !
+
+!StereoMatrix methodsFor: 'wiring' stamp: 'len 27/Jan/2026 01:49:49'!
+setInputB: aBuffer
+	inputB := aBuffer! !
+
+!StereoMatrix methodsFor: 'wiring' stamp: 'len 27/Jan/2026 01:50:00'!
+setOutputLeft: aBuffer
+	outputLeft := aBuffer! !
+
+!StereoMatrix methodsFor: 'wiring' stamp: 'len 27/Jan/2026 01:50:09'!
+setOutputRight: aBuffer
+	outputRight := aBuffer! !
 
 !Attenuator methodsFor: 'controlling' stamp: 'len 7/Jan/2026 16:52:27'!
 input: aNumber
@@ -5726,13 +5740,13 @@ defaultGap
 defaultPadding
 	^ 4 @ 4! !
 
-!PatchableBodyMorph methodsFor: 'as yet unclassified' stamp: 'len 24/Jan/2026 14:36:07'!
+!PatchableBodyMorph methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 19:19:39'!
 drawOn: aCanvas
 	| rect |
 	rect := self localBounds.
 	aCanvas
-		fillRoundRectangle: rect color: color radius: 8.0;
-		frameRoundRectangle: rect borderWidth: borderWidth  color: borderColor radius: 8.0! !
+		fillRectangle: rect color: color cornerRadius: 8.0;
+		frameRectangle: rect borderWidth: borderWidth  color: borderColor cornerRadius: 8.0! !
 
 !TrackerWindow methodsFor: 'actions' stamp: 'len 7/Jan/2026 14:25:54'!
 setBPM
@@ -5813,7 +5827,7 @@ moveUp
 update: aSymbol
 	self redrawNeeded! !
 
-!PluggableChoiceMorph methodsFor: 'drawing' stamp: 'len 22/Jan/2026 14:44:58'!
+!PluggableChoiceMorph methodsFor: 'drawing' stamp: 'len 27/Jan/2026 19:19:39'!
 drawOn: aCanvas
 	| string |
 "	aCanvas
@@ -5822,7 +5836,7 @@ drawOn: aCanvas
 "
 	string := (model perform: getter) asString.
 	aCanvas
-		frameRoundRectangle: (0@0 extent: self minimumExtent) borderWidth: 1 color: color radius: 6;
+		frameRectangle: (0@0 extent: self minimumExtent) borderWidth: 1 color: color cornerRadius: 6;
 "		fillRoundRectangle: ((0@0 extent: self minimumExtent) insetBy: 1) color: Color black radius: 6;"
 		drawString: string at: 3@0 font: font color: color.
 "	aCanvas frameRectangle: (0@0 extent: self minimumExtent) borderWidth: 1 color: color.
@@ -6886,6 +6900,10 @@ mouseScroll: aMouseEvent localPosition: localEventPosition
 	aMouseEvent direction = #down ifTrue: [self adjustYBy: step. ^ self].
 	aMouseEvent direction = #up ifTrue: [self adjustYBy: step negated]! !
 
+!XYControlMorph methodsFor: 'halos and balloon help' stamp: 'len 27/Jan/2026 19:29:29'!
+balloonText
+	^ controlX printedBaseValueWithLabel, ', ', controlY printedBaseValueWithLabel! !
+
 !XYControlMorph methodsFor: 'initialization' stamp: 'len 4/Dec/2025 16:34:09'!
 defaultColor
 	^ Color white! !
@@ -6953,10 +6971,6 @@ drawOn: aCanvas
 			lineTo: p1;
 			cubicBezierTo: p2 control1: p1 + (δ*1) control2: p2 - δ;
 			cubicBezierTo: p3 control1: p2 + δ control2: f @ y - (δ*1.5)]! !
-
-!FilterControlMorph methodsFor: 'halos and balloon help' stamp: 'len 27/Jan/2026 16:39:02'!
-balloonText
-	^ controlX printedBaseValueWithLabel, ', ', controlY printedBaseValueWithLabel! !
 
 !FilterControlMorph methodsFor: 'initialization' stamp: 'len 17/Jan/2026 16:57:32'!
 initialize
@@ -8407,12 +8421,12 @@ initialize
 	colormap := WordArray new: Viridis size.
 	1 to: Viridis size do: [:i| colormap at: i put: (image pixelValueFor: (Viridis at: i))]! !
 
-!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 8/Jan/2026 15:28:00'!
+!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 22:26:02'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self.
-	answer addSignalInput: #setInput: label: 'In'.
+	answer addAudioInput: #setInput: label: 'In'.
 	^ answer! !
 
 !SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Oct/2025 23:32:00'!
@@ -9049,12 +9063,12 @@ initialize
 	buffer := Float32Array new: fft size.
 	bufferIndex := 1! !
 
-!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 8/Jan/2026 15:28:00'!
+!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 22:26:13'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self.
-	answer addSignalInput: #setInput: label: 'In'.
+	answer addAudioInput: #setInput: label: 'In'.
 	^ answer! !
 
 !SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 25/Oct/2025 14:49:00'!
@@ -10104,9 +10118,9 @@ test
 write: aFloat32Array
 	handle ifNotNil: [self ffiWriteAudio: handle data: aFloat32Array count: aFloat32Array size]! !
 
-!Biquad methodsFor: 'accessing' stamp: 'len 12/Oct/2025 23:54:00'!
+!Biquad methodsFor: 'accessing' stamp: 'len 27/Jan/2026 22:19:43'!
 Q: Q
-	"Setup coefficients for allpass filter with resonance Q."
+	"Setup coefficients for a second order allpass filter with resonance Q."
 	| a b |
 	a := ((Float pi * Q) tan - 1.0) / ((Float pi * Q) tan + 1.0).
 	b := (Float pi * Q) cos negated.
@@ -10116,12 +10130,13 @@ Q: Q
 	b1 := a1.
 	b2 := a0! !
 
-!Biquad methodsFor: 'accessing' stamp: 'len 28/Sep/2025 00:47:00'!
+!Biquad methodsFor: 'accessing' stamp: 'len 27/Jan/2026 22:17:25'!
 bp: frequency Q: Q
-	"Setup coefficients for band-pass filter."
-	| ω b g |
+	"Setup coefficients for a second order band-pass filter."
+	| ω α b g |
 	ω := Float twoPi * frequency.
-	b := 0.5* ((1.0 - (ω / (2.0 * Q)) tan) / (1.0 + (ω / (2.0 * Q)) tan)).
+	α := (ω / (2.0 * Q)) tan.
+	b := 0.5 * (1.0 - α) / (1.0 + α).
 	g := (0.5 + b) * ω cos.
 	a0 := 0.5 - b.
 	a1 := 0.0.
@@ -10129,12 +10144,13 @@ bp: frequency Q: Q
 	b1 := -2.0 * g.
 	b2 := 2.0 * b! !
 
-!Biquad methodsFor: 'accessing' stamp: 'len 28/Sep/2025 00:46:00'!
+!Biquad methodsFor: 'accessing' stamp: 'len 27/Jan/2026 22:17:39'!
 bs: frequency Q: Q
-	"Setup coefficients for band-stop filter."
-	| ω b g |
+	"Setup coefficients for a second order band-stop filter."
+	| ω α b g |
 	ω := Float twoPi * frequency.
-	b := 0.5 * ((1.0 - (ω / (2.0 * Q)) tan) / (1.0 + (ω / (2.0 * Q)) tan)).
+	α := (ω / (2.0 * Q)) tan.
+	b := 0.5 * (1.0 - α) / (1.0 + α).
 	g := (0.5 + b) * ω cos.
 	a0 := 0.5 + b.
 	a1 := -2.0*g.
@@ -10196,15 +10212,16 @@ frequencyResponse: ω
 	z := (Float twoPi i * ω) exp.
 	^ a0 + (a1*z) + (z*z*a2) / (1.0 + (z*b1) + (z*z*b2))! !
 
-!Biquad methodsFor: 'accessing' stamp: 'len 28/Sep/2025 00:52:00'!
+!Biquad methodsFor: 'accessing' stamp: 'len 27/Jan/2026 22:18:02'!
 hp: frequency Q: Q
-	"Setup coefficients for high-pass filter."
-	| ω b g |
+	"Setup coefficients for a second order high-pass filter."
+	| ω α b g |
 	ω := Float twoPi * frequency.
-	b := 0.5 * ((1.0 - (ω / (2.0 * Q) * ω sin)) / (1.0 + (ω / (2.0 * Q) * ω sin))).
+	α := ω sin / (Q * 2.0).
+	b := 0.5 * (1.0 - α) / (1.0 + α).
 	g := (0.5 + b) * ω cos.
-	a0 := (0.5 + b + g) / 2.0.
 	a1 := -0.5 - b - g.
+	a0 := a1 / -2.0.
 	a2 := a0.
 	b1 := -2.0 * g.
 	b2 := 2.0 * b! !
@@ -10233,28 +10250,28 @@ linkwitz_lp: frequency Q: Q
 	b1 := -2.0 * c squared + 2.0 / d.
 	b2 := -2.0 * c + c squared + 1.0 / d! !
 
-!Biquad methodsFor: 'accessing' stamp: 'len 16/Oct/2025 19:51:00'!
+!Biquad methodsFor: 'accessing' stamp: 'len 27/Jan/2026 22:18:13'!
 lp: frequency Q: Q
-	"Setup coefficients for low-pass filter with resonance Q."
-	| b0 α ω cos |
-	ω := Float twoPi * frequency. "normalized frequency f / fₛ"
-	cos := ω cos.
+	"Setup coefficients for a second order low-pass filter."
+	| ω α b g |
+	ω := Float twoPi * frequency.
 	α := ω sin / (Q * 2.0).
-	b0 := 1.0 + α.
-	a0 := 1.0 - cos / 2.0 / b0.
-	a1 := a0 * 2.0.
+	b := 0.5 * (1.0 - α) / (1.0 + α).
+	g := (0.5 + b) * ω cos.
+	a1 := 0.5 + b - g.
+	a0 := a1 / 2.0.
 	a2 := a0.
-	b1 := cos * -2.0 / b0.
-	b2 := 1.0 - α / b0! !
+	b1 := -2.0 * g.
+	b2 := 2.0 * b! !
 
-!Biquad methodsFor: 'accessing' stamp: 'len 25/Jan/2026 16:30:10'!
+!Biquad methodsFor: 'accessing' stamp: 'len 27/Jan/2026 22:22:41'!
 peaking: frequency Q: Q gain: gain
 	"Setup coefficients for a second order parametric/peaking filter with non-constant Q.
 	See also >>#bp:Q:."
-	| ω z b g |
+	| ω α b g |
 	ω := Float twoPi * frequency.
-	z := 4.0 / (1.0 + gain).
-	b := 0.5 * ((1.0 - (z * (ω / (2.0 * Q)) tan)) / (1.0 + (z * (ω / (2.0 * Q)) tan))).
+	α := 4.0 / (1.0 + gain) * (ω / (2.0 * Q)) tan.
+	b := 0.5 * (1.0 - α) / (1.0 + α).
 	g := (0.5 + b) * ω cos.
 	a0 := 0.5 - b.
 	a1 := 0.0.
@@ -10286,7 +10303,7 @@ modifiedWrite: inputBuffer read: outputBuffer
 		x1 := in.
 		outputBuffer at: i put: (y1 := out gate)]! !
 
-!Biquad methodsFor: 'processing' stamp: 'len 25/Jan/2026 19:59:03'!
+!Biquad methodsFor: 'processing' stamp: 'len 27/Jan/2026 21:53:22'!
 value: in
 	"Direct Form 1."
 	| out |
@@ -10296,7 +10313,7 @@ value: in
 	x1 := in.
 	^ y1 := out gate! !
 
-!Biquad methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:16:25'!
+!Biquad methodsFor: 'processing' stamp: 'len 27/Jan/2026 19:44:55'!
 write: inputBuffer read: outputBuffer
 	"Direct Form 1."
 	(c0 = 1.0 and: [d0 = 0.0]) ifFalse: [^ self modifiedWrite: inputBuffer read: outputBuffer].

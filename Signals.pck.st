@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 28 January 2026 at 5:11:14 pm'!
+'From Cuis7.7 [latest update: #7797] on 28 January 2026 at 8:52:19 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 424!
+!provides: 'Signals' 1 425!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -236,7 +236,7 @@ MoogLPF class
 
 !classDefinition: #MoogLadder category: #'Signals-VA Filters'!
 Filter subclass: #MoogLadder
-	instanceVariableNames: 's1 s2 s3 s4 k g G'
+	instanceVariableNames: 's1 s2 s3 s4 G outputLP4 outputLP3 outputLP2 outputLP1'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-VA Filters'!
@@ -1407,13 +1407,13 @@ It is based on the source code from CSound, which is based on the paper "Analyzi
 See https://www.musicdsp.org/en/latest/Filters/24-moog-vcf.html!
 
 !MoogLadder commentStamp: '<historical>' prior: 0!
-Virtual analog model of the 4th-order Moog Ladder (without any nonlinearities), which is arguably the most well-known ladder filter in analog synthesizers. Several 1st-order filters are cascaded in series. Feedback is then used, in part, to control the cutoff frequency and the resonance.
+Virtual analog model of the 4th-order Moog ladder low-pass filter. This uses the Zero-Delay Feedback (ZDF) approach from Vadim Zavalishin's "The Art of VA Filter Design", and uses the Topology-Preserving Transform (TPT).
 
-https://www.native-instruments.com/fileadmin/ni_media/downloads/pdf/VAFilterDesign_2.1.2.pdf
+See https://www.native-instruments.com/fileadmin/ni_media/downloads/pdf/VAFilterDesign_2.1.2.pdf
 
-This fix is based on Lorenzo Della Cioppa's correction to Pirkle's implementation; see this post: https://www.kvraudio.com/forum/viewtopic.php?f=33&t=571909.
+This includes Lorenzo Della Cioppa's correction to Pirkle's implementation; see this post: https://www.kvraudio.com/forum/viewtopic.php?f=33&t=571909.
 
-This is based on code from Faust https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
+See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 
 !OberheimSVF commentStamp: '<historical>' prior: 0!
 This is a virtual analog model of the Oberheim state variable filter. It has outputs for low-pass, high-pass, band-pass and normalized band-pass modes. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section Figure 7.5.!
@@ -2890,13 +2890,13 @@ setOutput: aBuffer
 reset
 	s1 := s2 := 0.0! !
 
-!SVF methodsFor: 'controlling' stamp: 'len 20/Nov/2025 16:26:00'!
+!SVF methodsFor: 'controlling' stamp: 'len 28/Jan/2026 20:26:57'!
 updateFilterCoefficients
 	g := (Float pi * frequency) tan.
 	r := 1.0 / Q.
-	h := 1.0 / (1.0 + ((r + 1.0) * g))! !
+	h := 1.0 / (1.0 + ((r + g) * g))! !
 
-!SVF methodsFor: 'processing' stamp: 'len 27/Jan/2026 02:36:57'!
+!SVF methodsFor: 'processing' stamp: 'len 28/Jan/2026 20:32:13'!
 tick
 	self update.
 	(outputLP isNil and: [outputHP isNil and: [outputBP isNil and: [outputBPN isNil]]]) ifTrue: [^ self].
@@ -2909,7 +2909,7 @@ tick
 	1 to: input size do: [:i|
 		| in hp bp lp |
 		in := input at: i.
-		hp := (in - (r * s1) - (g * s1) - s2) * h.
+		hp := (in - (s1 * (g + r)) - s2) * h.
 		bp := g * hp + s1.
 		s1 := (g * hp + bp) gate.
 		lp := g * bp + s2.
@@ -3144,35 +3144,88 @@ setOutputLP3: aBuffer
 setOutputLP4: aBuffer
 	outputLP4 := aBuffer! !
 
-!MoogLadder methodsFor: 'controlling' stamp: 'len 9/Jan/2026 20:22:27'!
+!MoogLadder methodsFor: 'controlling' stamp: 'len 28/Jan/2026 17:34:01'!
 reset
 	s1 := s2 := s3 := s4 := 0.0! !
 
-!MoogLadder methodsFor: 'controlling' stamp: 'len 20/Nov/2025 16:26:00'!
+!MoogLadder methodsFor: 'controlling' stamp: 'len 28/Jan/2026 20:07:26'!
 updateFilterCoefficients
-	| f invSqrt2 cf omegaWarp   |
-	f := frequency * 2.0. "normalized frequency f / fₛ"
-	invSqrt2 := 1.0 / 2.0 sqrt.
-	cf := 2.0 * (10.0 raisedTo: f * 3.0 + 1.0).
-	k := 4.0 * (Q - invSqrt2) / (25.0 - invSqrt2).
-	omegaWarp := (Float pi * cf "/ samplingRate") tan.
-	g := omegaWarp / (1.0 + omegaWarp).
-	G := g squared squared! !
+	| g |
+	g := (Float pi * frequency) tan.
+	G := g / (1.0 + g)! !
 
-!MoogLadder methodsFor: 'processing' stamp: 'len 13/Oct/2025 19:39:00'!
-value: in
-	| S u lp1 lp2 lp3 lp4 v1 v2 v3 v4 |
-	S := (g*(g*(g*s1 + s2) + s3) + s4) * (1 - g).
-	u := (in - (k * S)) / (1.0 + (k * G)).
-	v1 := g * (u - s1).
-	v2 := g * (lp1 - s2).
-	v3 := g * (lp2 - s3).
-	v4 := g * (lp3 - s4).
-	lp1 := v1 + s1.
-	lp2 := v2 + s2.
-	lp3 := v3 + s3.
-	lp4 := v4 + s4.
-	^ lp4! !
+!MoogLadder methodsFor: 'processing' stamp: 'len 28/Jan/2026 20:41:22'!
+tick
+	| k G4 |
+	self update.
+	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
+	input ifNil:
+		[outputLP4 ifNotNil: [outputLP4 atAllPut: 0.0].
+		outputLP3 ifNotNil: [outputLP3 atAllPut: 0.0].
+		outputLP2 ifNotNil: [outputLP2 atAllPut: 0.0].
+		outputLP1 ifNotNil: [outputLP1 atAllPut: 0.0].
+		^ self].
+	k := 4.15 * (1.0 - (1.0 / Q)) min: 3.99 max: 0.0.
+	G4 := G squared squared.
+	1 to: input size do: [:i|
+		| S in σ v1 v2 v3 v4 y1 y2 y3 y4 |
+		in := input at: i.
+		"Passband compensation to fix bass-drop at higher resonance:"
+		in := in * (k * 0.5 + 1.0). 
+		"Compute feedback and softclip it to prevent blowup:"
+		S := G*(G*(G*s1 + s2) + s3) + s4.
+		S := S * (1 - G). "<- this sounds better than softclip"
+"		S := S tanh."
+		σ := (in - (k * S)) / (1.0 + (k * G4)).
+		"Stage 1:"
+		v1 := (σ - s1) * G.
+		y1 := v1 + s1.
+		s1 := y1 + v1.
+		"Stage 2:"
+		v2 := (y1 - s2) * G.
+		y2 := v2 + s2.
+		s2 := y2 + v2.
+		"Stage 3:"
+		v3 := (y2 - s3) * G.
+		y3 := v3 + s3.
+		s3 := y3 + v3.
+		"Stage 4:"
+		v4 := (y3 - s4) * G.
+		y4 := v4 + s4.
+		s4 := y4 + v4.
+		outputLP4 ifNotNil: [outputLP4 at: i put: y4].
+		outputLP3 ifNotNil: [outputLP3 at: i put: y3].
+		outputLP2 ifNotNil: [outputLP2 at: i put: y2].
+		outputLP1 ifNotNil: [outputLP1 at: i put: y1]]! !
+
+!MoogLadder methodsFor: 'tools' stamp: 'len 28/Jan/2026 17:46:22'!
+display
+	^ super display mode: #LP! !
+
+!MoogLadder methodsFor: 'tools' stamp: 'len 28/Jan/2026 17:46:43'!
+patchable
+	^ super patchable
+		addAudioOutput: #setOutputLP4: label: 'LP4';
+		addAudioOutput: #setOutputLP3: label: 'LP3';
+		addAudioOutput: #setOutputLP2: label: 'LP2';
+		addAudioOutput: #setOutputLP1: label: 'LP1';
+		yourself! !
+
+!MoogLadder methodsFor: 'wiring' stamp: 'len 28/Jan/2026 17:47:30'!
+setOutputLP1: aBuffer
+	outputLP1 := aBuffer! !
+
+!MoogLadder methodsFor: 'wiring' stamp: 'len 28/Jan/2026 17:47:35'!
+setOutputLP2: aBuffer
+	outputLP2 := aBuffer! !
+
+!MoogLadder methodsFor: 'wiring' stamp: 'len 28/Jan/2026 17:47:38'!
+setOutputLP3: aBuffer
+	outputLP3 := aBuffer! !
+
+!MoogLadder methodsFor: 'wiring' stamp: 'len 28/Jan/2026 17:47:40'!
+setOutputLP4: aBuffer
+	outputLP4 := aBuffer! !
 
 !OberheimSVF methodsFor: 'controlling' stamp: 'len 16/Oct/2025 19:49:00'!
 reset

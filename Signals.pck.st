@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 27 January 2026 at 10:31:45 pm'!
+'From Cuis7.7 [latest update: #7797] on 28 January 2026 at 5:11:14 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 423!
+!provides: 'Signals' 1 424!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -164,6 +164,16 @@ Filter subclass: #BPF
 BPF class
 	instanceVariableNames: ''!
 
+!classDefinition: #BSF category: #'Signals-Filters'!
+Filter subclass: #BSF
+	instanceVariableNames: 'biquad output'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Filters'!
+!classDefinition: 'BSF class' category: #'Signals-Filters'!
+BSF class
+	instanceVariableNames: ''!
+
 !classDefinition: #HPF category: #'Signals-Filters'!
 Filter subclass: #HPF
 	instanceVariableNames: 'biquad output'
@@ -182,16 +192,6 @@ Filter subclass: #LPF
 	category: 'Signals-Filters'!
 !classDefinition: 'LPF class' category: #'Signals-Filters'!
 LPF class
-	instanceVariableNames: ''!
-
-!classDefinition: #Notch category: #'Signals-Filters'!
-Filter subclass: #Notch
-	instanceVariableNames: 'biquad output'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Filters'!
-!classDefinition: 'Notch class' category: #'Signals-Filters'!
-Notch class
 	instanceVariableNames: ''!
 
 !classDefinition: #SVF category: #'Signals-Filters'!
@@ -866,7 +866,7 @@ ASRControlMorph class
 
 !classDefinition: #XYControlMorph category: #'Signals-Morphic-Controls'!
 BoxMorph subclass: #XYControlMorph
-	instanceVariableNames: 'color controlX controlY'
+	instanceVariableNames: 'controlX controlY'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Controls'!
@@ -876,7 +876,7 @@ XYControlMorph class
 
 !classDefinition: #FilterControlMorph category: #'Signals-Morphic-Controls'!
 XYControlMorph subclass: #FilterControlMorph
-	instanceVariableNames: 'baseColor'
+	instanceVariableNames: 'color baseColor mode'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Controls'!
@@ -886,7 +886,7 @@ FilterControlMorph class
 
 !classDefinition: #LFOControlMorph category: #'Signals-Morphic-Controls'!
 XYControlMorph subclass: #LFOControlMorph
-	instanceVariableNames: 'lfo currentPhase'
+	instanceVariableNames: 'color lfo currentPhase'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Controls'!
@@ -1382,17 +1382,17 @@ Abstract superclass for filters that allow modulation and independent control of
 !BPF commentStamp: '<historical>' prior: 0!
 This is a second order (12 dB/Oct) band-pass filter based on a biquad.!
 
+!BSF commentStamp: '<historical>' prior: 0!
+This is a second order (12 dB/Oct) band-stop or notch filter based on a biquad.!
+
 !HPF commentStamp: '<historical>' prior: 0!
 This is a second order (12 dB/Oct) high-pass filter based on a biquad.!
 
 !LPF commentStamp: '<historical>' prior: 0!
 This is a second order (12 dB/Oct) low-pass filter based on a biquad.!
 
-!Notch commentStamp: '<historical>' prior: 0!
-This is a second order (12 dB/Oct) notch (band-stop) filter based on a biquad.!
-
 !SVF commentStamp: '<historical>' prior: 0!
-This is a state variable filter (SVF) with a 12 dB/Oct slope (2 poles). It has outputs for low-pass, high-pass, band-pass and normalized band-pass modes. Based on stmlib/dsp/filter.h by Emilie Gillet.!
+This is a state variable filter with a 12 dB/Oct slope (2 poles). It has outputs for low-pass, high-pass, band-pass and normalized band-pass modes. Based on stmlib/dsp/filter.h by Emilie Gillet.!
 
 !Korg35HPF commentStamp: '<historical>' prior: 0!
 This is a virtual analog model of the Korg 35 high-pass 12 dB/Oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.!
@@ -1537,8 +1537,20 @@ Instruments handle events such as notes and control changes and distribute them 
 
 Instruments can mix the output of the voices to stereo buffers, and can apply effects (for example, spreading the voices in stereo).!
 
-!Biquad commentStamp: 'len 25/Jan/2026 16:20:53' prior: 0!
-This is a biquad filter in direct form 1, modified with extra parameters c0 (amount of the filtered signal) and d1 (amount of the dry signal).!
+!Biquad commentStamp: 'len 27/Jan/2026 23:55:10' prior: 0!
+This is a biquad filter in direct form 1, modified with extra parameters c0 (amount of the filtered signal) and d1 (amount of the dry signal).
+
+There are methods to setup the following types of biquad filters:
+	∙ Standard LP/HP/BP/notch with a resonance parameter Q;
+	∙ Butterwordth LP/HP/BP/notch;
+	∙ Linkwitz-Riley LP/HP.
+
+Standard biquad filters are designed using the RBJ (Robert Bristow-Johnson) cookbook formulas. These give you direct control over center frequency and Q. They’re versatile general-purpose filters that work well for most EQ tasks, cutting or boosting specific frequencies, and creating resonant effects. The response shape is straightforward to predict and adjust.
+
+Butterworth filters are specifically designed for maximally flat passband response - meaning no ripples or peaks in the frequencies you want to keep. The tradeoff is a gentler rolloff slope compared to some other filter types. You’d choose Butterworth when you want the cleanest, most transparent filtering with minimal coloration in your passband. They’re excellent for crossovers or whenever you need precise frequency separation without introducing artifacts in the region you’re preserving.
+
+Linkwitz-Riley filters are built from cascaded Butterworth filters, designed specifically for crossover applications. Their key feature is that when you use complementary LP and HP Linkwitz-Riley filters at the same frequency, they sum to a flat magnitude response with no phase issues at the crossover point. This makes them ideal for splitting a signal and processing bands separately while maintaining coherent recombination.
+!
 
 !FFT commentStamp: '<historical>' prior: 0!
 This class implements the Fast Fourier Transform roughly as described on page 367
@@ -2063,13 +2075,17 @@ update
 addControl: aSymbol min: min max: max value: defaultValue
 	^ controls at: aSymbol put: ((Control min: min max: max value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
 
-!Module methodsFor: 'controls and modulations' stamp: 'len 4/Dec/2025 14:41:16'!
+!Module methodsFor: 'controls and modulations' stamp: 'len 28/Jan/2026 00:09:58'!
 addFrequencyControl: aSymbol value: defaultValue
-	^ (self addControl: aSymbol min: 0 semitonesToHertz max: 127 semitonesToHertz value: defaultValue) printer: #hertzPrintString! !
+	^ (self addControl: aSymbol min: 20.0 "Hz" max: 20000.0 "20 kHz" value: defaultValue) printer: #hertzPrintString! !
 
 !Module methodsFor: 'controls and modulations' stamp: 'len 27/Jan/2026 16:47:56'!
 addLogControl: aSymbol min: min max: max value: defaultValue
 	^ controls at: aSymbol put: ((Control min: min max: max curve: #exp value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
+
+!Module methodsFor: 'controls and modulations' stamp: 'len 28/Jan/2026 00:09:19'!
+addPitchControl: aSymbol value: defaultValue
+	^ (self addControl: aSymbol min: 0 semitonesToHertz max: 127 semitonesToHertz value: defaultValue) printer: #hertzPrintString! !
 
 !Module methodsFor: 'controls and modulations' stamp: 'len 27/Jan/2026 16:47:59'!
 addQuadraticControl: aSymbol min: min max: max value: defaultValue
@@ -2715,12 +2731,15 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #Q min: 0.5 max: 20.0 value: 0.707! !
 
-!Filter methodsFor: 'tools' stamp: 'len 19/Jan/2026 19:27:33'!
+!Filter methodsFor: 'tools' stamp: 'len 28/Jan/2026 16:58:19'!
+display
+	^ FilterControlMorph new frequency: (controls at: #frequency); Q: (controls at: #Q)! !
+
+!Filter methodsFor: 'tools' stamp: 'len 28/Jan/2026 16:58:26'!
 patchable
-	| answer display |
+	| answer |
 	answer := PatchableMorph new model: self.
-	display := FilterControlMorph new frequency: (controls at: #frequency); Q: (controls at: #Q).
-	answer body addMorph: display.
+	answer body addMorph: self display.
 	answer
 		addAudioInput: #setInput: label: 'In';
 		addControlInput: #modulateFrequency: label: 'Frequency';
@@ -2751,6 +2770,10 @@ tick
 	self update.
 	biquad write: input read: output! !
 
+!BPF methodsFor: 'tools' stamp: 'len 28/Jan/2026 16:58:53'!
+display
+	^ super display mode: #BP! !
+
 !BPF methodsFor: 'tools' stamp: 'len 25/Jan/2026 22:18:45'!
 patchable
 	^ super patchable
@@ -2758,6 +2781,40 @@ patchable
 		yourself! !
 
 !BPF methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:40:16'!
+setOutput: aBuffer
+	output := aBuffer! !
+
+!BSF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:41:35'!
+reset
+	biquad reset! !
+
+!BSF methodsFor: 'controlling' stamp: 'len 27/Jan/2026 21:52:39'!
+updateFilterCoefficients
+	biquad bs: frequency Q: Q! !
+
+!BSF methodsFor: 'initialization' stamp: 'len 25/Jan/2026 22:41:35'!
+initialize
+	biquad := Biquad new.
+	super initialize! !
+
+!BSF methodsFor: 'processing' stamp: 'len 27/Jan/2026 19:35:50'!
+tick
+	output ifNil: [^ self].
+	input ifNil: [output atAllPut: 0.0. ^ self].
+	self update.
+	biquad write: input read: output! !
+
+!BSF methodsFor: 'tools' stamp: 'len 28/Jan/2026 16:59:03'!
+display
+	^ super display mode: #BS! !
+
+!BSF methodsFor: 'tools' stamp: 'len 25/Jan/2026 22:41:35'!
+patchable
+	^ super patchable
+		addAudioOutput: #setOutput: label: 'Out';
+		yourself! !
+
+!BSF methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:40:32'!
 setOutput: aBuffer
 	output := aBuffer! !
 
@@ -2780,6 +2837,10 @@ tick
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	self update.
 	biquad write: input read: output! !
+
+!HPF methodsFor: 'tools' stamp: 'len 28/Jan/2026 16:59:11'!
+display
+	^ super display mode: #HP! !
 
 !HPF methodsFor: 'tools' stamp: 'len 25/Jan/2026 22:18:06'!
 patchable
@@ -2811,6 +2872,10 @@ tick
 	self update.
 	biquad write: input read: output! !
 
+!LPF methodsFor: 'tools' stamp: 'len 28/Jan/2026 16:59:21'!
+display
+	^ super display mode: #LP! !
+
 !LPF methodsFor: 'tools' stamp: 'len 25/Jan/2026 22:17:54'!
 patchable
 	^ super patchable
@@ -2818,36 +2883,6 @@ patchable
 		yourself! !
 
 !LPF methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:40:25'!
-setOutput: aBuffer
-	output := aBuffer! !
-
-!Notch methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:41:35'!
-reset
-	biquad reset! !
-
-!Notch methodsFor: 'controlling' stamp: 'len 27/Jan/2026 21:52:39'!
-updateFilterCoefficients
-	biquad bs: frequency Q: Q! !
-
-!Notch methodsFor: 'initialization' stamp: 'len 25/Jan/2026 22:41:35'!
-initialize
-	biquad := Biquad new.
-	super initialize! !
-
-!Notch methodsFor: 'processing' stamp: 'len 27/Jan/2026 19:35:50'!
-tick
-	output ifNil: [^ self].
-	input ifNil: [output atAllPut: 0.0. ^ self].
-	self update.
-	biquad write: input read: output! !
-
-!Notch methodsFor: 'tools' stamp: 'len 25/Jan/2026 22:41:35'!
-patchable
-	^ super patchable
-		addAudioOutput: #setOutput: label: 'Out';
-		yourself! !
-
-!Notch methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:40:32'!
 setOutput: aBuffer
 	output := aBuffer! !
 
@@ -2957,6 +2992,10 @@ value: in
 	s3 := ((s3In - s3) * α + v3) gate.
 	^ v3! !
 
+!Korg35HPF methodsFor: 'tools' stamp: 'len 28/Jan/2026 16:59:37'!
+display
+	^ super display mode: #HP! !
+
 !Korg35HPF methodsFor: 'tools' stamp: 'len 19/Jan/2026 19:27:55'!
 patchable
 	^ super patchable
@@ -3012,6 +3051,10 @@ value: in
 	s2 := ((resonanceFeedback - s2) * α + v2) gate.
 	s3 := ((feedbackIn - s3) * α + v3) gate.
 	^ v3! !
+
+!Korg35LPF methodsFor: 'tools' stamp: 'len 28/Jan/2026 16:59:43'!
+display
+	^ super display mode: #LP! !
 
 !Korg35LPF methodsFor: 'tools' stamp: 'len 21/Jan/2026 05:09:37'!
 patchable
@@ -3071,6 +3114,10 @@ tick
 		outputLP3 ifNotNil: [outputLP3 at: i put: y3].
 		outputLP2 ifNotNil: [outputLP2 at: i put: y2].
 		outputLP1 ifNotNil: [outputLP1 at: i put: y1]]! !
+
+!MoogLPF methodsFor: 'tools' stamp: 'len 28/Jan/2026 16:59:54'!
+display
+	^ super display mode: #LP! !
 
 !MoogLPF methodsFor: 'tools' stamp: 'len 19/Jan/2026 19:27:55'!
 patchable
@@ -6904,18 +6951,9 @@ mouseScroll: aMouseEvent localPosition: localEventPosition
 balloonText
 	^ controlX printedBaseValueWithLabel, ', ', controlY printedBaseValueWithLabel! !
 
-!XYControlMorph methodsFor: 'initialization' stamp: 'len 4/Dec/2025 16:34:09'!
-defaultColor
-	^ Color white! !
-
 !XYControlMorph methodsFor: 'initialization' stamp: 'len 4/Dec/2025 16:42:29'!
 defaultExtent
 	^ `128@64`! !
-
-!XYControlMorph methodsFor: 'initialization' stamp: 'len 4/Dec/2025 16:34:06'!
-initialize
-	super initialize.
-	color := self defaultColor! !
 
 !XYControlMorph methodsFor: 'private' stamp: 'len 27/Jan/2026 16:35:47'!
 adjustXBy: aNumber
@@ -6939,46 +6977,115 @@ Q: aControl
 frequency: aControl
 	self controlX: aControl! !
 
-!FilterControlMorph methodsFor: 'drawing' stamp: 'len 6/Dec/2025 14:26:29'!
-drawOn: aCanvas
-	| w h f notch y p1 p2 p3 δ |
+!FilterControlMorph methodsFor: 'accessing' stamp: 'len 28/Jan/2026 16:55:14'!
+mode: aSymbol
+	mode := aSymbol! !
+
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 28/Jan/2026 16:41:57'!
+drawBPOn: aCanvas frequency: freq Q: Q color: aColor
+	| w h x y notch bw δ p1 p2 p3 |
 	w := self morphWidth.
-	h := self morphHeight - 2.
+	h := self morphHeight - 2.0.
+	x := freq * w.
 	y := h / 2.0.
-	δ := 20 @ 0.
+	bw := self notchWidth * (1.2 - Q abs).
+	δ := bw / 5.0 @ 0.0.
+	notch := Q * h * 0.5.
+	p1 := (x - (bw / 2.0)) @ y.
+	p2 := x @ (y - notch).
+	p3 := (x + (bw / 2.0)) @ y.
+	aCanvas strokeWidth: 2.0 color: aColor do:
+		[aCanvas
+			moveTo: (p1 x min: 0.0) @ y;
+			lineTo: p1;
+			cubicBezierTo: p2 control1: p1 + δ control2: p2 - δ;
+			cubicBezierTo: p3 control1: p2 + δ control2: p3 - δ;
+			lineTo: (p3 x max: w) @ y]! !
+
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 28/Jan/2026 16:42:18'!
+drawBSOn: aCanvas frequency: freq Q: Q color: aColor
+	self drawBPOn: aCanvas frequency: freq Q: Q negated color: aColor! !
+
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 28/Jan/2026 16:54:21'!
+drawHPOn: aCanvas frequency: freq Q: Q color: aColor
+	| w h x y notch bw δ p1 p2 p3 |
+	w := self morphWidth.
+	h := self morphHeight - 2.0.
+	x := freq * w.
+	y := h / 2.0.
+	bw := self notchWidth * (1.2 - Q abs).
+	δ := bw / 5.0 @ 0.0.
+	notch := Q * h * 0.5.
+	p1 := (x - (bw / 2.0)) @ h.
+	p2 := x @ (y - notch).
+	p3 := x + (bw / 2.0) + (Q*bw) @ y.
+	aCanvas strokeWidth: 2.0 color: aColor do:
+		[aCanvas
+			moveTo: (p1 x min: 0.0) @ h;
+			lineTo: p1;
+			cubicBezierTo: p2 control1: p1 + δ control2: p2 - δ;
+			cubicBezierTo: p3 control1: p2 + δ control2: p3 - (δ*1.5);
+			lineTo: (p3 x max: w) @ y]! !
+
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 28/Jan/2026 16:51:13'!
+drawLPOn: aCanvas frequency: freq Q: Q color: aColor
+	| w h x y notch bw δ p1 p2 p3 |
+	w := self morphWidth.
+	h := self morphHeight - 2.0.
+	x := freq * w.
+	y := h / 2.0.
+	bw := self notchWidth * (1.2 - Q abs).
+	δ := bw / 5.0 @ 0.0.
+	notch := Q * h * 0.5.
+	p1 := (x - (bw / 2.0)) @ y.
+	p2 := x @ (y - notch).
+	p3 := x + (bw / 2.0) + (Q*bw) @ h.
+	aCanvas strokeWidth: 2.0 color: aColor do:
+		[aCanvas
+			moveTo: (p1 x min: 0.0) @ y;
+			lineTo: p1;
+			cubicBezierTo: p2 control1: p1 + δ control2: p2 - δ;
+			cubicBezierTo: p3 control1: p2 + δ control2: p3 - (δ*1.5);
+			lineTo: (p3 x max: w) @ h]! !
+
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 28/Jan/2026 17:04:30'!
+drawOn: aCanvas
+	| prevClipRect |
+	prevClipRect := aCanvas clipRect.
+	aCanvas setClipRect: ((self externalizeBoundsToWorld: self localBounds) intersect: prevClipRect).
 	"draw the base values first, unless it's not modulated:"
 	(controlX modulation = 0.0 and: [controlY modulation = 0.0]) ifFalse:
-		[f := controlX basePosition * (w - 80) + 80.
-		notch := controlY basePosition * h * 0.45.
-		p1 := (f - 80) @ y.
-		p2 := (f - 45) @ (y - notch).
-		p3 := f @ h.
-		aCanvas strokeWidth: 1 color: baseColor "dashedStrokeBits: 2r100000000" do:
-			[aCanvas
-				moveTo: 0 @ y;
-				lineTo: p1;
-				cubicBezierTo: p2 control1: p1 + (δ*1) control2: p2 - δ;
-				cubicBezierTo: p3 control1: p2 + δ control2: f @ y - (δ*1.5)]].
+		[self drawOn: aCanvas frequency: controlX basePosition Q: controlY basePosition color: baseColor].
 	"then the modulated values:"
-	f := controlX modulatedPosition * (w - 80) + 80.
-	notch := controlY modulatedPosition * h * 0.45.
-	p1 := (f - 80) @ y.
-	p2 := (f - 45) @ (y - notch).
-	p3 := f @ h.
-	aCanvas strokeWidth: 2 color: color do:
-		[aCanvas
-			moveTo: 0 @ y;
-			lineTo: p1;
-			cubicBezierTo: p2 control1: p1 + (δ*1) control2: p2 - δ;
-			cubicBezierTo: p3 control1: p2 + δ control2: f @ y - (δ*1.5)]! !
+	self drawOn: aCanvas frequency: controlX modulatedPosition Q: controlY modulatedPosition color: color.
+	aCanvas setClipRect: prevClipRect! !
 
-!FilterControlMorph methodsFor: 'initialization' stamp: 'len 17/Jan/2026 16:57:32'!
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 28/Jan/2026 16:57:41'!
+drawOn: aCanvas frequency: freq Q: Q color: aColor
+	mode = #LP ifTrue: [^ self drawLPOn: aCanvas frequency: freq Q: Q color: aColor].
+	mode = #HP ifTrue: [^ self drawHPOn: aCanvas frequency: freq Q: Q color: aColor].
+	mode = #BP ifTrue: [^ self drawBPOn: aCanvas frequency: freq Q: Q color: aColor].
+	mode = #BS ifTrue: [^ self drawBSOn: aCanvas frequency: freq Q: Q color: aColor].
+	self drawBPOn: aCanvas frequency: freq Q: Q color: aColor! !
+
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 28/Jan/2026 16:14:59'!
+notchWidth
+	^ 80.0! !
+
+!FilterControlMorph methodsFor: 'initialization' stamp: 'len 28/Jan/2026 17:09:41'!
+defaultExtent
+	^ `144@96`! !
+
+!FilterControlMorph methodsFor: 'initialization' stamp: 'len 28/Jan/2026 15:34:38'!
 initialize
 	super initialize.
 	color := Color white.
 	baseColor := Color lightGray.
-"	self frequency:​ (Control frequency: 10000.0).
-	self Q: (Control min: 0.5 max: 20.0 value: 0.707)"! !
+	lp := hp := bp := bs := false! !
+
+!FilterControlMorph methodsFor: 'private' stamp: 'len 28/Jan/2026 17:07:46'!
+adjustYBy: aNumber
+	super adjustYBy: (mode = #BS ifTrue: [aNumber negated] ifFalse: [aNumber])! !
 
 !LFOControlMorph methodsFor: 'accessing' stamp: 'len 19/Jan/2026 18:57:51'!
 lfo: anLFO
@@ -7031,7 +7138,7 @@ waveAt: t
 defaultExtent
 	^ `144@64`! !
 
-!LFOControlMorph methodsFor: 'initialization' stamp: 'len 1/Dec/2025 18:06:00'!
+!LFOControlMorph methodsFor: 'initialization' stamp: 'len 28/Jan/2026 15:32:35'!
 initialize
 	super initialize.
 	color := PatchMorph lfoColor.
@@ -10226,7 +10333,7 @@ hp: frequency Q: Q
 	b1 := -2.0 * g.
 	b2 := 2.0 * b! !
 
-!Biquad methodsFor: 'accessing' stamp: 'len 25/Jan/2026 17:03:24'!
+!Biquad methodsFor: 'accessing' stamp: 'len 27/Jan/2026 22:40:13'!
 linkwitz_hp: frequency Q: Q
 	"Setup coefficients for a second order Linkwitz/Riley high-pass filter."
 	| c d |

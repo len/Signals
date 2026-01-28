@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 28 January 2026 at 8:52:19 pm'!
+'From Cuis7.7 [latest update: #7797] on 28 January 2026 at 11:11:13 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 425!
+!provides: 'Signals' 1 426!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -3154,9 +3154,9 @@ updateFilterCoefficients
 	g := (Float pi * frequency) tan.
 	G := g / (1.0 + g)! !
 
-!MoogLadder methodsFor: 'processing' stamp: 'len 28/Jan/2026 20:41:22'!
+!MoogLadder methodsFor: 'processing' stamp: 'len 28/Jan/2026 22:48:40'!
 tick
-	| k G4 |
+	| k γ |
 	self update.
 	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
 	input ifNil:
@@ -3166,7 +3166,7 @@ tick
 		outputLP1 ifNotNil: [outputLP1 atAllPut: 0.0].
 		^ self].
 	k := 4.15 * (1.0 - (1.0 / Q)) min: 3.99 max: 0.0.
-	G4 := G squared squared.
+	γ := G squared squared.
 	1 to: input size do: [:i|
 		| S in σ v1 v2 v3 v4 y1 y2 y3 y4 |
 		in := input at: i.
@@ -3175,8 +3175,9 @@ tick
 		"Compute feedback and softclip it to prevent blowup:"
 		S := G*(G*(G*s1 + s2) + s3) + s4.
 		S := S * (1 - G). "<- this sounds better than softclip"
-"		S := S tanh."
-		σ := (in - (k * S)) / (1.0 + (k * G4)).
+		σ := (in - (k * S)) / (1.0 + (k * γ)).
+"		drive := 0.8.
+		σ := ((in * drive) tanh - (k * S tanh)) / (1.0 + (k * γ))."
 		"Stage 1:"
 		v1 := (σ - s1) * G.
 		y1 := v1 + s1.
@@ -3240,14 +3241,15 @@ updateFilterCoefficients
 	feedback := r + g.
 	alpha0 := 1.0 / (1.0 + (feedback * g))! !
 
-!OberheimSVF methodsFor: 'processing' stamp: 'len 11/Jan/2026 21:47:48'!
+!OberheimSVF methodsFor: 'processing' stamp: 'len 28/Jan/2026 21:22:19'!
 tick
 	self update.
-	(outputLP isNil and: [outputHP isNil and: [outputBP isNil]]) ifTrue: [^ self].
+	(outputLP isNil and: [outputHP isNil and: [outputBP isNil and: [outputBPN isNil]]]) ifTrue: [^ self].
 	input ifNil:
 		[outputLP ifNotNil: [outputLP atAllPut: 0.0].
 		outputHP ifNotNil: [outputHP atAllPut: 0.0].
 		outputBP ifNotNil: [outputBP atAllPut: 0.0].
+		outputBPN ifNotNil: [outputBPN atAllPut: 0.0].
 		^ self].
 	1 to: input size do: [:i|
 		| in v0 hp v2 v3 bp v5 |
@@ -3584,9 +3586,9 @@ modulatePitch: aNumber
 setNote: aNumber
 	note := aNumber! !
 
-!TunedGenerator methodsFor: 'tools' stamp: 'len 4/Jan/2026 14:55:03'!
+!TunedGenerator methodsFor: 'tools' stamp: 'len 28/Jan/2026 23:08:13'!
 panel
-	^​ ControlPanel new addMorph: (TextControlMorph control: (controls at: #tune))! !
+	^​ ControlPanel new addMorph: ((TextControlMorph control: (controls at: #tune)) fineStepFactor: 0.01 "1 cent")! !
 
 !TunedGenerator methodsFor: 'tools' stamp: 'len 23/Jan/2026 23:57:49'!
 patchable
@@ -6271,6 +6273,14 @@ defaultColor
 defaultFontSize
 	^ 14! !
 
+!ControlMorph methodsFor: 'accessing' stamp: 'len 28/Jan/2026 23:07:48'!
+fineStepFactor
+	^ self valueOfProperty: #fineStepFactor ifAbsent: [0.1]! !
+
+!ControlMorph methodsFor: 'accessing' stamp: 'len 28/Jan/2026 23:07:04'!
+fineStepFactor: aNumber
+	self setProperty: #fineStepFactor toValue: aNumber! !
+
 !ControlMorph methodsFor: 'accessing' stamp: 'len 19/Nov/2025 19:08:00'!
 inactiveColor
 	^ self hasKeyboardFocus ifTrue: [Color veryLightGray] ifFalse: [Color lightGray]! !
@@ -6295,7 +6305,7 @@ update: anObject
 handlesMouseScroll: anEvent
 	^ anEvent anyModifierKeyPressed not! !
 
-!ControlMorph methodsFor: 'events' stamp: 'len 27/Jan/2026 16:34:58'!
+!ControlMorph methodsFor: 'events' stamp: 'len 28/Jan/2026 23:07:31'!
 keyStroke: aKeyboardEvent
 	aKeyboardEvent isEsc ifTrue:
 		[aKeyboardEvent wasHandled: true.
@@ -6304,19 +6314,19 @@ keyStroke: aKeyboardEvent
 		^ self].
 	(aKeyboardEvent isArrowUp or: [aKeyboardEvent isArrowRight]) ifTrue:
 		[aKeyboardEvent wasHandled: true.
-		self adjustControlBy: self stepSize * (aKeyboardEvent shiftPressed ifTrue: [0.01] ifFalse: [1.0]).
+		self adjustControlBy: self stepSize * (aKeyboardEvent shiftPressed ifTrue: [self fineStepFactor] ifFalse: [1.0]).
 		^ self].
 	(aKeyboardEvent isArrowDown or: [aKeyboardEvent isArrowLeft]) ifTrue:
 		[aKeyboardEvent wasHandled: true.
-		self adjustControlBy: self stepSize * (aKeyboardEvent shiftPressed ifTrue: [-0.01] ifFalse: [-1.0]).
+		self adjustControlBy: self stepSize * (aKeyboardEvent shiftPressed ifTrue: [self fineStepFactor negated] ifFalse: [-1.0]).
 		^ self].
 	^ super keyStroke: aKeyboardEvent! !
 
-!ControlMorph methodsFor: 'events' stamp: 'len 19/Jan/2026 15:20:24'!
+!ControlMorph methodsFor: 'events' stamp: 'len 28/Jan/2026 23:07:41'!
 mouseScroll: aMouseEvent localPosition: localEventPosition
 	| step |
 	step := self stepSize.
-	aMouseEvent shiftPressed ifTrue: [step := step * 0.01].
+	aMouseEvent shiftPressed ifTrue: [step := step * self fineStepFactor].
 	self adjustControlBy: ((aMouseEvent direction = #up or: [aMouseEvent direction = #right]) ifTrue: [step negated] ifFalse: [step])! !
 
 !ControlMorph methodsFor: 'focus handling' stamp: 'len 19/Nov/2025 19:02:00'!
@@ -6727,12 +6737,12 @@ drawOn: aCanvas
 maximumSegmentWidth
 	^ self morphWidth / 2.0! !
 
-!ADControlMorph methodsFor: 'events' stamp: 'len 27/Jan/2026 16:35:11'!
+!ADControlMorph methodsFor: 'events' stamp: 'len 28/Jan/2026 23:03:55'!
 mouseScroll: anEvent localPosition: localEventPosition
 	| a step control |
 	a := attack basePosition * self maximumSegmentWidth.
 	step := self stepSize.
-	anEvent shiftPressed ifTrue: [step := step * 0.01].
+	anEvent shiftPressed ifTrue: [step := step * 0.1].
 	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
 	localEventPosition x < a ifTrue: [control := attack] ifFalse: [control := decay].
 	control basePosition: control basePosition + step.
@@ -6789,11 +6799,11 @@ drawOn: aCanvas
 maximumSegmentWidth
 	^ self morphWidth / 3.0! !
 
-!ADSRControlMorph methodsFor: 'events' stamp: 'len 27/Jan/2026 16:35:23'!
+!ADSRControlMorph methodsFor: 'events' stamp: 'len 28/Jan/2026 23:03:51'!
 mouseScroll: anEvent localPosition: localEventPosition
 	| step w a d s r control |
 	step := self stepSize.
-	anEvent shiftPressed ifTrue: [step := step * 0.01].
+	anEvent shiftPressed ifTrue: [step := step * 0.1].
 	anEvent isVertical ifTrue:
 		[anEvent direction = #up ifTrue: [step := step negated].
 		sustain basePosition: sustain basePosition + step.
@@ -6845,13 +6855,13 @@ drawOn: aCanvas
 maximumSegmentWidth
 	^ self morphWidth / 3.0! !
 
-!AHDControlMorph methodsFor: 'events' stamp: 'len 27/Jan/2026 16:35:30'!
+!AHDControlMorph methodsFor: 'events' stamp: 'len 28/Jan/2026 23:03:47'!
 mouseScroll: anEvent localPosition: localEventPosition
 	| a h step control |
 	a := attack basePosition * self maximumSegmentWidth.
 	h := hold basePosition * self maximumSegmentWidth.
 	step := self stepSize.
-	anEvent shiftPressed ifTrue: [step := step * 0.01].
+	anEvent shiftPressed ifTrue: [step := step * 0.1].
 	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
 	control := localEventPosition x < a ifTrue: [attack] ifFalse: [localEventPosition x < (a + h) ifTrue: [hold] ifFalse: [decay]].
 	control basePosition: control basePosition + step.
@@ -6875,12 +6885,12 @@ drawOn: aCanvas
 maximumSegmentWidth
 	^ self morphWidth / 2.0! !
 
-!ARControlMorph methodsFor: 'events' stamp: 'len 27/Jan/2026 16:35:35'!
+!ARControlMorph methodsFor: 'events' stamp: 'len 28/Jan/2026 23:03:43'!
 mouseScroll: anEvent localPosition: localEventPosition
 	| a step control |
 	a := attack basePosition * self maximumSegmentWidth.
 	step := self stepSize.
-	anEvent shiftPressed ifTrue: [step := step * 0.01].
+	anEvent shiftPressed ifTrue: [step := step * 0.1].
 	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
 	localEventPosition x < a ifTrue: [control := attack] ifFalse: [control := release].
 	control basePosition: control basePosition + step.
@@ -6928,11 +6938,11 @@ drawOn: aCanvas
 maximumSegmentWidth
 	^ self morphWidth / 2.0! !
 
-!ASRControlMorph methodsFor: 'events' stamp: 'len 27/Jan/2026 16:35:41'!
+!ASRControlMorph methodsFor: 'events' stamp: 'len 28/Jan/2026 23:03:38'!
 mouseScroll: anEvent localPosition: localEventPosition
 	| step w a s r control |
 	step := self stepSize.
-	anEvent shiftPressed ifTrue: [step := step * 0.01].
+	anEvent shiftPressed ifTrue: [step := step * 0.1].
 	anEvent isVertical ifTrue:
 		[anEvent direction = #up ifTrue: [step := step negated].
 		sustain basePosition: sustain basePosition + step.
@@ -6959,9 +6969,9 @@ controlY: aControl
 	controlY := aControl.
 	aControl addDependent: self! !
 
-!XYControlMorph methodsFor: 'accessing' stamp: 'len 19/Jan/2026 15:16:23'!
+!XYControlMorph methodsFor: 'accessing' stamp: 'len 28/Jan/2026 23:00:10'!
 stepSize
-	^ 1 / 128.0! !
+	^ 1.0 / 128.0! !
 
 !XYControlMorph methodsFor: 'dependency mechanism' stamp: 'len 20/Jan/2026 15:18:05'!
 update: anObject
@@ -6975,12 +6985,12 @@ requiresVectorCanvas
 handlesMouseScroll: anEvent
 	^ anEvent anyModifierKeyPressed not! !
 
-!XYControlMorph methodsFor: 'events' stamp: 'len 19/Jan/2026 15:32:09'!
+!XYControlMorph methodsFor: 'events' stamp: 'len 28/Jan/2026 23:03:21'!
 keyStroke: aKeyboardEvent
 	| step |
 	aKeyboardEvent isEsc ifTrue:
 		[aKeyboardEvent wasHandled: true. controlX resetToDefault. controlY resetToDefault. ^ self].
-	step := self stepSize * (aKeyboardEvent shiftPressed ifTrue: [0.01] ifFalse: [1.0]).
+	step := self stepSize * (aKeyboardEvent shiftPressed ifTrue: [0.1] ifFalse: [1.0]).
 	aKeyboardEvent isArrowUp ifTrue:
 		[aKeyboardEvent wasHandled: true. self adjustYBy: step. ^ self].
 	aKeyboardEvent isArrowDown ifTrue:
@@ -6990,11 +7000,11 @@ keyStroke: aKeyboardEvent
 	aKeyboardEvent isArrowRight ifTrue:
 		[aKeyboardEvent wasHandled: true. self adjustXBy: step]! !
 
-!XYControlMorph methodsFor: 'events' stamp: 'len 19/Jan/2026 15:21:27'!
+!XYControlMorph methodsFor: 'events' stamp: 'len 28/Jan/2026 22:49:00'!
 mouseScroll: aMouseEvent localPosition: localEventPosition
 	| step |
 	step := self stepSize.
-	aMouseEvent shiftPressed ifTrue: [step := step * 0.01].
+	aMouseEvent shiftPressed ifTrue: [step := step * 0.1].
 	aMouseEvent direction = #left ifTrue: [self adjustXBy: step. ^ self].
 	aMouseEvent direction = #right ifTrue: [self adjustXBy: step negated. ^ self].
 	aMouseEvent direction = #down ifTrue: [self adjustYBy: step. ^ self].

@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 31 January 2026 at 3:01:46 pm'!
+'From Cuis7.7 [latest update: #7797] on 31 January 2026 at 4:47:14 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 430!
+!provides: 'Signals' 1 431!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -4681,7 +4681,7 @@ tick
 		delayLine write: out * feedback + in.
 		output at: i put: in * (1.0 - mix) + (out * mix)]! !
 
-!Overdrive methodsFor: 'accessing' stamp: 'len 1/Oct/2025 20:02:00'!
+!Overdrive methodsFor: 'accessing' stamp: 'len 31/Jan/2026 16:18:20'!
 drive: aNumber
 	"Set a drive amount from 0 to 2."
 	| drive_2 pre_gain_a pre_gain_b drive_squashed |
@@ -4690,7 +4690,7 @@ drive: aNumber
 	pre_gain_a := drive * 0.5.
 	pre_gain_b := drive_2 * drive_2 * drive * 24.0.
 	pregain := pre_gain_a + ((pre_gain_b - pre_gain_a) * drive_2).
-	drive_squashed := drive * (2.0 - drive).
+	drive_squashed := drive * (2.0001 - drive). "2.0001 in order to avoid discontinuity at drive=2.0"
 	postgain := 1.0 / (0.33 + (drive_squashed * (pregain - 0.33))) softclip! !
 
 !Overdrive methodsFor: 'controlling' stamp: 'len 16/Jan/2026 23:54:04'!
@@ -5020,7 +5020,7 @@ patchable
 		addAudioOutput: #setOutput: label: 'Out'.
 	^ answer! !
 
-!EQ3 methodsFor: 'as yet unclassified' stamp: 'len 31/Jan/2026 03:39:10'!
+!EQ3 methodsFor: 'initialization' stamp: 'len 31/Jan/2026 03:39:10'!
 initialize
 	super initialize.
 	aux := Float32Array new: self class blockSize.
@@ -5029,14 +5029,14 @@ initialize
 	lowPassMid := Biquad new linkwitz_lp: 2500.0 / self class sampleRate Q: 0.707.
 	highPassHigh := Biquad new linkwitz_hp: 2500.0 / self class sampleRate Q: 0.707! !
 
-!EQ3 methodsFor: 'as yet unclassified' stamp: 'len 31/Jan/2026 03:44:24'!
+!EQ3 methodsFor: 'initialization' stamp: 'len 31/Jan/2026 03:44:24'!
 initializeControls
 	super initializeControls.
 	self addVolumeControl: #low min: 0.001 max: 2.0 value: 1.0.
 	self addVolumeControl: #mid min: 0.001 max: 2.0 value: 1.0.
 	self addVolumeControl: #high min: 0.001 max: 2.0 value: 1.0! !
 
-!EQ3 methodsFor: 'as yet unclassified' stamp: 'len 31/Jan/2026 03:38:52'!
+!EQ3 methodsFor: 'processing' stamp: 'len 31/Jan/2026 03:38:52'!
 tick
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
@@ -5219,7 +5219,7 @@ modulateResonance: aNumber
 reset
 	s1 := s2 := s3 := 0.0! !
 
-!Korg35HPF methodsFor: 'controlling' stamp: 'len 31/Jan/2026 14:58:17'!
+!Korg35HPF methodsFor: 'controlling' stamp: 'len 31/Jan/2026 15:44:50'!
 update
 	"See Will. C Pinkle, 'Designing Software Synthesizer Plug-ins in C++', section 12.7.1, equation 12.15."
 	| newFrequency newResonance g |
@@ -5235,7 +5235,7 @@ update
 	"the following two lines are different in the lowpass version:"
 	β₃ := 1.0 / (1.0 + g).
 	β₂ := -1.0 * α / (1.0 + g).
-	α₀ := 1.0 / (1.0 - ((1.0 - α)*k*α) max: 1.0e-9) "avoid too small denominator"! !
+	α₀ := 1.0 / (1.0 - ((1.0 - α)*k*α) "max: 1.0e-9") "avoid too small denominator"! !
 
 !Korg35HPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 14:01:06'!
 initialize
@@ -5248,7 +5248,7 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #resonance min: 0.0 max: 1.0 value: 0.1! !
 
-!Korg35HPF methodsFor: 'processing' stamp: 'len 31/Jan/2026 14:53:49'!
+!Korg35HPF methodsFor: 'processing' stamp: 'len 31/Jan/2026 15:41:18'!
 value: in
 	| v1 u1 feedback hp1 hp2 res_signal u2 v2 v3 y |
 	v1 := (in - s1) * α.
@@ -5291,7 +5291,7 @@ modulateResonance: aNumber
 reset
 	s1 := s2 := s3 := 0.0! !
 
-!Korg35LPF methodsFor: 'controlling' stamp: 'len 31/Jan/2026 14:57:59'!
+!Korg35LPF methodsFor: 'controlling' stamp: 'len 31/Jan/2026 15:31:08'!
 update
 	"See Will. C Pinkle, 'Designing Software Synthesizer Plug-ins in C++', section 12.7.1, equation 12.15."
 	| newFrequency newResonance g |
@@ -5307,7 +5307,7 @@ update
 	"the following two lines are different in the highpass version:"
 	β₃ := k * (1.0 - α) / (1.0 + g). "NOTE: in Pinkle's book β₃ and β₂ are reversed, this is as they are defined in https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib"
 	β₂ := -1.0 / (1.0 + g).
-	α₀ := 1.0 / (1.0 - ((1.0 - α)*k*α) max: 1.0e-9) "avoid too small denominator"! !
+	α₀ := 1.0 / (1.0 - ((1.0 - α)*k*α) "max: 1.0e-9") "avoid too small denominator"! !
 
 !Korg35LPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 14:00:59'!
 initialize
@@ -5320,7 +5320,7 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #resonance min: 0.0 max: 1.0 value: 0.1! !
 
-!Korg35LPF methodsFor: 'processing' stamp: 'len 31/Jan/2026 14:56:22'!
+!Korg35LPF methodsFor: 'processing' stamp: 'len 31/Jan/2026 15:38:45'!
 value: in
 	| v1 u1 feedback v2 v3 u3 y |
 	v1 := (in - s1) * α.
@@ -5333,7 +5333,7 @@ value: in
 	s1 := u1 + v1.
 	s2 := v2 + s2.
 	s3 := u3 + v3.
-	^ y! !
+	^ y tanh! !
 
 !Korg35LPF methodsFor: 'tools' stamp: 'len 30/Jan/2026 15:18:25'!
 patchable
@@ -7702,6 +7702,10 @@ wantsSteps
 adjustXBy: aNumber
 	super adjustXBy: aNumber * -4.0! !
 
+!PinMorph methodsFor: 'accessing' stamp: 'len 31/Jan/2026 16:28:27'!
+balloonText
+	^ self name! !
+
 !PinMorph methodsFor: 'accessing' stamp: 'len 25/Jan/2026 17:30:40'!
 borderWidth
 	^ focused ifTrue: [4.0] ifFalse: [2.0]! !
@@ -7879,9 +7883,14 @@ dragLeave: event
 		aHandMorph submorphs do:
 			[:each| (each isKindOf: ConnectorMorph) ifTrue: [each beDashed]]]! !
 
-!AudioInputPinMorph methodsFor: 'connections' stamp: 'len 27/Nov/2025 18:18:00'!
+!AudioInputPinMorph methodsFor: 'accessing' stamp: 'len 31/Jan/2026 16:35:51'!
+balloonText
+	voltage > 0.0001 ifFalse: [^ self name].
+	^ self name, ' (', voltage linearToDecibelsFSPrintString, ')'! !
+
+!AudioInputPinMorph methodsFor: 'connections' stamp: 'len 31/Jan/2026 16:19:40'!
 uninstallDisconnectedSignals
-	self isConnected ifFalse: [self model perform: selector with: nil]! !
+	self isConnected ifFalse: [voltage := 0.0. self model perform: selector with: nil]! !
 
 !AudioInputPinMorph methodsFor: 'dropping/grabbing' stamp: 'len 19/Jan/2026 19:31:12'!
 wantsDroppedMorph: aMorph event: evt
@@ -7979,6 +7988,11 @@ initialize
 	connections := #().
 	wires := #()! !
 
+!AudioOutputPinMorph methodsFor: 'accessing' stamp: 'len 31/Jan/2026 16:36:01'!
+balloonText
+	voltage > 0.0001 ifFalse: [^ self name].
+	^ self name, ' (', voltage linearToDecibelsFSPrintString, ')'! !
+
 !AudioOutputPinMorph methodsFor: 'connections' stamp: 'len 26/Nov/2025 18:12:00'!
 installConnectionTo: anInput
 	self model perform: selector with: buffer. "perhaps it's already set, unless this is the first connection"
@@ -7991,9 +8005,9 @@ uninstallConnectionTo: anInput
 "	anInput model perform: anInput selector with: nil.
 	connections isEmpty ifTrue: [self model perform: selector with: nil]"! !
 
-!AudioOutputPinMorph methodsFor: 'connections' stamp: 'len 27/Nov/2025 18:18:00'!
+!AudioOutputPinMorph methodsFor: 'connections' stamp: 'len 31/Jan/2026 16:19:57'!
 uninstallDisconnectedSignals
-	self isConnected ifFalse: [self model perform: selector with: nil]! !
+	self isConnected ifFalse: [voltage := 0.0. self model perform: selector with: nil]! !
 
 !AudioOutputPinMorph methodsFor: 'initialization' stamp: 'len 7/Dec/2025 00:22:35'!
 initialize
@@ -10061,31 +10075,31 @@ patch
 setTitle: aString
 	title contents: aString! !
 
-!PatchableMorph methodsFor: 'building' stamp: 'len 19/Jan/2026 19:30:48'!
+!PatchableMorph methodsFor: 'building' stamp: 'len 31/Jan/2026 15:50:11'!
 addAudioInput: aSymbol label: labelString
 	| pin |
-	pin := AudioInputPinMorph new selector: aSymbol; name: labelString; setBalloonText: labelString.
+	pin := AudioInputPinMorph new selector: aSymbol; name: labelString.
 	inputsArea addMorph: pin.
 	^ pin! !
 
-!PatchableMorph methodsFor: 'building' stamp: 'len 19/Jan/2026 19:31:12'!
+!PatchableMorph methodsFor: 'building' stamp: 'len 31/Jan/2026 15:50:03'!
 addAudioOutput: aSymbol label: labelString
 	| pin |
-	pin := AudioOutputPinMorph new selector: aSymbol; name: labelString; setBalloonText: labelString.
+	pin := AudioOutputPinMorph new selector: aSymbol; name: labelString.
 	outputsArea addMorph: pin.
 	^ pin! !
 
-!PatchableMorph methodsFor: 'building' stamp: 'len 19/Jan/2026 19:30:57'!
+!PatchableMorph methodsFor: 'building' stamp: 'len 31/Jan/2026 15:49:57'!
 addControlInput: aSymbol label: labelString
 	| pin |
-	pin := ControlInputPinMorph new selector: aSymbol; name: labelString; setBalloonText: labelString.
+	pin := ControlInputPinMorph new selector: aSymbol; name: labelString.
 	inputsArea addMorph: pin.
 	^ pin! !
 
-!PatchableMorph methodsFor: 'building' stamp: 'len 19/Jan/2026 19:31:19'!
+!PatchableMorph methodsFor: 'building' stamp: 'len 31/Jan/2026 15:49:50'!
 addControlOutput: aSymbol label: labelString
 	| pin |
-	pin := ControlOutputPinMorph new selector: aSymbol; name: labelString; setBalloonText: labelString.
+	pin := ControlOutputPinMorph new selector: aSymbol; name: labelString.
 	outputsArea addMorph: pin.
 	^ pin! !
 
@@ -12580,6 +12594,12 @@ camelSeparatedWords
 centsToRatio
 	^ (self / 100.0) semitonesToRatio! !
 
+!Number methodsFor: '*signals' stamp: 'len 31/Jan/2026 16:32:44'!
+decibelsFSPrintString
+	self < -59.9 ifTrue: [^ '-∞ dBFS'].
+	self abs < 0.1 ifTrue: [^ '0 dBFS'].
+	^ (self positive ifTrue: ['+'] ifFalse: ['']), (self printStringFractionDigits: 1), ' dBFS'! !
+
 !Number methodsFor: '*signals' stamp: 'len 24/Jan/2026 15:56:54'!
 decibelsPrintString
 	self < -59.9 ifTrue: [^ '-∞ dB'].
@@ -12607,6 +12627,10 @@ linearToDecibels
 	x := self abs.
 	x < 1.0e-12 ifTrue: [^ -120.0].
 	^ 20.0 * x log! !
+
+!Number methodsFor: '*signals' stamp: 'len 31/Jan/2026 16:32:57'!
+linearToDecibelsFSPrintString
+	^ self linearToDecibels decibelsFSPrintString! !
 
 !Number methodsFor: '*signals' stamp: 'len 28/Nov/2025 13:02:00'!
 linearToDecibelsPrintString

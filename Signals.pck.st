@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 28 January 2026 at 11:11:13 pm'!
+'From Cuis7.7 [latest update: #7797] on 31 January 2026 at 3:01:46 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 426!
+!provides: 'Signals' 1 430!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -36,7 +36,7 @@ AudioBuffer class
 
 !classDefinition: #Control category: #'Signals-Kernel'!
 ActiveModel subclass: #Control
-	instanceVariableNames: 'min max curve base modulation lastValue printer default label'
+	instanceVariableNames: 'min max curve base modulation lastValue printer default label coarseStep fineStep'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Kernel'!
@@ -114,14 +114,14 @@ EG subclass: #ASR
 ASR class
 	instanceVariableNames: ''!
 
-!classDefinition: #Clock category: #'Signals-Etc'!
-Module subclass: #Clock
-	instanceVariableNames: 'tempo phase increment syncTime1 syncTime2'
+!classDefinition: #DiodeLadder category: #'Signals-Etc'!
+Module subclass: #DiodeLadder
+	instanceVariableNames: 's1 s2 s3 s4 ρ G1 G2 G3 G4 γ k input outputLP4 outputLP3 outputLP2 outputLP1'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Etc'!
-!classDefinition: 'Clock class' category: #'Signals-Etc'!
-Clock class
+!classDefinition: 'DiodeLadder class' category: #'Signals-Etc'!
+DiodeLadder class
 	instanceVariableNames: ''!
 
 !classDefinition: #Operator category: #'Signals-Etc'!
@@ -144,114 +144,14 @@ Module subclass: #Chorus
 Chorus class
 	instanceVariableNames: ''!
 
-!classDefinition: #Filter category: #'Signals-Filters'!
-Module subclass: #Filter
-	instanceVariableNames: 'input frequency Q'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Filters'!
-!classDefinition: 'Filter class' category: #'Signals-Filters'!
-Filter class
-	instanceVariableNames: ''!
-
-!classDefinition: #BPF category: #'Signals-Filters'!
-Filter subclass: #BPF
-	instanceVariableNames: 'biquad output'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Filters'!
-!classDefinition: 'BPF class' category: #'Signals-Filters'!
-BPF class
-	instanceVariableNames: ''!
-
-!classDefinition: #BSF category: #'Signals-Filters'!
-Filter subclass: #BSF
-	instanceVariableNames: 'biquad output'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Filters'!
-!classDefinition: 'BSF class' category: #'Signals-Filters'!
-BSF class
-	instanceVariableNames: ''!
-
-!classDefinition: #HPF category: #'Signals-Filters'!
-Filter subclass: #HPF
-	instanceVariableNames: 'biquad output'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Filters'!
-!classDefinition: 'HPF class' category: #'Signals-Filters'!
-HPF class
-	instanceVariableNames: ''!
-
-!classDefinition: #LPF category: #'Signals-Filters'!
-Filter subclass: #LPF
-	instanceVariableNames: 'biquad output'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Filters'!
-!classDefinition: 'LPF class' category: #'Signals-Filters'!
-LPF class
-	instanceVariableNames: ''!
-
 !classDefinition: #SVF category: #'Signals-Filters'!
-Filter subclass: #SVF
-	instanceVariableNames: 's1 s2 r g h outputLP outputHP outputBP outputBPN'
+Module subclass: #SVF
+	instanceVariableNames: 's1 s2 r g h frequency Q input outputLP outputHP outputBP outputBPN'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Filters'!
 !classDefinition: 'SVF class' category: #'Signals-Filters'!
 SVF class
-	instanceVariableNames: ''!
-
-!classDefinition: #Korg35HPF category: #'Signals-VA Filters'!
-Filter subclass: #Korg35HPF
-	instanceVariableNames: 's1 s2 s3 α α₀ K β₂ β₃ output'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-VA Filters'!
-!classDefinition: 'Korg35HPF class' category: #'Signals-VA Filters'!
-Korg35HPF class
-	instanceVariableNames: ''!
-
-!classDefinition: #Korg35LPF category: #'Signals-VA Filters'!
-Filter subclass: #Korg35LPF
-	instanceVariableNames: 's1 s2 s3 α α₀ K β₂ β₃ output'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-VA Filters'!
-!classDefinition: 'Korg35LPF class' category: #'Signals-VA Filters'!
-Korg35LPF class
-	instanceVariableNames: ''!
-
-!classDefinition: #MoogLPF category: #'Signals-VA Filters'!
-Filter subclass: #MoogLPF
-	instanceVariableNames: 'p r k y0 y1 y2 y3 y4 outputLP4 outputLP3 outputLP2 outputLP1'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-VA Filters'!
-!classDefinition: 'MoogLPF class' category: #'Signals-VA Filters'!
-MoogLPF class
-	instanceVariableNames: ''!
-
-!classDefinition: #MoogLadder category: #'Signals-VA Filters'!
-Filter subclass: #MoogLadder
-	instanceVariableNames: 's1 s2 s3 s4 G outputLP4 outputLP3 outputLP2 outputLP1'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-VA Filters'!
-!classDefinition: 'MoogLadder class' category: #'Signals-VA Filters'!
-MoogLadder class
-	instanceVariableNames: ''!
-
-!classDefinition: #OberheimSVF category: #'Signals-VA Filters'!
-Filter subclass: #OberheimSVF
-	instanceVariableNames: 's1 s2 g feedback alpha0 outputLP outputHP outputBP outputBPN'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-VA Filters'!
-!classDefinition: 'OberheimSVF class' category: #'Signals-VA Filters'!
-OberheimSVF class
 	instanceVariableNames: ''!
 
 !classDefinition: #AudioIn category: #'Signals-IO'!
@@ -454,6 +354,16 @@ Module subclass: #Transform
 Transform class
 	instanceVariableNames: ''!
 
+!classDefinition: #DiodeLadder2 category: #'Signals-Etc'!
+Transform subclass: #DiodeLadder2
+	instanceVariableNames: 's1 s2 s3 s4 vc1 vc2 vc3 vc4 vout k g'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Etc'!
+!classDefinition: 'DiodeLadder2 class' category: #'Signals-Etc'!
+DiodeLadder2 class
+	instanceVariableNames: ''!
+
 !classDefinition: #Allpass category: #'Signals-FX'!
 Transform subclass: #Allpass
 	instanceVariableNames: 'delayLine tap gain'
@@ -554,14 +464,54 @@ Transform subclass: #Wavefolder
 Wavefolder class
 	instanceVariableNames: ''!
 
-!classDefinition: #EQ2 category: #'Signals-Filters'!
-Transform subclass: #EQ2
-	instanceVariableNames: 'lowShelfBiquad highShelfBiquad lowShelfFrequency highShelfFrequency lowShelfGain highShelfGain'
+!classDefinition: #BPF category: #'Signals-Filters'!
+Transform subclass: #BPF
+	instanceVariableNames: 'biquad frequency bandwidth'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Filters'!
-!classDefinition: 'EQ2 class' category: #'Signals-Filters'!
-EQ2 class
+!classDefinition: 'BPF class' category: #'Signals-Filters'!
+BPF class
+	instanceVariableNames: ''!
+
+!classDefinition: #BSF category: #'Signals-Filters'!
+Transform subclass: #BSF
+	instanceVariableNames: 'biquad frequency bandwidth'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Filters'!
+!classDefinition: 'BSF class' category: #'Signals-Filters'!
+BSF class
+	instanceVariableNames: ''!
+
+!classDefinition: #EQ3 category: #'Signals-Filters'!
+Transform subclass: #EQ3
+	instanceVariableNames: 'lowPassLow highPassMid lowPassMid highPassHigh aux'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Filters'!
+!classDefinition: 'EQ3 class' category: #'Signals-Filters'!
+EQ3 class
+	instanceVariableNames: ''!
+
+!classDefinition: #HPF category: #'Signals-Filters'!
+Transform subclass: #HPF
+	instanceVariableNames: 'biquad frequency Q'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Filters'!
+!classDefinition: 'HPF class' category: #'Signals-Filters'!
+HPF class
+	instanceVariableNames: ''!
+
+!classDefinition: #LPF category: #'Signals-Filters'!
+Transform subclass: #LPF
+	instanceVariableNames: 'biquad frequency Q'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Filters'!
+!classDefinition: 'LPF class' category: #'Signals-Filters'!
+LPF class
 	instanceVariableNames: ''!
 
 !classDefinition: #Limiter category: #'Signals-Levels'!
@@ -582,6 +532,26 @@ Transform subclass: #MultiTapDelayLine
 	category: 'Signals-Support'!
 !classDefinition: 'MultiTapDelayLine class' category: #'Signals-Support'!
 MultiTapDelayLine class
+	instanceVariableNames: ''!
+
+!classDefinition: #Korg35HPF category: #'Signals-VA Filters'!
+Transform subclass: #Korg35HPF
+	instanceVariableNames: 's1 s2 s3 α α₀ β₂ β₃ k frequency resonance'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-VA Filters'!
+!classDefinition: 'Korg35HPF class' category: #'Signals-VA Filters'!
+Korg35HPF class
+	instanceVariableNames: ''!
+
+!classDefinition: #Korg35LPF category: #'Signals-VA Filters'!
+Transform subclass: #Korg35LPF
+	instanceVariableNames: 's1 s2 s3 α α₀ β₂ β₃ k frequency resonance'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-VA Filters'!
+!classDefinition: 'Korg35LPF class' category: #'Signals-VA Filters'!
+Korg35LPF class
 	instanceVariableNames: ''!
 
 !classDefinition: #Amp category: #'Signals-Levels'!
@@ -662,6 +632,36 @@ Module subclass: #LFO
 	category: 'Signals-Modulation'!
 !classDefinition: 'LFO class' category: #'Signals-Modulation'!
 LFO class
+	instanceVariableNames: ''!
+
+!classDefinition: #MoogLPF category: #'Signals-VA Filters'!
+Module subclass: #MoogLPF
+	instanceVariableNames: 'p r k y0 y1 y2 y3 y4 frequency resonance input outputLP4 outputLP3 outputLP2 outputLP1'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-VA Filters'!
+!classDefinition: 'MoogLPF class' category: #'Signals-VA Filters'!
+MoogLPF class
+	instanceVariableNames: ''!
+
+!classDefinition: #MoogLadder category: #'Signals-VA Filters'!
+Module subclass: #MoogLadder
+	instanceVariableNames: 's1 s2 s3 s4 G frequency resonance input outputLP4 outputLP3 outputLP2 outputLP1'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-VA Filters'!
+!classDefinition: 'MoogLadder class' category: #'Signals-VA Filters'!
+MoogLadder class
+	instanceVariableNames: ''!
+
+!classDefinition: #OberheimSVF category: #'Signals-VA Filters'!
+Module subclass: #OberheimSVF
+	instanceVariableNames: 's1 s2 g feedback alpha0 r frequency resonance input outputLP outputHP outputBP outputBS'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-VA Filters'!
+!classDefinition: 'OberheimSVF class' category: #'Signals-VA Filters'!
+OberheimSVF class
 	instanceVariableNames: ''!
 
 !classDefinition: #ControlPanel category: #'Signals-Morphic-Controls'!
@@ -1254,6 +1254,16 @@ Object subclass: #DelayLineTap
 DelayLineTap class
 	instanceVariableNames: ''!
 
+!classDefinition: #Downsampler2x category: #'Signals-Support'!
+Object subclass: #Downsampler2x
+	instanceVariableNames: 'd0 d1 d2 d3'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Support'!
+!classDefinition: 'Downsampler2x class' category: #'Signals-Support'!
+Downsampler2x class
+	instanceVariableNames: ''!
+
 !classDefinition: #FFT category: #'Signals-Support'!
 Object subclass: #FFT
 	instanceVariableNames: 'nu n sinTable permTable realData imagData window'
@@ -1282,6 +1292,16 @@ Object subclass: #Sound
 	category: 'Signals-Support'!
 !classDefinition: 'Sound class' category: #'Signals-Support'!
 Sound class
+	instanceVariableNames: ''!
+
+!classDefinition: #Upsampler2x category: #'Signals-Support'!
+Object subclass: #Upsampler2x
+	instanceVariableNames: 'u0 u1 u2 u3'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Support'!
+!classDefinition: 'Upsampler2x class' category: #'Signals-Support'!
+Upsampler2x class
 	instanceVariableNames: ''!
 
 !classDefinition: #WAVFileReader category: #'Signals-Support'!
@@ -1376,47 +1396,15 @@ Attack-Release envelope generator.!
 !ASR commentStamp: '<historical>' prior: 0!
 Attack-Sustain-Release envelope generator.!
 
-!Filter commentStamp: '<historical>' prior: 0!
-Abstract superclass for filters that allow modulation and independent control of cutoff frequency and Q.!
-
-!BPF commentStamp: '<historical>' prior: 0!
-This is a second order (12 dB/Oct) band-pass filter based on a biquad.!
-
-!BSF commentStamp: '<historical>' prior: 0!
-This is a second order (12 dB/Oct) band-stop or notch filter based on a biquad.!
-
-!HPF commentStamp: '<historical>' prior: 0!
-This is a second order (12 dB/Oct) high-pass filter based on a biquad.!
-
-!LPF commentStamp: '<historical>' prior: 0!
-This is a second order (12 dB/Oct) low-pass filter based on a biquad.!
-
-!SVF commentStamp: '<historical>' prior: 0!
-This is a state variable filter with a 12 dB/Oct slope (2 poles). It has outputs for low-pass, high-pass, band-pass and normalized band-pass modes. Based on stmlib/dsp/filter.h by Emilie Gillet.!
-
-!Korg35HPF commentStamp: '<historical>' prior: 0!
-This is a virtual analog model of the Korg 35 high-pass 12 dB/Oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.!
-
-!Korg35LPF commentStamp: '<historical>' prior: 0!
-This is a virtual analog model of the Korg 35 low-pass 12 dB/Oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.!
-
-!MoogLPF commentStamp: '<historical>' prior: 0!
-This is a low pass filter inspired by the classic Moog ladder filter. It's a low-pass 24 dB/Oct (4 poles) resonant filter.
-It is based on the source code from CSound, which is based on the paper "Analyzing the Moog VCF with considerations for digital implementations" by Stilson and Smith (CCRMA).
-
-See https://www.musicdsp.org/en/latest/Filters/24-moog-vcf.html!
-
-!MoogLadder commentStamp: '<historical>' prior: 0!
-Virtual analog model of the 4th-order Moog ladder low-pass filter. This uses the Zero-Delay Feedback (ZDF) approach from Vadim Zavalishin's "The Art of VA Filter Design", and uses the Topology-Preserving Transform (TPT).
+!DiodeLadder commentStamp: '<historical>' prior: 0!
+Virtual analog model of the 4th-order TB-303 diode ladder low-pass filter. This uses the Zero-Delay Feedback (ZDF) approach from Vadim Zavalishin's "The Art of VA Filter Design", and uses the Topology-Preserving Transform (TPT).
 
 See https://www.native-instruments.com/fileadmin/ni_media/downloads/pdf/VAFilterDesign_2.1.2.pdf
 
-This includes Lorenzo Della Cioppa's correction to Pirkle's implementation; see this post: https://www.kvraudio.com/forum/viewtopic.php?f=33&t=571909.
-
 See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 
-!OberheimSVF commentStamp: '<historical>' prior: 0!
-This is a virtual analog model of the Oberheim state variable filter. It has outputs for low-pass, high-pass, band-pass and normalized band-pass modes. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section Figure 7.5.!
+!SVF commentStamp: '<historical>' prior: 0!
+This is a state variable filter with a 12 dB/Oct slope (2 poles). It has outputs for low-pass, high-pass, band-pass and normalized band-pass modes. Based on stmlib/dsp/filter.h by Emilie Gillet.!
 
 !Generator commentStamp: '<historical>' prior: 0!
 A signal generator produces a stream of samples from a real-valued function of time (typically a mono audio signal). It is similar to a Stream, but its values are 32-bit floats. See subclasses.!
@@ -1469,6 +1457,9 @@ A pink noise generator. The color parameter controls how much white noise is fil
 !Transform commentStamp: '<historical>' prior: 0!
 A (unary) transform has one audio input and one audio output, and modifies the audio signal sample-by-sample (for each input sample, it applies a function to it producing an output sample).!
 
+!DiodeLadder2 commentStamp: '<historical>' prior: 0!
+This is a virtual analog model of the Korg 35 low-pass 12 dB/Oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.!
+
 !Decimator commentStamp: '<historical>' prior: 0!
 A simple bitcrusher and sample rate reducer.!
 
@@ -1485,8 +1476,35 @@ Basic wavefolder. Amplitude of input determines level of folding. Amplitudes of 
 
 Based on code from DaisySP by Nick Donaldson.!
 
+!BPF commentStamp: '<historical>' prior: 0!
+This is a second order (12 dB/Oct) band-pass filter based on a biquad.!
+
+!BSF commentStamp: '<historical>' prior: 0!
+This is a second order (12 dB/Oct) band-stop or notch filter based on a biquad.!
+
+!EQ3 commentStamp: '<historical>' prior: 0!
+Three-band DJ-style equalizer. This is a crossover-based EQ that splits the audio into three fixed frequency bands (low, mid, high) using Linkwitz-Riley filters. Each band has an independent gain control. Crossover frequencies: Low/Mid at 250 Hz, and Mid/High at 2.5 kHz.
+
+The implementation uses 4 second-order Linkwitz-Riley biquad filters (Q=0.707) configured as two crossover points, with parallel band processing and summing.!
+
+!HPF commentStamp: '<historical>' prior: 0!
+This is a second order (12 dB/Oct) high-pass filter based on a biquad.!
+
+!LPF commentStamp: '<historical>' prior: 0!
+This is a second order (12 dB/Oct) low-pass filter based on a biquad.!
+
 !MultiTapDelayLine commentStamp: '<historical>' prior: 0!
 This is based on Squeak's original ReverbSound by John Maloney.!
+
+!Korg35HPF commentStamp: '<historical>' prior: 0!
+This is a virtual analog model of the Korg 35 high-pass 12 dB/Oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.
+
+See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
+
+!Korg35LPF commentStamp: '<historical>' prior: 0!
+This is a virtual analog model of the Korg 35 low-pass 12 dB/Oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.
+
+See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 
 !Amp commentStamp: '<historical>' prior: 0!
 An amplifier just multiplies the input signal by a gain parameter, typically modulated by an envolope. When the gain parameter changes, the actual gain is varied smoothly by sample to avoid clicks or zipper noise.!
@@ -1530,6 +1548,26 @@ An attenuverter is similar to an attenuator, but it can also invert the polarity
 !LFO commentStamp: '<historical>' prior: 0!
 Low frequency oscillator.!
 
+!MoogLPF commentStamp: '<historical>' prior: 0!
+This is a low pass filter inspired by the classic Moog ladder filter. It's a low-pass 24 dB/Oct (4 poles) resonant filter.
+It is based on the source code from CSound, which is based on the paper "Analyzing the Moog VCF with considerations for digital implementations" by Stilson and Smith (CCRMA).
+
+See https://www.musicdsp.org/en/latest/Filters/24-moog-vcf.html!
+
+!MoogLadder commentStamp: '<historical>' prior: 0!
+Virtual analog model of the 4th-order Moog ladder low-pass filter. It uses the Zero-Delay Feedback (ZDF) approach from Vadim Zavalishin's "The Art of VA Filter Design", and the Topology-Preserving Transform (TPT).
+
+See https://www.native-instruments.com/fileadmin/ni_media/downloads/pdf/VAFilterDesign_2.1.2.pdf
+
+This includes Lorenzo Della Cioppa's correction to Pirkle's implementation; see this post: https://www.kvraudio.com/forum/viewtopic.php?f=33&t=571909.
+
+See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
+
+!OberheimSVF commentStamp: '<historical>' prior: 0!
+Virtual analog model of the Oberheim state variable filter. It has low-pass, high-pass, band-pass and band-stop outputs. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section Figure 7.5.
+
+See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
+
 !Instrument2 commentStamp: '<historical>' prior: 0!
 An instrument has one or more voices, each of them monophonic. A monophonic instrument has only one voice.
 
@@ -1552,6 +1590,20 @@ Butterworth filters are specifically designed for maximally flat passband respon
 Linkwitz-Riley filters are built from cascaded Butterworth filters, designed specifically for crossover applications. Their key feature is that when you use complementary LP and HP Linkwitz-Riley filters at the same frequency, they sum to a flat magnitude response with no phase issues at the crossover point. This makes them ideal for splitting a signal and processing bands separately while maintaining coherent recombination.
 !
 
+!Downsampler2x commentStamp: '<historical>' prior: 0!
+This is a polyphase 2x oversampler designed to reduce aliasing in non-linear DSP modules (e.g. distortion, saturation or virtual analog filters).
+
+This class uses a Polyphase Half-Band FIR filter (13-tap) to increase the internal sample rate. By processing signals at 2x the original frequency, we push the Nyquist limit higher, allowing harmonics to exist without folding back (aliasing) into the audible spectrum.
+
+The polyphase implementation is highly efficient:
+1. It avoids zero-stuffing (doesn't multiply by 0.0),
+2. It splits the work intwo two paths (an FIR branch and a pure delay branch),
+3. It maintains internal state for both upsampling and downsampling.
+
+Usage: 'anOversampler oversampling: inputSample do: [:subsample| ... ]'. Two subsamples are derived from the input sample, then the block is evaluated twice (once per subsample), and the result is downsampled and returned.
+
+Note: this process introduces a fixed latency (group delay) of approximately 6 samples. If mixing this signal with a 'dry' signal, the dry path must be delayed by the same amount to maintain phase alignment.!
+
 !FFT commentStamp: '<historical>' prior: 0!
 This class implements the Fast Fourier Transform roughly as described on page 367
 of "Theory and Application of Digital Signal Processing" by Rabiner and Gold.
@@ -1560,6 +1612,20 @@ Each instance caches tables used for transforming a given size (n = 2^nu samples
 It would have been cleaner using complex numbers, but often the data is all real.!
 
 !Oversampler2x commentStamp: '<historical>' prior: 0!
+This is a polyphase 2x oversampler designed to reduce aliasing in non-linear DSP modules (e.g. distortion, saturation or virtual analog filters).
+
+This class uses a Polyphase Half-Band FIR filter (13-tap) to increase the internal sample rate. By processing signals at 2x the original frequency, we push the Nyquist limit higher, allowing harmonics to exist without folding back (aliasing) into the audible spectrum.
+
+The polyphase implementation is highly efficient:
+1. It avoids zero-stuffing (doesn't multiply by 0.0),
+2. It splits the work intwo two paths (an FIR branch and a pure delay branch),
+3. It maintains internal state for both upsampling and downsampling.
+
+Usage: 'anOversampler oversampling: inputSample do: [:subsample| ... ]'. Two subsamples are derived from the input sample, then the block is evaluated twice (once per subsample), and the result is downsampled and returned.
+
+Note: this process introduces a fixed latency (group delay) of approximately 6 samples. If mixing this signal with a 'dry' signal, the dry path must be delayed by the same amount to maintain phase alignment.!
+
+!Upsampler2x commentStamp: '<historical>' prior: 0!
 This is a polyphase 2x oversampler designed to reduce aliasing in non-linear DSP modules (e.g. distortion, saturation or virtual analog filters).
 
 This class uses a Polyphase Half-Band FIR filter (13-tap) to increase the internal sample rate. By processing signals at 2x the original frequency, we push the Nyquist limit higher, allowing harmonics to exist without folding back (aliasing) into the audible spectrum.
@@ -1905,29 +1971,45 @@ newStereoSampleCount: anInteger
 	^ self basicNew: anInteger
 ! !
 
-!Control methodsFor: 'control and modulation' stamp: 'len 3/Oct/2025 00:43:00'!
-apply
-	| newValue |
-	(newValue := self value) = lastValue ifFalse: [lastValue := newValue. self changed: newValue]! !
-
-!Control methodsFor: 'control and modulation' stamp: 'len 28/Nov/2025 11:01:00'!
+!Control methodsFor: 'accessing' stamp: 'len 28/Nov/2025 11:01:00'!
 basePosition
 	"Answer the base value of the receiver mapped to a number between 0.0 and 1.0."
 	^ base! !
 
-!Control methodsFor: 'control and modulation' stamp: 'len 28/Nov/2025 11:01:00'!
+!Control methodsFor: 'accessing' stamp: 'len 28/Nov/2025 11:01:00'!
 basePosition: aNumber
 	"Set the base value of the receiver from a number between 0.0 and 1.0."
 	base := aNumber min: 1.0 max: 0.0.
 	self changed: self baseValue! !
 
-!Control methodsFor: 'control and modulation' stamp: 'len 28/Nov/2025 11:02:00'!
+!Control methodsFor: 'accessing' stamp: 'len 28/Nov/2025 11:02:00'!
 baseValue
 	^ self valueFromPosition: base! !
 
-!Control methodsFor: 'control and modulation' stamp: 'len 28/Nov/2025 11:04:00'!
+!Control methodsFor: 'accessing' stamp: 'len 28/Nov/2025 11:04:00'!
 baseValue: anObject
 	self basePosition: (self positionFromValue: anObject)! !
+
+!Control methodsFor: 'accessing' stamp: 'len 29/Jan/2026 18:42:54'!
+coarseStep
+	^ coarseStep! !
+
+!Control methodsFor: 'accessing' stamp: 'len 29/Jan/2026 18:43:19'!
+coarseStep: aNumber
+	coarseStep := aNumber! !
+
+!Control methodsFor: 'accessing' stamp: 'len 29/Jan/2026 18:43:04'!
+fineStep
+	^ fineStep! !
+
+!Control methodsFor: 'accessing' stamp: 'len 29/Jan/2026 18:43:12'!
+fineStep: aNumber
+	fineStep := aNumber! !
+
+!Control methodsFor: 'control and modulation' stamp: 'len 3/Oct/2025 00:43:00'!
+apply
+	| newValue |
+	(newValue := self value) = lastValue ifFalse: [lastValue := newValue. self changed: newValue]! !
 
 !Control methodsFor: 'control and modulation' stamp: 'len 8/Dec/2025 18:05:22'!
 clear
@@ -1959,14 +2041,16 @@ resetToDefault
 value
 	^ self modulatedValue! !
 
-!Control methodsFor: 'initialization' stamp: 'len 14/Oct/2025 15:20:00'!
+!Control methodsFor: 'initialization' stamp: 'len 29/Jan/2026 19:06:05'!
 initialize
 	super initialize.
 	lastValue := base := 0.0.
 	min := -1.0.
 	max := 1.0.
 	modulation := 0.0.
-	curve := #linear! !
+	curve := #linear.
+	coarseStep := 1.0 / 128.0.
+	fineStep := coarseStep * 0.1! !
 
 !Control methodsFor: 'printing' stamp: 'len 27/Jan/2026 16:28:29'!
 label: aString
@@ -1994,10 +2078,6 @@ printer: aSymbol
 !Control methodsFor: 'testing' stamp: 'len 28/Sep/2025 02:03:00'!
 isBipolar
 	^ min = max negated! !
-
-!Control methodsFor: 'tools' stamp: 'len 30/Sep/2025 22:58:00'!
-edit
-	^ KnobControlMorph new control: self! !
 
 !Control methodsFor: 'private' stamp: 'len 16/Jan/2026 15:22:25'!
 curveAt: aNumber
@@ -2075,9 +2155,9 @@ update
 addControl: aSymbol min: min max: max value: defaultValue
 	^ controls at: aSymbol put: ((Control min: min max: max value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
 
-!Module methodsFor: 'controls and modulations' stamp: 'len 28/Jan/2026 00:09:58'!
+!Module methodsFor: 'controls and modulations' stamp: 'len 29/Jan/2026 12:42:40'!
 addFrequencyControl: aSymbol value: defaultValue
-	^ (self addControl: aSymbol min: 20.0 "Hz" max: 20000.0 "20 kHz" value: defaultValue) printer: #hertzPrintString! !
+	^ (self addLogControl: aSymbol min: 20.0 "Hz" max: 20000.0 "20 kHz" value: defaultValue) printer: #hertzPrintString! !
 
 !Module methodsFor: 'controls and modulations' stamp: 'len 27/Jan/2026 16:47:56'!
 addLogControl: aSymbol min: min max: max value: defaultValue
@@ -2103,9 +2183,21 @@ addSpeedControl: aSymbol value: defaultValue
 addTimeControl: aSymbol min: min max: max value: defaultValue
 	^ (self addLogControl: aSymbol min: min max: max value: defaultValue) printer: #secondsPrintString! !
 
-!Module methodsFor: 'controls and modulations' stamp: 'len 4/Dec/2025 14:41:16'!
+!Module methodsFor: 'controls and modulations' stamp: 'len 29/Jan/2026 18:54:23'!
+addTuneControl: aSymbol
+	^ self addTuneControl: aSymbol min: -48.0 max: 48.0 value: 0.0! !
+
+!Module methodsFor: 'controls and modulations' stamp: 'len 29/Jan/2026 18:54:33'!
+addTuneControl: aSymbol min: min max: max value: defaultValue
+	^ (self addControl: aSymbol min: min max: max value: defaultValue) coarseStep: 1.0 / (max - min); fineStep: 0.01 / (max - min) "one cent"; printer: #semitonesOffsetPrintString! !
+
+!Module methodsFor: 'controls and modulations' stamp: 'len 31/Jan/2026 03:42:37'!
+addVolumeControl: aSymbol min: min max: max value: defaultValue
+	^ (self addLogControl: aSymbol min: min max: max value: defaultValue) printer: #linearToDecibelsPrintString! !
+
+!Module methodsFor: 'controls and modulations' stamp: 'len 31/Jan/2026 03:42:58'!
 addVolumeControl: aSymbol value: defaultValue
-	^ (self addLogControl: aSymbol min: 0.001 max: 1.0 value: defaultValue) printer: #linearToDecibelsPrintString! !
+	^ self addVolumeControl: aSymbol min: 0.001 max: 1.0 value: defaultValue! !
 
 !Module methodsFor: 'controls and modulations' stamp: 'len 25/Jan/2026 22:25:45'!
 at: aSymbol
@@ -2169,22 +2261,13 @@ tick
 is: aSymbol
 	^ aSymbol == #Module or: [super is: aSymbol]! !
 
-!Module methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:47:17'!
-edit
-	"Answer a panel with knobs for all the controls of this module.
-	This is typically more general than the panel obtained with #panel.
-	See also #panel and #view."
+!Module methodsFor: 'tools' stamp: 'len 30/Jan/2026 15:03:59'!
+panel
+	"Answer a panel to use in the patchable views."
 	| panel |
 	panel := ControlPanel new.
 	controls keysAndValuesDo: [:name :control| panel addKnob: control label: name capitalized].
 	^ panel! !
-
-!Module methodsFor: 'tools' stamp: 'len 25/Nov/2025 15:12:00'!
-panel
-	"Answer a panel to use in the patchable views.
-	This is typically more limited than the general #edit.
-	See also #edit and #view."
-	^ self edit! !
 
 !Module methodsFor: 'tools' stamp: 'len 10/Jan/2026 16:16:26'!
 patchable
@@ -2506,57 +2589,146 @@ patchable
 		addControlOutput: #output: label: 'Out'.
 	^ answer! !
 
-!Clock methodsFor: 'as yet unclassified' stamp: 'len 3/Dec/2025 15:42:01'!
-initialize
-	super initialize.
-	tempo := 120.
-	phase := 0.0.
-	increment := 0.0! !
-
-!Clock methodsFor: 'as yet unclassified' stamp: 'len 3/Dec/2025 15:44:52'!
-initializeControls
-	super initializeControls.
-	self addControl: #tempo min: 20 max: 300 value: 120! !
-
-!Clock methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 14:48:12'!
-panel
-	^ ControlPanel new addKnob: (controls at: #tempo) label: 'BPM'! !
-
-!Clock methodsFor: 'as yet unclassified' stamp: 'len 8/Jan/2026 15:28:00'!
-patchable
-	| answer |
-	answer := PatchableMorph new model: self.
-	answer body addMorph: self panel.
-	answer
-		addTriggerInput: #reset label: 'Reset';
-		addTriggerInput: #sync label: 'Sync';
-		addTriggerOutput: #pulse label: 'Pulse'.
-"		addGateOutput: #gate: label: 'Gate';
-		addEventOutput: #phase: label: 'Phase'."
-	^ answer! !
-
-!Clock methodsFor: 'as yet unclassified' stamp: 'len 3/Dec/2025 15:42:18'!
+!DiodeLadder methodsFor: 'controlling' stamp: 'len 29/Jan/2026 03:00:39'!
 reset
-	phase := 0.0! !
+	s1 := s2 := s3 := s4 := 0.0! !
 
-!Clock methodsFor: 'as yet unclassified' stamp: 'len 3/Dec/2025 15:53:47'!
-sync
-	syncTime1 ifNil: [syncTime1 := Time millisecondClockValue. ^ self].
-	syncTime2 ifNil: [syncTime2 := Time millisecondClockValue]! !
+!DiodeLadder methodsFor: 'controlling' stamp: 'len 29/Jan/2026 14:30:59'!
+updateFilterCoefficients
+	| g |
+	g := (Float pi * frequency) tan.
+	ρ := 1.0 / (1.0 + g). "feedback component"
+	"Gains are derived from Stage 4 back to Stage 1. This represents the impedance 'seen' by each rung:"
+	G4 := g * ρ.
+	G3 := g / (1.0 + g - (g * G4)).
+	G2 := g / (1.0 + g - (g * G3)).
+	G1 := g / (1.0 + g - (g * G2)).
+	"Total Loop Gain (gamma):"
+	γ := G1 * G2 * G3 * G4.
+	"Map Q to resonance (k):"
+	k := 17.0 * (1.0 - (0.707 / Q)) max: 0.0.
+	k := k min: 17.0! !
 
-!Clock methodsFor: 'as yet unclassified' stamp: 'len 8/Dec/2025 22:33:33'!
+!DiodeLadder methodsFor: 'processing' stamp: 'len 29/Jan/2026 14:21:11'!
 tick
+	| in σ |
 	self update.
-"	self triggerEvent: #phase: with: phase."
-	phase := phase + increment.
-	phase >= 1.0 ifTrue: [self triggerEvent: #pulse. phase := phase - 1.0]! !
+	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
+	input ifNil:
+		[outputLP4 ifNotNil: [outputLP4 atAllPut: 0.0].
+		outputLP3 ifNotNil: [outputLP3 atAllPut: 0.0].
+		outputLP2 ifNotNil: [outputLP2 atAllPut: 0.0].
+		outputLP1 ifNotNil: [outputLP1 atAllPut: 0.0].
+		^ self].
+	1 to: input size do: [:i|
+		| s1p s2p s3p s4p S v1 v2 v3 v4 y1 y2 y3 y4 |
+		in := input at: i.
+		"Passband compensation to fix bass-drop at higher resonance:"
+"		in := in * (k * 0.5 / 17.0 + 1.0)."
+		"Calculate the State Feedback (S):"
+		s1p := s1 * ρ.
+		s2p := s2 * ρ.
+		s3p := s3 * ρ.
+		s4p := s4 * ρ.
+		S := G1 * (G2 * (G3 * s4p + s3p) + s2p) + s1p.
+		"Feedback Solver (Sigma). using tanh here keeps the scream stable:"
+		σ := (in - (k * S tanh)) / (1.0 + (k * γ)).
+		"Update Stages (Forward Processing):
+		Stage 1:"
+		v1 := (σ - s1p) * G1.
+		y1 := v1 + s1p.
+		s1 := y1 + v1.
+		"Stage 2:"
+		v2 := (y1 - s2p) * G2.
+		y2 := v2 + s2p.
+		s2 := y2 + v2.
+		"Stage 3:"
+		v3 := (y2 - s3p) * G3.
+		y3 := v3 + s3p.
+		s3 := y3 + v3.
+		"Stage 4:"
+		v4 := (y3 - s4p) * G4.
+		y4 := v4 + s4p.
+		s4 := y4 + v4.
+		outputLP4 ifNotNil: [outputLP4 at: i put: y4].
+		outputLP3 ifNotNil: [outputLP3 at: i put: y3].
+		outputLP2 ifNotNil: [outputLP2 at: i put: y2].
+		outputLP1 ifNotNil: [outputLP1 at: i put: y1]]! !
 
-!Clock methodsFor: 'as yet unclassified' stamp: 'len 3/Dec/2025 15:55:10'!
-update
-	super update.
-	syncTime2 ifNotNil: [self set: #tempo to: (syncTime2 - syncTime1) * 60 / 1000.0. syncTime1 := syncTime2 := nil].
-	tempo := self get: #tempo.
-	increment := tempo / 60.0 / self class controlRate! !
+!DiodeLadder methodsFor: 'processing' stamp: 'len 29/Jan/2026 14:45:54'!
+tick2
+	| in σ |
+	self update.
+	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
+	input ifNil:
+		[outputLP4 ifNotNil: [outputLP4 atAllPut: 0.0].
+		outputLP3 ifNotNil: [outputLP3 atAllPut: 0.0].
+		outputLP2 ifNotNil: [outputLP2 atAllPut: 0.0].
+		outputLP1 ifNotNil: [outputLP1 atAllPut: 0.0].
+		^ self].
+	1 to: input size do: [:i|
+		| s1p s2p s3p s4p S v1 v2 v3 v4 y1 y2 y3 y4 |
+		in := input at: i.
+		"Passband compensation to fix bass-drop at higher resonance:"
+"		in := in * (k * 0.5 / 17.0 + 1.0)."
+		"Calculate the State Feedback (S):"
+		s1p := s1 * ρ.
+		s2p := s2 * ρ.
+		s3p := s3 * ρ.
+		s4p := s4 * ρ.
+		S := G1 * (G2 * (G3 * s4p + s3p) + s2p) + s1p.
+		"Feedback Solver (Sigma). using tanh here keeps the scream stable:"
+		σ := (in - (k * S tanh)) / (1.0 + (k * γ)).
+		"Update Stages (Forward Processing):
+		Stage 1:"
+		v1 := (σ - s1p) * G1.
+		y1 := v1 + s1p.
+		s1 := y1 + v1.
+		"Stage 2:"
+		v2 := (y1 - s2p) * G2.
+		y2 := v2 + s2p.
+		s2 := y2 + v2.
+		"Stage 3:"
+		v3 := (y2 - s3p) * G3.
+		y3 := v3 + s3p.
+		s3 := y3 + v3.
+		"Stage 4:"
+		v4 := (y3 - s4p) * G4.
+		y4 := v4 + s4p.
+		s4 := y4 + v4.
+		outputLP4 ifNotNil: [outputLP4 at: i put: y4].
+		outputLP3 ifNotNil: [outputLP3 at: i put: y3].
+		outputLP2 ifNotNil: [outputLP2 at: i put: y2].
+		outputLP1 ifNotNil: [outputLP1 at: i put: y1]]! !
+
+!DiodeLadder methodsFor: 'tools' stamp: 'len 29/Jan/2026 03:00:39'!
+display
+	^ super display mode: #LP! !
+
+!DiodeLadder methodsFor: 'tools' stamp: 'len 29/Jan/2026 03:00:39'!
+patchable
+	^ super patchable
+		addAudioOutput: #setOutputLP4: label: 'LP4';
+		addAudioOutput: #setOutputLP3: label: 'LP3';
+		addAudioOutput: #setOutputLP2: label: 'LP2';
+		addAudioOutput: #setOutputLP1: label: 'LP1';
+		yourself! !
+
+!DiodeLadder methodsFor: 'wiring' stamp: 'len 29/Jan/2026 03:00:39'!
+setOutputLP1: aBuffer
+	outputLP1 := aBuffer! !
+
+!DiodeLadder methodsFor: 'wiring' stamp: 'len 29/Jan/2026 03:00:39'!
+setOutputLP2: aBuffer
+	outputLP2 := aBuffer! !
+
+!DiodeLadder methodsFor: 'wiring' stamp: 'len 29/Jan/2026 03:00:39'!
+setOutputLP3: aBuffer
+	outputLP3 := aBuffer! !
+
+!DiodeLadder methodsFor: 'wiring' stamp: 'len 29/Jan/2026 03:00:39'!
+setOutputLP4: aBuffer
+	outputLP4 := aBuffer! !
 
 !Operator methodsFor: 'as yet unclassified' stamp: 'len 28/Nov/2025 15:40:00'!
 code
@@ -2697,204 +2869,41 @@ setOutputLeft: aBuffer
 setOutputRight: aBuffer
 	outputRight := aBuffer! !
 
-!Filter methodsFor: 'controlling' stamp: 'len 23/Nov/2025 18:19:00'!
+!SVF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:06:43'!
 modulateFrequency: aNumber
 	self modulate: #frequency by: aNumber! !
 
-!Filter methodsFor: 'controlling' stamp: 'len 23/Nov/2025 18:20:00'!
+!SVF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:07:31'!
 modulateQ: aNumber
 	self modulate: #Q by: aNumber! !
-
-!Filter methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:23:28'!
-update
-	| newFrequency newQ |
-	super update.
-	newFrequency := (self get: #frequency) / self class sampleRate.
-	newQ := self get: #Q.
-	(frequency = newFrequency and: [Q = newQ]) ifFalse:
-		[frequency := newFrequency.
-		Q := newQ.
-		self updateFilterCoefficients]! !
-
-!Filter methodsFor: 'controlling' stamp: 'len 9/Jan/2026 20:02:37'!
-updateFilterCoefficients
-	self subclassResponsibility! !
-
-!Filter methodsFor: 'initialization' stamp: 'len 16/Jan/2026 23:58:12'!
-initialize
-	super initialize.
-	self reset! !
-
-!Filter methodsFor: 'initialization' stamp: 'len 11/Jan/2026 21:12:47'!
-initializeControls
-	super initializeControls.
-	self addFrequencyControl: #frequency value: 1000.0.
-	self addControl: #Q min: 0.5 max: 20.0 value: 0.707! !
-
-!Filter methodsFor: 'tools' stamp: 'len 28/Jan/2026 16:58:19'!
-display
-	^ FilterControlMorph new frequency: (controls at: #frequency); Q: (controls at: #Q)! !
-
-!Filter methodsFor: 'tools' stamp: 'len 28/Jan/2026 16:58:26'!
-patchable
-	| answer |
-	answer := PatchableMorph new model: self.
-	answer body addMorph: self display.
-	answer
-		addAudioInput: #setInput: label: 'In';
-		addControlInput: #modulateFrequency: label: 'Frequency';
-		addControlInput: #modulateQ: label: 'Q'.
-	^ answer! !
-
-!Filter methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:11:10'!
-setInput: aBuffer
-	input := aBuffer! !
-
-!BPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:18:45'!
-reset
-	biquad reset! !
-
-!BPF methodsFor: 'controlling' stamp: 'len 27/Jan/2026 21:52:21'!
-updateFilterCoefficients
-	biquad bp: frequency Q: Q! !
-
-!BPF methodsFor: 'initialization' stamp: 'len 25/Jan/2026 22:24:46'!
-initialize
-	biquad := Biquad new.
-	super initialize! !
-
-!BPF methodsFor: 'processing' stamp: 'len 27/Jan/2026 19:35:38'!
-tick
-	output ifNil: [^ self].
-	input ifNil: [output atAllPut: 0.0. ^ self].
-	self update.
-	biquad write: input read: output! !
-
-!BPF methodsFor: 'tools' stamp: 'len 28/Jan/2026 16:58:53'!
-display
-	^ super display mode: #BP! !
-
-!BPF methodsFor: 'tools' stamp: 'len 25/Jan/2026 22:18:45'!
-patchable
-	^ super patchable
-		addAudioOutput: #setOutput: label: 'Out';
-		yourself! !
-
-!BPF methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:40:16'!
-setOutput: aBuffer
-	output := aBuffer! !
-
-!BSF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:41:35'!
-reset
-	biquad reset! !
-
-!BSF methodsFor: 'controlling' stamp: 'len 27/Jan/2026 21:52:39'!
-updateFilterCoefficients
-	biquad bs: frequency Q: Q! !
-
-!BSF methodsFor: 'initialization' stamp: 'len 25/Jan/2026 22:41:35'!
-initialize
-	biquad := Biquad new.
-	super initialize! !
-
-!BSF methodsFor: 'processing' stamp: 'len 27/Jan/2026 19:35:50'!
-tick
-	output ifNil: [^ self].
-	input ifNil: [output atAllPut: 0.0. ^ self].
-	self update.
-	biquad write: input read: output! !
-
-!BSF methodsFor: 'tools' stamp: 'len 28/Jan/2026 16:59:03'!
-display
-	^ super display mode: #BS! !
-
-!BSF methodsFor: 'tools' stamp: 'len 25/Jan/2026 22:41:35'!
-patchable
-	^ super patchable
-		addAudioOutput: #setOutput: label: 'Out';
-		yourself! !
-
-!BSF methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:40:32'!
-setOutput: aBuffer
-	output := aBuffer! !
-
-!HPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:18:06'!
-reset
-	biquad reset! !
-
-!HPF methodsFor: 'controlling' stamp: 'len 27/Jan/2026 21:52:27'!
-updateFilterCoefficients
-	biquad hp: frequency Q: Q! !
-
-!HPF methodsFor: 'initialization' stamp: 'len 25/Jan/2026 22:24:53'!
-initialize
-	biquad := Biquad new.
-	super initialize! !
-
-!HPF methodsFor: 'processing' stamp: 'len 27/Jan/2026 19:35:22'!
-tick
-	output ifNil: [^ self].
-	input ifNil: [output atAllPut: 0.0. ^ self].
-	self update.
-	biquad write: input read: output! !
-
-!HPF methodsFor: 'tools' stamp: 'len 28/Jan/2026 16:59:11'!
-display
-	^ super display mode: #HP! !
-
-!HPF methodsFor: 'tools' stamp: 'len 25/Jan/2026 22:18:06'!
-patchable
-	^ super patchable
-		addAudioOutput: #setOutput: label: 'Out';
-		yourself! !
-
-!HPF methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:40:21'!
-setOutput: aBuffer
-	output := aBuffer! !
-
-!LPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:16:21'!
-reset
-	biquad reset! !
-
-!LPF methodsFor: 'controlling' stamp: 'len 27/Jan/2026 21:52:32'!
-updateFilterCoefficients
-	biquad lp: frequency Q: Q! !
-
-!LPF methodsFor: 'initialization' stamp: 'len 25/Jan/2026 22:24:58'!
-initialize
-	biquad := Biquad new.
-	super initialize! !
-
-!LPF methodsFor: 'processing' stamp: 'len 27/Jan/2026 19:35:45'!
-tick
-	output ifNil: [^ self].
-	input ifNil: [output atAllPut: 0.0. ^ self].
-	self update.
-	biquad write: input read: output! !
-
-!LPF methodsFor: 'tools' stamp: 'len 28/Jan/2026 16:59:21'!
-display
-	^ super display mode: #LP! !
-
-!LPF methodsFor: 'tools' stamp: 'len 25/Jan/2026 22:17:54'!
-patchable
-	^ super patchable
-		addAudioOutput: #setOutput: label: 'Out';
-		yourself! !
-
-!LPF methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:40:25'!
-setOutput: aBuffer
-	output := aBuffer! !
 
 !SVF methodsFor: 'controlling' stamp: 'len 16/Oct/2025 19:38:00'!
 reset
 	s1 := s2 := 0.0! !
 
-!SVF methodsFor: 'controlling' stamp: 'len 28/Jan/2026 20:26:57'!
-updateFilterCoefficients
-	g := (Float pi * frequency) tan.
+!SVF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:02:20'!
+update
+	| newFrequency newQ |
+	super update.
+	newFrequency := self get: #frequency.
+	newQ := self get: #Q.
+	(frequency = newFrequency and: [Q = newQ]) ifTrue: [^ self].
+	frequency := newFrequency.
+	Q := newQ.
+	g := (Float pi * frequency / self class sampleRate) tan.
 	r := 1.0 / Q.
 	h := 1.0 / (1.0 + ((r + g) * g))! !
+
+!SVF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 01:37:23'!
+initialize
+	super initialize.
+	self reset! !
+
+!SVF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 01:13:01'!
+initializeControls
+	super initializeControls.
+	self addFrequencyControl: #frequency value: 1000.0.
+	self addControl: #Q min: 0.5 max: 20.0 value: 0.707! !
 
 !SVF methodsFor: 'processing' stamp: 'len 28/Jan/2026 20:32:13'!
 tick
@@ -2919,14 +2928,25 @@ tick
 		outputBP ifNotNil: [outputBP at: i put: bp].
 		outputBPN ifNotNil: [outputBPN at: i put: bp * r]]! !
 
-!SVF methodsFor: 'tools' stamp: 'len 21/Jan/2026 05:09:52'!
+!SVF methodsFor: 'tools' stamp: 'len 30/Jan/2026 15:20:04'!
 patchable
-	^ super patchable
+	| answer display |
+	answer := PatchableMorph new model: self.
+	display := FilterControlMorph new frequency: (controls at: #frequency); controlY: (controls at: #Q).
+	answer body addMorph: display.
+	answer
+		addAudioInput: #setInput: label: 'In';
+		addControlInput: #modulateFrequency: label: 'Frequency';
+		addControlInput: #modulateQ: label: 'Q';
 		addAudioOutput: #setOutputLP: label: 'LP';
 		addAudioOutput: #setOutputHP: label: 'HP';
 		addAudioOutput: #setOutputBP: label: 'BP';
-		addAudioOutput: #setOutputBPN: label: 'BPN';
-		yourself! !
+		addAudioOutput: #setOutputBPN: label: 'BPN'.
+	^ answer! !
+
+!SVF methodsFor: 'wiring' stamp: 'len 30/Jan/2026 01:04:43'!
+setInput: aBuffer
+	input := aBuffer! !
 
 !SVF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:46:39'!
 setOutputBP: aBuffer
@@ -2941,356 +2961,6 @@ setOutputHP: aBuffer
 	outputHP := aBuffer! !
 
 !SVF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:46:30'!
-setOutputLP: aBuffer
-	outputLP := aBuffer! !
-
-!Korg35HPF methodsFor: 'controlling' stamp: 'len 16/Oct/2025 18:46:00'!
-reset
-	s1 := s2 := s3 := 0.0! !
-
-!Korg35HPF methodsFor: 'controlling' stamp: 'len 20/Nov/2025 16:26:00'!
-updateFilterCoefficients
-	"Frequency between 20 hz and sampling rate / 2.
-	Q between 0.707 and 10.
-	See Will. C Pinkle, 'Designing Software Synthesizer Plug-ins in C++', section 12.7.1, equation 12.15."
-	| g |
-	K := 2.0 * ((Q min: 10.0 max: 0.707) - 0.707) / (10.0 - 0.707).
-	g := (Float pi * frequency) tan.
-	α := g / (1.0 + g).
-	"the following two lines are different in the lowpass version:"
-	β₃ := 1.0 / (1.0 + g).
-	β₂ := -1.0 * α / (1.0 + g).
-	α₀ := 1.0 / (1.0 - ((1.0 - α)*K*α) max: 1.0e-9) "avoid too small denominator"! !
-
-!Korg35HPF methodsFor: 'processing' stamp: 'len 11/Jan/2026 20:12:02'!
-tick
-	self update.
-	output ifNil: [^ self]. "actually, we should process the input anyway, if available"
-	input ifNil: [1 to: output size do: [:i| output at: i put: (self value: 0.0)]. ^ self].
-	1 to: input size do: [:i| output at: i put: (self value: (input at: i))]! !
-
-!Korg35HPF methodsFor: 'processing' stamp: 'len 21/Nov/2025 16:15:00'!
-value: in
-	| v1 v2 v3 commonSum out  resonanceFeedback s3In |
-	"v1 is the output of the first integrator stage:"
-	v1 := (in - s1) * α + s1.
-	"the common summation point in the filter's core:"
-	commonSum := in - v1 + (s2 * β₂) + (s3 * β₃).
-	"the final output sample:"
-	out := commonSum * α₀.
-	"the resonance feedback signal is taken from the output:"
-	resonanceFeedback := out * K.
-	"v2 is the output of the second integrator stage:"
-	v2 := (resonanceFeedback - s2) * α + s2.
-	"the input of the third integrator is the feedback minus the output of the second:"
-	s3In := resonanceFeedback - v2.
-	"v3 is the output of the third integrator stage:"
-	v3 := (s3In - s3) * α + s3.
-	"update state:"
-	s1 := ((in - s1) * α + v1) gate.
-	s2 := ((resonanceFeedback - s2) * α + v2) gate.
-	s3 := ((s3In - s3) * α + v3) gate.
-	^ v3! !
-
-!Korg35HPF methodsFor: 'tools' stamp: 'len 28/Jan/2026 16:59:37'!
-display
-	^ super display mode: #HP! !
-
-!Korg35HPF methodsFor: 'tools' stamp: 'len 19/Jan/2026 19:27:55'!
-patchable
-	^ super patchable
-		addAudioOutput: #setOutput: label: 'Out';
-		yourself! !
-
-!Korg35HPF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:12:35'!
-setOutput: aBuffer
-	output := aBuffer! !
-
-!Korg35LPF methodsFor: 'controlling' stamp: 'len 17/Oct/2025 20:13:00'!
-reset
-	s1 := s2 := s3 := 0.0! !
-
-!Korg35LPF methodsFor: 'controlling' stamp: 'len 20/Nov/2025 16:26:00'!
-updateFilterCoefficients
-	"Frequency between 20 hz and sampling rate / 2.
-	Q between 0.707 and 10.
-	See Will. C Pinkle, 'Designing Software Synthesizer Plug-ins in C++', section 12.7.1, equation 12.15."
-	| g |
-	K := 2.0 * ((Q min: 10.0 max: 0.707) - 0.707) / (10.0 - 0.707).
-	g := (Float pi * frequency) tan.
-	α := g / (1.0 + g).
-	"the following two lines are different in the highpass version:"
-	β₃ := K * (1.0 - α) / (1.0 + g).
-	β₂ := -1.0 / (1.0 + g).
-	α₀ := 1.0 / (1.0 - ((1.0 - α)*K*α) max: 1.0e-9) "avoid too small denominator"! !
-
-!Korg35LPF methodsFor: 'processing' stamp: 'len 11/Jan/2026 20:12:15'!
-tick
-	self update.
-	output ifNil: [^ self]. "actually, we should process the input anyway, if available"
-	input ifNil: [1 to: output size do: [:i| output at: i put: (self value: 0.0)]. ^ self].
-	1 to: input size do: [:i| output at: i put: (self value: (input at: i))]! !
-
-!Korg35LPF methodsFor: 'processing' stamp: 'len 21/Nov/2025 16:16:00'!
-value: in
-	| v1 v2 v3 commonSum feedbackIn resonanceFeedback |
-	"v1 is the output of the first integrator stage:"
-	v1 := (in - s1) * α + s1.
-	"the common summation point in the filter's core:"
-	commonSum := v1 + (s3 * β₃) + (s2 * β₂).
-	"input to the third integrator stage:"
-	feedbackIn := commonSum * α₀.
-	"v3 is the output of the third integrator stage, and the final output for the LPF mode:"
-	v3 := (feedbackIn - s3) * α + s3.
-	"the resonance feedback signal is taken from the output (v3):"
-	resonanceFeedback := v3 * K.
-	"v2 is the output of the second integrator stage:"
-	v2 := (resonanceFeedback - s2) * α + s2.
-	"update state:"
-	s1 := ((in - s1) * α + v1) gate.
-	s2 := ((resonanceFeedback - s2) * α + v2) gate.
-	s3 := ((feedbackIn - s3) * α + v3) gate.
-	^ v3! !
-
-!Korg35LPF methodsFor: 'tools' stamp: 'len 28/Jan/2026 16:59:43'!
-display
-	^ super display mode: #LP! !
-
-!Korg35LPF methodsFor: 'tools' stamp: 'len 21/Jan/2026 05:09:37'!
-patchable
-	^ super patchable
-		addAudioOutput: #setOutput: label: 'Out';
-		yourself! !
-
-!Korg35LPF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:12:27'!
-setOutput: aBuffer
-	output := aBuffer! !
-
-!MoogLPF methodsFor: 'controlling' stamp: 'len 22/Sep/2025 19:52:00'!
-reset
-	y0 := y1 := y2 := y3 := y4 := 0.0! !
-
-!MoogLPF methodsFor: 'controlling' stamp: 'len 3/Jan/2026 02:31:33'!
-updateFilterCoefficients
-	| f t1 t2 |
-	f := frequency * 2.0. "normalized frequency f / fₛ"
-	"empirical tuning:"
-	p := f * (1.8 - (0.8 * f)).
-	"k := p * 2 - 1.0."
-	k := 2.0 * (f * Float halfPi) sin - 1.0. "better tuning"
-	t1 := (1.0 - p) * 1.386249.
-	t2 := 12.0 + (t1*t1).
-	"The original version uses Q from 0 to 1, but we use Q between 0.5 and 20:"
-	r := ((Q min: 20.0 max: 0.5) - 0.5) / (20.0 - 0.5) * (t2 + (6.0 * t1)) / (t2 - (6.0 * t1))! !
-
-!MoogLPF methodsFor: 'processing' stamp: 'len 11/Jan/2026 20:34:14'!
-tick
-	self update.
-	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
-	input ifNil:
-		[outputLP4 ifNotNil: [outputLP4 atAllPut: 0.0].
-		outputLP3 ifNotNil: [outputLP3 atAllPut: 0.0].
-		outputLP2 ifNotNil: [outputLP2 atAllPut: 0.0].
-		outputLP1 ifNotNil: [outputLP1 atAllPut: 0.0].
-		^ self].
-	1 to: input size do: [:i|
-		| in z0 z1 z2 z3 |
-		in := input at: i.
-		"Process input:"
-		z0 := in - (r * y4).
-		"Four cascaded onepole filters (bilinear transform):"	
-		z1 := p * (z0 + y0) - (k * y1).
-		z2 := p * (z1 + y1) - (k * y2).
-		z3 := p * (z2 + y2) - (k * y3).
-		y4 := p * (z3 + y3) - (k * y4).
-		"Update:"
-		y0 := z0 gate.
-		y1 := z1 gate.
-		y2 := z2 gate.
-		y3 := z3 gate.
-		"Clipper band limited sigmoid:"
-		y4 := (y4 - (y4 * y4 * y4 / 6.0)) gate.
-		outputLP4 ifNotNil: [outputLP4 at: i put: y4].
-		outputLP3 ifNotNil: [outputLP3 at: i put: y3].
-		outputLP2 ifNotNil: [outputLP2 at: i put: y2].
-		outputLP1 ifNotNil: [outputLP1 at: i put: y1]]! !
-
-!MoogLPF methodsFor: 'tools' stamp: 'len 28/Jan/2026 16:59:54'!
-display
-	^ super display mode: #LP! !
-
-!MoogLPF methodsFor: 'tools' stamp: 'len 19/Jan/2026 19:27:55'!
-patchable
-	^ super patchable
-		addAudioOutput: #setOutputLP4: label: 'LP4';
-		addAudioOutput: #setOutputLP3: label: 'LP3';
-		addAudioOutput: #setOutputLP2: label: 'LP2';
-		addAudioOutput: #setOutputLP1: label: 'LP1';
-		yourself! !
-
-!MoogLPF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:34:24'!
-setOutputLP1: aBuffer
-	outputLP1 := aBuffer! !
-
-!MoogLPF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:34:32'!
-setOutputLP2: aBuffer
-	outputLP2 := aBuffer! !
-
-!MoogLPF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:34:39'!
-setOutputLP3: aBuffer
-	outputLP3 := aBuffer! !
-
-!MoogLPF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:34:45'!
-setOutputLP4: aBuffer
-	outputLP4 := aBuffer! !
-
-!MoogLadder methodsFor: 'controlling' stamp: 'len 28/Jan/2026 17:34:01'!
-reset
-	s1 := s2 := s3 := s4 := 0.0! !
-
-!MoogLadder methodsFor: 'controlling' stamp: 'len 28/Jan/2026 20:07:26'!
-updateFilterCoefficients
-	| g |
-	g := (Float pi * frequency) tan.
-	G := g / (1.0 + g)! !
-
-!MoogLadder methodsFor: 'processing' stamp: 'len 28/Jan/2026 22:48:40'!
-tick
-	| k γ |
-	self update.
-	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
-	input ifNil:
-		[outputLP4 ifNotNil: [outputLP4 atAllPut: 0.0].
-		outputLP3 ifNotNil: [outputLP3 atAllPut: 0.0].
-		outputLP2 ifNotNil: [outputLP2 atAllPut: 0.0].
-		outputLP1 ifNotNil: [outputLP1 atAllPut: 0.0].
-		^ self].
-	k := 4.15 * (1.0 - (1.0 / Q)) min: 3.99 max: 0.0.
-	γ := G squared squared.
-	1 to: input size do: [:i|
-		| S in σ v1 v2 v3 v4 y1 y2 y3 y4 |
-		in := input at: i.
-		"Passband compensation to fix bass-drop at higher resonance:"
-		in := in * (k * 0.5 + 1.0). 
-		"Compute feedback and softclip it to prevent blowup:"
-		S := G*(G*(G*s1 + s2) + s3) + s4.
-		S := S * (1 - G). "<- this sounds better than softclip"
-		σ := (in - (k * S)) / (1.0 + (k * γ)).
-"		drive := 0.8.
-		σ := ((in * drive) tanh - (k * S tanh)) / (1.0 + (k * γ))."
-		"Stage 1:"
-		v1 := (σ - s1) * G.
-		y1 := v1 + s1.
-		s1 := y1 + v1.
-		"Stage 2:"
-		v2 := (y1 - s2) * G.
-		y2 := v2 + s2.
-		s2 := y2 + v2.
-		"Stage 3:"
-		v3 := (y2 - s3) * G.
-		y3 := v3 + s3.
-		s3 := y3 + v3.
-		"Stage 4:"
-		v4 := (y3 - s4) * G.
-		y4 := v4 + s4.
-		s4 := y4 + v4.
-		outputLP4 ifNotNil: [outputLP4 at: i put: y4].
-		outputLP3 ifNotNil: [outputLP3 at: i put: y3].
-		outputLP2 ifNotNil: [outputLP2 at: i put: y2].
-		outputLP1 ifNotNil: [outputLP1 at: i put: y1]]! !
-
-!MoogLadder methodsFor: 'tools' stamp: 'len 28/Jan/2026 17:46:22'!
-display
-	^ super display mode: #LP! !
-
-!MoogLadder methodsFor: 'tools' stamp: 'len 28/Jan/2026 17:46:43'!
-patchable
-	^ super patchable
-		addAudioOutput: #setOutputLP4: label: 'LP4';
-		addAudioOutput: #setOutputLP3: label: 'LP3';
-		addAudioOutput: #setOutputLP2: label: 'LP2';
-		addAudioOutput: #setOutputLP1: label: 'LP1';
-		yourself! !
-
-!MoogLadder methodsFor: 'wiring' stamp: 'len 28/Jan/2026 17:47:30'!
-setOutputLP1: aBuffer
-	outputLP1 := aBuffer! !
-
-!MoogLadder methodsFor: 'wiring' stamp: 'len 28/Jan/2026 17:47:35'!
-setOutputLP2: aBuffer
-	outputLP2 := aBuffer! !
-
-!MoogLadder methodsFor: 'wiring' stamp: 'len 28/Jan/2026 17:47:38'!
-setOutputLP3: aBuffer
-	outputLP3 := aBuffer! !
-
-!MoogLadder methodsFor: 'wiring' stamp: 'len 28/Jan/2026 17:47:40'!
-setOutputLP4: aBuffer
-	outputLP4 := aBuffer! !
-
-!OberheimSVF methodsFor: 'controlling' stamp: 'len 16/Oct/2025 19:49:00'!
-reset
-	s1 := s2 := 0.0! !
-
-!OberheimSVF methodsFor: 'controlling' stamp: 'len 23/Jan/2026 15:15:38'!
-updateFilterCoefficients
-	"Frequency: normalized 20 Hz - 20 kHz. Q: 0.5 - 10.0."
-	| r |
-	g := (Float pi * frequency) tan.
-	r := 1.0 / Q.
-	feedback := r + g.
-	alpha0 := 1.0 / (1.0 + (feedback * g))! !
-
-!OberheimSVF methodsFor: 'processing' stamp: 'len 28/Jan/2026 21:22:19'!
-tick
-	self update.
-	(outputLP isNil and: [outputHP isNil and: [outputBP isNil and: [outputBPN isNil]]]) ifTrue: [^ self].
-	input ifNil:
-		[outputLP ifNotNil: [outputLP atAllPut: 0.0].
-		outputHP ifNotNil: [outputHP atAllPut: 0.0].
-		outputBP ifNotNil: [outputBP atAllPut: 0.0].
-		outputBPN ifNotNil: [outputBPN atAllPut: 0.0].
-		^ self].
-	1 to: input size do: [:i|
-		| in v0 hp v2 v3 bp v5 |
-		in := input at: i.
-		v0 := in - s2 - (s1 * feedback).
-		hp := v0 * alpha0.
-		"update s1:"
-		v2 := hp * g.
-		v3 := v2 + s1.
-		bp := v3 tanh.
-		s1 := bp gate.
-		"update s2:"
-		v5 := bp * g * 2.0.
-		s2 := (v5 + s2) gate.
-		outputLP ifNotNil: [outputLP at: i put: s2].
-		outputHP ifNotNil: [outputHP at: i put: hp].
-		outputBP ifNotNil: [outputBP at: i put: bp].
-		outputBPN ifNotNil: [outputBPN at: i put: bp / Q]]! !
-
-!OberheimSVF methodsFor: 'tools' stamp: 'len 19/Jan/2026 19:27:55'!
-patchable
-	^ super patchable
-		addAudioOutput: #setOutputLP: label: 'LP';
-		addAudioOutput: #setOutputHP: label: 'HP';
-		addAudioOutput: #setOutputBP: label: 'BP';
-		addAudioOutput: #setOutputBPN: label: 'BPN';
-		yourself! !
-
-!OberheimSVF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:39:42'!
-setOutputBP: aBuffer
-	outputBP := aBuffer! !
-
-!OberheimSVF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:57:33'!
-setOutputBPN: aBuffer
-	outputBPN := aBuffer! !
-
-!OberheimSVF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:39:36'!
-setOutputHP: aBuffer
-	outputHP := aBuffer! !
-
-!OberheimSVF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:39:30'!
 setOutputLP: aBuffer
 	outputLP := aBuffer! !
 
@@ -3573,10 +3243,10 @@ initialize
 	super initialize.
 	note := 60.0! !
 
-!TunedGenerator methodsFor: 'initialization' stamp: 'len 4/Jan/2026 14:53:28'!
+!TunedGenerator methodsFor: 'initialization' stamp: 'len 29/Jan/2026 18:55:02'!
 initializeControls
 	super initializeControls.
-	(self addControl: #tune min: -48.0 max: 48.0 value: 0.0) printer: #semitonesOffsetPrintString! !
+	self addTuneControl: #tune! !
 
 !TunedGenerator methodsFor: 'controlling' stamp: 'len 4/Jan/2026 14:55:51'!
 modulatePitch: aNumber
@@ -3586,9 +3256,9 @@ modulatePitch: aNumber
 setNote: aNumber
 	note := aNumber! !
 
-!TunedGenerator methodsFor: 'tools' stamp: 'len 28/Jan/2026 23:08:13'!
+!TunedGenerator methodsFor: 'tools' stamp: 'len 29/Jan/2026 18:50:03'!
 panel
-	^​ ControlPanel new addMorph: ((TextControlMorph control: (controls at: #tune)) fineStepFactor: 0.01 "1 cent")! !
+	^​ ControlPanel new addMorph: (TextControlMorph control: (controls at: #tune))! !
 
 !TunedGenerator methodsFor: 'tools' stamp: 'len 23/Jan/2026 23:57:49'!
 patchable
@@ -3614,11 +3284,6 @@ initialize
 	super initialize.
 	self reset.
 	frequency := note semitonesToHertz! !
-
-!Oscillator methodsFor: 'initialization' stamp: 'len 4/Dec/2025 18:24:30'!
-initializeControls
-	super initializeControls.
-	(self addControl: #tune min: -48.0 max: 48.0 value: 0.0) printer: #semitonesOffsetPrintString! !
 
 !Oscillator methodsFor: 'processing' stamp: 'len 5/Dec/2025 15:02:14'!
 next
@@ -4192,10 +3857,9 @@ initialize
 	frequencies := (Float32Array new: 7) atAllPut: frequency.
 	centerGain := sideGain := 1.0 / 7.0! !
 
-!Supersaw methodsFor: 'initialization' stamp: 'len 4/Dec/2025 18:24:17'!
+!Supersaw methodsFor: 'initialization' stamp: 'len 29/Jan/2026 18:57:13'!
 initializeControls
 	super initializeControls.
-	(self addControl: #tune min: -48.0 max: 48.0 value: 0.0)  printer: #semitonesOffsetPrintString.
 	self addControl: #detune min: 0.0 max: 1.0 value: 0.001! !
 
 !Supersaw methodsFor: 'processing' stamp: 'len 5/Dec/2025 15:14:20'!
@@ -4266,10 +3930,9 @@ initialize
 	super initialize.
 	carrierPhase := formant1Phase := formant2Phase := 0.0! !
 
-!VOSIM methodsFor: 'initialization' stamp: 'len 9/Dec/2025 15:12:13'!
+!VOSIM methodsFor: 'initialization' stamp: 'len 29/Jan/2026 18:57:05'!
 initializeControls
 	super initializeControls.
-	(self addControl: #tune min: -48.0 max: 48.0 value: 0.0) printer: #semitonesOffsetPrintString.
 	self addControl: #shape min: 0.0 max: 1.0 value: 0.0.
 	self addControl: #vowel min: 0.0 max: 1.0 value: 0.0! !
 
@@ -4701,12 +4364,11 @@ patchable
 		addAudioOutput: #setOutput: label: 'Out'.
 	^ answer! !
 
-!Transform methodsFor: 'processing' stamp: 'len 26/Jan/2026 17:27:34'!
+!Transform methodsFor: 'processing' stamp: 'len 30/Jan/2026 13:03:33'!
 tick
 	self update.
 	output ifNil: [^ self]. "actually, we should process the input anyway, if available"
 	input ifNil: [1 to: output size do: [:i| output at: i put: (self value: 0.0)]. ^ self].
-	self update.
 	1 to: input size do: [:i| output at: i put: (self value: (input at: i))]! !
 
 !Transform methodsFor: 'processing' stamp: 'len 20/Nov/2025 00:38:00'!
@@ -4725,6 +4387,61 @@ setInput: aBuffer
 	input := aBuffer! !
 
 !Transform methodsFor: 'wiring' stamp: 'len 18/Nov/2025 17:26:00'!
+setOutput: aBuffer
+	output := aBuffer! !
+
+!DiodeLadder2 methodsFor: 'controlling' stamp: 'len 29/Jan/2026 15:28:49'!
+reset
+	s1 := s2 := s3 := s4 := vc1 := vc2 := vc3 := vc4 := vout := 0.0! !
+
+!DiodeLadder2 methodsFor: 'controlling' stamp: 'len 29/Jan/2026 15:24:04'!
+updateFilterCoefficients
+	g := (Float pi * frequency) tan.
+	k := 17.0 * (1.0 - (0.707 / Q)) max: 0.0.
+	k := k min: 17.0! !
+
+!DiodeLadder2 methodsFor: 'processing' stamp: 'len 29/Jan/2026 15:19:55'!
+tick
+	self update.
+	output ifNil: [^ self]. "actually, we should process the input anyway, if available"
+	input ifNil: [1 to: output size do: [:i| output at: i put: (self value: 0.0)]. ^ self].
+	1 to: input size do: [:i| output at: i put: (self value: (input at: i))]! !
+
+!DiodeLadder2 methodsFor: 'processing' stamp: 'len 29/Jan/2026 15:52:49'!
+value: in
+	| vin VT η γ C Mp G vout_approx i dt |
+	dt := 1/(2*44100.0).
+	VT := 0.0260. "thermal voltage"
+	η := 1.836. "diode emission coefficient (1N4148)."
+	γ := η * VT. "diode-law scale factor."
+	C := 1.0e-7. "capacitance (100 nF)."
+	Mp := 1.0e-4.
+	G := 4.0 * g * VT.
+	vin := in * 0.4.
+	i := 0.
+	[vc1 := G * ((vc2 - vc1) / (γ * 2.0)) tanh + ((vin - vout) / (VT * 2.0)) tanh + s1.
+	vc2 := G * ((vc3 - vc2) / (γ * 2.0)) tanh + ((vc2 - vc1) / (γ * 2.0)) tanh + s2.
+	vc3 := G * ((vc4 - vc3) / (γ * 2.0)) tanh + ((vc3 - vc2) / (γ * 2.0)) tanh + s3.
+	vc4 := G * (vc4 / (γ * 6.0)) tanh negated - ((vc4 - vc3) / (γ * 2.0)) tanh + s4.
+	vout_approx := (k + 0.5) * vc4.
+	i > 10 or: [(vout_approx - vout) abs >= (vout abs * Mp)]] whileFalse: [vout := vout_approx. i := i + 1].
+	s1 = dt * ((vin - vout) / (2.0 * VT)) tanh + vc1.
+	s2 = dt * ((vc2 - vc1) / (2.0 * γ)) tanh + vc2.
+	s3 = dt * ((vc3 - vc2) / (2.0 * γ)) tanh + vc3.
+	s4 = dt * ((vc4 - vc3) / (2.0 * γ)) tanh + vc4.
+	^ vout! !
+
+!DiodeLadder2 methodsFor: 'tools' stamp: 'len 29/Jan/2026 15:19:55'!
+display
+	^ super display mode: #LP! !
+
+!DiodeLadder2 methodsFor: 'tools' stamp: 'len 29/Jan/2026 15:19:55'!
+patchable
+	^ super patchable
+		addAudioOutput: #setOutput: label: 'Out';
+		yourself! !
+
+!DiodeLadder2 methodsFor: 'wiring' stamp: 'len 29/Jan/2026 15:19:55'!
 setOutput: aBuffer
 	output := aBuffer! !
 
@@ -5195,6 +4912,253 @@ patchable
 		addAudioOutput: #setOutput: label: 'Out';
 		yourself! !
 
+!BPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:08:04'!
+modulateBandwidth: aNumber
+	self modulate: #bandwidth by: aNumber! !
+
+!BPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:07:09'!
+modulateFrequency: aNumber
+	self modulate: #frequency by: aNumber! !
+
+!BPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:18:45'!
+reset
+	biquad reset! !
+
+!BPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:33:42'!
+update
+	| newFrequency newBandwidth |
+	super update.
+	newFrequency := self get: #frequency.
+	newBandwidth := self get: #bandwidth.
+	(frequency = newFrequency and: [bandwidth = newBandwidth]) ifTrue: [^ self].
+	frequency := newFrequency.
+	bandwidth := newBandwidth.
+	biquad bp: frequency / self class sampleRate Q: 1.0 / (2.0 * (0.5 * 2.0 log * bandwidth) sinh)! !
+
+!BPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 00:57:46'!
+initialize
+	super initialize.
+	biquad := Biquad new! !
+
+!BPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 01:21:53'!
+initializeControls
+	super initializeControls.
+	self addFrequencyControl: #frequency value: 1000.0.
+	(self addControl: #bandwidth min: 0.1 max: 4.0 value: 1.0) printer: [:x| (x printStringFractionDigits: 2), ' oct']! !
+
+!BPF methodsFor: 'processing' stamp: 'len 27/Jan/2026 19:35:38'!
+tick
+	output ifNil: [^ self].
+	input ifNil: [output atAllPut: 0.0. ^ self].
+	self update.
+	biquad write: input read: output! !
+
+!BPF methodsFor: 'tools' stamp: 'len 30/Jan/2026 15:20:40'!
+patchable
+	| answer display |
+	answer := PatchableMorph new model: self.
+	display := FilterControlMorph new frequency: (controls at: #frequency); controlY: (controls at: #bandwidth).
+	answer body addMorph: display.
+	answer
+		addAudioInput: #setInput: label: 'In';
+		addControlInput: #modulateFrequency: label: 'Frequency';
+		addControlInput: #modulateBandwidth: label: 'Bandwidth';
+		addAudioOutput: #setOutput: label: 'Out'.
+	^ answer! !
+
+!BSF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:07:59'!
+modulateBandwidth: aNumber
+	self modulate: #bandwidth by: aNumber! !
+
+!BSF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:07:04'!
+modulateFrequency: aNumber
+	self modulate: #frequency by: aNumber! !
+
+!BSF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:41:35'!
+reset
+	biquad reset! !
+
+!BSF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:34:08'!
+update
+	| newFrequency newBandwidth |
+	super update.
+	newFrequency := self get: #frequency.
+	newBandwidth := self get: #bandwidth.
+	(frequency = newFrequency and: [bandwidth = newBandwidth]) ifTrue: [^ self].
+	frequency := newFrequency.
+	bandwidth := newBandwidth.
+	biquad bs: frequency / self class sampleRate Q: 1.0 / (2.0 * (0.5 * 2.0 log * bandwidth) sinh)! !
+
+!BSF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 00:57:49'!
+initialize
+	super initialize.
+	biquad := Biquad new! !
+
+!BSF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 01:22:00'!
+initializeControls
+	super initializeControls.
+	self addFrequencyControl: #frequency value: 1000.0.
+	(self addControl: #bandwidth min: 0.1 max: 4.0 value: 1.0) printer: [:x| (x printStringFractionDigits: 2), ' oct']! !
+
+!BSF methodsFor: 'processing' stamp: 'len 27/Jan/2026 19:35:50'!
+tick
+	output ifNil: [^ self].
+	input ifNil: [output atAllPut: 0.0. ^ self].
+	self update.
+	biquad write: input read: output! !
+
+!BSF methodsFor: 'tools' stamp: 'len 30/Jan/2026 15:21:04'!
+patchable
+	| answer display |
+	answer := PatchableMorph new model: self.
+	display := FilterControlMorph new frequency: (controls at: #frequency); controlY: (controls at: #bandwidth).
+	answer body addMorph: display.
+	answer
+		addAudioInput: #setInput: label: 'In';
+		addControlInput: #modulateFrequency: label: 'Frequency';
+		addControlInput: #modulateBandwidth: label: 'Bandwidth';
+		addAudioOutput: #setOutput: label: 'Out'.
+	^ answer! !
+
+!EQ3 methodsFor: 'as yet unclassified' stamp: 'len 31/Jan/2026 03:39:10'!
+initialize
+	super initialize.
+	aux := Float32Array new: self class blockSize.
+	lowPassLow := Biquad new linkwitz_lp: 250.0 / self class sampleRate Q: 0.707.
+	highPassMid := Biquad new linkwitz_hp: 250.0 / self class sampleRate Q: 0.707.
+	lowPassMid := Biquad new linkwitz_lp: 2500.0 / self class sampleRate Q: 0.707.
+	highPassHigh := Biquad new linkwitz_hp: 2500.0 / self class sampleRate Q: 0.707! !
+
+!EQ3 methodsFor: 'as yet unclassified' stamp: 'len 31/Jan/2026 03:44:24'!
+initializeControls
+	super initializeControls.
+	self addVolumeControl: #low min: 0.001 max: 2.0 value: 1.0.
+	self addVolumeControl: #mid min: 0.001 max: 2.0 value: 1.0.
+	self addVolumeControl: #high min: 0.001 max: 2.0 value: 1.0! !
+
+!EQ3 methodsFor: 'as yet unclassified' stamp: 'len 31/Jan/2026 03:38:52'!
+tick
+	output ifNil: [^ self].
+	input ifNil: [output atAllPut: 0.0. ^ self].
+	self update.
+	lowPassLow write: input read: output.
+	output *= (self get: #low).
+	highPassMid write: input read: aux.
+	lowPassMid write: aux read: aux.
+	aux *= (self get: #mid).
+	output += aux.
+	highPassHigh write: input read: aux.
+	aux *= (self get: #high).
+	output += aux! !
+
+!HPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:06:57'!
+modulateFrequency: aNumber
+	self modulate: #frequency by: aNumber! !
+
+!HPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:07:43'!
+modulateQ: aNumber
+	self modulate: #Q by: aNumber! !
+
+!HPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:18:06'!
+reset
+	biquad reset! !
+
+!HPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:03:04'!
+update
+	| newFrequency newQ |
+	super update.
+	newFrequency := self get: #frequency.
+	newQ := self get: #Q.
+	(frequency = newFrequency and: [Q = newQ]) ifTrue: [^ self].
+	frequency := newFrequency.
+	Q := newQ.
+	biquad hp: frequency / self class sampleRate Q: Q! !
+
+!HPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 00:57:32'!
+initialize
+	super initialize.
+	biquad := Biquad new! !
+
+!HPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 00:55:04'!
+initializeControls
+	super initializeControls.
+	self addFrequencyControl: #frequency value: 1000.0.
+	self addControl: #Q min: 0.5 max: 10.0 value: 0.707! !
+
+!HPF methodsFor: 'processing' stamp: 'len 27/Jan/2026 19:35:22'!
+tick
+	output ifNil: [^ self].
+	input ifNil: [output atAllPut: 0.0. ^ self].
+	self update.
+	biquad write: input read: output! !
+
+!HPF methodsFor: 'tools' stamp: 'len 30/Jan/2026 15:19:20'!
+patchable
+	| answer display |
+	answer := PatchableMorph new model: self.
+	display := FilterControlMorph new frequency: (controls at: #frequency); controlY: (controls at: #Q); mode: #HP.
+	answer body addMorph: display.
+	answer
+		addAudioInput: #setInput: label: 'In';
+		addControlInput: #modulateFrequency: label: 'Frequency';
+		addControlInput: #modulateQ: label: 'Q';
+		addAudioOutput: #setOutput: label: 'Out'.
+	^ answer! !
+
+!LPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:06:51'!
+modulateFrequency: aNumber
+	self modulate: #frequency by: aNumber! !
+
+!LPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:07:38'!
+modulateQ: aNumber
+	self modulate: #Q by: aNumber! !
+
+!LPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:16:21'!
+reset
+	biquad reset! !
+
+!LPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:02:49'!
+update
+	| newFrequency newQ |
+	super update.
+	newFrequency := self get: #frequency.
+	newQ := self get: #Q.
+	(frequency = newFrequency and: [Q = newQ]) ifTrue: [^ self].
+	frequency := newFrequency.
+	Q := newQ.
+	biquad lp: frequency / self class sampleRate Q: Q! !
+
+!LPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 00:57:38'!
+initialize
+	super initialize.
+	biquad := Biquad new! !
+
+!LPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 00:54:56'!
+initializeControls
+	super initializeControls.
+	self addFrequencyControl: #frequency value: 1000.0.
+	self addControl: #Q min: 0.5 max: 10.0 value: 0.707! !
+
+!LPF methodsFor: 'processing' stamp: 'len 27/Jan/2026 19:35:45'!
+tick
+	output ifNil: [^ self].
+	input ifNil: [output atAllPut: 0.0. ^ self].
+	self update.
+	biquad write: input read: output! !
+
+!LPF methodsFor: 'tools' stamp: 'len 30/Jan/2026 15:19:40'!
+patchable
+	| answer display |
+	answer := PatchableMorph new model: self.
+	display := FilterControlMorph new frequency: (controls at: #frequency); controlY: (controls at: #Q); mode: #LP.
+	answer body addMorph: display.
+	answer
+		addAudioInput: #setInput: label: 'In';
+		addControlInput: #modulateFrequency: label: 'Frequency';
+		addControlInput: #modulateQ: label: 'Q';
+		addAudioOutput: #setOutput: label: 'Out'.
+	^ answer! !
+
 !Limiter methodsFor: 'initialization' stamp: 'len 20/Nov/2025 16:10:00'!
 initialize
 	super initialize.
@@ -5242,6 +5206,147 @@ value: in
 	buffer at: i put: out.
 	position := position \\ buffer size.
 	^ out! !
+
+!Korg35HPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:11:57'!
+modulateFrequency: aNumber
+	self modulate: #frequency by: aNumber! !
+
+!Korg35HPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:12:38'!
+modulateResonance: aNumber
+	self modulate: #resonance by: aNumber! !
+
+!Korg35HPF methodsFor: 'controlling' stamp: 'len 16/Oct/2025 18:46:00'!
+reset
+	s1 := s2 := s3 := 0.0! !
+
+!Korg35HPF methodsFor: 'controlling' stamp: 'len 31/Jan/2026 14:58:17'!
+update
+	"See Will. C Pinkle, 'Designing Software Synthesizer Plug-ins in C++', section 12.7.1, equation 12.15."
+	| newFrequency newResonance g |
+	super update.
+	newFrequency := self get: #frequency.
+	newResonance := self get: #resonance.
+	(frequency = newFrequency and: [resonance = newResonance]) ifTrue: [^ self].
+	frequency := newFrequency.
+	resonance := newResonance.
+	k := resonance squared * 1.999. "quadratic curve, to have finer control at low resonance"
+	g := (Float pi * frequency / self class sampleRate) tan.
+	α := g / (1.0 + g).
+	"the following two lines are different in the lowpass version:"
+	β₃ := 1.0 / (1.0 + g).
+	β₂ := -1.0 * α / (1.0 + g).
+	α₀ := 1.0 / (1.0 - ((1.0 - α)*k*α) max: 1.0e-9) "avoid too small denominator"! !
+
+!Korg35HPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 14:01:06'!
+initialize
+	super initialize.
+	self reset! !
+
+!Korg35HPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 13:49:38'!
+initializeControls
+	super initializeControls.
+	self addFrequencyControl: #frequency value: 1000.0.
+	self addControl: #resonance min: 0.0 max: 1.0 value: 0.1! !
+
+!Korg35HPF methodsFor: 'processing' stamp: 'len 31/Jan/2026 14:53:49'!
+value: in
+	| v1 u1 feedback hp1 hp2 res_signal u2 v2 v3 y |
+	v1 := (in - s1) * α.
+	u1 := v1 + s1.
+	hp1 := in - u1.
+	feedback := s2*β₂ + (s3*β₃).
+	y := (hp1 + feedback) * α₀.
+	res_signal := y * k.
+	v2 := (res_signal - s2) * α.
+	u2 := v2 + s2.
+	hp2 := res_signal - u2.
+	v3 := (hp2 - s3) * α.
+	s1 := v1 * 2.0 + s1.
+	s2 := v2 * 2.0 + s2.
+	s3 := v3 * 2.0 + s3.
+	^ y! !
+
+!Korg35HPF methodsFor: 'tools' stamp: 'len 30/Jan/2026 15:18:45'!
+patchable
+	| answer display |
+	answer := PatchableMorph new model: self.
+	display := FilterControlMorph new frequency: (controls at: #frequency); controlY: (controls at: #resonance); mode: #HP.
+	answer body addMorph: display.
+	answer
+		addAudioInput: #setInput: label: 'In';
+		addControlInput: #modulateFrequency: label: 'Frequency';
+		addControlInput: #modulateResonance: label: 'Resonance';
+		addAudioOutput: #setOutput: label: 'Out'.
+	^ answer! !
+
+!Korg35LPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:11:53'!
+modulateFrequency: aNumber
+	self modulate: #frequency by: aNumber! !
+
+!Korg35LPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:12:42'!
+modulateResonance: aNumber
+	self modulate: #resonance by: aNumber! !
+
+!Korg35LPF methodsFor: 'controlling' stamp: 'len 17/Oct/2025 20:13:00'!
+reset
+	s1 := s2 := s3 := 0.0! !
+
+!Korg35LPF methodsFor: 'controlling' stamp: 'len 31/Jan/2026 14:57:59'!
+update
+	"See Will. C Pinkle, 'Designing Software Synthesizer Plug-ins in C++', section 12.7.1, equation 12.15."
+	| newFrequency newResonance g |
+	super update.
+	newFrequency := self get: #frequency.
+	newResonance := self get: #resonance.
+	(frequency = newFrequency and: [resonance = newResonance]) ifTrue: [^ self].
+	frequency := newFrequency.
+	resonance := newResonance.
+	k := resonance squared * 1.999. "quadratic curve, to have finer control at low resonance"
+	g := (Float pi * frequency / self class sampleRate) tan.
+	α := g / (1.0 + g).
+	"the following two lines are different in the highpass version:"
+	β₃ := k * (1.0 - α) / (1.0 + g). "NOTE: in Pinkle's book β₃ and β₂ are reversed, this is as they are defined in https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib"
+	β₂ := -1.0 / (1.0 + g).
+	α₀ := 1.0 / (1.0 - ((1.0 - α)*k*α) max: 1.0e-9) "avoid too small denominator"! !
+
+!Korg35LPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 14:00:59'!
+initialize
+	super initialize.
+	self reset! !
+
+!Korg35LPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 13:49:47'!
+initializeControls
+	super initializeControls.
+	self addFrequencyControl: #frequency value: 1000.0.
+	self addControl: #resonance min: 0.0 max: 1.0 value: 0.1! !
+
+!Korg35LPF methodsFor: 'processing' stamp: 'len 31/Jan/2026 14:56:22'!
+value: in
+	| v1 u1 feedback v2 v3 u3 y |
+	v1 := (in - s1) * α.
+	u1 := v1 + s1.
+	feedback := (s3 * β₃) + (s2 * β₂).
+	y := (u1 + feedback) * α₀.
+	v3 := (y - s3) * α.
+	u3 := v3 + s3.
+	v2 := (u3 * k - s2) * α * 2.0.
+	s1 := u1 + v1.
+	s2 := v2 + s2.
+	s3 := u3 + v3.
+	^ y! !
+
+!Korg35LPF methodsFor: 'tools' stamp: 'len 30/Jan/2026 15:18:25'!
+patchable
+	| answer display |
+	answer := PatchableMorph new model: self.
+	display := FilterControlMorph new frequency: (controls at: #frequency); controlY: (controls at: #resonance); mode: #LP.
+	answer body addMorph: display.
+	answer
+		addAudioInput: #setInput: label: 'In';
+		addControlInput: #modulateFrequency: label: 'Frequency';
+		addControlInput: #modulateResonance: label: 'Resonance';
+		addAudioOutput: #setOutput: label: 'Out'.
+	^ answer! !
 
 !Amp methodsFor: 'controlling' stamp: 'len 28/Nov/2025 11:45:00'!
 modulateGain: aNumber
@@ -5783,6 +5888,328 @@ patchable
 		addControlOutput: #output: label: 'Out'.
 	^ answer! !
 
+!MoogLPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:11:45'!
+modulateFrequency: aNumber
+	self modulate: #frequency by: aNumber! !
+
+!MoogLPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:12:46'!
+modulateResonance: aNumber
+	self modulate: #resonance by: aNumber! !
+
+!MoogLPF methodsFor: 'controlling' stamp: 'len 22/Sep/2025 19:52:00'!
+reset
+	y0 := y1 := y2 := y3 := y4 := 0.0! !
+
+!MoogLPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 18:51:08'!
+update
+	| newFrequency newResonance f t1 t2 |
+	super update.
+	newFrequency := self get: #frequency.
+	newResonance := self get: #resonance.
+	(frequency = newFrequency and: [resonance = newResonance]) ifTrue: [^ self].
+	frequency := newFrequency.
+	resonance := newResonance.
+	f := frequency * 2.0 / self class sampleRate. "normalized frequency f / fₛ"
+	"empirical tuning:"
+	p := f * (1.8 - (0.8 * f)).
+	"k := p * 2 - 1.0."
+	k := 2.0 * (f * Float halfPi) sin - 1.0. "better tuning"
+	t1 := (1.0 - p) * 1.386249.
+	t2 := 12.0 + (t1*t1).
+	r := resonance * (t2 + (6.0 * t1)) / (t2 - (6.0 * t1))! !
+
+!MoogLPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 14:01:42'!
+initialize
+	super initialize.
+	self reset! !
+
+!MoogLPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 13:09:15'!
+initializeControls
+	super initializeControls.
+	self addFrequencyControl: #frequency value: 1000.0.
+	self addControl: #resonance min: 0.0 max: 1.0 value: 0.1! !
+
+!MoogLPF methodsFor: 'processing' stamp: 'len 30/Jan/2026 13:54:51'!
+tick
+	self update.
+	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
+	input ifNil:
+		[outputLP4 ifNotNil: [outputLP4 atAllPut: 0.0].
+		outputLP3 ifNotNil: [outputLP3 atAllPut: 0.0].
+		outputLP2 ifNotNil: [outputLP2 atAllPut: 0.0].
+		outputLP1 ifNotNil: [outputLP1 atAllPut: 0.0].
+		^ self].
+	1 to: input size do: [:i|
+		| in z0 z1 z2 z3 |
+		in := input at: i.
+		"Process input:"
+		z0 := in - (r * y4).
+		"Four cascaded one-pole filters (bilinear transform):"	
+		z1 := p * (z0 + y0) - (k * y1).
+		z2 := p * (z1 + y1) - (k * y2).
+		z3 := p * (z2 + y2) - (k * y3).
+		y4 := p * (z3 + y3) - (k * y4).
+		"Update:"
+		y0 := z0 gate.
+		y1 := z1 gate.
+		y2 := z2 gate.
+		y3 := z3 gate.
+		"Clipper band limited sigmoid:"
+		y4 := (y4 - (y4 * y4 * y4 / 6.0)) gate.
+		outputLP4 ifNotNil: [outputLP4 at: i put: y4].
+		outputLP3 ifNotNil: [outputLP3 at: i put: y3].
+		outputLP2 ifNotNil: [outputLP2 at: i put: y2].
+		outputLP1 ifNotNil: [outputLP1 at: i put: y1]]! !
+
+!MoogLPF methodsFor: 'tools' stamp: 'len 30/Jan/2026 15:17:58'!
+patchable
+	| answer display |
+	answer := PatchableMorph new model: self.
+	display := FilterControlMorph new frequency: (controls at: #frequency); controlY: (controls at: #resonance); mode: #LP.
+	answer body addMorph: display.
+	answer
+		addAudioInput: #setInput: label: 'In';
+		addControlInput: #modulateFrequency: label: 'Frequency';
+		addControlInput: #modulateResonance: label: 'Resonance';
+		addAudioOutput: #setOutputLP4: label: 'LP4';
+		addAudioOutput: #setOutputLP3: label: 'LP3';
+		addAudioOutput: #setOutputLP2: label: 'LP2';
+		addAudioOutput: #setOutputLP1: label: 'LP1'.
+	^ answer! !
+
+!MoogLPF methodsFor: 'wiring' stamp: 'len 30/Jan/2026 13:08:00'!
+setInput: aBuffer
+	input := aBuffer! !
+
+!MoogLPF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:34:24'!
+setOutputLP1: aBuffer
+	outputLP1 := aBuffer! !
+
+!MoogLPF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:34:32'!
+setOutputLP2: aBuffer
+	outputLP2 := aBuffer! !
+
+!MoogLPF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:34:39'!
+setOutputLP3: aBuffer
+	outputLP3 := aBuffer! !
+
+!MoogLPF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:34:45'!
+setOutputLP4: aBuffer
+	outputLP4 := aBuffer! !
+
+!MoogLadder methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:12:06'!
+modulateFrequency: aNumber
+	self modulate: #frequency by: aNumber! !
+
+!MoogLadder methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:12:49'!
+modulateResonance: aNumber
+	self modulate: #resonance by: aNumber! !
+
+!MoogLadder methodsFor: 'controlling' stamp: 'len 28/Jan/2026 17:34:01'!
+reset
+	s1 := s2 := s3 := s4 := 0.0! !
+
+!MoogLadder methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:14:48'!
+update
+	| newFrequency newResonance g |
+	super update.
+	newFrequency := self get: #frequency.
+	newResonance := self get: #resonance.
+	(frequency = newFrequency and: [resonance = newResonance]) ifTrue: [^ self].
+	frequency := newFrequency.
+	resonance := newResonance.
+	g := (Float pi * frequency / self class sampleRate) tan.
+	G := g / (1.0 + g)! !
+
+!MoogLadder methodsFor: 'initialization' stamp: 'len 30/Jan/2026 14:01:49'!
+initialize
+	super initialize.
+	self reset! !
+
+!MoogLadder methodsFor: 'initialization' stamp: 'len 30/Jan/2026 13:49:59'!
+initializeControls
+	super initializeControls.
+	self addFrequencyControl: #frequency value: 1000.0.
+	self addControl: #resonance min: 0.0 max: 1.0 value: 0.1! !
+
+!MoogLadder methodsFor: 'processing' stamp: 'len 30/Jan/2026 18:51:23'!
+tick
+	| γ k |
+	self update.
+	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
+	input ifNil:
+		[outputLP4 ifNotNil: [outputLP4 atAllPut: 0.0].
+		outputLP3 ifNotNil: [outputLP3 atAllPut: 0.0].
+		outputLP2 ifNotNil: [outputLP2 atAllPut: 0.0].
+		outputLP1 ifNotNil: [outputLP1 atAllPut: 0.0].
+		^ self].
+	γ := G squared squared.
+	"Feedback coefficient from 0 to 4.
+	Resonance is mapped with a quadratic curve to have finer control at low resonance."
+	k := resonance squared * 4.0.
+	1 to: input size do: [:i|
+		| S in σ v1 v2 v3 v4 y1 y2 y3 y4 |
+		in := input at: i.
+		"Passband compensation to fix bass-drop at higher resonance:"
+		in := in * (k * 0.5 + 1.0). 
+		"Compute feedback:"
+		S := (G*(G*(G*s1 + s2) + s3) + s4) * (1 - G).
+		σ := (in - (k * S)) / (1.0 + (k * γ)).
+		"Stage 1:"
+		v1 := (σ - s1) * G.
+		y1 := v1 + s1.
+		s1 := y1 + v1.
+		"Stage 2:"
+		v2 := (y1 - s2) * G.
+		y2 := v2 + s2.
+		s2 := y2 + v2.
+		"Stage 3:"
+		v3 := (y2 - s3) * G.
+		y3 := v3 + s3.
+		s3 := y3 + v3.
+		"Stage 4:"
+		v4 := (y3 - s4) * G.
+		y4 := v4 + s4.
+		s4 := y4 + v4.
+		outputLP4 ifNotNil: [outputLP4 at: i put: y4].
+		outputLP3 ifNotNil: [outputLP3 at: i put: y3].
+		outputLP2 ifNotNil: [outputLP2 at: i put: y2].
+		outputLP1 ifNotNil: [outputLP1 at: i put: y1]]! !
+
+!MoogLadder methodsFor: 'tools' stamp: 'len 30/Jan/2026 15:17:36'!
+patchable
+	| answer display |
+	answer := PatchableMorph new model: self.
+	display := FilterControlMorph new frequency: (controls at: #frequency); controlY: (controls at: #resonance); mode: #LP.
+	answer body addMorph: display.
+	answer
+		addAudioInput: #setInput: label: 'In';
+		addControlInput: #modulateFrequency: label: 'Frequency';
+		addControlInput: #modulateResonance: label: 'Resonance';
+		addAudioOutput: #setOutputLP4: label: 'LP4';
+		addAudioOutput: #setOutputLP3: label: 'LP3';
+		addAudioOutput: #setOutputLP2: label: 'LP2';
+		addAudioOutput: #setOutputLP1: label: 'LP1'.
+	^ answer! !
+
+!MoogLadder methodsFor: 'wiring' stamp: 'len 30/Jan/2026 13:14:10'!
+setInput: aBuffer
+	input := aBuffer! !
+
+!MoogLadder methodsFor: 'wiring' stamp: 'len 28/Jan/2026 17:47:30'!
+setOutputLP1: aBuffer
+	outputLP1 := aBuffer! !
+
+!MoogLadder methodsFor: 'wiring' stamp: 'len 28/Jan/2026 17:47:35'!
+setOutputLP2: aBuffer
+	outputLP2 := aBuffer! !
+
+!MoogLadder methodsFor: 'wiring' stamp: 'len 28/Jan/2026 17:47:38'!
+setOutputLP3: aBuffer
+	outputLP3 := aBuffer! !
+
+!MoogLadder methodsFor: 'wiring' stamp: 'len 28/Jan/2026 17:47:40'!
+setOutputLP4: aBuffer
+	outputLP4 := aBuffer! !
+
+!OberheimSVF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:12:11'!
+modulateFrequency: aNumber
+	self modulate: #frequency by: aNumber! !
+
+!OberheimSVF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:19:23'!
+modulateResonance: aNumber
+	self modulate: #resonance by: aNumber! !
+
+!OberheimSVF methodsFor: 'controlling' stamp: 'len 16/Oct/2025 19:49:00'!
+reset
+	s1 := s2 := 0.0! !
+
+!OberheimSVF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 21:43:04'!
+update
+	| newFrequency newResonance |
+	super update.
+	newFrequency := self get: #frequency.
+	newResonance := self get: #resonance.
+	(frequency = newFrequency and: [resonance = newResonance]) ifTrue: [^ self].
+	frequency := newFrequency.
+	resonance := newResonance.
+	g := (Float pi * frequency / self class sampleRate) tan.
+	r := 1.0 / (resonance * 9.5 + 0.5). "1/Q"
+	feedback := r + g.
+	alpha0 := 1.0 / (1.0 + (feedback * g))! !
+
+!OberheimSVF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 14:01:54'!
+initialize
+	super initialize.
+	self reset! !
+
+!OberheimSVF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 13:44:11'!
+initializeControls
+	super initializeControls.
+	self addFrequencyControl: #frequency value: 1000.0.
+	self addControl: #resonance min: 0.0 max: 1.0 value: 0.0! !
+
+!OberheimSVF methodsFor: 'processing' stamp: 'len 30/Jan/2026 22:33:59'!
+tick
+	self update.
+	(outputLP isNil and: [outputHP isNil and: [outputBP isNil and: [outputBS isNil]]]) ifTrue: [^ self].
+	input ifNil:
+		[outputLP ifNotNil: [outputLP atAllPut: 0.0].
+		outputHP ifNotNil: [outputHP atAllPut: 0.0].
+		outputBP ifNotNil: [outputBP atAllPut: 0.0].
+		outputBS ifNotNil: [outputBS atAllPut: 0.0].
+		^ self].
+	1 to: input size do: [:i|
+		| in hp bp lp |
+		in := input at: i.
+		hp := (in - s2 - (s1 * feedback)) * alpha0.
+		"update s1:"
+		bp := (hp * g + s1) tanh. "faust vaeffects uses x - x^3/3 instead, clipped to -1 to 1."
+		s1 := bp gate.
+		"update s2:"
+		lp := bp * g + s2.
+		s2 := lp gate.
+		outputLP ifNotNil: [outputLP at: i put: lp].
+		outputHP ifNotNil: [outputHP at: i put: hp].
+		outputBP ifNotNil: [outputBP at: i put: bp].
+		outputBS ifNotNil: [outputBS at: i put: lp + hp]]! !
+
+!OberheimSVF methodsFor: 'tools' stamp: 'len 30/Jan/2026 22:15:31'!
+patchable
+	| answer display |
+	answer := PatchableMorph new model: self.
+	display := FilterControlMorph new frequency: (controls at: #frequency); controlY: (controls at: #resonance).
+	answer body addMorph: display.
+	answer
+		addAudioInput: #setInput: label: 'In';
+		addControlInput: #modulateFrequency: label: 'Frequency';
+		addControlInput: #modulateResonance: label: 'Resonance';
+		addAudioOutput: #setOutputLP: label: 'LP';
+		addAudioOutput: #setOutputHP: label: 'HP';
+		addAudioOutput: #setOutputBP: label: 'BP';
+		addAudioOutput: #setOutputBS: label: 'BS'.
+	^ answer! !
+
+!OberheimSVF methodsFor: 'wiring' stamp: 'len 30/Jan/2026 13:21:45'!
+setInput: aBuffer
+	input := aBuffer! !
+
+!OberheimSVF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:39:42'!
+setOutputBP: aBuffer
+	outputBP := aBuffer! !
+
+!OberheimSVF methodsFor: 'wiring' stamp: 'len 30/Jan/2026 22:15:16'!
+setOutputBS: aBuffer
+	outputBS := aBuffer! !
+
+!OberheimSVF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:39:36'!
+setOutputHP: aBuffer
+	outputHP := aBuffer! !
+
+!OberheimSVF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:39:30'!
+setOutputLP: aBuffer
+	outputLP := aBuffer! !
+
 !ControlPanel methodsFor: 'building' stamp: 'len 27/Jan/2026 14:58:32'!
 addHorizontalSlider: aControl
 	self addMorph: (SliderControlMorph control: aControl) transpose! !
@@ -5821,6 +6248,14 @@ initialize
 	super initialize.
 	layoutObject := RowLayout new gap: self defaultGap.
 	color := Color transparent! !
+
+!PatchableBodyMorph methodsFor: 'as yet unclassified' stamp: 'len 30/Jan/2026 15:05:52'!
+addPanel
+	| answer |
+	answer := ControlPanel new.
+"	answer := LinearLayoutMorph newRow gap: 12; color: Color transparent."
+	self addMorph: answer.
+	^ answer! !
 
 !PatchableBodyMorph methodsFor: 'as yet unclassified' stamp: 'len 24/Jan/2026 14:29:23'!
 defaultBorderColor
@@ -6273,21 +6708,9 @@ defaultColor
 defaultFontSize
 	^ 14! !
 
-!ControlMorph methodsFor: 'accessing' stamp: 'len 28/Jan/2026 23:07:48'!
-fineStepFactor
-	^ self valueOfProperty: #fineStepFactor ifAbsent: [0.1]! !
-
-!ControlMorph methodsFor: 'accessing' stamp: 'len 28/Jan/2026 23:07:04'!
-fineStepFactor: aNumber
-	self setProperty: #fineStepFactor toValue: aNumber! !
-
 !ControlMorph methodsFor: 'accessing' stamp: 'len 19/Nov/2025 19:08:00'!
 inactiveColor
 	^ self hasKeyboardFocus ifTrue: [Color veryLightGray] ifFalse: [Color lightGray]! !
-
-!ControlMorph methodsFor: 'accessing' stamp: 'len 19/Jan/2026 15:16:23'!
-stepSize
-	^ 1.0 / 96.0! !
 
 !ControlMorph methodsFor: 'building' stamp: 'len 27/Jan/2026 10:25:08'!
 withLabel: aString
@@ -6305,29 +6728,28 @@ update: anObject
 handlesMouseScroll: anEvent
 	^ anEvent anyModifierKeyPressed not! !
 
-!ControlMorph methodsFor: 'events' stamp: 'len 28/Jan/2026 23:07:31'!
-keyStroke: aKeyboardEvent
-	aKeyboardEvent isEsc ifTrue:
-		[aKeyboardEvent wasHandled: true.
+!ControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:10:00'!
+keyStroke: anEvent
+	anEvent isEsc ifTrue:
+		[anEvent wasHandled: true.
 		control resetToDefault.
 		self wantsBalloon ifTrue: [self showBalloon: control printedBaseValueWithLabel].
 		^ self].
-	(aKeyboardEvent isArrowUp or: [aKeyboardEvent isArrowRight]) ifTrue:
-		[aKeyboardEvent wasHandled: true.
-		self adjustControlBy: self stepSize * (aKeyboardEvent shiftPressed ifTrue: [self fineStepFactor] ifFalse: [1.0]).
+	(anEvent isArrowUp or: [anEvent isArrowRight]) ifTrue:
+		[anEvent wasHandled: true.
+		self adjustControlBy: (anEvent shiftPressed ifTrue: [control fineStep] ifFalse: [control coarseStep]).
 		^ self].
-	(aKeyboardEvent isArrowDown or: [aKeyboardEvent isArrowLeft]) ifTrue:
-		[aKeyboardEvent wasHandled: true.
-		self adjustControlBy: self stepSize * (aKeyboardEvent shiftPressed ifTrue: [self fineStepFactor negated] ifFalse: [-1.0]).
+	(anEvent isArrowDown or: [anEvent isArrowLeft]) ifTrue:
+		[anEvent wasHandled: true.
+		self adjustControlBy: (anEvent shiftPressed ifTrue: [control fineStep] ifFalse: [control coarseStep]) negated.
 		^ self].
-	^ super keyStroke: aKeyboardEvent! !
+	^ super keyStroke: anEvent! !
 
-!ControlMorph methodsFor: 'events' stamp: 'len 28/Jan/2026 23:07:41'!
-mouseScroll: aMouseEvent localPosition: localEventPosition
+!ControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:10:08'!
+mouseScroll: anEvent localPosition: localEventPosition
 	| step |
-	step := self stepSize.
-	aMouseEvent shiftPressed ifTrue: [step := step * self fineStepFactor].
-	self adjustControlBy: ((aMouseEvent direction = #up or: [aMouseEvent direction = #right]) ifTrue: [step negated] ifFalse: [step])! !
+	step := anEvent shiftPressed ifTrue: [control fineStep] ifFalse: [control coarseStep].
+	self adjustControlBy: ((anEvent direction = #up or: [anEvent direction = #right]) ifTrue: [step negated] ifFalse: [step])! !
 
 !ControlMorph methodsFor: 'focus handling' stamp: 'len 19/Nov/2025 19:02:00'!
 keyboardFocusChange: aBoolean
@@ -6693,6 +7115,14 @@ initialize
 	super initialize.
 	color := PatchMorph envelopeColor! !
 
+!EGControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:08:46'!
+coarseStep
+	^ attack coarseStep! !
+
+!EGControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:09:02'!
+fineStep
+	^ attack fineStep! !
+
 !EGControlMorph methodsFor: 'events' stamp: 'len 18/Jan/2026 18:49:12'!
 handlesMouseScroll: anEvent
 	^ anEvent anyModifierKeyPressed not! !
@@ -6700,10 +7130,6 @@ handlesMouseScroll: anEvent
 !EGControlMorph methodsFor: 'events' stamp: 'len 18/Jan/2026 18:49:37'!
 mouseScroll: aMouseEvent localPosition: localEventPosition
 	^ self! !
-
-!EGControlMorph methodsFor: 'events' stamp: 'len 19/Jan/2026 15:16:23'!
-stepSize
-	^ 1.0 / 128.0! !
 
 !EGControlMorph methodsFor: 'geometry testing' stamp: 'len 18/Jan/2026 16:38:50'!
 requiresVectorCanvas
@@ -6737,12 +7163,11 @@ drawOn: aCanvas
 maximumSegmentWidth
 	^ self morphWidth / 2.0! !
 
-!ADControlMorph methodsFor: 'events' stamp: 'len 28/Jan/2026 23:03:55'!
+!ADControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 18:59:05'!
 mouseScroll: anEvent localPosition: localEventPosition
 	| a step control |
 	a := attack basePosition * self maximumSegmentWidth.
-	step := self stepSize.
-	anEvent shiftPressed ifTrue: [step := step * 0.1].
+	step := anEvent shiftPressed ifTrue: [attack fineStep] ifFalse: [attack coarseStep].
 	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
 	localEventPosition x < a ifTrue: [control := attack] ifFalse: [control := decay].
 	control basePosition: control basePosition + step.
@@ -6799,11 +7224,10 @@ drawOn: aCanvas
 maximumSegmentWidth
 	^ self morphWidth / 3.0! !
 
-!ADSRControlMorph methodsFor: 'events' stamp: 'len 28/Jan/2026 23:03:51'!
+!ADSRControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:08:24'!
 mouseScroll: anEvent localPosition: localEventPosition
 	| step w a d s r control |
-	step := self stepSize.
-	anEvent shiftPressed ifTrue: [step := step * 0.1].
+	step := anEvent shiftPressed ifTrue: [self fineStep] ifFalse: [self coarseStep].
 	anEvent isVertical ifTrue:
 		[anEvent direction = #up ifTrue: [step := step negated].
 		sustain basePosition: sustain basePosition + step.
@@ -6855,13 +7279,12 @@ drawOn: aCanvas
 maximumSegmentWidth
 	^ self morphWidth / 3.0! !
 
-!AHDControlMorph methodsFor: 'events' stamp: 'len 28/Jan/2026 23:03:47'!
+!AHDControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:08:32'!
 mouseScroll: anEvent localPosition: localEventPosition
 	| a h step control |
 	a := attack basePosition * self maximumSegmentWidth.
 	h := hold basePosition * self maximumSegmentWidth.
-	step := self stepSize.
-	anEvent shiftPressed ifTrue: [step := step * 0.1].
+	step := anEvent shiftPressed ifTrue: [self fineStep] ifFalse: [self coarseStep].
 	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
 	control := localEventPosition x < a ifTrue: [attack] ifFalse: [localEventPosition x < (a + h) ifTrue: [hold] ifFalse: [decay]].
 	control basePosition: control basePosition + step.
@@ -6885,12 +7308,11 @@ drawOn: aCanvas
 maximumSegmentWidth
 	^ self morphWidth / 2.0! !
 
-!ARControlMorph methodsFor: 'events' stamp: 'len 28/Jan/2026 23:03:43'!
+!ARControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:09:22'!
 mouseScroll: anEvent localPosition: localEventPosition
 	| a step control |
 	a := attack basePosition * self maximumSegmentWidth.
-	step := self stepSize.
-	anEvent shiftPressed ifTrue: [step := step * 0.1].
+	step := anEvent shiftPressed ifTrue: [self fineStep] ifFalse: [self coarseStep].
 	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
 	localEventPosition x < a ifTrue: [control := attack] ifFalse: [control := release].
 	control basePosition: control basePosition + step.
@@ -6938,11 +7360,10 @@ drawOn: aCanvas
 maximumSegmentWidth
 	^ self morphWidth / 2.0! !
 
-!ASRControlMorph methodsFor: 'events' stamp: 'len 28/Jan/2026 23:03:38'!
+!ASRControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:09:28'!
 mouseScroll: anEvent localPosition: localEventPosition
 	| step w a s r control |
-	step := self stepSize.
-	anEvent shiftPressed ifTrue: [step := step * 0.1].
+	step := anEvent shiftPressed ifTrue: [self fineStep] ifFalse: [self coarseStep].
 	anEvent isVertical ifTrue:
 		[anEvent direction = #up ifTrue: [step := step negated].
 		sustain basePosition: sustain basePosition + step.
@@ -6969,10 +7390,6 @@ controlY: aControl
 	controlY := aControl.
 	aControl addDependent: self! !
 
-!XYControlMorph methodsFor: 'accessing' stamp: 'len 28/Jan/2026 23:00:10'!
-stepSize
-	^ 1.0 / 128.0! !
-
 !XYControlMorph methodsFor: 'dependency mechanism' stamp: 'len 20/Jan/2026 15:18:05'!
 update: anObject
 	self redrawNeeded! !
@@ -6985,30 +7402,25 @@ requiresVectorCanvas
 handlesMouseScroll: anEvent
 	^ anEvent anyModifierKeyPressed not! !
 
-!XYControlMorph methodsFor: 'events' stamp: 'len 28/Jan/2026 23:03:21'!
-keyStroke: aKeyboardEvent
-	| step |
-	aKeyboardEvent isEsc ifTrue:
-		[aKeyboardEvent wasHandled: true. controlX resetToDefault. controlY resetToDefault. ^ self].
-	step := self stepSize * (aKeyboardEvent shiftPressed ifTrue: [0.1] ifFalse: [1.0]).
-	aKeyboardEvent isArrowUp ifTrue:
-		[aKeyboardEvent wasHandled: true. self adjustYBy: step. ^ self].
-	aKeyboardEvent isArrowDown ifTrue:
-		[aKeyboardEvent wasHandled: true. self adjustYBy: step negated. ^ self].
-	aKeyboardEvent isArrowLeft ifTrue:
-		[aKeyboardEvent wasHandled: true. self adjustXBy: step negated. ^ self].
-	aKeyboardEvent isArrowRight ifTrue:
-		[aKeyboardEvent wasHandled: true. self adjustXBy: step]! !
+!XYControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:04:28'!
+keyStroke: anEvent
+	anEvent isEsc ifTrue:
+		[anEvent wasHandled: true. controlX resetToDefault. controlY resetToDefault. ^ self].
+	anEvent isArrowUp ifTrue:
+		[anEvent wasHandled: true. self adjustYBy: (anEvent shiftPressed ifTrue: [controlY fineStep] ifFalse: [controlY coarseStep]). ^ self].
+	anEvent isArrowDown ifTrue:
+		[anEvent wasHandled: true. self adjustYBy: (anEvent shiftPressed ifTrue: [controlY fineStep] ifFalse: [controlY coarseStep]) negated. ^ self].
+	anEvent isArrowLeft ifTrue:
+		[anEvent wasHandled: true. self adjustXBy: (anEvent shiftPressed ifTrue: [controlX fineStep] ifFalse: [controlX coarseStep]) negated. ^ self].
+	anEvent isArrowRight ifTrue:
+		[anEvent wasHandled: true. self adjustXBy: (anEvent shiftPressed ifTrue: [controlX fineStep] ifFalse: [controlX coarseStep])]! !
 
-!XYControlMorph methodsFor: 'events' stamp: 'len 28/Jan/2026 22:49:00'!
-mouseScroll: aMouseEvent localPosition: localEventPosition
-	| step |
-	step := self stepSize.
-	aMouseEvent shiftPressed ifTrue: [step := step * 0.1].
-	aMouseEvent direction = #left ifTrue: [self adjustXBy: step. ^ self].
-	aMouseEvent direction = #right ifTrue: [self adjustXBy: step negated. ^ self].
-	aMouseEvent direction = #down ifTrue: [self adjustYBy: step. ^ self].
-	aMouseEvent direction = #up ifTrue: [self adjustYBy: step negated]! !
+!XYControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:04:13'!
+mouseScroll: anEvent localPosition: localEventPosition
+	anEvent direction = #left ifTrue: [self adjustXBy: (anEvent shiftPressed ifTrue: [controlX fineStep] ifFalse: [controlX coarseStep]). ^ self].
+	anEvent direction = #right ifTrue: [self adjustXBy: (anEvent shiftPressed ifTrue: [controlX fineStep] ifFalse: [controlX coarseStep]) negated. ^ self].
+	anEvent direction = #down ifTrue: [self adjustYBy: (anEvent shiftPressed ifTrue: [controlY fineStep] ifFalse: [controlY coarseStep]). ^ self].
+	anEvent direction = #up ifTrue: [self adjustYBy: (anEvent shiftPressed ifTrue: [controlY fineStep] ifFalse: [controlY coarseStep]) negated]! !
 
 !XYControlMorph methodsFor: 'halos and balloon help' stamp: 'len 27/Jan/2026 19:29:29'!
 balloonText
@@ -7032,10 +7444,6 @@ adjustYBy: aNumber
 	self redrawNeeded.
 	self showBalloon: controlY printedBaseValueWithLabel! !
 
-!FilterControlMorph methodsFor: 'accessing' stamp: 'len 6/Dec/2025 14:28:10'!
-Q: aControl
-	self controlY: aControl! !
-
 !FilterControlMorph methodsFor: 'accessing' stamp: 'len 6/Dec/2025 14:26:58'!
 frequency: aControl
 	self controlX: aControl! !
@@ -7044,92 +7452,161 @@ frequency: aControl
 mode: aSymbol
 	mode := aSymbol! !
 
-!FilterControlMorph methodsFor: 'drawing' stamp: 'len 28/Jan/2026 16:41:57'!
-drawBPOn: aCanvas frequency: freq Q: Q color: aColor
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 30/Jan/2026 15:28:10'!
+drawBPOn: aCanvas frequency: freq Q: Q color: curveColor fill: aBoolean
 	| w h x y notch bw δ p1 p2 p3 |
 	w := self morphWidth.
-	h := self morphHeight - 2.0.
+	h := self morphHeight.
 	x := freq * w.
 	y := h / 2.0.
-	bw := self notchWidth * (1.2 - Q abs).
+	bw := self notchWidth * (1.2 - Q).
 	δ := bw / 5.0 @ 0.0.
 	notch := Q * h * 0.5.
+	p1 := (x - (bw / 2.0)) @ h.
+	p2 := x @ (y - notch).
+	p3 := (x + (bw / 2.0)) @ h.
+	aBoolean ifTrue:
+		[aCanvas fillColor: (Color cyanPhosphor alpha: 0.15) do:
+			[aCanvas
+				moveTo: (p1 x min: 0.0) @ h;
+				lineTo: p1;
+				cubicBezierTo: p2 control1: p1 + δ control2: p2 - δ;
+				cubicBezierTo: p3 control1: p2 + δ control2: p3 - δ;
+				lineTo: w @ h;
+				closePath]].
+	aCanvas strokeWidth: 1.0 color: curveColor do:
+		[aCanvas
+			moveTo: (p1 x min: 0.0) @ h;
+			lineTo: p1;
+			cubicBezierTo: p2 control1: p1 + δ control2: p2 - δ;
+			cubicBezierTo: p3 control1: p2 + δ control2: p3 - δ;
+			lineTo: w @ h]! !
+
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 29/Jan/2026 16:28:19'!
+drawBSOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean
+	| w h x y notch bw δ p1 p2 p3 |
+	w := self morphWidth.
+	h := self morphHeight.
+	x := freq * w.
+	y := h / 2.0.
+	bw := self notchWidth * (1.2 - Q).
+	δ := bw / 5.0 @ 0.0.
+	notch := Q negated * h * 0.5.
 	p1 := (x - (bw / 2.0)) @ y.
 	p2 := x @ (y - notch).
 	p3 := (x + (bw / 2.0)) @ y.
-	aCanvas strokeWidth: 2.0 color: aColor do:
+	aBoolean ifTrue:
+		[aCanvas fillColor: (Color white alpha: 0.15) do:
+			[aCanvas
+				moveTo: (p1 x min: 0.0) @ y;
+				lineTo: p1;
+				cubicBezierTo: p2 control1: p1 + δ control2: p2 - δ;
+				cubicBezierTo: p3 control1: p2 + δ control2: p3 - δ;
+				lineTo: w @ y;
+				lineTo: w @ h;
+				lineTo: 0.0 @ h;
+				closePath]].
+	aCanvas strokeWidth: 1.0 color: aColor do:
 		[aCanvas
 			moveTo: (p1 x min: 0.0) @ y;
 			lineTo: p1;
 			cubicBezierTo: p2 control1: p1 + δ control2: p2 - δ;
 			cubicBezierTo: p3 control1: p2 + δ control2: p3 - δ;
-			lineTo: (p3 x max: w) @ y]! !
+			lineTo: w @ y]! !
 
-!FilterControlMorph methodsFor: 'drawing' stamp: 'len 28/Jan/2026 16:42:18'!
-drawBSOn: aCanvas frequency: freq Q: Q color: aColor
-	self drawBPOn: aCanvas frequency: freq Q: Q negated color: aColor! !
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 30/Jan/2026 15:56:08'!
+drawDecadesOn: aCanvas
+	| h lineColor w x |
+	w := self morphWidth.
+	h := self morphHeight.
+	lineColor := Color gray.
+	#(100 1000 10000) do: [:f|
+		x := w * (controlX positionFromValue: f).
+		aCanvas line: x @ 0 to: x @ h width: 1.0 color: lineColor].
+	lineColor := Color darkGray.
+	#(50 200 500 2000 5000) do: [:f|
+		x := w * (controlX positionFromValue: f).
+		aCanvas line: x @ 0 to: x @ h width: 1.0 color: lineColor]! !
 
-!FilterControlMorph methodsFor: 'drawing' stamp: 'len 28/Jan/2026 16:54:21'!
-drawHPOn: aCanvas frequency: freq Q: Q color: aColor
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 30/Jan/2026 15:29:18'!
+drawHPOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean
 	| w h x y notch bw δ p1 p2 p3 |
 	w := self morphWidth.
-	h := self morphHeight - 2.0.
+	h := self morphHeight.
 	x := freq * w.
 	y := h / 2.0.
-	bw := self notchWidth * (1.2 - Q abs).
+	bw := self notchWidth * (1.2 - Q).
 	δ := bw / 5.0 @ 0.0.
 	notch := Q * h * 0.5.
-	p1 := (x - (bw / 2.0)) @ h.
+	p1 := x - (bw / 2.0) - (Q*bw) @ h.
 	p2 := x @ (y - notch).
-	p3 := x + (bw / 2.0) + (Q*bw) @ y.
-	aCanvas strokeWidth: 2.0 color: aColor do:
+	p3 := x + (bw / 2.0) @ y.
+	aBoolean ifTrue:
+		[aCanvas fillColor: (Color azureBeam alpha: 0.15) do:
+			[aCanvas
+				moveTo: p1;
+				cubicBezierTo: p2 control1: p1 + δ control2: p2 - δ;
+				cubicBezierTo: p3 control1: p2 + δ control2: p3 - (δ*1);
+				lineTo: w @ y;
+				lineTo: w @ h;
+				closePath]].
+	aCanvas strokeWidth: 1.0 color: aColor do:
 		[aCanvas
-			moveTo: (p1 x min: 0.0) @ h;
-			lineTo: p1;
+			moveTo: p1;
 			cubicBezierTo: p2 control1: p1 + δ control2: p2 - δ;
 			cubicBezierTo: p3 control1: p2 + δ control2: p3 - (δ*1.5);
-			lineTo: (p3 x max: w) @ y]! !
+			lineTo: w @ y]! !
 
-!FilterControlMorph methodsFor: 'drawing' stamp: 'len 28/Jan/2026 16:51:13'!
-drawLPOn: aCanvas frequency: freq Q: Q color: aColor
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 30/Jan/2026 15:28:23'!
+drawLPOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean
 	| w h x y notch bw δ p1 p2 p3 |
 	w := self morphWidth.
-	h := self morphHeight - 2.0.
+	h := self morphHeight.
 	x := freq * w.
 	y := h / 2.0.
-	bw := self notchWidth * (1.2 - Q abs).
+	bw := self notchWidth * (1.2 - Q).
 	δ := bw / 5.0 @ 0.0.
 	notch := Q * h * 0.5.
 	p1 := (x - (bw / 2.0)) @ y.
 	p2 := x @ (y - notch).
 	p3 := x + (bw / 2.0) + (Q*bw) @ h.
-	aCanvas strokeWidth: 2.0 color: aColor do:
+	aBoolean ifTrue:
+		[aCanvas fillColor: (Color hotPinkGlow alpha: 0.15) do:
+			[aCanvas
+				moveTo: (p1 x min: 0.0) @ y;
+				lineTo: p1;
+				cubicBezierTo: p2 control1: p1 + δ control2: p2 - δ;
+				cubicBezierTo: p3 control1: p2 + δ control2: p3 - (δ*1);
+				lineTo: 0@h;
+				closePath]].
+	aCanvas strokeWidth: 1.0 color: aColor do:
 		[aCanvas
 			moveTo: (p1 x min: 0.0) @ y;
 			lineTo: p1;
 			cubicBezierTo: p2 control1: p1 + δ control2: p2 - δ;
-			cubicBezierTo: p3 control1: p2 + δ control2: p3 - (δ*1.5);
-			lineTo: (p3 x max: w) @ h]! !
+			cubicBezierTo: p3 control1: p2 + δ control2: p3 - (δ*1.5)]! !
 
-!FilterControlMorph methodsFor: 'drawing' stamp: 'len 28/Jan/2026 17:04:30'!
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 30/Jan/2026 15:48:02'!
 drawOn: aCanvas
 	| prevClipRect |
+	self drawDecadesOn: aCanvas.
 	prevClipRect := aCanvas clipRect.
 	aCanvas setClipRect: ((self externalizeBoundsToWorld: self localBounds) intersect: prevClipRect).
 	"draw the base values first, unless it's not modulated:"
 	(controlX modulation = 0.0 and: [controlY modulation = 0.0]) ifFalse:
-		[self drawOn: aCanvas frequency: controlX basePosition Q: controlY basePosition color: baseColor].
+		[self drawOn: aCanvas frequency: controlX basePosition Q: controlY basePosition color: baseColor fill: false].
 	"then the modulated values:"
-	self drawOn: aCanvas frequency: controlX modulatedPosition Q: controlY modulatedPosition color: color.
+	self drawOn: aCanvas frequency: controlX modulatedPosition Q: controlY modulatedPosition color: color fill: true.
 	aCanvas setClipRect: prevClipRect! !
 
-!FilterControlMorph methodsFor: 'drawing' stamp: 'len 28/Jan/2026 16:57:41'!
-drawOn: aCanvas frequency: freq Q: Q color: aColor
-	mode = #LP ifTrue: [^ self drawLPOn: aCanvas frequency: freq Q: Q color: aColor].
-	mode = #HP ifTrue: [^ self drawHPOn: aCanvas frequency: freq Q: Q color: aColor].
-	mode = #BP ifTrue: [^ self drawBPOn: aCanvas frequency: freq Q: Q color: aColor].
-	mode = #BS ifTrue: [^ self drawBSOn: aCanvas frequency: freq Q: Q color: aColor].
-	self drawBPOn: aCanvas frequency: freq Q: Q color: aColor! !
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 30/Jan/2026 15:25:00'!
+drawOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean
+	mode = #LP ifTrue: [^ self drawLPOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean].
+	mode = #HP ifTrue: [^ self drawHPOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean].
+	mode = #BP ifTrue: [^ self drawBPOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean].
+	mode = #BS ifTrue: [^ self drawBSOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean].
+	self drawHPOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean.
+	self drawLPOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean! !
 
 !FilterControlMorph methodsFor: 'drawing' stamp: 'len 28/Jan/2026 16:14:59'!
 notchWidth
@@ -10314,7 +10791,7 @@ bp: frequency Q: Q
 	b1 := -2.0 * g.
 	b2 := 2.0 * b! !
 
-!Biquad methodsFor: 'accessing' stamp: 'len 27/Jan/2026 22:17:39'!
+!Biquad methodsFor: 'accessing' stamp: 'len 30/Jan/2026 01:30:53'!
 bs: frequency Q: Q
 	"Setup coefficients for a second order band-stop filter."
 	| ω α b g |
@@ -10323,7 +10800,7 @@ bs: frequency Q: Q
 	b := 0.5 * (1.0 - α) / (1.0 + α).
 	g := (0.5 + b) * ω cos.
 	a0 := 0.5 + b.
-	a1 := -2.0*g.
+	a1 := -2.0 * g.
 	a2 := 0.5 + b.
 	b1 := -2.0 * g.
 	b2 := 2.0 * b! !
@@ -10575,6 +11052,25 @@ read
 !DelayLineTap class methodsFor: 'instance creation' stamp: 'len 26/Jan/2026 17:11:08'!
 on: aDelayLine
 	^ self new setDelayLine: aDelayLine! !
+
+!Downsampler2x methodsFor: 'as yet unclassified' stamp: 'len 30/Jan/2026 15:12:33'!
+downsample: subsample1 and: subsample2
+	| o1 o2 |
+	d3 := d2.
+	d2 := d1.
+	d1 := d0.
+	d0 := subsample1.
+	o1 := (d0 + d3) * -0.031 + ((d1 + d2) * 0.113) + (d1 * -0.251).
+	o2 := subsample2 * 0.5.
+	^ o1 + o2! !
+
+!Downsampler2x methodsFor: 'as yet unclassified' stamp: 'len 30/Jan/2026 15:09:48'!
+initialize
+	self reset! !
+
+!Downsampler2x methodsFor: 'as yet unclassified' stamp: 'len 30/Jan/2026 15:10:00'!
+reset
+	d0 := d1 := d2 := d3 := 0.0! !
 
 !FFT methodsFor: 'initialization' stamp: 'jmv 10/Aug/2010 10:51:00'!
 basicRealData: real
@@ -10977,6 +11473,25 @@ resume
 !Sound methodsFor: 'playing' stamp: 'len 27/Nov/2025 02:02:00'!
 stop
 	AudioPlayer stopPlaying: self! !
+
+!Upsampler2x methodsFor: 'as yet unclassified' stamp: 'len 30/Jan/2026 15:09:20'!
+initialize
+	self reset! !
+
+!Upsampler2x methodsFor: 'as yet unclassified' stamp: 'len 30/Jan/2026 15:09:32'!
+reset
+	u0 := u1 := u2 := u3 :=​ 0.0! !
+
+!Upsampler2x methodsFor: 'as yet unclassified' stamp: 'len 30/Jan/2026 15:11:02'!
+upsampling: aNumber do: aBlock
+	| s1 s2 |
+	u3 := u2.
+	u2 := u1.
+	u1 := u0.
+	u0 := aNumber.
+	s1 := (u0 + u3) * -0.031 + ((u1 + u2) * 0.113) + (u1 * -0.251).
+	s2 := u1 * 0.5.
+	^ aBlock value: s1 value: s2! !
 
 !WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 31/Dec/2025 01:15:55'!
 channels

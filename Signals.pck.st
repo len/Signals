@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 31 January 2026 at 4:47:14 pm'!
+'From Cuis7.7 [latest update: #7797] on 31 January 2026 at 7:08:23 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 431!
+!provides: 'Signals' 1 432!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -2364,15 +2364,15 @@ initializeControls
 	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01.
 	self addTimeControl: #decay min: 0.001 max: 2.0 value: 0.5! !
 
-!AD methodsFor: 'processing' stamp: 'len 29/Nov/2025 20:43:00'!
+!AD methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:45:01'!
 next
 	stage = #attack ifTrue:
 		["value := (1.0 - value) * factor + value." value := value + increment.
-		value >= 0.999 ifTrue: [stage := #decay. factor := 0.001 raisedTo: 1.0 / decay].
+		value >= 0.999 ifTrue: [stage := #decay. factor := 0.001 "-60 dB" raisedTo: 1.0 / decay].
 		^ value * velocity].
 	stage = #decay ifTrue:
 		[value := value * factor.
-		value <= 0.001 ifTrue: [value := 0.0. stage := #idle]].
+		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value * velocity! !
 
 !AD methodsFor: 'tools' stamp: 'len 23/Jan/2026 14:42:06'!
@@ -2418,11 +2418,11 @@ initializeControls
 	self addVolumeControl: #sustain value: 0.6.
 	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0! !
 
-!ADSR methodsFor: 'processing' stamp: 'len 28/Nov/2025 16:37:00'!
+!ADSR methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:46:07'!
 next
 	stage = #attack ifTrue:
 		["value := (1.0 - value) * factor + value." value := value + increment.
-		value >= 0.999 ifTrue: [stage := #decay. factor := 0.001 raisedTo: 1.0 / decay].
+		value >= 0.999 ifTrue: [stage := #decay. factor := 0.001 "-60 dB" raisedTo: 1.0 / decay].
 		^ value * velocity].
 	stage = #decay ifTrue:
 		[value := (value - sustain) * factor + sustain.
@@ -2431,7 +2431,7 @@ next
 	stage = #sustain ifTrue: [^ value * velocity].
 	stage = #release ifTrue:
 		[value := value * factor.
-		value <= 0.001 ifTrue: [value := 0.0. stage := #idle]].
+		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value * velocity! !
 
 !ADSR methodsFor: 'tools' stamp: 'len 23/Jan/2026 22:39:34'!
@@ -2470,18 +2470,18 @@ initializeControls
 	self addTimeControl: #hold min: 0.001 max: 10.0 value: 1.0.
 	self addTimeControl: #decay min: 0.001 max: 2.0 value: 0.5! !
 
-!AHD methodsFor: 'processing' stamp: 'len 26/Jan/2026 18:31:39'!
+!AHD methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:46:40'!
 next
 	stage = #attack ifTrue:
 		["value := (1.0 - value) * factor + value." value := value + increment.
 		value >= 0.999 ifTrue: [value := 1.0. stage := #hold. holding := (hold * self class controlRate) asInteger].
 		^ value * velocity].
 	stage = #hold ifTrue:
-		[(holding := holding - 1) > 0 ifFalse: [stage := #decay. factor := 0.001 raisedTo: 1.0 / decay].
+		[(holding := holding - 1) > 0 ifFalse: [stage := #decay. factor := 0.001 "-60 dB" raisedTo: 1.0 / decay].
 		^ value * velocity].
 	stage = #decay ifTrue:
 		[value := value * factor.
-		value <= 0.001 ifTrue: [value := 0.0. stage := #idle]].
+		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value * velocity! !
 
 !AHD methodsFor: 'tools' stamp: 'len 23/Jan/2026 22:33:25'!
@@ -2518,7 +2518,7 @@ initializeControls
 	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01.
 	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0! !
 
-!AR methodsFor: 'processing' stamp: 'len 26/Jan/2026 18:32:20'!
+!AR methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:46:53'!
 next
 	stage = #attack ifTrue:
 		["value := (1.0 - value) * factor + value." value := value + increment.
@@ -2527,7 +2527,7 @@ next
 	stage = #sustain ifTrue: [^ value * velocity].
 	stage = #release ifTrue:
 		[value := value * factor.
-		value <= 0.001 ifTrue: [value := 0.0. stage := #idle]].
+		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value * velocity! !
 
 !AR methodsFor: 'tools' stamp: 'len 23/Jan/2026 14:55:34'!
@@ -2565,7 +2565,7 @@ initializeControls
 	self addVolumeControl: #sustain value: 0.6.
 	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0! !
 
-!ASR methodsFor: 'processing' stamp: 'len 29/Nov/2025 22:00:00'!
+!ASR methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:47:02'!
 next
 	stage = #attack ifTrue:
 		["value := (1.0 - value) * factor + value." value := value + increment.
@@ -2574,7 +2574,7 @@ next
 	stage = #sustain ifTrue: [^ value * velocity].
 	stage = #release ifTrue:
 		[value := value * factor.
-		value <= 0.001 ifTrue: [value := 0.0. stage := #idle]].
+		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value * velocity! !
 
 !ASR methodsFor: 'tools' stamp: 'len 23/Jan/2026 14:54:57'!
@@ -2905,7 +2905,7 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #Q min: 0.5 max: 20.0 value: 0.707! !
 
-!SVF methodsFor: 'processing' stamp: 'len 28/Jan/2026 20:32:13'!
+!SVF methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:54:00'!
 tick
 	self update.
 	(outputLP isNil and: [outputHP isNil and: [outputBP isNil and: [outputBPN isNil]]]) ifTrue: [^ self].
@@ -2920,13 +2920,15 @@ tick
 		in := input at: i.
 		hp := (in - (s1 * (g + r)) - s2) * h.
 		bp := g * hp + s1.
-		s1 := (g * hp + bp) gate.
+		s1 := g * hp + bp.
 		lp := g * bp + s2.
-		s2 := (g * bp + lp) gate.
+		s2 := g * bp + lp.
 		outputLP ifNotNil: [outputLP at: i put: lp].
 		outputHP ifNotNil: [outputHP at: i put: hp].
 		outputBP ifNotNil: [outputBP at: i put: bp].
-		outputBPN ifNotNil: [outputBPN at: i put: bp * r]]! !
+		outputBPN ifNotNil: [outputBPN at: i put: bp * r]].
+	s1 abs < 1.0e-15 ifTrue: [s1 := 0.0].
+	s2 abs < 1.0e-15 ifTrue: [s1 := 0.0]! !
 
 !SVF methodsFor: 'tools' stamp: 'len 30/Jan/2026 15:20:04'!
 patchable
@@ -4506,11 +4508,16 @@ initializeControls
 	self addControl: #feedback min: 0.0 max: 0.999 value: 0.75.
 	self addControl: #damping min: 0.0 max: 0.5 value: 0.2! !
 
-!Comb methodsFor: 'processing' stamp: 'len 26/Jan/2026 17:16:10'!
+!Comb methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:54:04'!
+tick
+	super tick.
+	x0 abs < 1.0e-15 ifTrue: [x0 := 0.0]! !
+
+!Comb methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:27:44'!
 value: in
 	| out |
 	out := tap read.
-	x0 := (out * damping + (x0 * (1.0 - damping))) gate.
+	x0 := out * damping + (x0 * (1.0 - damping)).
 	delayLine write: in + (x0 * feedback).
 	^ out! !
 
@@ -5248,6 +5255,13 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #resonance min: 0.0 max: 1.0 value: 0.1! !
 
+!Korg35HPF methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:54:14'!
+tick
+	super tick.
+	s1 abs < 1.0e-15 ifTrue: [s1 := 0.0].
+	s2 abs < 1.0e-15 ifTrue: [s2 := 0.0].
+	s3 abs < 1.0e-15 ifTrue: [s3 := 0.0]! !
+
 !Korg35HPF methodsFor: 'processing' stamp: 'len 31/Jan/2026 15:41:18'!
 value: in
 	| v1 u1 feedback hp1 hp2 res_signal u2 v2 v3 y |
@@ -5319,6 +5333,13 @@ initializeControls
 	super initializeControls.
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #resonance min: 0.0 max: 1.0 value: 0.1! !
+
+!Korg35LPF methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:54:21'!
+tick
+	super tick.
+	s1 abs < 1.0e-15 ifTrue: [s1 := 0.0].
+	s2 abs < 1.0e-15 ifTrue: [s2 := 0.0].
+	s3 abs < 1.0e-15 ifTrue: [s3 := 0.0]! !
 
 !Korg35LPF methodsFor: 'processing' stamp: 'len 31/Jan/2026 15:38:45'!
 value: in
@@ -5929,7 +5950,7 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #resonance min: 0.0 max: 1.0 value: 0.1! !
 
-!MoogLPF methodsFor: 'processing' stamp: 'len 30/Jan/2026 13:54:51'!
+!MoogLPF methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:53:19'!
 tick
 	self update.
 	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
@@ -5950,16 +5971,21 @@ tick
 		z3 := p * (z2 + y2) - (k * y3).
 		y4 := p * (z3 + y3) - (k * y4).
 		"Update:"
-		y0 := z0 gate.
-		y1 := z1 gate.
-		y2 := z2 gate.
-		y3 := z3 gate.
+		y0 := z0.
+		y1 := z1.
+		y2 := z2.
+		y3 := z3.
 		"Clipper band limited sigmoid:"
-		y4 := (y4 - (y4 * y4 * y4 / 6.0)) gate.
+		y4 := y4 - (y4 * y4 * y4 / 6.0).
 		outputLP4 ifNotNil: [outputLP4 at: i put: y4].
 		outputLP3 ifNotNil: [outputLP3 at: i put: y3].
 		outputLP2 ifNotNil: [outputLP2 at: i put: y2].
-		outputLP1 ifNotNil: [outputLP1 at: i put: y1]]! !
+		outputLP1 ifNotNil: [outputLP1 at: i put: y1]].
+	y0 abs < 1.0e-15 ifTrue: [y0 := 0.0].
+	y1 abs < 1.0e-15 ifTrue: [y1 := 0.0].
+	y2 abs < 1.0e-15 ifTrue: [y2 := 0.0].
+	y3 abs < 1.0e-15 ifTrue: [y3 := 0.0].
+	y4 abs < 1.0e-15 ifTrue: [y4 := 0.0]! !
 
 !MoogLPF methodsFor: 'tools' stamp: 'len 30/Jan/2026 15:17:58'!
 patchable
@@ -6032,7 +6058,7 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #resonance min: 0.0 max: 1.0 value: 0.1! !
 
-!MoogLadder methodsFor: 'processing' stamp: 'len 30/Jan/2026 18:51:23'!
+!MoogLadder methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:54:36'!
 tick
 	| γ k |
 	self update.
@@ -6074,7 +6100,11 @@ tick
 		outputLP4 ifNotNil: [outputLP4 at: i put: y4].
 		outputLP3 ifNotNil: [outputLP3 at: i put: y3].
 		outputLP2 ifNotNil: [outputLP2 at: i put: y2].
-		outputLP1 ifNotNil: [outputLP1 at: i put: y1]]! !
+		outputLP1 ifNotNil: [outputLP1 at: i put: y1]].
+	s1 abs < 1.0e-15 ifTrue: [s1 := 0.0].
+	s2 abs < 1.0e-15 ifTrue: [s2 := 0.0].
+	s3 abs < 1.0e-15 ifTrue: [s3 := 0.0].
+	s4 abs < 1.0e-15 ifTrue: [s4 := 0.0]! !
 
 !MoogLadder methodsFor: 'tools' stamp: 'len 30/Jan/2026 15:17:36'!
 patchable
@@ -6149,7 +6179,7 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #resonance min: 0.0 max: 1.0 value: 0.0! !
 
-!OberheimSVF methodsFor: 'processing' stamp: 'len 30/Jan/2026 22:33:59'!
+!OberheimSVF methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:54:45'!
 tick
 	self update.
 	(outputLP isNil and: [outputHP isNil and: [outputBP isNil and: [outputBS isNil]]]) ifTrue: [^ self].
@@ -6165,14 +6195,16 @@ tick
 		hp := (in - s2 - (s1 * feedback)) * alpha0.
 		"update s1:"
 		bp := (hp * g + s1) tanh. "faust vaeffects uses x - x^3/3 instead, clipped to -1 to 1."
-		s1 := bp gate.
+		s1 := bp.
 		"update s2:"
 		lp := bp * g + s2.
-		s2 := lp gate.
+		s2 := lp.
 		outputLP ifNotNil: [outputLP at: i put: lp].
 		outputHP ifNotNil: [outputHP at: i put: hp].
 		outputBP ifNotNil: [outputBP at: i put: bp].
-		outputBS ifNotNil: [outputBS at: i put: lp + hp]]! !
+		outputBS ifNotNil: [outputBS at: i put: lp + hp]].
+	s1 abs < 1.0e-15 ifTrue: [s1 := 0.0].
+	s2 abs < 1.0e-15 ifTrue: [s2 := 0.0]! !
 
 !OberheimSVF methodsFor: 'tools' stamp: 'len 30/Jan/2026 22:15:31'!
 patchable
@@ -7888,9 +7920,9 @@ balloonText
 	voltage > 0.0001 ifFalse: [^ self name].
 	^ self name, ' (', voltage linearToDecibelsFSPrintString, ')'! !
 
-!AudioInputPinMorph methodsFor: 'connections' stamp: 'len 31/Jan/2026 16:19:40'!
+!AudioInputPinMorph methodsFor: 'connections' stamp: 'len 31/Jan/2026 19:05:55'!
 uninstallDisconnectedSignals
-	self isConnected ifFalse: [voltage := 0.0. self model perform: selector with: nil]! !
+	self isConnected ifFalse: [self voltage:​ 0.0. self model perform: selector with: nil]! !
 
 !AudioInputPinMorph methodsFor: 'dropping/grabbing' stamp: 'len 19/Jan/2026 19:31:12'!
 wantsDroppedMorph: aMorph event: evt
@@ -8005,18 +8037,18 @@ uninstallConnectionTo: anInput
 "	anInput model perform: anInput selector with: nil.
 	connections isEmpty ifTrue: [self model perform: selector with: nil]"! !
 
-!AudioOutputPinMorph methodsFor: 'connections' stamp: 'len 31/Jan/2026 16:19:57'!
+!AudioOutputPinMorph methodsFor: 'connections' stamp: 'len 31/Jan/2026 19:06:03'!
 uninstallDisconnectedSignals
-	self isConnected ifFalse: [voltage := 0.0. self model perform: selector with: nil]! !
+	self isConnected ifFalse: [self voltage:​ 0.0. self model perform: selector with: nil]! !
 
 !AudioOutputPinMorph methodsFor: 'initialization' stamp: 'len 7/Dec/2025 00:22:35'!
 initialize
 	super initialize.
 	buffer := Float32Array new: Module blockSize! !
 
-!AudioOutputPinMorph methodsFor: 'stepping' stamp: 'len 26/Nov/2025 16:03:00'!
+!AudioOutputPinMorph methodsFor: 'stepping' stamp: 'len 31/Jan/2026 19:03:27'!
 step
-	self voltage:​ (buffer at: 1) abs.
+	self isConnected ifTrue: [self voltage:​ (buffer at: 1) abs].
 	super step! !
 
 !ControlOutputPinMorph methodsFor: 'accessing' stamp: 'len 30/Nov/2025 10:56:00'!
@@ -10111,6 +10143,18 @@ drawOn: aCanvas
 aboutToBeGrabbedBy: aHand
 	^ MoverMorph new target: self; offset: (self owner internalizeFromWorld: aHand morphPosition) - self morphPosition! !
 
+!PatchableMorph methodsFor: 'events' stamp: 'len 31/Jan/2026 19:07:05'!
+dragEnter: anEvent
+	self mouseEnter: anEvent! !
+
+!PatchableMorph methodsFor: 'events' stamp: 'len 31/Jan/2026 19:06:56'!
+dragLeave: anEvent
+	self mouseLeave: anEvent! !
+
+!PatchableMorph methodsFor: 'events' stamp: 'len 31/Jan/2026 18:59:58'!
+handlesDragOver: anEvent
+	^ true! !
+
 !PatchableMorph methodsFor: 'events' stamp: 'len 24/Nov/2025 14:03:00'!
 handlesKeyboardFocus
 	^ true! !
@@ -10952,7 +10996,7 @@ initialize
 	d0 := 0.0.
 	self reset! !
 
-!Biquad methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:16:13'!
+!Biquad methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:54:58'!
 modifiedWrite: inputBuffer read: outputBuffer
 	"Direct Form 1."
 	1 to: inputBuffer size do: [:i|
@@ -10962,9 +11006,13 @@ modifiedWrite: inputBuffer read: outputBuffer
 		x2 := x1.
 		y2 := y1.
 		x1 := in.
-		outputBuffer at: i put: (y1 := out gate)]! !
+		outputBuffer at: i put: (y1 := out)].
+	x1 abs < 1.0e-15 ifTrue: [x1 := 0.0].
+	x2 abs < 1.0e-15 ifTrue: [x2 := 0.0].
+	y1 abs < 1.0e-15 ifTrue: [y1 := 0.0].
+	y2 abs < 1.0e-15 ifTrue: [y2 := 0.0]! !
 
-!Biquad methodsFor: 'processing' stamp: 'len 27/Jan/2026 21:53:22'!
+!Biquad methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:32:24'!
 value: in
 	"Direct Form 1."
 	| out |
@@ -10972,9 +11020,9 @@ value: in
 	x2 := x1.
 	y2 := y1.
 	x1 := in.
-	^ y1 := out gate! !
+	^ y1 := out! !
 
-!Biquad methodsFor: 'processing' stamp: 'len 27/Jan/2026 19:44:55'!
+!Biquad methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:55:13'!
 write: inputBuffer read: outputBuffer
 	"Direct Form 1."
 	(c0 = 1.0 and: [d0 = 0.0]) ifFalse: [^ self modifiedWrite: inputBuffer read: outputBuffer].
@@ -10985,7 +11033,11 @@ write: inputBuffer read: outputBuffer
 		x2 := x1.
 		y2 := y1.
 		x1 := in.
-		outputBuffer at: i put: (y1 := out gate)]! !
+		outputBuffer at: i put: (y1 := out)].
+	x1 abs < 1.0e-15 ifTrue: [x1 := 0.0].
+	x2 abs < 1.0e-15 ifTrue: [x2 := 0.0].
+	y1 abs < 1.0e-15 ifTrue: [y1 := 0.0].
+	y2 abs < 1.0e-15 ifTrue: [y2 := 0.0]! !
 
 !DelayLine methodsFor: 'accessing' stamp: 'len 26/Jan/2026 14:57:13'!
 at: anInteger
@@ -12715,11 +12767,6 @@ blep: dt
 		[x := (self - 1.0) / dt.
 		^ x * x + (x+x) + 1.0].
 	^ 0.0! !
-
-!Float methodsFor: '*signals' stamp: 'len 28/Nov/2025 01:11:00'!
-gate
-	"Flush to zero anything below -96 dB."
-	(self > 0.00001585 or: [self < -0.00001585]) ifFalse: [^ 0.0]! !
 
 !Float methodsFor: '*signals' stamp: 'len 30/Sep/2025 02:03:00'!
 hardclip

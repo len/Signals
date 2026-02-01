@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 31 January 2026 at 7:08:23 pm'!
+'From Cuis7.7 [latest update: #7797] on 2 February 2026 at 12:18:50 am'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 432!
+!provides: 'Signals' 1 433!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -146,7 +146,7 @@ Chorus class
 
 !classDefinition: #SVF category: #'Signals-Filters'!
 Module subclass: #SVF
-	instanceVariableNames: 's1 s2 r g h frequency Q input outputLP outputHP outputBP outputBPN'
+	instanceVariableNames: 's1 s2 input outputLP outputHP outputBP outputBPN'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Filters'!
@@ -324,24 +324,34 @@ TunedGenerator subclass: #Sample
 Sample class
 	instanceVariableNames: ''!
 
-!classDefinition: #Dust category: #'Signals-Noise'!
-Generator subclass: #Dust
-	instanceVariableNames: 'frequency random'
+!classDefinition: #ColoredNoise category: #'Signals-Noise'!
+Generator subclass: #ColoredNoise
+	instanceVariableNames: 'color state x1 y1 s1 s2 s3'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Noise'!
-!classDefinition: 'Dust class' category: #'Signals-Noise'!
-Dust class
+!classDefinition: 'ColoredNoise class' category: #'Signals-Noise'!
+ColoredNoise class
 	instanceVariableNames: ''!
 
-!classDefinition: #Noise category: #'Signals-Noise'!
-Generator subclass: #Noise
-	instanceVariableNames: 'color state pinkState'
+!classDefinition: #SparseNoise category: #'Signals-Noise'!
+Generator subclass: #SparseNoise
+	instanceVariableNames: 'p d jitter random state'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Noise'!
-!classDefinition: 'Noise class' category: #'Signals-Noise'!
-Noise class
+!classDefinition: 'SparseNoise class' category: #'Signals-Noise'!
+SparseNoise class
+	instanceVariableNames: ''!
+
+!classDefinition: #VelvetNoise category: #'Signals-Noise'!
+Generator subclass: #VelvetNoise
+	instanceVariableNames: 'period jitterRange bias energy random counter'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Noise'!
+!classDefinition: 'VelvetNoise class' category: #'Signals-Noise'!
+VelvetNoise class
 	instanceVariableNames: ''!
 
 !classDefinition: #Transform category: #'Signals-Kernel'!
@@ -556,7 +566,7 @@ Korg35LPF class
 
 !classDefinition: #Amp category: #'Signals-Levels'!
 Module subclass: #Amp
-	instanceVariableNames: 'input gain increment output inputRM'
+	instanceVariableNames: 'input gain output inputRM'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Levels'!
@@ -566,7 +576,7 @@ Amp class
 
 !classDefinition: #Crossfader category: #'Signals-Levels'!
 Module subclass: #Crossfader
-	instanceVariableNames: 'inputA inputB mix output'
+	instanceVariableNames: 'inputA inputB output'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Levels'!
@@ -576,7 +586,7 @@ Crossfader class
 
 !classDefinition: #Mixer category: #'Signals-Levels'!
 Module subclass: #Mixer
-	instanceVariableNames: 'inputA inputB gainA gainB output'
+	instanceVariableNames: 'inputA inputB output'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Levels'!
@@ -586,7 +596,7 @@ Mixer class
 
 !classDefinition: #Panner category: #'Signals-Levels'!
 Module subclass: #Panner
-	instanceVariableNames: 'inputA inputB pan outputLeft outputRight'
+	instanceVariableNames: 'inputA inputB outputLeft outputRight'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Levels'!
@@ -596,7 +606,7 @@ Panner class
 
 !classDefinition: #StereoMatrix category: #'Signals-Levels'!
 Module subclass: #StereoMatrix
-	instanceVariableNames: 'inputA inputB outputLeft outputRight width balance aux'
+	instanceVariableNames: 'inputA inputB outputLeft outputRight aux'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Levels'!
@@ -606,7 +616,7 @@ StereoMatrix class
 
 !classDefinition: #Attenuator category: #'Signals-Modulation'!
 Module subclass: #Attenuator
-	instanceVariableNames: 'value amount'
+	instanceVariableNames: 'value'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Modulation'!
@@ -616,7 +626,7 @@ Attenuator class
 
 !classDefinition: #Attenuverter category: #'Signals-Modulation'!
 Module subclass: #Attenuverter
-	instanceVariableNames: 'value amount'
+	instanceVariableNames: 'value'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Modulation'!
@@ -636,7 +646,7 @@ LFO class
 
 !classDefinition: #MoogLPF category: #'Signals-VA Filters'!
 Module subclass: #MoogLPF
-	instanceVariableNames: 'p r k y0 y1 y2 y3 y4 frequency resonance input outputLP4 outputLP3 outputLP2 outputLP1'
+	instanceVariableNames: 'y0 y1 y2 y3 y4 input outputLP4 outputLP3 outputLP2 outputLP1'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-VA Filters'!
@@ -646,7 +656,7 @@ MoogLPF class
 
 !classDefinition: #MoogLadder category: #'Signals-VA Filters'!
 Module subclass: #MoogLadder
-	instanceVariableNames: 's1 s2 s3 s4 G frequency resonance input outputLP4 outputLP3 outputLP2 outputLP1'
+	instanceVariableNames: 's1 s2 s3 s4 input outputLP4 outputLP3 outputLP2 outputLP1'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-VA Filters'!
@@ -656,7 +666,7 @@ MoogLadder class
 
 !classDefinition: #OberheimSVF category: #'Signals-VA Filters'!
 Module subclass: #OberheimSVF
-	instanceVariableNames: 's1 s2 g feedback alpha0 r frequency resonance input outputLP outputHP outputBP outputBS'
+	instanceVariableNames: 's1 s2 input outputLP outputHP outputBP outputBS'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-VA Filters'!
@@ -1451,8 +1461,40 @@ A multisample is the basis of a rompler (from "ROM" and "sampler"). It generates
 !Sample commentStamp: '<historical>' prior: 0!
 A sample is a recorded signal. It has a buffer of recorded samples, base sample rate that corresponds either to the original sampling rate or (in the case of samples with pitch) to middle C, a start position, and optional loop points. Samples can be played at different rates to produce different pitches.!
 
-!Noise commentStamp: '<historical>' prior: 0!
-A pink noise generator. The color parameter controls how much white noise is filtered to produce the output: at 0.0 it generates white noise, and at 1.0 it approximates pink noise.!
+!ColoredNoise commentStamp: '<historical>' prior: 0!
+A colored noise generator. The color parameter blends between different noise sources: centered at 0.0 it generates white noise, at -0.5 pink noise, at -1.0 brown noise, and at 1.0 blue noise.!
+
+!SparseNoise commentStamp: 'len 1/Feb/2026 16:16:01' prior: 0!
+Dust / Crackle Noise Generator. Produces sparse impulsive noise by generating a Poisson-distributed impulse train and feeding it into a short decaying state.
+
+At low density the output consists of isolated clicks. Increasing density creates crackle and finally continuous noisy bursts. The decay control sets the temporal memory of each impulse, moving the sound from single-sample impulses to ringing, colored noise.
+
+This source is particularly effective for exciting resonant filters, waveguides, and physical-model style structures.
+
+Parameters:
+    - Density: average number of impulses per second (log-scaled)
+    - Decay: impulse memory / ring time
+    - Amplitude Jitter: randomness of impulse amplitude
+
+State:
+    - Decaying accumulator holding impulse energy
+!
+
+!VelvetNoise commentStamp: 'len 1/Feb/2026 19:09:07' prior: 0!
+Velvet Noise Generator. Generates sparse bipolar impulses (+1 / -1) that are approximately evenly distributed in time, producing spectrally flat noise with reduced hiss compared to white noise.
+
+Unlike purely random impulse noise, velvet noise avoids clustering, resulting in predictable energy and clean excitation characteristics. With low jitter it approaches a periodic impulse train; with higher jitter it becomes increasingly noise-like.
+
+Common uses include reverb excitation, waveguide and Karplus–Strong synthesis, and controlled percussive noise sources.
+
+Parameters:
+    - Sparsity (Period): average distance between impulses
+    - Jitter: random deviation from uniform spacing
+    - Polarity Bias: bias toward positive or negative impulses
+    - Amp: amplitude of the impulses
+
+State:
+    - Sample counter until next impulse!
 
 !Transform commentStamp: '<historical>' prior: 0!
 A (unary) transform has one audio input and one audio output, and modifies the audio signal sample-by-sample (for each input sample, it applies a function to it producing an output sample).!
@@ -2155,9 +2197,13 @@ update
 addControl: aSymbol min: min max: max value: defaultValue
 	^ controls at: aSymbol put: ((Control min: min max: max value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
 
-!Module methodsFor: 'controls and modulations' stamp: 'len 29/Jan/2026 12:42:40'!
+!Module methodsFor: 'controls and modulations' stamp: 'len 1/Feb/2026 15:45:37'!
+addFrequencyControl: aSymbol min: min max: max value: defaultValue
+	^ (self addLogControl: aSymbol min: min max: max value: defaultValue) printer: #hertzPrintString! !
+
+!Module methodsFor: 'controls and modulations' stamp: 'len 1/Feb/2026 15:46:13'!
 addFrequencyControl: aSymbol value: defaultValue
-	^ (self addLogControl: aSymbol min: 20.0 "Hz" max: 20000.0 "20 kHz" value: defaultValue) printer: #hertzPrintString! !
+	^ self addFrequencyControl: aSymbol min: 20.0 "Hz" max: 20000.0 "20 kHz" value: defaultValue! !
 
 !Module methodsFor: 'controls and modulations' stamp: 'len 27/Jan/2026 16:47:56'!
 addLogControl: aSymbol min: min max: max value: defaultValue
@@ -2171,13 +2217,9 @@ addPitchControl: aSymbol value: defaultValue
 addQuadraticControl: aSymbol min: min max: max value: defaultValue
 	^ controls at: aSymbol put: ((Control min: min max: max curve: #quadratic value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
 
-!Module methodsFor: 'controls and modulations' stamp: 'len 26/Jan/2026 15:39:30'!
-addSpeedControl: aSymbol min: min max: max value: defaultValue
-	^ (self addLogControl: aSymbol min: min max: max value: defaultValue) printer: #hertzPrintString! !
-
-!Module methodsFor: 'controls and modulations' stamp: 'len 26/Jan/2026 15:40:00'!
+!Module methodsFor: 'controls and modulations' stamp: 'len 1/Feb/2026 15:46:28'!
 addSpeedControl: aSymbol value: defaultValue
-	^ self addSpeedControl: aSymbol min: 0.01 max: 20.0 value: defaultValue! !
+	^ self addFrequencyControl: aSymbol min: 0.01 max: 20.0 value: defaultValue! !
 
 !Module methodsFor: 'controls and modulations' stamp: 'len 4/Dec/2025 14:41:16'!
 addTimeControl: aSymbol min: min max: max value: defaultValue
@@ -2806,11 +2848,11 @@ initialize
 	tap3 := DelayLineTap on: delayLine.
 	self reset! !
 
-!Chorus methodsFor: 'initialization' stamp: 'len 26/Jan/2026 15:45:20'!
+!Chorus methodsFor: 'initialization' stamp: 'len 1/Feb/2026 15:46:37'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #time min: 0.010 "10 ms" max: 0.025 "25 ms" value: 0.015 "15 ms".
-	self addSpeedControl: #speed min: 0.1 "Hz" max: 1.5 "Hz" value: 0.5 "Hz".
+	self addFrequencyControl: #speed min: 0.1 "Hz" max: 1.5 "Hz" value: 0.5 "Hz".
 	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
 	self addControl: #mix min: 0.0 max: 1.0 value: 0.5! !
 
@@ -2881,19 +2923,6 @@ modulateQ: aNumber
 reset
 	s1 := s2 := 0.0! !
 
-!SVF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:02:20'!
-update
-	| newFrequency newQ |
-	super update.
-	newFrequency := self get: #frequency.
-	newQ := self get: #Q.
-	(frequency = newFrequency and: [Q = newQ]) ifTrue: [^ self].
-	frequency := newFrequency.
-	Q := newQ.
-	g := (Float pi * frequency / self class sampleRate) tan.
-	r := 1.0 / Q.
-	h := 1.0 / (1.0 + ((r + g) * g))! !
-
 !SVF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 01:37:23'!
 initialize
 	super initialize.
@@ -2905,8 +2934,9 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #Q min: 0.5 max: 20.0 value: 0.707! !
 
-!SVF methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:54:00'!
+!SVF methodsFor: 'processing' stamp: 'len 31/Jan/2026 21:42:28'!
 tick
+	| r g h |
 	self update.
 	(outputLP isNil and: [outputHP isNil and: [outputBP isNil and: [outputBPN isNil]]]) ifTrue: [^ self].
 	input ifNil:
@@ -2915,6 +2945,9 @@ tick
 		outputBP ifNotNil: [outputBP atAllPut: 0.0].
 		outputBPN ifNotNil: [outputBPN atAllPut: 0.0].
 		^ self].
+	g := (Float pi * (self get: #frequency) / self class sampleRate) tan.
+	r := 1.0 / (self get: #Q).
+	h := 1.0 / (1.0 + ((r + g) * g)).
 	1 to: input size do: [:i|
 		| in hp bp lp |
 		in := input at: i.
@@ -4300,63 +4333,70 @@ fromFileNamed: aString
 "	(i := samples findLast: [:x| x abs > 0.00316]) > 0 ifTrue: [samples := samples copyFrom: 1 to: i]."
 	^ self buffer: samples baseRate: reader sampleRate! !
 
-!Dust methodsFor: 'accessing' stamp: 'len 29/Sep/2025 02:47:00'!
-frequency: aNumber
-	frequency := aNumber! !
-
-!Dust methodsFor: 'initialization' stamp: 'len 29/Sep/2025 20:12:00'!
-initialize
-	super initialize.
-	frequency := 0.01.
-	random := Random new! !
-
-!Dust methodsFor: 'processing' stamp: 'len 29/Sep/2025 20:15:00'!
-next
-	| u |
-	^ (u := random next * 2.0 - 1.0) abs < frequency  ifTrue: [u / frequency] ifFalse: [0.0]! !
-
-!Noise methodsFor: 'accessing' stamp: 'len 24/Sep/2025 00:12:00'!
-color
-	^ color! !
-
-!Noise methodsFor: 'accessing' stamp: 'len 24/Sep/2025 00:12:00'!
-color: aNumber
-	color := aNumber! !
-
-!Noise methodsFor: 'controlling' stamp: 'len 23/Nov/2025 18:16:00'!
+!ColoredNoise methodsFor: 'controlling' stamp: 'len 1/Feb/2026 03:41:08'!
 modulateColor: aNumber
 	self modulate: #color by: aNumber! !
 
-!Noise methodsFor: 'controlling' stamp: 'len 22/Nov/2025 22:47:00'!
+!ColoredNoise methodsFor: 'controlling' stamp: 'len 1/Feb/2026 17:53:42'!
+reset
+	x1 := y1 := s1 := s2 := s3 := 0.0! !
+
+!ColoredNoise methodsFor: 'controlling' stamp: 'len 1/Feb/2026 03:41:08'!
 update
 	super update.
 	color := self get: #color! !
 
-!Noise methodsFor: 'initialization' stamp: 'len 24/Sep/2025 00:10:00'!
+!ColoredNoise methodsFor: 'initialization' stamp: 'len 1/Feb/2026 03:53:03'!
 initialize
 	super initialize.
-	color := 0.0. "white noise"
 	state := ((Random withDefaultDo: [:aRandom| aRandom nextBits: 32]) \\ 2147483646 + 1) asFloat.
-	pinkState := 0.0! !
+	self reset! !
 
-!Noise methodsFor: 'initialization' stamp: 'len 18/Nov/2025 22:09:00'!
+!ColoredNoise methodsFor: 'initialization' stamp: 'len 1/Feb/2026 03:52:57'!
 initializeControls
 	super initializeControls.
-	self addControl: #color min: 0.0 max: 0.1 value: 0.001! !
+	self addControl: #color min: -1.0 max: 1.0 value: 0.0! !
 
-!Noise methodsFor: 'processing' stamp: 'len 24/Sep/2025 02:06:00'!
+!ColoredNoise methodsFor: 'processing' stamp: 'len 1/Feb/2026 14:43:01'!
 next
-	| s |
-	s := self nextWhite.
-	color > 0.0 ifFalse: [^ s].
-	^ (pinkState := color * pinkState + (1.0 - color * s))! !
+	color = 0.0 ifTrue: [^ self nextWhite].
+	"0.0 to 1.0:"
+	color > 0.0 ifTrue: [^ self nextWhite * (1.0 - color) + (self nextBlue * color)].
+	"-1.0 to -0.5:"
+	color < -0.5 ifTrue: [^ (self nextPink * (color + 1.0) + (self nextBrown * (-0.5 - color))) * 2.0].
+	"-0.5 to 0.0:"
+	^ (self nextWhite * (color + 0.5) - (self nextPink * color)) * 2.0! !
 
-!Noise methodsFor: 'processing' stamp: 'len 29/Sep/2025 14:41:00'!
+!ColoredNoise methodsFor: 'processing' stamp: 'len 1/Feb/2026 03:46:53'!
+nextBlue
+	| x0 |
+	x0 := self nextWhite.
+	y1 := x0 - x1.
+	x1 := x0.
+	^ y1! !
+
+!ColoredNoise methodsFor: 'processing' stamp: 'len 1/Feb/2026 03:45:18'!
+nextBrown
+	x1 := self nextWhite.
+	^ y1 := (y1 * 0.99 + x1)! !
+
+!ColoredNoise methodsFor: 'processing' stamp: 'len 1/Feb/2026 14:44:20'!
+nextPink
+	"Approximate pink noise (1/f) as one-pole filtered white noise. The idea is to cascade a few very gentle lowpasses to approximate -3 dB/oct."
+	| x |
+	x := self nextWhite.
+	"Paul Kellet coefficients:"
+	s1 := 0.99765*s1 + (0.0990460*x).
+	s2 := 0.96300*s2 + (0.2965164*x).
+	s3 := 0.57000*s3 + (1.0526913*x).
+	^ s1 + s2 + s3! !
+
+!ColoredNoise methodsFor: 'processing' stamp: 'len 1/Feb/2026 03:41:08'!
 nextWhite
 	state := (state * 16807.0 \\ 2147483647.0) truncated asFloat.
 	^​ state / 1073741823.5  - 1.0! !
 
-!Noise methodsFor: 'tools' stamp: 'len 22/Jan/2026 02:50:43'!
+!ColoredNoise methodsFor: 'tools' stamp: 'len 1/Feb/2026 03:41:08'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -4365,6 +4405,71 @@ patchable
 		addControlInput: #modulateColor: label: 'Color';
 		addAudioOutput: #setOutput: label: 'Out'.
 	^ answer! !
+
+!SparseNoise methodsFor: 'controlling' stamp: 'len 1/Feb/2026 15:50:59'!
+reset
+	state := 0.0! !
+
+!SparseNoise methodsFor: 'controlling' stamp: 'len 1/Feb/2026 15:49:34'!
+update
+	super update.
+	p := (self get: #density) / self class sampleRate.
+	d := 1.0 - (10.0 raisedTo: (self get: #decay) * -4.0).
+	jitter := self get: #jitter! !
+
+!SparseNoise methodsFor: 'initialization' stamp: 'len 1/Feb/2026 15:51:06'!
+initialize
+	super initialize.
+	random := Random new.
+	self reset! !
+
+!SparseNoise methodsFor: 'initialization' stamp: 'len 1/Feb/2026 15:50:36'!
+initializeControls
+	super initializeControls.
+	self addFrequencyControl: #density min: 0.1 max: 20000.0 value: 30.0.
+	self addControl: #decay min: 0.0 max: 1.0 value: 0.9.
+	self addControl: #jitter min: 0.0 max: 1.0 value: 0.6! !
+
+!SparseNoise methodsFor: 'processing' stamp: 'len 1/Feb/2026 15:49:34'!
+next
+	random next < p  ifTrue: [state := (random next * 2.0 - 1.0) * jitter + state].
+	^ state := state * d! !
+
+!VelvetNoise methodsFor: 'controlling' stamp: 'len 1/Feb/2026 18:51:43'!
+reset
+	counter := (random next * 1000.0) truncated! !
+
+!VelvetNoise methodsFor: 'controlling' stamp: 'len 1/Feb/2026 19:13:10'!
+update
+	super update.
+	period := self class sampleRate / (self get: #sparsity).
+	jitterRange := ((self get: #jitter) * period) truncated.
+	bias := self get: #bias.
+	energy := self get: #energy! !
+
+!VelvetNoise methodsFor: 'initialization' stamp: 'len 1/Feb/2026 17:56:45'!
+initialize
+	super initialize.
+	random := Random new.
+	self reset! !
+
+!VelvetNoise methodsFor: 'initialization' stamp: 'len 1/Feb/2026 19:15:35'!
+initializeControls
+	super initializeControls.
+	self addFrequencyControl: #sparsity min: 10.0 "Hz" max: 20000.0 "Hz" value: 1000.0 "Hz".
+	self addControl: #jitter min: 0.0 max: 1.0 value: 0.0.
+	self addControl: #bias min: -1.0 max: 1.0 value: 0.0.
+	self addLogControl: #energy min: 0.05 max: 4.0 value: 0.5! !
+
+!VelvetNoise methodsFor: 'processing' stamp: 'len 1/Feb/2026 19:13:07'!
+next
+	| currentImpulse |
+	currentImpulse := 0.0.
+	(counter := counter - 1) <= 0 ifTrue:
+		[currentImpulse := ((random next * 2.0 - 1.0) + bias) sign * energy.
+		counter := period.
+		jitterRange > 0 ifTrue: [counter := counter + (jitterRange * (random next * 2.0 - 1.0)) truncated]].
+	^ currentImpulse! !
 
 !Transform methodsFor: 'processing' stamp: 'len 30/Jan/2026 13:03:33'!
 tick
@@ -4663,11 +4768,11 @@ initialize
 	tap := DelayLineTap on: delayLine.
 	self reset! !
 
-!Flanger methodsFor: 'initialization' stamp: 'len 26/Jan/2026 15:46:05'!
+!Flanger methodsFor: 'initialization' stamp: 'len 1/Feb/2026 15:46:42'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #time min: 0.0002 "0.2 ms" max: 0.002 "2 ms" value: 0.001 "1 ms".
-	self addSpeedControl: #speed min: 0.05 "Hz" max: 1.0 "Hz" value: 0.1 "Hz".
+	self addFrequencyControl: #speed min: 0.05 "Hz" max: 1.0 "Hz" value: 0.1 "Hz".
 	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
 	self addControl: #feedback min: -0.8 max: 0.8 value: 0.5.
 	self addControl: #mix min: 0.0 max: 1.0 value: 0.5! !
@@ -4840,11 +4945,11 @@ initialize
 	tap := DelayLineTap on: delayLine.
 	self reset! !
 
-!Vibrato methodsFor: 'initialization' stamp: 'len 26/Jan/2026 18:14:17'!
+!Vibrato methodsFor: 'initialization' stamp: 'len 1/Feb/2026 15:46:49'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #time min: 0.002 "2 ms" max: 0.010 "10 ms" value: 0.005 "5 ms".
-	self addSpeedControl: #speed min: 3.0 "Hz" max: 8.0 "Hz" value: 5.0 "Hz".
+	self addFrequencyControl: #speed min: 3.0 "Hz" max: 8.0 "Hz" value: 5.0 "Hz".
 	self addControl: #depth min: 0.0 max: 1.0 value: 0.1! !
 
 !Vibrato methodsFor: 'processing' stamp: 'len 26/Jan/2026 18:13:43'!
@@ -5373,31 +5478,32 @@ patchable
 modulateGain: aNumber
 	self modulate: #gain by: aNumber! !
 
-!Amp methodsFor: 'controlling' stamp: 'len 7/Dec/2025 00:22:24'!
-update
-	super update.
-	increment := (self get: #gain) - gain / self class blockSize! !
-
-!Amp methodsFor: 'initialization' stamp: 'len 28/Nov/2025 18:57:00'!
+!Amp methodsFor: 'initialization' stamp: 'len 31/Jan/2026 21:50:16'!
 initialize
 	super initialize.
-	gain := 0.0.
-	increment := 0.0! !
+	gain := 0.0! !
 
 !Amp methodsFor: 'initialization' stamp: 'len 2/Dec/2025 23:42:00'!
 initializeControls
 	super initializeControls.
 	self addControl: #gain min: 0.0 max: 1.0 value: 0.0! !
 
-!Amp methodsFor: 'processing' stamp: 'len 13/Jan/2026 13:14:33'!
+!Amp methodsFor: 'processing' stamp: 'len 31/Jan/2026 21:51:10'!
 tick
+	| increment |
 	self update.
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
+	increment := (self get: #gain) - gain / self class blockSize.
 	(gain = 0.0 and: [increment = 0.0]) ifTrue: [output atAllPut: 0.0. ^ self].
-	1 to: input size do: [:i|
-		gain := gain + increment.
-		output at: i put: (input at: i) * gain].
+	increment = 0.0 
+		ifTrue:
+			[output replaceWith: input.
+			output *= gain]
+		ifFalse:
+			[1 to: input size do: [:i|
+				gain := gain + increment.
+				output at: i put: (input at: i) * gain]].
 	inputRM ifNotNil: [output *= inputRM]! !
 
 !Amp methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:56:14'!
@@ -5432,22 +5538,17 @@ setOutput: aBuffer
 modulateMix: aNumber
 	self modulate: #mix by: aNumber! !
 
-!Crossfader methodsFor: 'controlling' stamp: 'len 22/Nov/2025 22:51:00'!
-update
-	super update.
-	mix := self get: #mix! !
-
 !Crossfader methodsFor: 'initialization' stamp: 'len 27/Jan/2026 15:35:09'!
 initializeControls
 	super initializeControls.
 	(self addControl: #mix min: -1.0 max: 1.0 value: 0.0) printer: [:x| 'A ', (1.0 - x * 50.0) rounded printString, '% + B ', (1.0 + x * 50.0) rounded printString, '%']! !
 
-!Crossfader methodsFor: 'processing' stamp: 'len 27/Jan/2026 15:31:02'!
+!Crossfader methodsFor: 'processing' stamp: 'len 31/Jan/2026 21:52:56'!
 tick
 	| x |
 	self update.
 	output ifNil: [^ self].
-	x := mix + 1.0 / 2.0.
+	x := (self get: #mix) + 1.0 / 2.0.
 	inputB ifNil:
 		[inputA ifNil: [output atAllPut: 0.0. ^ self].
 		output replaceWith: inputA.
@@ -5500,21 +5601,18 @@ modulateGainA: aNumber
 modulateGainB: aNumber
 	self modulate: #gainB by: aNumber! !
 
-!Mixer methodsFor: 'controlling' stamp: 'len 27/Jan/2026 15:18:34'!
-update
-	super update.
-	gainA := self get: #gainA.
-	gainB := self get: #gainB! !
-
 !Mixer methodsFor: 'initialization' stamp: 'len 27/Jan/2026 15:17:58'!
 initializeControls
 	super initializeControls.
 	self addVolumeControl: #gainA value: 0.6; addVolumeControl: #gainB value: 0.6! !
 
-!Mixer methodsFor: 'processing' stamp: 'len 27/Jan/2026 15:18:34'!
+!Mixer methodsFor: 'processing' stamp: 'len 31/Jan/2026 21:54:30'!
 tick
+	| gainA gainB |
 	self update.
 	output ifNil: [^ self].
+	gainA := self get: #gainA.
+	gainB := self get: #gainB.
 	gainB = 0.0 ifTrue:
 		[gainA = 0.0 ifTrue: [output atAllPut: 0.0. ^ self].
 		output replaceWith: inputA.
@@ -5564,11 +5662,6 @@ setOutput: aBuffer
 modulatePan: aNumber
 	self modulate: #pan by: aNumber! !
 
-!Panner methodsFor: 'controlling' stamp: 'len 22/Nov/2025 22:52:00'!
-update
-	super update.
-	pan := self get: #pan! !
-
 !Panner methodsFor: 'initialization' stamp: 'len 21/Jan/2026 15:56:54'!
 initializeControls
 	super initializeControls.
@@ -5615,12 +5708,6 @@ modulateBalance: aNumber
 modulateWidth: aNumber
 	self modulate: #width by: aNumber! !
 
-!StereoMatrix methodsFor: 'controlling' stamp: 'len 27/Jan/2026 01:52:51'!
-update
-	super update.
-	width := self get: #width.
-	balance := self get: #balance! !
-
 !StereoMatrix methodsFor: 'initialization' stamp: 'len 27/Jan/2026 02:18:51'!
 initialize
 	super initialize.
@@ -5633,11 +5720,14 @@ initializeControls
 	self addControl: #balance min: -1.0 max: 1.0 value: 0.0
 ! !
 
-!StereoMatrix methodsFor: 'processing' stamp: 'len 27/Jan/2026 02:18:51'!
+!StereoMatrix methodsFor: 'processing' stamp: 'len 31/Jan/2026 21:57:06'!
 tick
+	| width balance |
+	self update.
 	(inputA isNil or: [inputB isNil]) ifTrue: [^ self].
 	(outputLeft isNil or: [outputRight isNil]) ifTrue: [^ self].
-	self update.
+	width := self get: #width.
+	balance := self get: #balance.
 	outputLeft replaceWith: inputA.
 	outputLeft += inputB.
 	outputLeft *= ((1.0 + balance) * 0.5).
@@ -5686,11 +5776,6 @@ input: aNumber
 modulateAmount: aNumber
 	self modulate: #amount by: aNumber! !
 
-!Attenuator methodsFor: 'controlling' stamp: 'len 7/Jan/2026 17:01:04'!
-update
-	super update.
-	amount := self get: #amount! !
-
 !Attenuator methodsFor: 'initialization' stamp: 'len 7/Jan/2026 16:52:28'!
 initialize
 	super initialize.
@@ -5701,10 +5786,10 @@ initializeControls
 	super initializeControls.
 	(self addControl: #amount min: 0.0 max: 1.0 value: 0.0) printer: [:x| (x * 100.0) rounded printString, '%']! !
 
-!Attenuator methodsFor: 'processing' stamp: 'len 9/Jan/2026 20:31:50'!
+!Attenuator methodsFor: 'processing' stamp: 'len 31/Jan/2026 21:58:08'!
 tick
 	self update.
-	value = 0.0 ifFalse: [self triggerEvent: #output: with: value * amount. value := 0.0]! !
+	value = 0.0 ifFalse: [self triggerEvent: #output: with: value * (self get: #amount). value := 0.0]! !
 
 !Attenuator methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:53:48'!
 panel
@@ -5729,11 +5814,6 @@ input: aNumber
 modulateAmount: aNumber
 	self modulate: #amount by: aNumber! !
 
-!Attenuverter methodsFor: 'controlling' stamp: 'len 7/Jan/2026 16:59:14'!
-update
-	super update.
-	amount := self get: #amount! !
-
 !Attenuverter methodsFor: 'initialization' stamp: 'len 7/Jan/2026 16:27:06'!
 initialize
 	super initialize.
@@ -5744,10 +5824,10 @@ initializeControls
 	super initializeControls.
 	(self addControl: #amount min: -1.0 max: 1.0 value: 0.0) printer: [:x| (x * 100.0) rounded printString, '%']! !
 
-!Attenuverter methodsFor: 'processing' stamp: 'len 9/Jan/2026 20:31:32'!
+!Attenuverter methodsFor: 'processing' stamp: 'len 31/Jan/2026 21:58:31'!
 tick
 	self update.
-	value = 0.0 ifFalse: [self triggerEvent: #output: with: value * amount. value := 0.0]! !
+	value = 0.0 ifFalse: [self triggerEvent: #output: with: value * (self get: #amount). value := 0.0]! !
 
 !Attenuverter methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:53:58'!
 panel
@@ -5921,24 +6001,6 @@ modulateResonance: aNumber
 reset
 	y0 := y1 := y2 := y3 := y4 := 0.0! !
 
-!MoogLPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 18:51:08'!
-update
-	| newFrequency newResonance f t1 t2 |
-	super update.
-	newFrequency := self get: #frequency.
-	newResonance := self get: #resonance.
-	(frequency = newFrequency and: [resonance = newResonance]) ifTrue: [^ self].
-	frequency := newFrequency.
-	resonance := newResonance.
-	f := frequency * 2.0 / self class sampleRate. "normalized frequency f / fₛ"
-	"empirical tuning:"
-	p := f * (1.8 - (0.8 * f)).
-	"k := p * 2 - 1.0."
-	k := 2.0 * (f * Float halfPi) sin - 1.0. "better tuning"
-	t1 := (1.0 - p) * 1.386249.
-	t2 := 12.0 + (t1*t1).
-	r := resonance * (t2 + (6.0 * t1)) / (t2 - (6.0 * t1))! !
-
 !MoogLPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 14:01:42'!
 initialize
 	super initialize.
@@ -5950,8 +6012,9 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #resonance min: 0.0 max: 1.0 value: 0.1! !
 
-!MoogLPF methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:53:19'!
+!MoogLPF methodsFor: 'processing' stamp: 'len 31/Jan/2026 21:32:18'!
 tick
+	| f t1 t2 p r k |
 	self update.
 	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
 	input ifNil:
@@ -5960,6 +6023,14 @@ tick
 		outputLP2 ifNotNil: [outputLP2 atAllPut: 0.0].
 		outputLP1 ifNotNil: [outputLP1 atAllPut: 0.0].
 		^ self].
+	f := (self get: #frequency) * 2.0 / self class sampleRate. "normalized frequency f / fₛ"
+	"empirical tuning:"
+	p := f * (1.8 - (0.8 * f)).
+	"k := p * 2 - 1.0."
+	k := 2.0 * (f * Float halfPi) sin - 1.0. "better tuning"
+	t1 := (1.0 - p) * 1.386249.
+	t2 := 12.0 + (t1*t1).
+	r := (self get: #resonance) * (t2 + (6.0 * t1)) / (t2 - (6.0 * t1)).
 	1 to: input size do: [:i|
 		| in z0 z1 z2 z3 |
 		in := input at: i.
@@ -6035,18 +6106,6 @@ modulateResonance: aNumber
 reset
 	s1 := s2 := s3 := s4 := 0.0! !
 
-!MoogLadder methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:14:48'!
-update
-	| newFrequency newResonance g |
-	super update.
-	newFrequency := self get: #frequency.
-	newResonance := self get: #resonance.
-	(frequency = newFrequency and: [resonance = newResonance]) ifTrue: [^ self].
-	frequency := newFrequency.
-	resonance := newResonance.
-	g := (Float pi * frequency / self class sampleRate) tan.
-	G := g / (1.0 + g)! !
-
 !MoogLadder methodsFor: 'initialization' stamp: 'len 30/Jan/2026 14:01:49'!
 initialize
 	super initialize.
@@ -6058,9 +6117,9 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #resonance min: 0.0 max: 1.0 value: 0.1! !
 
-!MoogLadder methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:54:36'!
+!MoogLadder methodsFor: 'processing' stamp: 'len 31/Jan/2026 21:27:03'!
 tick
-	| γ k |
+	| g G γ k |
 	self update.
 	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
 	input ifNil:
@@ -6069,10 +6128,12 @@ tick
 		outputLP2 ifNotNil: [outputLP2 atAllPut: 0.0].
 		outputLP1 ifNotNil: [outputLP1 atAllPut: 0.0].
 		^ self].
+	g := (Float pi * (self get: #frequency) / self class sampleRate) tan.
+	G := g / (1.0 + g).
 	γ := G squared squared.
 	"Feedback coefficient from 0 to 4.
 	Resonance is mapped with a quadratic curve to have finer control at low resonance."
-	k := resonance squared * 4.0.
+	k := (self get: #resonance) squared * 4.0.
 	1 to: input size do: [:i|
 		| S in σ v1 v2 v3 v4 y1 y2 y3 y4 |
 		in := input at: i.
@@ -6154,20 +6215,6 @@ modulateResonance: aNumber
 reset
 	s1 := s2 := 0.0! !
 
-!OberheimSVF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 21:43:04'!
-update
-	| newFrequency newResonance |
-	super update.
-	newFrequency := self get: #frequency.
-	newResonance := self get: #resonance.
-	(frequency = newFrequency and: [resonance = newResonance]) ifTrue: [^ self].
-	frequency := newFrequency.
-	resonance := newResonance.
-	g := (Float pi * frequency / self class sampleRate) tan.
-	r := 1.0 / (resonance * 9.5 + 0.5). "1/Q"
-	feedback := r + g.
-	alpha0 := 1.0 / (1.0 + (feedback * g))! !
-
 !OberheimSVF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 14:01:54'!
 initialize
 	super initialize.
@@ -6179,8 +6226,9 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #resonance min: 0.0 max: 1.0 value: 0.0! !
 
-!OberheimSVF methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:54:45'!
+!OberheimSVF methodsFor: 'processing' stamp: 'len 31/Jan/2026 21:36:56'!
 tick
+	| g r feedback α₀ |
 	self update.
 	(outputLP isNil and: [outputHP isNil and: [outputBP isNil and: [outputBS isNil]]]) ifTrue: [^ self].
 	input ifNil:
@@ -6189,10 +6237,14 @@ tick
 		outputBP ifNotNil: [outputBP atAllPut: 0.0].
 		outputBS ifNotNil: [outputBS atAllPut: 0.0].
 		^ self].
+	g := (Float pi * (self get: #frequency) / self class sampleRate) tan.
+	r := 1.0 / ((self get: #resonance) * 9.5 + 0.5). "1/Q"
+	feedback := r + g.
+	α₀ := 1.0 / (1.0 + (feedback * g)).
 	1 to: input size do: [:i|
 		| in hp bp lp |
 		in := input at: i.
-		hp := (in - s2 - (s1 * feedback)) * alpha0.
+		hp := (in - s2 - (s1 * feedback)) * α₀.
 		"update s1:"
 		bp := (hp * g + s1) tanh. "faust vaeffects uses x - x^3/3 instead, clipped to -1 to 1."
 		s1 := bp.
@@ -7484,7 +7536,7 @@ frequency: aControl
 mode: aSymbol
 	mode := aSymbol! !
 
-!FilterControlMorph methodsFor: 'drawing' stamp: 'len 30/Jan/2026 15:28:10'!
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 1/Feb/2026 01:41:57'!
 drawBPOn: aCanvas frequency: freq Q: Q color: curveColor fill: aBoolean
 	| w h x y notch bw δ p1 p2 p3 |
 	w := self morphWidth.
@@ -7498,7 +7550,7 @@ drawBPOn: aCanvas frequency: freq Q: Q color: curveColor fill: aBoolean
 	p2 := x @ (y - notch).
 	p3 := (x + (bw / 2.0)) @ h.
 	aBoolean ifTrue:
-		[aCanvas fillColor: (Color cyanPhosphor alpha: 0.15) do:
+		[aCanvas fillColor: (Color white alpha: 0.15) do:
 			[aCanvas
 				moveTo: (p1 x min: 0.0) @ h;
 				lineTo: p1;
@@ -7560,7 +7612,7 @@ drawDecadesOn: aCanvas
 		x := w * (controlX positionFromValue: f).
 		aCanvas line: x @ 0 to: x @ h width: 1.0 color: lineColor]! !
 
-!FilterControlMorph methodsFor: 'drawing' stamp: 'len 30/Jan/2026 15:29:18'!
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 1/Feb/2026 01:32:13'!
 drawHPOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean
 	| w h x y notch bw δ p1 p2 p3 |
 	w := self morphWidth.
@@ -7574,7 +7626,7 @@ drawHPOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean
 	p2 := x @ (y - notch).
 	p3 := x + (bw / 2.0) @ y.
 	aBoolean ifTrue:
-		[aCanvas fillColor: (Color azureBeam alpha: 0.15) do:
+		[aCanvas fillColor: self highpassColor do:
 			[aCanvas
 				moveTo: p1;
 				cubicBezierTo: p2 control1: p1 + δ control2: p2 - δ;
@@ -7589,7 +7641,7 @@ drawHPOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean
 			cubicBezierTo: p3 control1: p2 + δ control2: p3 - (δ*1.5);
 			lineTo: w @ y]! !
 
-!FilterControlMorph methodsFor: 'drawing' stamp: 'len 30/Jan/2026 15:28:23'!
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 1/Feb/2026 01:32:03'!
 drawLPOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean
 	| w h x y notch bw δ p1 p2 p3 |
 	w := self morphWidth.
@@ -7603,7 +7655,7 @@ drawLPOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean
 	p2 := x @ (y - notch).
 	p3 := x + (bw / 2.0) + (Q*bw) @ h.
 	aBoolean ifTrue:
-		[aCanvas fillColor: (Color hotPinkGlow alpha: 0.15) do:
+		[aCanvas fillColor: self lowpassColor do:
 			[aCanvas
 				moveTo: (p1 x min: 0.0) @ y;
 				lineTo: p1;
@@ -7639,6 +7691,14 @@ drawOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean
 	mode = #BS ifTrue: [^ self drawBSOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean].
 	self drawHPOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean.
 	self drawLPOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean! !
+
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 1/Feb/2026 01:38:28'!
+highpassColor
+	^ `(Color okl: 0.6 c: 0.25 h: 250.0) alpha: 0.15`! !
+
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 1/Feb/2026 01:39:13'!
+lowpassColor
+	^ `(Color okl: 0.6 c: 0.25 h: 20.0) alpha: 0.15`! !
 
 !FilterControlMorph methodsFor: 'drawing' stamp: 'len 28/Jan/2026 16:14:59'!
 notchWidth
@@ -9089,7 +9149,7 @@ wantsSteps
 defaultExtent
 	^ 256@128! !
 
-!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Jan/2026 14:01:11'!
+!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 1/Feb/2026 19:21:55'!
 drawOn: aCanvas
 	"Draw the form, wrapping, with the current column always at the left. This produces the the impression of infinite scrolling left to right."
 	| w h p |
@@ -9097,9 +9157,9 @@ drawOn: aCanvas
 	h := image height.
 	p := position.
 	"from left to right, draw from the current column position to the last column:"
-	aCanvas image: image at: 0 @ 0 sourceRect: ((p + 1) @ 0 corner: w @ h).
+	aCanvas image: image at: 0 @ 0 sourceRect: (p @ 0 corner: w @ h).
 	"and then wrap and continue drawing from the first column to the current column position - 1:"
-	aCanvas image: image at: (w - p - 1) @ 0 sourceRect: (0 @ 0 corner: p @ h)! !
+	aCanvas image: image at: (w - p - 1) @ 0 sourceRect: (0 @ 0 corner: p + 2 "??" @ h)! !
 
 !SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Dec/2025 15:51:57'!
 initialize

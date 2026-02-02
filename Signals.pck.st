@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 2 February 2026 at 6:26:03 pm'!
+'From Cuis7.7 [latest update: #7797] on 3 February 2026 at 12:01:16 am'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 438!
+!provides: 'Signals' 1 439!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -14,6 +14,7 @@ SystemOrganization addCategory: #'Signals-Filters'!
 SystemOrganization addCategory: #'Signals-VA Filters'!
 SystemOrganization addCategory: #'Signals-FX'!
 SystemOrganization addCategory: #'Signals-IO'!
+SystemOrganization addCategory: #'Signals-Utility'!
 SystemOrganization addCategory: #'Signals-Tracker'!
 SystemOrganization addCategory: #'Signals-Morphic-Widgets'!
 SystemOrganization addCategory: #'Signals-Morphic-Controls'!
@@ -344,6 +345,16 @@ Generator subclass: #VelvetNoise
 VelvetNoise class
 	instanceVariableNames: ''!
 
+!classDefinition: #SineSweep category: #'Signals-Utility'!
+Generator subclass: #SineSweep
+	instanceVariableNames: 'frequency phase'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Utility'!
+!classDefinition: 'SineSweep class' category: #'Signals-Utility'!
+SineSweep class
+	instanceVariableNames: ''!
+
 !classDefinition: #Transform category: #'Signals-Kernel'!
 Module subclass: #Transform
 	instanceVariableNames: 'input output'
@@ -522,6 +533,16 @@ Transform subclass: #Transform2x
 	category: 'Signals-Kernel'!
 !classDefinition: 'Transform2x class' category: #'Signals-Kernel'!
 Transform2x class
+	instanceVariableNames: ''!
+
+!classDefinition: #Clipper category: #'Signals-FX'!
+Transform2x subclass: #Clipper
+	instanceVariableNames: 'pregain negativeClip positiveClip postgain'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-FX'!
+!classDefinition: 'Clipper class' category: #'Signals-FX'!
+Clipper class
 	instanceVariableNames: ''!
 
 !classDefinition: #Wavefolder2x category: #'Signals-FX'!
@@ -1304,34 +1325,24 @@ Object subclass: #FFT
 FFT class
 	instanceVariableNames: ''!
 
-!classDefinition: #Oversampler2x category: #'Signals-Support'!
-Object subclass: #Oversampler2x
+!classDefinition: #LagrangeOversampler2x category: #'Signals-Support'!
+Object subclass: #LagrangeOversampler2x
 	instanceVariableNames: 'u0 u1 u2 u3 d0 d1 d2 d3'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Support'!
-!classDefinition: 'Oversampler2x class' category: #'Signals-Support'!
-Oversampler2x class
+!classDefinition: 'LagrangeOversampler2x class' category: #'Signals-Support'!
+LagrangeOversampler2x class
 	instanceVariableNames: ''!
 
-!classDefinition: #Oversampler2x2 category: #'Signals-Support'!
-Object subclass: #Oversampler2x2
-	instanceVariableNames: 'u0 u1 u2 u3 d0 d1 d2 d3'
+!classDefinition: #Polyphase13TapOversampler2x category: #'Signals-Support'!
+Object subclass: #Polyphase13TapOversampler2x
+	instanceVariableNames: 'x0 x1 x2 x3 x4 x5 x6 d0 d1 d2 d3 d4 d5 d6 e0 e1'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Support'!
-!classDefinition: 'Oversampler2x2 class' category: #'Signals-Support'!
-Oversampler2x2 class
-	instanceVariableNames: ''!
-
-!classDefinition: #Oversampler2x3 category: #'Signals-Support'!
-Object subclass: #Oversampler2x3
-	instanceVariableNames: 'u0 u1 u2 u3 u4 u5 d0 d1 d2 d3 d4 d5'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'Oversampler2x3 class' category: #'Signals-Support'!
-Oversampler2x3 class
+!classDefinition: 'Polyphase13TapOversampler2x class' category: #'Signals-Support'!
+Polyphase13TapOversampler2x class
 	instanceVariableNames: ''!
 
 !classDefinition: #Sound category: #'Signals-Support'!
@@ -1698,53 +1709,44 @@ Each instance caches tables used for transforming a given size (n = 2^nu samples
 
 It would have been cleaner using complex numbers, but often the data is all real.!
 
-!Oversampler2x commentStamp: '<historical>' prior: 0!
-This is a polyphase 2x oversampler designed to reduce aliasing in non-linear DSP modules (e.g. distortion, saturation, or virtual analog filters).
+!LagrangeOversampler2x commentStamp: '<historical>' prior: 0!
+This class implements a 2× oversampler based on cubic Lagrange interpolation.
 
-This class uses a 3rd-order Cubic (Lagrange) Polyphase FIR filter (effectively 7-tap) to increase the internal sample rate. By processing signals at 2x the original frequency, we push the Nyquist limit higher, allowing harmonics to exist without folding back (aliasing) into the audible spectrum.
+The oversampler generates an intermediate sample between input samples using a 4-point cubic Lagrange interpolator, evaluates a user-supplied block at the higher rate, and then downsamples back to the base rate.
 
-The polyphase implementation is highly efficient:
-1. It avoids zero-stuffing (computes interpolation directly).
-2. It splits the work into two paths: an Interpolation Branch (odd samples) and a Pass-Through/Delay Branch (even samples).
-3. It maintains internal state for both upsampling and downsampling.
+Unlike a half-band FIR oversampler, this design:
+	•	is not band-limited,
+	•	does not provide a true Nyquist null,
+	•	and therefore does not fully suppress aliasing.
 
-Usage: 
-    anOversampler oversampling: inputSample do: [:subsample | ... ]
+Instead, it offers a very low-latency, CPU-cheap approximation that reduces aliasing moderately and is often sufficient for soft non-linearities or modulation-rate oversampling.
 
-Two subsamples are derived from the input sample, the block is evaluated twice (once per subsample), and the result is downsampled and returned.
+The interpolator uses symmetric cubic coefficients:
+	•	[-1/16, 9/16, 9/16, -1/16]
 
-Note: This process introduces a fixed latency (group delay) of approximately 3 samples. If mixing this signal with a 'dry' signal, the dry path must be delayed by the same amount to maintain phase alignment.
-!
+which sum to 1.0 and preserve DC gain. The even (original) samples are passed through directly.
 
-!Oversampler2x2 commentStamp: '<historical>' prior: 0!
-This is a polyphase 2x oversampler designed to reduce aliasing in non-linear DSP modules (e.g. distortion, saturation, or virtual analog filters).
+Downsampling is performed by averaging the processed even and odd phases. This restores unity gain but does not remove high-frequency images.
 
-This class uses a Polyphase Half-Band FIR filter (13-tap) to increase the internal sample rate. By processing signals at 2x the original frequency, we push the Nyquist limit higher, allowing harmonics to exist without folding back (aliasing) into the audible spectrum.
+Latency: This oversampler introduces approximately 1 sample of delay.
 
-The polyphase implementation is highly efficient:
-1. It avoids zero-stuffing (doesn't multiply by 0.0),
-2. It splits the work intwo two paths (an FIR branch and a pure delay branch),
-3. It maintains internal state for both upsampling and downsampling.
+Important: This oversampler is not suitable for hard clipping, wavefolding, or feedback filters where strong alias rejection is required. Use a half-band FIR oversampler instead.!
 
-Usage: 'anOversampler oversampling: inputSample do: [:subsample| ... ]'. Two subsamples are derived from the input sample, then the block is evaluated twice (once per subsample), and the result is downsampled and returned.
+!Polyphase13TapOversampler2x commentStamp: '<historical>' prior: 0!
+This class implements a 2x polyphase half-band oversampler intended to reduce aliasing in non-linear DSP modules (e.g. distortion, saturation, wavefolders, or virtual-analog filters).
 
-Note: this process introduces a fixed latency (group delay) of approximately 6 samples. If mixing this signal with a 'dry' signal, the dry path must be delayed by the same amount to maintain phase alignment.!
+Oversampling raises the internal Nyquist frequency, allowing harmonics generated by non-linear processing to exist without folding back into the audible band.
 
-!Oversampler2x3 commentStamp: '<historical>' prior: 0!
-This is a high-quality Polyphase 2x Oversampler using a 13-tap Windowed-Sinc Half-Band kernel.
+The oversampler uses a 13-tap linear-phase half-band FIR filter, implemented in polyphase form for efficiency:
+	1.	The even phase consists of the center tap only (gain = 0.5).
+	2.	The odd phase consists of three symmetric FIR tap pairs whose coefficients sum to 0.25.
+	3.	Together, the two phases provide unity gain and a true half-band response without zero-stuffing.
 
-It is designed for 'audiophile' quality anti-aliasing in non-linear processes (saturation, distortion). Unlike simpler cubic interpolators, this filter maintains a flat frequency response up to the cut-off point and provides superior rejection of alias frequencies.
+For each input sample, two subsamples (even and odd phases) are generated. A user-supplied block is evaluated once per subsample at the higher rate, after which the signal is downsampled using the same half-band structure.
 
-Structure:
-1. Interpolation Branch (Odd): 6-tap symmetric FIR filter.
-2. Delay Branch (Even): Pure delay (Pass-through).
+The implementation maintains separate internal state for the upsampling and downsampling polyphase paths and preserves correct phase alignment.
 
-Performance:
-- Latency: Fixed group delay of 5 samples (at 2x rate) / 2.5 samples (at 1x rate).
-- Complexity: 3 Multiplications per subsample (using symmetry).
-
-Usage:
-    anOversampler oversampling: inputSample do: [:subsample | ... ].!
+Latency: This process introduces a fixed group delay of 6 samples at the base sample rate (corresponding to the 13-tap FIR length). When mixing with an unprocessed (“dry”) signal, the dry path must be delayed by the same amount to maintain phase alignment.!
 
 !Upsampler2x commentStamp: '<historical>' prior: 0!
 This is a polyphase 2x oversampler designed to reduce aliasing in non-linear DSP modules (e.g. distortion, saturation or virtual analog filters).
@@ -4400,6 +4402,29 @@ next
 		jitterRange > 0 ifTrue: [counter := counter + (jitterRange * (random next * 2.0 - 1.0)) truncated]].
 	^ currentImpulse! !
 
+!SineSweep methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 19:33:21'!
+initialize
+	super initialize.
+	self reset! !
+
+!SineSweep methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 19:34:34'!
+next
+	| answer |
+	answer := (phase * Float twoPi) sin.
+	(phase := phase + frequency) >= 1.0 ifTrue: [phase := phase - phase truncated].
+	frequency := frequency * 1.00001.
+	^ answer! !
+
+!SineSweep methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 19:44:05'!
+reset
+	phase := 0.0.
+	frequency := 100.0 / self class sampleRate! !
+
+!SineSweep methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 19:28:39'!
+update
+	super update.
+	frequency > (20000.0 / self class sampleRate) ifTrue: [self reset]! !
+
 !Transform methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:17'!
 tick
 	output ifNil: [^ self]. "actually, we should process the input anyway, if available"
@@ -5108,16 +5133,38 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!Transform2x methodsFor: 'initialization' stamp: 'len 2/Feb/2026 02:34:29'!
+!Transform2x methodsFor: 'initialization' stamp: 'len 2/Feb/2026 22:00:22'!
 initialize
 	super initialize.
-	oversampler := Oversampler2x new! !
+	oversampler := Polyphase13TapOversampler2x new! !
 
 !Transform2x methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:16:34'!
 tick
 	output ifNil: [^ self]. "actually, we should process the input anyway, if available"
 	input ifNil: [1 to: output size do: [:i| output at: i put: (self value: 0.0)]. ^ self].
 	1 to: input size do: [:i| output at: i put: (oversampler oversampling: (input at: i) do: self)]! !
+
+!Clipper methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 23:54:49'!
+initializeControls
+	super initializeControls.
+	self addVolumeControl: #pregain min: 0.25 max: 64.0 value: 1.0.
+	self addVolumeControl: #clip min: 0.063 max: 1.0 value: 1.0.
+	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0! !
+
+!Clipper methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 23:57:42'!
+update
+	super update.
+	pregain := self get: #pregain.
+	positiveClip := self get: #clip.
+	negativeClip := positiveClip negated.
+	postgain := self get: #postgain! !
+
+!Clipper methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 23:57:46'!
+value: in
+	| x |
+	x := in * pregain.
+	x := x < negativeClip ifTrue: [negativeClip] ifFalse: [x > positiveClip ifTrue: [positiveClip] ifFalse: [x]].
+	^ x * postgain! !
 
 !Wavefolder2x methodsFor: 'accessing' stamp: 'len 2/Feb/2026 02:40:28'!
 gain: aNumber
@@ -8872,6 +8919,10 @@ tick
 	remainder := input size - i + 1.
 	self redrawNeeded! !
 
+!OscilloscopeMorph methodsFor: 'module' stamp: 'len 2/Feb/2026 19:10:07'!
+update
+	^ self! !
+
 !PlotMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Oct/2025 19:40:00'!
 defaultExtent
 	^`256@128`! !
@@ -9092,6 +9143,10 @@ tick
 			buffer replaceFrom: 1 to: bufferIndex - 1 with: buffer startingAt: bufferIndex].
 			changed := true].
 	changed ifTrue: [self redrawNeeded]! !
+
+!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 19:10:16'!
+update
+	^ self! !
 
 !SpectrogramMorph class methodsFor: 'as yet unclassified' stamp: 'len 18/Oct/2025 15:33:00'!
 initialize
@@ -9730,6 +9785,10 @@ tick
 			bufferIndex := 1.
 			changed := true]].
 	changed ifTrue: [self redrawNeeded]! !
+
+!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 19:10:25'!
+update
+	^ self! !
 
 !VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025 16:45:00'!
 defaultExtent
@@ -11433,11 +11492,11 @@ new: anIntegerPowerOfTwo
 	^ self new setSize: anIntegerPowerOfTwo
 ! !
 
-!Oversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:26:13'!
+!LagrangeOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:26:13'!
 initialize
 	self reset! !
 
-!Oversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:29:31'!
+!LagrangeOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:29:31'!
 oversampling: aNumber do: aBlock
 	| f1 f2 o1 o2 s1 s2 |
 	"1. Upsample (generate 2 subsamples):"
@@ -11470,103 +11529,37 @@ oversampling: aNumber do: aBlock
 	"The o1 branch also needs the 0.5 gain for downsampling averaging."
 	^ o1 * 0.5 + o2! !
 
-!Oversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:26:13'!
+!LagrangeOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:26:13'!
 reset
 	u0 := u1 := u2 := u3 := d0 := d1 := d2 := d3 := 0.0! !
 
-!Oversampler2x2 methodsFor: 'as yet unclassified' stamp: 'len 16/Jan/2026 16:10:59'!
+!Polyphase13TapOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 21:21:34'!
 initialize
 	self reset! !
 
-!Oversampler2x2 methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:06:17'!
-oversampling: aNumber do: aBlock
-	| f1 f2 o1 o2 s1 s2 |
-	"1. Upsample (generate 2 subsamples):"
-	u3 := u2.
-	u2 := u1.
-	u1 := u0.
-	u0 := aNumber.
-	s1 := (u0 + u3) * -0.031 + ((u1 + u2) * 0.113) + (u1 * -0.251).
-	s2 := u1 * 0.5.
-	"2. Process:"
-	f1 := aBlock value: s1.
-	f2 := aBlock value: s2.
-	"3. Downsample:"
-	d3 := d2.
-	d2 := d1.
-	d1 := d0.
-	d0 := f1.
-	o1 := (d0 + d3) * -0.031 + ((d1 + d2) * 0.113) + (d1 * -0.251).
-	o2 := f2 * 0.5.
-	^ o1 + o2! !
+!Polyphase13TapOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 22:07:26'!
+oversampling: x do: aBlock
+	| even odd y0 y1 |
+	"Note: we use coefficients ​-0.0083, 0.0625, 0.1958.
+	Alternatives:
+		-0.0102, 0.0736, 0.1866;
+		-0.0050, 0.0480, 0.2070."
+	"Shift input history:"
+	x6 := x5. x5 := x4. x4 := x3. x3 := x2. x2 := x1. x1 := x0. x0 := x.
+	"1. Polyphase upsample."
+	"Even phase: center tap only"
+	even := 0.5 * x3.
+	"Odd phase: half-band FIR"
+	odd := ​-0.0083 * (x0 + x6) + (0.0625 * (x1 + x5)) + (0.1958 * (x2 + x4)).
+	"2. Process at 2× rate:"
+	y0 := aBlock value: even.
+	y1 := aBlock value: odd.
+	"3. Polyphase downsample. Same structure, roles reversed."
+	d6 := d5. d5 := d4. d4 := d3. d3 := d2. d2 := d1. d1 := d0. d0 := y1.
+	e1 := e0. e0 := y0.
+	^ (0.5 * e1) + (​-0.0083 * (d0 + d6) + (0.0625 * (d1 + d5)) + (0.1958 * (d2 + d4)))! !
 
-!Oversampler2x2 methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:06:13'!
-oversamplingNew: aNumber do: aBlock
-	| f1 f2 o1 o2 s1 s2 |
-	"1. Upsample (generate 2 subsamples):"
-	u3 := u2.
-	u2 := u1.
-	u1 := u0.
-	u0 := aNumber.
-	"Branch 1: Interpolation (Odd samples)"
-	"Using standard Cubic/Lagrange coefficients: -0.0625, 0.5625, 0.5625, -0.0625"
-	"Note: We multiply by 2 implicit gain here. The raw coeffs sum to 0.5, so we use coeffs that sum to 1.0"
-	s1 := (u0 + u3) * -0.0625 + ((u1 + u2) * 0.5625).
-	"Branch 2: Pass-through (Even samples)"
-	"Pure delay. We use u1 (center). Multiplied by 1.0 (instead of 0.5) to handle the 2x gain."
-	s2 := u1.
-	"2. Process (Apply non-linear VA filter, etc):"
-	f1 := aBlock value: s1.
-	f2 := aBlock value: s2.
-	"3. Downsample:"
-	"Standard polyphase decimation: Filter both branches and sum."
-	d3 := d2.
-	d2 := d1.
-	d1 := d0.
-	d0 := f1.
-	"Branch 1: Filter the 'odd' processed samples"
-	"We reuse the same coefficients for symmetry"
-	o1 := (d0 + d3) * -0.0625 + ((d1 + d2) * 0.5625).
-	"Branch 2: The 'even' processed samples"
-	"In downsampling, we technically average. Gain is 0.5."
-	o2 := f2 * 0.5.
-	"The o1 branch also needs the 0.5 gain for downsampling averaging."
-	^ o1 * 0.5 + o2! !
-
-!Oversampler2x2 methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:10:19'!
-oversamplingNew4points: aNumber do: aBlock
-	| f1 f2 o1 o2 s1 s2 |
-	"1. Upsample (generate 2 subsamples):"
-	u3 := u2.
-	u2 := u1.
-	u1 := u0.
-	u0 := aNumber.
-	"Branch 1: Interpolation (Odd samples)"
-	"Using standard Cubic/Lagrange coefficients: -0.0625, 0.5625, 0.5625, -0.0625"
-	"Note: We multiply by 2 implicit gain here. The raw coeffs sum to 0.5, so we use coeffs that sum to 1.0"
-	s1 := (u0 + u3) * -0.0625 + ((u1 + u2) * 0.5625).
-	"Branch 2: Pass-through (Even samples)"
-	"Pure delay. We use u1 (center). Multiplied by 1.0 (instead of 0.5) to handle the 2x gain."
-	s2 := u1.
-	"2. Process (Apply non-linear VA filter, etc):"
-	f1 := aBlock value: s1.
-	f2 := aBlock value: s2.
-	"3. Downsample:"
-	"Standard polyphase decimation: Filter both branches and sum."
-	d3 := d2.
-	d2 := d1.
-	d1 := d0.
-	d0 := f1.
-	"Branch 1: Filter the 'odd' processed samples"
-	"We reuse the same coefficients for symmetry"
-	o1 := (d0 + d3) * -0.0625 + ((d1 + d2) * 0.5625).
-	"Branch 2: The 'even' processed samples"
-	"In downsampling, we technically average. Gain is 0.5."
-	o2 := f2 * 0.5.
-	"The o1 branch also needs the 0.5 gain for downsampling averaging."
-	^ o1 * 0.5 + o2! !
-
-!Oversampler2x2 methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 00:47:18'!
+!Polyphase13TapOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 21:21:34'!
 oversamplingOld: aNumber do: aBlock
 	| f1 f2 o1 o2 s1 s2 |
 	"1. Upsample (generate 2 subsamples):"
@@ -11588,70 +11581,9 @@ oversamplingOld: aNumber do: aBlock
 	o2 := f2 * 0.5.
 	^ o1 + o2! !
 
-!Oversampler2x2 methodsFor: 'as yet unclassified' stamp: 'len 16/Jan/2026 16:12:53'!
+!Polyphase13TapOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 21:24:12'!
 reset
-	u0 := u1 := u2 := u3 := d0 := d1 := d2 := d3 := 0.0! !
-
-!Oversampler2x3 methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:32:05'!
-initialize
-	self reset! !
-
-!Oversampler2x3 methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:33:25'!
-oversampling: aNumber do: aBlock
-	| f1 f2 o1 o2 s1 s2 |
-	"1. Upsample (Update state)"
-	"We need a deeper history buffer for 13 taps (6 taps per branch)"
-	u5 := u4.
-	u4 := u3.
-	u3 := u2.
-	u2 := u1.
-	u1 := u0.
-	u0 := aNumber.
-	"Branch 1: The 'Filter' Branch (Odd samples)"
-	"Coefficients are derived from a Steep Blackman-Windowed Sinc."
-	"They sum to 1.0 (gain corrected)."
-	"c1 (Outer)  :  0.0366"
-	"c2 (Middle) : -0.1982"
-	"c3 (Inner)  :  1.1616"
-	s1 := ((u0 + u5) * 0.0366) + 
-	      ((u1 + u4) * -0.1982) + 
-	      ((u2 + u3) * 1.1616).
-
-	"Branch 2: The 'Delay' Branch (Even samples)"
-	"For a 13-tap centered filter, the pure delay aligns with the center of the kernel."
-	"This corresponds to the sample 'between' the filter taps, which is u2 or u3."
-	"In this specific topology (delay=3), we pass u2."
-	s2 := u2.
-
-	"2. Process (The Non-Linear Block)"
-	f1 := aBlock value: s1.
-	f2 := aBlock value: s2.
-
-	"3. Downsample (Symmetric to upsampling)"
-	"Update Downsampling State"
-	d5 := d4.
-	d4 := d3.
-	d3 := d2.
-	d2 := d1.
-	d1 := d0.
-	d0 := f1.
-
-	"Filter Branch (Processed Odd Samples)"
-	o1 := ((d0 + d5) * 0.0366) + 
-	      ((d1 + d4) * -0.1982) + 
-	      ((d2 + d3) * 1.1616).
-
-	"Delay Branch (Processed Even Samples)"
-	"Remember: Downsampling gain is 0.5"
-	o2 := f2 * 0.5.
-
-	"Sum and apply gain to o1"
-	^ (o1 * 0.5) + o2
-! !
-
-!Oversampler2x3 methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:34:38'!
-reset
-	u0 := u1 := u2 := u3 := u4 := u5 := d0 := d1 := d2 := d3 := d4 := d5 := 0.0! !
+	x0 := x1 := x2 := x3 := x4 := x5 := x6 := d0 := d1 := d2 := d3 := d4 := d5 := d6 := e0 := e1 := 0.0! !
 
 !Sound methodsFor: 'playing' stamp: 'len 27/Nov/2025 02:05:00'!
 isPlaying

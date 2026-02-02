@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 3 February 2026 at 12:01:16 am'!
+'From Cuis7.7 [latest update: #7797] on 3 February 2026 at 2:34:46 am'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 439!
+!provides: 'Signals' 1 440!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1153,6 +1153,16 @@ BoxMorph subclass: #SpectrumAnalyzerMorph
 	category: 'Signals-Morphic-Widgets'!
 !classDefinition: 'SpectrumAnalyzerMorph class' category: #'Signals-Morphic-Widgets'!
 SpectrumAnalyzerMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #VectorscopeMorph category: #'Signals-Morphic-Widgets'!
+BoxMorph subclass: #VectorscopeMorph
+	instanceVariableNames: 'inputX inputY image color'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Widgets'!
+!classDefinition: 'VectorscopeMorph class' category: #'Signals-Morphic-Widgets'!
+VectorscopeMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #VideoMorph category: #'Signals-Morphic-Widgets'!
@@ -8874,9 +8884,9 @@ color: aColor
 	color := aColor.
 	self redrawNeeded! !
 
-!OscilloscopeMorph methodsFor: 'initialization' stamp: 'len 27/Sep/2025 22:24:00'!
+!OscilloscopeMorph methodsFor: 'initialization' stamp: 'len 3/Feb/2026 00:05:41'!
 defaultExtent
-	^`256@128`! !
+	^`128@64`! !
 
 !OscilloscopeMorph methodsFor: 'initialization' stamp: 'len 30/Nov/2025 01:45:00'!
 initialize
@@ -9790,6 +9800,82 @@ tick
 update
 	^ self! !
 
+!VectorscopeMorph methodsFor: 'drawing' stamp: 'len 3/Feb/2026 00:23:19'!
+drawOn: aCanvas
+	aCanvas image: image at: 0 @ 0! !
+
+!VectorscopeMorph methodsFor: 'drawing' stamp: 'len 3/Feb/2026 00:06:32'!
+requiresVectorCanvas
+	^ true ! !
+
+!VectorscopeMorph methodsFor: 'initialization' stamp: 'len 3/Feb/2026 00:06:32'!
+color: aColor
+	color := aColor.
+	self redrawNeeded! !
+
+!VectorscopeMorph methodsFor: 'initialization' stamp: 'len 3/Feb/2026 00:08:14'!
+defaultExtent
+	^`128@128`! !
+
+!VectorscopeMorph methodsFor: 'initialization' stamp: 'len 3/Feb/2026 02:33:24'!
+initialize
+	super initialize.
+	color := PatchMorph waveformColor.
+	image := Form extent: self defaultExtent depth: 32.
+	image fillBlack! !
+
+!VectorscopeMorph methodsFor: 'module' stamp: 'len 3/Feb/2026 00:09:11'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self.
+	answer addAudioInput: #setInputX: label: 'X'; addAudioInput: #setInputY: label: 'Y'.
+	^ answer! !
+
+!VectorscopeMorph methodsFor: 'module' stamp: 'len 3/Feb/2026 00:22:32'!
+reset
+	^ self! !
+
+!VectorscopeMorph methodsFor: 'module' stamp: 'len 3/Feb/2026 00:09:21'!
+setInputX: aBuffer
+	inputX := aBuffer.
+	self reset! !
+
+!VectorscopeMorph methodsFor: 'module' stamp: 'len 3/Feb/2026 00:09:25'!
+setInputY: aBuffer
+	inputY := aBuffer.
+	self reset! !
+
+!VectorscopeMorph methodsFor: 'module' stamp: 'len 3/Feb/2026 00:45:13'!
+tick
+	| h i x y c max |
+	(inputX isNil or: [inputY isNil]) ifTrue: [^ self].
+	h := image width - 1 / 2.0.
+	i := 1.
+	c := image pixelValueFor: color.
+	max := image width.
+	[(i  := i + 8) <= inputX size] whileTrue:
+		[x := (((inputX at: i) + 1.0) * h) truncated min: max.
+		y := (((inputY at: i) + 1.0) * h) truncated min: max.
+		image pixelValueAt: x @ y put: c]! !
+
+!VectorscopeMorph methodsFor: 'module' stamp: 'len 3/Feb/2026 00:06:32'!
+update
+	^ self! !
+
+!VectorscopeMorph methodsFor: 'stepping' stamp: 'len 3/Feb/2026 02:32:24'!
+step
+	image fill: image boundingBox rule: Form blend fillColor: (Color black alpha: 0.1).
+	self redrawNeeded! !
+
+!VectorscopeMorph methodsFor: 'stepping' stamp: 'len 3/Feb/2026 00:35:27'!
+stepTime
+	^ 100! !
+
+!VectorscopeMorph methodsFor: 'stepping' stamp: 'len 3/Feb/2026 00:36:32'!
+wantsSteps
+	^ true! !
+
 !VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025 16:45:00'!
 defaultExtent
 	^`256@192`! !
@@ -9997,7 +10083,7 @@ addModuleCopying: aModule
 addModuleInstantiating: aClass
 	self addMorph: aClass new patchable position: (self valueOfProperty: #lastMenuOpeningPosition)! !
 
-!PatchMorph methodsFor: 'menu' stamp: 'len 27/Jan/2026 14:42:05'!
+!PatchMorph methodsFor: 'menu' stamp: 'len 3/Feb/2026 00:27:09'!
 getMenu
 	| menu submenu |
 	self setProperty: #lastMenuOpeningPosition toValue: (self internalizeFromWorld: self activeHand morphPosition).
@@ -10019,7 +10105,8 @@ getMenu
 	submenu
 		add: 'Oscilloscope' action: #addModuleInstantiating: argument: OscilloscopeMorph;
 		add: 'Spectrogram' action: #addModuleInstantiating: argument: SpectrogramMorph;
-		add: 'Spectrum Analyzer' action: #addModuleInstantiating: argument: SpectrumAnalyzerMorph.
+		add: 'Spectrum Analyzer' action: #addModuleInstantiating: argument: SpectrumAnalyzerMorph;
+		add: 'Vectorscope' action: #addModuleInstantiating: argument: VectorscopeMorph.
 	menu add: 'Utilities' subMenu: submenu.
 
 	Sample library ifNotNil: [:aDict|

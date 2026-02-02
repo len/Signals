@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 2 February 2026 at 6:10:29 pm'!
+'From Cuis7.7 [latest update: #7797] on 2 February 2026 at 6:26:03 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 437!
+!provides: 'Signals' 1 438!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -466,7 +466,7 @@ Wavefolder class
 
 !classDefinition: #BPF category: #'Signals-Filters'!
 Transform subclass: #BPF
-	instanceVariableNames: 'biquad frequency bandwidth'
+	instanceVariableNames: 'biquad'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Filters'!
@@ -476,7 +476,7 @@ BPF class
 
 !classDefinition: #BSF category: #'Signals-Filters'!
 Transform subclass: #BSF
-	instanceVariableNames: 'biquad frequency bandwidth'
+	instanceVariableNames: 'biquad'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Filters'!
@@ -496,7 +496,7 @@ EQ3 class
 
 !classDefinition: #HPF category: #'Signals-Filters'!
 Transform subclass: #HPF
-	instanceVariableNames: 'biquad frequency Q'
+	instanceVariableNames: 'biquad'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Filters'!
@@ -506,7 +506,7 @@ HPF class
 
 !classDefinition: #LPF category: #'Signals-Filters'!
 Transform subclass: #LPF
-	instanceVariableNames: 'biquad frequency Q'
+	instanceVariableNames: 'biquad'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Filters'!
@@ -1453,8 +1453,8 @@ See https://www.native-instruments.com/fileadmin/ni_media/downloads/pdf/VAFilter
 
 See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 
-!SVF commentStamp: '<historical>' prior: 0!
-This is a state variable filter with a 12 dB/Oct slope (2 poles). It has outputs for low-pass, high-pass, band-pass and normalized band-pass modes. Based on stmlib/dsp/filter.h by Emilie Gillet.!
+!SVF commentStamp: 'len 2/Feb/2026 18:24:09' prior: 0!
+This is a state variable filter with a 12 dB/oct slope (2 poles). It has outputs for low-pass, high-pass, band-pass and normalized band-pass modes. Based on stmlib/dsp/filter.h by Emilie Gillet.!
 
 !Generator commentStamp: '<historical>' prior: 0!
 A signal generator produces a stream of samples from a real-valued function of time (typically a mono audio signal). It is similar to a Stream, but its values are 32-bit floats. See subclasses.!
@@ -1539,8 +1539,8 @@ State:
 !Transform commentStamp: '<historical>' prior: 0!
 A (unary) transform has one audio input and one audio output, and modifies the audio signal sample-by-sample (for each input sample, it applies a function to it producing an output sample).!
 
-!DiodeLadder2 commentStamp: '<historical>' prior: 0!
-This is a virtual analog model of the Korg 35 low-pass 12 dB/Oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.!
+!DiodeLadder2 commentStamp: 'len 2/Feb/2026 18:24:19' prior: 0!
+This is a virtual analog model of the Korg 35 low-pass 12 dB/oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.!
 
 !Decimator commentStamp: '<historical>' prior: 0!
 A simple bitcrusher and sample rate reducer.!
@@ -1558,35 +1558,35 @@ Basic wavefolder. Amplitude of input determines level of folding. Amplitudes of 
 
 Based on code from DaisySP by Nick Donaldson.!
 
-!BPF commentStamp: '<historical>' prior: 0!
-This is a second order (12 dB/Oct) band-pass filter based on a biquad.!
+!BPF commentStamp: 'len 2/Feb/2026 18:24:24' prior: 0!
+This is a second order (12 dB/oct) band-pass filter based on a biquad.!
 
-!BSF commentStamp: '<historical>' prior: 0!
-This is a second order (12 dB/Oct) band-stop or notch filter based on a biquad.!
+!BSF commentStamp: 'len 2/Feb/2026 18:24:28' prior: 0!
+This is a second order (12 dB/oct) band-stop or notch filter based on a biquad.!
 
 !EQ3 commentStamp: '<historical>' prior: 0!
 Three-band DJ-style equalizer. This is a crossover-based EQ that splits the audio into three fixed frequency bands (low, mid, high) using Linkwitz-Riley filters. Each band has an independent gain control. Crossover frequencies: Low/Mid at 250 Hz, and Mid/High at 2.5 kHz.
 
 The implementation uses 4 second-order Linkwitz-Riley biquad filters (Q=0.707) configured as two crossover points, with parallel band processing and summing.!
 
-!HPF commentStamp: '<historical>' prior: 0!
-This is a second order (12 dB/Oct) high-pass filter based on a biquad.!
+!HPF commentStamp: 'len 2/Feb/2026 18:24:32' prior: 0!
+This is a second order (12 dB/oct) high-pass filter based on a biquad.!
 
-!LPF commentStamp: '<historical>' prior: 0!
-This is a second order (12 dB/Oct) low-pass filter based on a biquad.!
+!LPF commentStamp: 'len 2/Feb/2026 18:24:37' prior: 0!
+This is a second order (12 dB/oct) low-pass filter based on a biquad.!
 
 !Wavefolder2x commentStamp: '<historical>' prior: 0!
 Basic wavefolder. Amplitude of input determines level of folding. Amplitudes of magnitude > 1.0 will start to fold.
 
 Based on code from DaisySP by Nick Donaldson.!
 
-!Korg35HPF commentStamp: '<historical>' prior: 0!
-This is a virtual analog model of the Korg 35 high-pass 12 dB/Oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.
+!Korg35HPF commentStamp: 'len 2/Feb/2026 18:24:43' prior: 0!
+This is a virtual analog model of the Korg 35 high-pass 12 dB/oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.
 
 See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 
-!Korg35LPF commentStamp: '<historical>' prior: 0!
-This is a virtual analog model of the Korg 35 low-pass 12 dB/Oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.
+!Korg35LPF commentStamp: 'len 2/Feb/2026 18:24:52' prior: 0!
+This is a virtual analog model of the Korg 35 low-pass 12 dB/oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.
 
 See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 
@@ -1635,8 +1635,8 @@ An attenuverter is similar to an attenuator, but it can also invert the polarity
 !LFO commentStamp: '<historical>' prior: 0!
 Low frequency oscillator.!
 
-!MoogLPF commentStamp: '<historical>' prior: 0!
-This is a low pass filter inspired by the classic Moog ladder filter. It's a low-pass 24 dB/Oct (4 poles) resonant filter.
+!MoogLPF commentStamp: 'len 2/Feb/2026 18:24:58' prior: 0!
+This is a low pass filter inspired by the classic Moog ladder filter. It's a low-pass 24 dB/oct (4 poles) resonant filter.
 It is based on the source code from CSound, which is based on the paper "Analyzing the Moog VCF with considerations for digital implementations" by Stilson and Smith (CCRMA).
 
 See https://www.musicdsp.org/en/latest/Filters/24-moog-vcf.html!
@@ -4926,16 +4926,10 @@ patchable
 reset
 	biquad reset! !
 
-!BPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:33:42'!
+!BPF methodsFor: 'controlling' stamp: 'len 2/Feb/2026 18:21:42'!
 update
-	| newFrequency newBandwidth |
 	super update.
-	newFrequency := self get: #frequency.
-	newBandwidth := self get: #bandwidth.
-	(frequency = newFrequency and: [bandwidth = newBandwidth]) ifTrue: [^ self].
-	frequency := newFrequency.
-	bandwidth := newBandwidth.
-	biquad bp: frequency / self class sampleRate Q: 1.0 / (2.0 * (0.5 * 2.0 log * bandwidth) sinh)! !
+	biquad bp: (self get: #frequency) / self class sampleRate Q: 1.0 / (2.0 * (0.5 * 2.0 log * (self get: #bandwidth)) sinh)! !
 
 !BPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 00:57:46'!
 initialize
@@ -4971,16 +4965,10 @@ patchable
 reset
 	biquad reset! !
 
-!BSF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:34:08'!
+!BSF methodsFor: 'controlling' stamp: 'len 2/Feb/2026 18:21:14'!
 update
-	| newFrequency newBandwidth |
 	super update.
-	newFrequency := self get: #frequency.
-	newBandwidth := self get: #bandwidth.
-	(frequency = newFrequency and: [bandwidth = newBandwidth]) ifTrue: [^ self].
-	frequency := newFrequency.
-	bandwidth := newBandwidth.
-	biquad bs: frequency / self class sampleRate Q: 1.0 / (2.0 * (0.5 * 2.0 log * bandwidth) sinh)! !
+	biquad bs: (self get: #frequency) / self class sampleRate Q: 1.0 / (2.0 * (0.5 * 2.0 log * (self get: #bandwidth)) sinh)! !
 
 !BSF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 00:57:49'!
 initialize
@@ -5046,16 +5034,10 @@ tick
 reset
 	biquad reset! !
 
-!HPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:03:04'!
+!HPF methodsFor: 'controlling' stamp: 'len 2/Feb/2026 18:20:20'!
 update
-	| newFrequency newQ |
 	super update.
-	newFrequency := self get: #frequency.
-	newQ := self get: #Q.
-	(frequency = newFrequency and: [Q = newQ]) ifTrue: [^ self].
-	frequency := newFrequency.
-	Q := newQ.
-	biquad hp: frequency / self class sampleRate Q: Q! !
+	biquad hp: (self get: #frequency) / self class sampleRate Q: (self get: #Q)! !
 
 !HPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 00:57:32'!
 initialize
@@ -5091,16 +5073,10 @@ patchable
 reset
 	biquad reset! !
 
-!LPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:02:49'!
+!LPF methodsFor: 'controlling' stamp: 'len 2/Feb/2026 18:19:58'!
 update
-	| newFrequency newQ |
 	super update.
-	newFrequency := self get: #frequency.
-	newQ := self get: #Q.
-	(frequency = newFrequency and: [Q = newQ]) ifTrue: [^ self].
-	frequency := newFrequency.
-	Q := newQ.
-	biquad lp: frequency / self class sampleRate Q: Q! !
+	biquad lp: (self get: #frequency) / self class sampleRate Q: (self get: #Q)! !
 
 !LPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 00:57:38'!
 initialize
@@ -12943,10 +12919,10 @@ inverseSaw: dt
 	Note: the #blep: method already has a baked-in scaling factor of 2, which corresponds to the jump from -1 to 1."
 	^ (2.0 * (1.0 - self) - 1.0) + (self blep: dt)! !
 
-!Float methodsFor: '*signals' stamp: 'len 17/Jan/2026 19:32:03'!
+!Float methodsFor: '*signals' stamp: 'len 2/Feb/2026 18:25:07'!
 parabolic: dt
 	"Answer a PolyBLAMP antialiased parabolic wave.
-	The parabolic wave is the result of integrating a sawtooth wave. It has a distinctive mellow character, somewhere between a sine and a triangle wave, but with richer harmonic series that rools off at 12 dB/Oct (compared to 6 dB/Oct for a saw)."
+	The parabolic wave is the result of integrating a sawtooth wave. It has a distinctive mellow character, somewhere between a sine and a triangle wave, but with richer harmonic series that rools off at 12 dB/oct (compared to 6 dB/oct for a saw)."
 	^ ((4.0 * (self - 0.5) squared) + (8.0 * dt * (self blamp: dt)) - 0.5) * 1.95! !
 
 !Float methodsFor: '*signals' stamp: 'len 16/Jan/2026 18:46:01'!

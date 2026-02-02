@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 2 February 2026 at 4:20:04 pm'!
+'From Cuis7.7 [latest update: #7797] on 2 February 2026 at 6:10:29 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 436!
+!provides: 'Signals' 1 437!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -5440,6 +5440,22 @@ initializeControls
 	super initializeControls.
 	(self addControl: #balance min: -1.0 max: 1.0 value: 0.0) printer: [:x| x abs < 0.01 ifTrue: ['Center'] ifFalse: [(x abs * 100.0) rounded printString, '% ', (x < 0.0 ifTrue: ['L'] ifFalse: ['R'])]]! !
 
+!Balance methodsFor: 'processing' stamp: 'len 2/Feb/2026 18:06:19'!
+tick
+	| θ sin cos |
+	(inputA isNil or: [inputB isNil]) ifTrue: [outputL ifNotNil: [outputL atAllPut: 0.0]. outputR ifNotNil: [outputR atAllPut: 0.0]. ^ self].
+	θ := ((self get: #balance) + 1.0) * Float pi / 4.0.
+	cos := θ cos.
+	sin := θ sin.
+	outputL ifNotNil:
+		[sin abs > cos abs
+			ifTrue: [outputL replaceWith: inputA; *= (cos / sin); += inputB; *= sin]
+			ifFalse: [outputL replaceWith: inputB; *= (sin / cos); += inputA; *= cos]].
+	outputR ifNotNil:
+		[sin abs < cos abs
+			ifTrue: [outputR replaceWith: inputA; *= (sin / cos); += inputB; *= cos]
+			ifFalse: [outputR replaceWith: inputB; *= (cos / sin); += inputA; *= sin]]! !
+
 !Balance methodsFor: 'tools' stamp: 'len 2/Feb/2026 03:12:01'!
 panel
 	^ ControlPanel new addKnob: (controls at: #balance)! !
@@ -5587,6 +5603,15 @@ setOutput: aBuffer
 initializeControls
 	super initializeControls.
 	(self addControl: #pan min: -1.0 max: 1.0 value: 0.0) printer: [:x| x abs < 0.01 ifTrue: ['Center'] ifFalse: [(x abs * 100.0) rounded printString, '% ', (x < 0.0 ifTrue: ['L'] ifFalse: ['R'])]]! !
+
+!Pan methodsFor: 'processing' stamp: 'len 2/Feb/2026 17:56:49'!
+tick
+	| θ |
+	input ifNil: [outputL ifNotNil: [outputL atAllPut: 0.0]. outputR ifNotNil: [outputR atAllPut: 0.0]. ^ self].
+	"constant-power panning:"
+	θ := ((self get: #pan) + 1.0) * Float pi / 4.0.
+	outputL ifNotNil: [outputL replaceWith: input; *= θ cos].
+	outputR ifNotNil: [outputR replaceWith: input; *= θ sin]! !
 
 !Pan methodsFor: 'tools' stamp: 'len 27/Jan/2026 15:05:19'!
 panel

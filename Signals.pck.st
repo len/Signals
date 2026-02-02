@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 2 February 2026 at 12:18:50 am'!
+'From Cuis7.7 [latest update: #7797] on 2 February 2026 at 3:08:40 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 433!
+!provides: 'Signals' 1 434!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -136,7 +136,7 @@ Operator class
 
 !classDefinition: #Chorus category: #'Signals-FX'!
 Module subclass: #Chorus
-	instanceVariableNames: 'input outputLeft outputRight phase increment depth delayLine tap1 tap2 tap3 time mix'
+	instanceVariableNames: 'input outputL outputR phase increment depth delayLine tap1 tap2 tap3 time mix'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
@@ -156,7 +156,7 @@ SVF class
 
 !classDefinition: #AudioIn category: #'Signals-IO'!
 Module subclass: #AudioIn
-	instanceVariableNames: 'outputLeft outputRight aux meterLeftValue meterRightValue'
+	instanceVariableNames: 'outputL outputR aux meterLeftValue meterRightValue'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-IO'!
@@ -166,7 +166,7 @@ AudioIn class
 
 !classDefinition: #AudioOut category: #'Signals-IO'!
 Module subclass: #AudioOut
-	instanceVariableNames: 'level levelLeft levelRight inputLeft inputRight aux meterLeftValue meterRightValue'
+	instanceVariableNames: 'level levelLeft levelRight inputL inputR aux meterLeftValue meterRightValue'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-IO'!
@@ -524,6 +524,46 @@ Transform subclass: #LPF
 LPF class
 	instanceVariableNames: ''!
 
+!classDefinition: #Transform2x category: #'Signals-Kernel'!
+Transform subclass: #Transform2x
+	instanceVariableNames: 'oversampler'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Kernel'!
+!classDefinition: 'Transform2x class' category: #'Signals-Kernel'!
+Transform2x class
+	instanceVariableNames: ''!
+
+!classDefinition: #Wavefolder2x category: #'Signals-FX'!
+Transform2x subclass: #Wavefolder2x
+	instanceVariableNames: 'gain offset'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-FX'!
+!classDefinition: 'Wavefolder2x class' category: #'Signals-FX'!
+Wavefolder2x class
+	instanceVariableNames: ''!
+
+!classDefinition: #Korg35HPF category: #'Signals-VA Filters'!
+Transform2x subclass: #Korg35HPF
+	instanceVariableNames: 's1 s2 s3 α α₀ β₂ β₃ k frequency resonance'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-VA Filters'!
+!classDefinition: 'Korg35HPF class' category: #'Signals-VA Filters'!
+Korg35HPF class
+	instanceVariableNames: ''!
+
+!classDefinition: #Korg35LPF category: #'Signals-VA Filters'!
+Transform2x subclass: #Korg35LPF
+	instanceVariableNames: 's1 s2 s3 α α₀ β₂ β₃ k frequency resonance'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-VA Filters'!
+!classDefinition: 'Korg35LPF class' category: #'Signals-VA Filters'!
+Korg35LPF class
+	instanceVariableNames: ''!
+
 !classDefinition: #Limiter category: #'Signals-Levels'!
 Transform subclass: #Limiter
 	instanceVariableNames: 'peak'
@@ -544,26 +584,6 @@ Transform subclass: #MultiTapDelayLine
 MultiTapDelayLine class
 	instanceVariableNames: ''!
 
-!classDefinition: #Korg35HPF category: #'Signals-VA Filters'!
-Transform subclass: #Korg35HPF
-	instanceVariableNames: 's1 s2 s3 α α₀ β₂ β₃ k frequency resonance'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-VA Filters'!
-!classDefinition: 'Korg35HPF class' category: #'Signals-VA Filters'!
-Korg35HPF class
-	instanceVariableNames: ''!
-
-!classDefinition: #Korg35LPF category: #'Signals-VA Filters'!
-Transform subclass: #Korg35LPF
-	instanceVariableNames: 's1 s2 s3 α α₀ β₂ β₃ k frequency resonance'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-VA Filters'!
-!classDefinition: 'Korg35LPF class' category: #'Signals-VA Filters'!
-Korg35LPF class
-	instanceVariableNames: ''!
-
 !classDefinition: #Amp category: #'Signals-Levels'!
 Module subclass: #Amp
 	instanceVariableNames: 'input gain output inputRM'
@@ -572,6 +592,16 @@ Module subclass: #Amp
 	category: 'Signals-Levels'!
 !classDefinition: 'Amp class' category: #'Signals-Levels'!
 Amp class
+	instanceVariableNames: ''!
+
+!classDefinition: #Balance category: #'Signals-Levels'!
+Module subclass: #Balance
+	instanceVariableNames: 'inputA inputB outputL outputR'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Levels'!
+!classDefinition: 'Balance class' category: #'Signals-Levels'!
+Balance class
 	instanceVariableNames: ''!
 
 !classDefinition: #Crossfader category: #'Signals-Levels'!
@@ -594,19 +624,19 @@ Module subclass: #Mixer
 Mixer class
 	instanceVariableNames: ''!
 
-!classDefinition: #Panner category: #'Signals-Levels'!
-Module subclass: #Panner
-	instanceVariableNames: 'inputA inputB outputLeft outputRight'
+!classDefinition: #Pan category: #'Signals-Levels'!
+Module subclass: #Pan
+	instanceVariableNames: 'input outputL outputR'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Levels'!
-!classDefinition: 'Panner class' category: #'Signals-Levels'!
-Panner class
+!classDefinition: 'Pan class' category: #'Signals-Levels'!
+Pan class
 	instanceVariableNames: ''!
 
 !classDefinition: #StereoMatrix category: #'Signals-Levels'!
 Module subclass: #StereoMatrix
-	instanceVariableNames: 'inputA inputB outputLeft outputRight aux'
+	instanceVariableNames: 'inputA inputB outputL outputR aux'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Levels'!
@@ -1294,6 +1324,26 @@ Object subclass: #Oversampler2x
 Oversampler2x class
 	instanceVariableNames: ''!
 
+!classDefinition: #Oversampler2x2 category: #'Signals-Support'!
+Object subclass: #Oversampler2x2
+	instanceVariableNames: 'u0 u1 u2 u3 d0 d1 d2 d3'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Support'!
+!classDefinition: 'Oversampler2x2 class' category: #'Signals-Support'!
+Oversampler2x2 class
+	instanceVariableNames: ''!
+
+!classDefinition: #Oversampler2x3 category: #'Signals-Support'!
+Object subclass: #Oversampler2x3
+	instanceVariableNames: 'u0 u1 u2 u3 u4 u5 d0 d1 d2 d3 d4 d5'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Support'!
+!classDefinition: 'Oversampler2x3 class' category: #'Signals-Support'!
+Oversampler2x3 class
+	instanceVariableNames: ''!
+
 !classDefinition: #Sound category: #'Signals-Support'!
 Object subclass: #Sound
 	instanceVariableNames: ''
@@ -1535,8 +1585,10 @@ This is a second order (12 dB/Oct) high-pass filter based on a biquad.!
 !LPF commentStamp: '<historical>' prior: 0!
 This is a second order (12 dB/Oct) low-pass filter based on a biquad.!
 
-!MultiTapDelayLine commentStamp: '<historical>' prior: 0!
-This is based on Squeak's original ReverbSound by John Maloney.!
+!Wavefolder2x commentStamp: '<historical>' prior: 0!
+Basic wavefolder. Amplitude of input determines level of folding. Amplitudes of magnitude > 1.0 will start to fold.
+
+Based on code from DaisySP by Nick Donaldson.!
 
 !Korg35HPF commentStamp: '<historical>' prior: 0!
 This is a virtual analog model of the Korg 35 high-pass 12 dB/Oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.
@@ -1547,6 +1599,9 @@ See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 This is a virtual analog model of the Korg 35 low-pass 12 dB/Oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.
 
 See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
+
+!MultiTapDelayLine commentStamp: '<historical>' prior: 0!
+This is based on Squeak's original ReverbSound by John Maloney.!
 
 !Amp commentStamp: '<historical>' prior: 0!
 An amplifier just multiplies the input signal by a gain parameter, typically modulated by an envolope. When the gain parameter changes, the actual gain is varied smoothly by sample to avoid clicks or zipper noise.!
@@ -1654,7 +1709,25 @@ Each instance caches tables used for transforming a given size (n = 2^nu samples
 It would have been cleaner using complex numbers, but often the data is all real.!
 
 !Oversampler2x commentStamp: '<historical>' prior: 0!
-This is a polyphase 2x oversampler designed to reduce aliasing in non-linear DSP modules (e.g. distortion, saturation or virtual analog filters).
+This is a polyphase 2x oversampler designed to reduce aliasing in non-linear DSP modules (e.g. distortion, saturation, or virtual analog filters).
+
+This class uses a 3rd-order Cubic (Lagrange) Polyphase FIR filter (effectively 7-tap) to increase the internal sample rate. By processing signals at 2x the original frequency, we push the Nyquist limit higher, allowing harmonics to exist without folding back (aliasing) into the audible spectrum.
+
+The polyphase implementation is highly efficient:
+1. It avoids zero-stuffing (computes interpolation directly).
+2. It splits the work into two paths: an Interpolation Branch (odd samples) and a Pass-Through/Delay Branch (even samples).
+3. It maintains internal state for both upsampling and downsampling.
+
+Usage: 
+    anOversampler oversampling: inputSample do: [:subsample | ... ]
+
+Two subsamples are derived from the input sample, the block is evaluated twice (once per subsample), and the result is downsampled and returned.
+
+Note: This process introduces a fixed latency (group delay) of approximately 3 samples. If mixing this signal with a 'dry' signal, the dry path must be delayed by the same amount to maintain phase alignment.
+!
+
+!Oversampler2x2 commentStamp: '<historical>' prior: 0!
+This is a polyphase 2x oversampler designed to reduce aliasing in non-linear DSP modules (e.g. distortion, saturation, or virtual analog filters).
 
 This class uses a Polyphase Half-Band FIR filter (13-tap) to increase the internal sample rate. By processing signals at 2x the original frequency, we push the Nyquist limit higher, allowing harmonics to exist without folding back (aliasing) into the audible spectrum.
 
@@ -1666,6 +1739,22 @@ The polyphase implementation is highly efficient:
 Usage: 'anOversampler oversampling: inputSample do: [:subsample| ... ]'. Two subsamples are derived from the input sample, then the block is evaluated twice (once per subsample), and the result is downsampled and returned.
 
 Note: this process introduces a fixed latency (group delay) of approximately 6 samples. If mixing this signal with a 'dry' signal, the dry path must be delayed by the same amount to maintain phase alignment.!
+
+!Oversampler2x3 commentStamp: '<historical>' prior: 0!
+This is a high-quality Polyphase 2x Oversampler using a 13-tap Windowed-Sinc Half-Band kernel.
+
+It is designed for 'audiophile' quality anti-aliasing in non-linear processes (saturation, distortion). Unlike simpler cubic interpolators, this filter maintains a flat frequency response up to the cut-off point and provides superior rejection of alias frequencies.
+
+Structure:
+1. Interpolation Branch (Odd): 6-tap symmetric FIR filter.
+2. Delay Branch (Even): Pure delay (Pass-through).
+
+Performance:
+- Latency: Fixed group delay of 5 samples (at 2x rate) / 2.5 samples (at 1x rate).
+- Complexity: 3 Multiplications per subsample (using symmetry).
+
+Usage:
+    anOversampler oversampling: inputSample do: [:subsample | ... ].!
 
 !Upsampler2x commentStamp: '<historical>' prior: 0!
 This is a polyphase 2x oversampler designed to reduce aliasing in non-linear DSP modules (e.g. distortion, saturation or virtual analog filters).
@@ -2856,11 +2945,11 @@ initializeControls
 	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
 	self addControl: #mix min: 0.0 max: 1.0 value: 0.5! !
 
-!Chorus methodsFor: 'processing' stamp: 'len 26/Jan/2026 22:10:13'!
+!Chorus methodsFor: 'processing' stamp: 'len 2/Feb/2026 04:07:11'!
 tick
 	| twoPi d1 d2 d3 dry |
-	outputLeft ifNil: [^ self].
-	input ifNil: [outputLeft atAllPut: 0.0. outputRight ifNotNil: [outputRight atAllPut: 0.0].^ self].
+	outputL ifNil: [^ self].
+	input ifNil: [outputL atAllPut: 0.0. outputR ifNotNil: [outputR atAllPut: 0.0].^ self].
 	self update.
 	twoPi := Float twoPi.
 	d1 := (phase sin * depth * 0.002 "2 ms" + (time * 0.8)) * self class sampleRate.
@@ -2871,13 +2960,13 @@ tick
 	tap2 setDelayIncrement: (d2 - tap2 delay) / self class blockSize.
 	tap3 setDelayIncrement: (d3 - tap3 delay) / self class blockSize.
 	dry := 1.0 - mix.
-	outputRight isNil
+	outputR isNil
 		ifTrue:
 			[1 to: input size do: [:i|
 				| in out |
 				delayLine write: (in := input at: i).
 				out := tap1 read + tap2 read + tap3 read / 3.0.
-				outputLeft at: i put: in * dry + (out * mix)]]
+				outputL at: i put: in * dry + (out * mix)]]
 		ifFalse:
 			[1 to: input size do: [:i|
 				| in v1 v2 v3 mid side |
@@ -2888,28 +2977,28 @@ tick
 				mid := v1 + v2 + v3 / 3.0.
 				side := v1 - v3 * 0.5.
 				in := in * dry.
-				outputLeft at: i put: in + (mid + side * mix).
-				outputRight at: i put: in + (mid - side * mix)]]! !
+				outputL at: i put: in + (mid + side * mix).
+				outputR at: i put: in + (mid - side * mix)]]! !
 
-!Chorus methodsFor: 'tools' stamp: 'len 26/Jan/2026 22:13:56'!
+!Chorus methodsFor: 'tools' stamp: 'len 2/Feb/2026 04:07:29'!
 patchable
 	^ super patchable
 		addAudioInput: #setInput: label: 'In';
-		addAudioOutput: #setOutputLeft: label: 'Out L/M';
-		addAudioOutput: #setOutputRight: label: 'Out R';
+		addAudioOutput: #setOutputL: label: 'Out L/M';
+		addAudioOutput: #setOutputR: label: 'Out R';
 		yourself! !
 
 !Chorus methodsFor: 'wiring' stamp: 'len 26/Jan/2026 22:14:23'!
 setInput: aBuffer
 	input := aBuffer! !
 
-!Chorus methodsFor: 'wiring' stamp: 'len 26/Jan/2026 22:10:49'!
-setOutputLeft: aBuffer
-	outputLeft := aBuffer! !
+!Chorus methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:07:18'!
+setOutputL: aBuffer
+	outputL := aBuffer! !
 
-!Chorus methodsFor: 'wiring' stamp: 'len 26/Jan/2026 22:10:54'!
-setOutputRight: aBuffer
-	outputRight := aBuffer! !
+!Chorus methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:10:06'!
+setOutputR: aBuffer
+	outputR := aBuffer! !
 
 !SVF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:06:43'!
 modulateFrequency: aNumber
@@ -2999,11 +3088,11 @@ setOutputHP: aBuffer
 setOutputLP: aBuffer
 	outputLP := aBuffer! !
 
-!AudioIn methodsFor: 'controlling' stamp: 'len 21/Jan/2026 02:54:15'!
+!AudioIn methodsFor: 'controlling' stamp: 'len 2/Feb/2026 04:10:50'!
 clear
 	super clear.
-	outputLeft ifNotNil: [outputLeft atAllPut: 0.0].
-	outputRight ifNotNil: [outputRight atAllPut: 0.0]! !
+	outputL ifNotNil: [outputL atAllPut: 0.0].
+	outputR ifNotNil: [outputR atAllPut: 0.0]! !
 
 !AudioIn methodsFor: 'initialization' stamp: 'len 21/Jan/2026 02:49:31'!
 initialize
@@ -3025,40 +3114,40 @@ meterRightValue
 meterValue
 	^ self meterLeftValue max: self meterRightValue! !
 
-!AudioIn methodsFor: 'mixing' stamp: 'len 21/Jan/2026 02:49:05'!
+!AudioIn methodsFor: 'mixing' stamp: 'len 2/Feb/2026 04:10:50'!
 mixFromLeft: leftBuffer right: rightBuffer gain: gain
-	outputLeft ifNotNil:
+	outputL ifNotNil:
 		[aux replaceWith: leftBuffer.
 		aux *= gain.
-		outputLeft += aux].
-	outputRight ifNotNil:
+		outputL += aux].
+	outputR ifNotNil:
 		[aux replaceWith: rightBuffer.
 		aux *= gain.
-		outputRight += aux]! !
+		outputR += aux]! !
 
-!AudioIn methodsFor: 'processing' stamp: 'len 21/Jan/2026 02:55:42'!
+!AudioIn methodsFor: 'processing' stamp: 'len 2/Feb/2026 04:10:50'!
 tick
 	self update.
-	meterLeftValue := meterLeftValue * 0.98 "dampen" max: (outputLeft rms max: outputLeft last abs).
-	meterRightValue := meterRightValue * 0.98 "dampen" max: (outputRight rms max: outputRight last abs).! !
+	meterLeftValue := meterLeftValue * 0.98 "dampen" max: (outputL rms max: outputL last abs).
+	meterRightValue := meterRightValue * 0.98 "dampen" max: (outputR rms max: outputR last abs).! !
 
-!AudioIn methodsFor: 'wiring' stamp: 'len 22/Jan/2026 02:42:38'!
+!AudioIn methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:09:34'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: (RollingMeterMorph new meterBlock: [self meterValue]).
 	answer
-		addAudioInput: #setOutputLeft: label: 'Out L/M';
-		addAudioInput: #setOutputRight: label: 'Out R'.
+		addAudioOutput: #setOutputL: label: 'Out L/M';
+		addAudioOutput: #setOutputR: label: 'Out R'.
 	^ answer! !
 
-!AudioIn methodsFor: 'wiring' stamp: 'len 21/Jan/2026 02:31:53'!
-setOutputLeft: aBuffer
-	outputLeft := aBuffer! !
+!AudioIn methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:10:50'!
+setOutputL: aBuffer
+	outputL := aBuffer! !
 
-!AudioIn methodsFor: 'wiring' stamp: 'len 21/Jan/2026 02:32:01'!
-setOutputRight: aBuffer
-	outputRight := aBuffer! !
+!AudioIn methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:10:28'!
+setOutputR: aBuffer
+	outputR := aBuffer! !
 
 !AudioOut methodsFor: 'controlling' stamp: 'len 18/Jan/2026 02:32:48'!
 modulateLevel: aNumber
@@ -3076,7 +3165,7 @@ setLevel: aNumber
 setPan: aNumber
 	self set: #pan to: aNumber! !
 
-!AudioOut methodsFor: 'controlling' stamp: 'len 24/Jan/2026 22:03:54'!
+!AudioOut methodsFor: 'controlling' stamp: 'len 2/Feb/2026 02:55:17'!
 update
 	| pan |
 	super update.
@@ -3084,9 +3173,7 @@ update
 	pan := self get: #pan.
 	levelLeft := levelRight := level.
 	pan < 0.0 ifTrue: [levelRight := levelRight * (pan * Float halfPi) cos].
-	pan > 0.0 ifTrue: [levelLeft := levelLeft * (pan * Float halfPi) cos].
-
-	! !
+	pan > 0.0 ifTrue: [levelLeft := levelLeft * (pan * Float halfPi) cos]! !
 
 !AudioOut methodsFor: 'initialization' stamp: 'len 24/Jan/2026 22:03:54'!
 initialize
@@ -3115,20 +3202,20 @@ meterRightValue
 meterValue
 	^ (meterLeftValue max: meterRightValue) * level! !
 
-!AudioOut methodsFor: 'mixing' stamp: 'len 24/Jan/2026 22:36:46'!
+!AudioOut methodsFor: 'mixing' stamp: 'len 2/Feb/2026 04:06:40'!
 mixIntoLeft: leftBuffer right: rightBuffer
-	inputLeft ifNil: [^ self].
-	meterLeftValue := meterLeftValue * 0.9 "dampen" max: (inputLeft rms max: inputLeft last abs).
-	inputRight
+	inputL ifNil: [^ self].
+	meterLeftValue := meterLeftValue * 0.9 "dampen" max: (inputL rms max: inputL last abs).
+	inputR
 		ifNil:
 			[meterRightValue := meterLeftValue.
-			aux replaceWith: inputLeft]
+			aux replaceWith: inputL]
 		ifNotNil:
-			[meterRightValue := meterRightValue * 0.9 max: (inputRight rms max: inputRight last abs).
-			aux replaceWith: inputRight].
+			[meterRightValue := meterRightValue * 0.9 max: (inputR rms max: inputR last abs).
+			aux replaceWith: inputR].
 	aux *= levelRight.
 	rightBuffer += aux.
-	aux replaceWith: inputLeft.
+	aux replaceWith: inputL.
 	aux *= levelLeft.
 	leftBuffer += aux! !
 
@@ -3142,25 +3229,25 @@ panel
 	^ ControlPanel new
 		addMorph: column! !
 
-!AudioOut methodsFor: 'tools' stamp: 'len 22/Jan/2026 02:42:38'!
+!AudioOut methodsFor: 'tools' stamp: 'len 2/Feb/2026 04:05:43'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: (RollingMeterMorph new meterBlock: [self meterValue]); addMorph: self panel.
 	answer
-		addAudioInput: #setInputLeft: label: 'In L/M';
-		addAudioInput: #setInputRight: label: 'In R';
+		addAudioInput: #setInputL: label: 'In L/M';
+		addAudioInput: #setInputR: label: 'In R';
 		addControlInput: #modulateLevel: label: 'Level';
 		addControlInput: #modulatePan: label: 'Pan'.
 	^ answer! !
 
-!AudioOut methodsFor: 'wiring' stamp: 'len 20/Jan/2026 14:12:34'!
-setInputLeft: aBuffer
-	inputLeft := aBuffer! !
+!AudioOut methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:06:40'!
+setInputL: aBuffer
+	inputL := aBuffer! !
 
-!AudioOut methodsFor: 'wiring' stamp: 'len 20/Jan/2026 14:12:48'!
-setInputRight: aBuffer
-	inputRight := aBuffer! !
+!AudioOut methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:06:33'!
+setInputR: aBuffer
+	inputR := aBuffer! !
 
 !ControlIn methodsFor: 'accessing' stamp: 'len 6/Jan/2026 14:30:25'!
 index
@@ -5271,53 +5358,75 @@ patchable
 		addAudioOutput: #setOutput: label: 'Out'.
 	^ answer! !
 
-!Limiter methodsFor: 'initialization' stamp: 'len 20/Nov/2025 16:10:00'!
+!Transform2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 02:34:29'!
 initialize
 	super initialize.
-	peak := 0.5! !
+	oversampler := Oversampler2x new! !
 
-!Limiter methodsFor: 'processing' stamp: 'len 20/Nov/2025 16:12:00'!
+!Transform2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 00:28:36'!
+tick
+	self update.
+	output ifNil: [^ self]. "actually, we should process the input anyway, if available"
+	input ifNil: [1 to: output size do: [:i| output at: i put: (self value: 0.0)]. ^ self].
+	1 to: input size do: [:i| output at: i put: (oversampler oversampling: (input at: i) do: self)]! !
+
+!Wavefolder2x methodsFor: 'accessing' stamp: 'len 2/Feb/2026 02:40:28'!
+gain: aNumber
+	"Set input gain. Supports negative values for thru-zero."
+	gain := aNumber! !
+
+!Wavefolder2x methodsFor: 'accessing' stamp: 'len 2/Feb/2026 02:40:28'!
+offset: aNumber
+	"Set offset added to input (pre-gain) for asymmetrical folding."
+	offset := aNumber! !
+
+!Wavefolder2x methodsFor: 'controlling' stamp: 'len 2/Feb/2026 02:40:28'!
+modulateGain: aNumber
+	self modulate: #gain by: aNumber! !
+
+!Wavefolder2x methodsFor: 'controlling' stamp: 'len 2/Feb/2026 02:40:28'!
+modulateOffset: aNumber
+	self modulate: #offset by: aNumber! !
+
+!Wavefolder2x methodsFor: 'controlling' stamp: 'len 2/Feb/2026 02:40:28'!
+update
+	super update.
+	gain := self get: #gain.
+	offset := self get: #offset! !
+
+!Wavefolder2x methodsFor: 'initialization' stamp: 'len 2/Feb/2026 02:40:28'!
+initialize
+	super initialize.
+	gain := 1.0.
+	offset := 0.0! !
+
+!Wavefolder2x methodsFor: 'initialization' stamp: 'len 2/Feb/2026 02:40:28'!
+initializeControls
+	super initializeControls.
+	self addControl: #gain min: -4.0 max: 4.0 value: 1.0.
+	self addControl: #offset min: -2.0 max: 2.0 value: 0.0! !
+
+!Wavefolder2x methodsFor: 'processing' stamp: 'len 2/Feb/2026 02:40:28'!
 value: in
-	| error |
-	error := in abs - peak.
-	peak := (error > 0 ifTrue: [0.05] ifFalse: [0.00002]) * error + peak.
-	^ in * (peak <= 1.0 ifTrue: [0.8] ifFalse: [0.8 / peak])! !
+	| x ft |
+	x := in.
+	x := (x + offset) * gain.
+	ft := ((x + 1.0) * 0.5) floor.
+	x := x - (ft * 2).
+	ft odd ifTrue: [x := x negated].
+	^ x! !
 
-!MultiTapDelayLine methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 15:01:05'!
-delays: delayList gains: gainList
-	"For best results it's desirable that the delays are primes.
-	
-	MultiTapDelay new delays: #(537 691 1191) gains: #(0.07 0.07 0.07)
-	
-	The default in SoundPlayer:
-	MultiTapDelay new delays: #(1601 7919) gains: #(0.12 0.07).
-"
-	self assert: delayList size = gainList size.
-	delays := delayList.
-	gains := gainList.
-	buffer := Float32Array new: delayList max.
-	position := 1! !
-
-!MultiTapDelayLine methodsFor: 'as yet unclassified' stamp: 'len 6/Oct/2025 15:53:00'!
-reset
-	buffer atAllPut: 0.0! !
-
-!MultiTapDelayLine methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 15:01:05'!
-value: in
-	| n i out |
-	n := buffer size. "max delay"
-	position := position + 1.
-	i := position truncated.
-	out := 0.0.
-	delays with: gains do: [:delay :gain|
-		| j |
-		j := position - delay.
-		j < 1 ifTrue: [j := j + n].
-		out := (buffer at: j) * gain + out].
-	out := out + in.
-	buffer at: i put: out.
-	position := position \\ buffer size.
-	^ out! !
+!Wavefolder2x methodsFor: 'tools' stamp: 'len 2/Feb/2026 02:40:28'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self panel.
+	^ answer
+		addAudioInput: #setInput: label: 'In';
+		addControlInput: #modulateGain: label: 'Gain';
+		addControlInput: #modulateOffset: label: 'Offset';
+		addAudioOutput: #setOutput: label: 'Out';
+		yourself! !
 
 !Korg35HPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:11:57'!
 modulateFrequency: aNumber
@@ -5331,7 +5440,7 @@ modulateResonance: aNumber
 reset
 	s1 := s2 := s3 := 0.0! !
 
-!Korg35HPF methodsFor: 'controlling' stamp: 'len 31/Jan/2026 15:44:50'!
+!Korg35HPF methodsFor: 'controlling' stamp: 'len 2/Feb/2026 02:51:08'!
 update
 	"See Will. C Pinkle, 'Designing Software Synthesizer Plug-ins in C++', section 12.7.1, equation 12.15."
 	| newFrequency newResonance g |
@@ -5342,7 +5451,7 @@ update
 	frequency := newFrequency.
 	resonance := newResonance.
 	k := resonance squared * 1.999. "quadratic curve, to have finer control at low resonance"
-	g := (Float pi * frequency / self class sampleRate) tan.
+	g := (Float pi * frequency / (self class sampleRate * 2.0)) tan. "oversampled 2x"
 	α := g / (1.0 + g).
 	"the following two lines are different in the lowpass version:"
 	β₃ := 1.0 / (1.0 + g).
@@ -5410,7 +5519,7 @@ modulateResonance: aNumber
 reset
 	s1 := s2 := s3 := 0.0! !
 
-!Korg35LPF methodsFor: 'controlling' stamp: 'len 31/Jan/2026 15:31:08'!
+!Korg35LPF methodsFor: 'controlling' stamp: 'len 2/Feb/2026 02:38:31'!
 update
 	"See Will. C Pinkle, 'Designing Software Synthesizer Plug-ins in C++', section 12.7.1, equation 12.15."
 	| newFrequency newResonance g |
@@ -5421,7 +5530,7 @@ update
 	frequency := newFrequency.
 	resonance := newResonance.
 	k := resonance squared * 1.999. "quadratic curve, to have finer control at low resonance"
-	g := (Float pi * frequency / self class sampleRate) tan.
+	g := (Float pi * frequency / (self class sampleRate * 2.0)) tan. "oversampled 2x"
 	α := g / (1.0 + g).
 	"the following two lines are different in the highpass version:"
 	β₃ := k * (1.0 - α) / (1.0 + g). "NOTE: in Pinkle's book β₃ and β₂ are reversed, this is as they are defined in https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib"
@@ -5446,7 +5555,7 @@ tick
 	s2 abs < 1.0e-15 ifTrue: [s2 := 0.0].
 	s3 abs < 1.0e-15 ifTrue: [s3 := 0.0]! !
 
-!Korg35LPF methodsFor: 'processing' stamp: 'len 31/Jan/2026 15:38:45'!
+!Korg35LPF methodsFor: 'processing' stamp: 'len 2/Feb/2026 00:30:03'!
 value: in
 	| v1 u1 feedback v2 v3 u3 y |
 	v1 := (in - s1) * α.
@@ -5459,7 +5568,7 @@ value: in
 	s1 := u1 + v1.
 	s2 := v2 + s2.
 	s3 := u3 + v3.
-	^ y tanh! !
+	^ y "tanh"! !
 
 !Korg35LPF methodsFor: 'tools' stamp: 'len 30/Jan/2026 15:18:25'!
 patchable
@@ -5473,6 +5582,54 @@ patchable
 		addControlInput: #modulateResonance: label: 'Resonance';
 		addAudioOutput: #setOutput: label: 'Out'.
 	^ answer! !
+
+!Limiter methodsFor: 'initialization' stamp: 'len 20/Nov/2025 16:10:00'!
+initialize
+	super initialize.
+	peak := 0.5! !
+
+!Limiter methodsFor: 'processing' stamp: 'len 20/Nov/2025 16:12:00'!
+value: in
+	| error |
+	error := in abs - peak.
+	peak := (error > 0 ifTrue: [0.05] ifFalse: [0.00002]) * error + peak.
+	^ in * (peak <= 1.0 ifTrue: [0.8] ifFalse: [0.8 / peak])! !
+
+!MultiTapDelayLine methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 15:01:05'!
+delays: delayList gains: gainList
+	"For best results it's desirable that the delays are primes.
+	
+	MultiTapDelay new delays: #(537 691 1191) gains: #(0.07 0.07 0.07)
+	
+	The default in SoundPlayer:
+	MultiTapDelay new delays: #(1601 7919) gains: #(0.12 0.07).
+"
+	self assert: delayList size = gainList size.
+	delays := delayList.
+	gains := gainList.
+	buffer := Float32Array new: delayList max.
+	position := 1! !
+
+!MultiTapDelayLine methodsFor: 'as yet unclassified' stamp: 'len 6/Oct/2025 15:53:00'!
+reset
+	buffer atAllPut: 0.0! !
+
+!MultiTapDelayLine methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 15:01:05'!
+value: in
+	| n i out |
+	n := buffer size. "max delay"
+	position := position + 1.
+	i := position truncated.
+	out := 0.0.
+	delays with: gains do: [:delay :gain|
+		| j |
+		j := position - delay.
+		j < 1 ifTrue: [j := j + n].
+		out := (buffer at: j) * gain + out].
+	out := out + in.
+	buffer at: i put: out.
+	position := position \\ buffer size.
+	^ out! !
 
 !Amp methodsFor: 'controlling' stamp: 'len 28/Nov/2025 11:45:00'!
 modulateGain: aNumber
@@ -5533,6 +5690,48 @@ setInputRM: aBuffer
 !Amp methodsFor: 'wiring' stamp: 'len 25/Nov/2025 22:29:00'!
 setOutput: aBuffer
 	output := aBuffer! !
+
+!Balance methodsFor: 'controlling' stamp: 'len 2/Feb/2026 03:12:36'!
+modulateBalance: aNumber
+	self modulate: #balance by: aNumber! !
+
+!Balance methodsFor: 'initialization' stamp: 'len 2/Feb/2026 03:11:52'!
+initializeControls
+	super initializeControls.
+	(self addControl: #balance min: -1.0 max: 1.0 value: 0.0) printer: [:x| x abs < 0.01 ifTrue: ['Center'] ifFalse: [(x abs * 100.0) rounded printString, '% ', (x < 0.0 ifTrue: ['L'] ifFalse: ['R'])]]! !
+
+!Balance methodsFor: 'tools' stamp: 'len 2/Feb/2026 03:12:01'!
+panel
+	^ ControlPanel new addKnob: (controls at: #balance)! !
+
+!Balance methodsFor: 'tools' stamp: 'len 2/Feb/2026 04:09:44'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self panel.
+	answer
+		addAudioInput: #setInputA: label: 'In A';
+		addAudioInput: #setInputB: label: 'In B';
+		addControlInput: #modulateBalance: label: 'Balance';
+		addAudioOutput: #setOutputL: label: 'Out L';
+		addAudioOutput: #setOutputR: label: 'Out R'.
+	^ answer! !
+
+!Balance methodsFor: 'wiring' stamp: 'len 2/Feb/2026 03:10:35'!
+setInputA: aBuffer
+	inputA := aBuffer! !
+
+!Balance methodsFor: 'wiring' stamp: 'len 2/Feb/2026 03:10:35'!
+setInputB: aBuffer
+	inputB := aBuffer! !
+
+!Balance methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:11:32'!
+setOutputL: aBuffer
+	outputL := aBuffer! !
+
+!Balance methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:11:10'!
+setOutputR: aBuffer
+	outputR := aBuffer! !
 
 !Crossfader methodsFor: 'controlling' stamp: 'len 10/Jan/2026 16:01:02'!
 modulateMix: aNumber
@@ -5658,47 +5857,42 @@ setInputB: aBuffer
 setOutput: aBuffer
 	output := aBuffer! !
 
-!Panner methodsFor: 'controlling' stamp: 'len 10/Jan/2026 16:03:16'!
+!Pan methodsFor: 'controlling' stamp: 'len 10/Jan/2026 16:03:16'!
 modulatePan: aNumber
 	self modulate: #pan by: aNumber! !
 
-!Panner methodsFor: 'initialization' stamp: 'len 21/Jan/2026 15:56:54'!
+!Pan methodsFor: 'initialization' stamp: 'len 21/Jan/2026 15:56:54'!
 initializeControls
 	super initializeControls.
 	(self addControl: #pan min: -1.0 max: 1.0 value: 0.0) printer: [:x| x abs < 0.01 ifTrue: ['Center'] ifFalse: [(x abs * 100.0) rounded printString, '% ', (x < 0.0 ifTrue: ['L'] ifFalse: ['R'])]]! !
 
-!Panner methodsFor: 'tools' stamp: 'len 27/Jan/2026 15:05:19'!
+!Pan methodsFor: 'tools' stamp: 'len 27/Jan/2026 15:05:19'!
 panel
 	^ ControlPanel new addKnob: (controls at: #pan)! !
 
-!Panner methodsFor: 'tools' stamp: 'len 27/Jan/2026 15:16:30'!
+!Pan methodsFor: 'tools' stamp: 'len 2/Feb/2026 04:09:51'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
 	answer
-		addAudioInput: #setInputA: label: 'In A';
-		addAudioInput: #setInputB: label: 'In B';
+		addAudioInput: #setInput: label: 'In';
 		addControlInput: #modulatePan: label: 'Pan';
-		addAudioOutput: #setOutputLeft: label: 'Out L';
-		addAudioOutput: #setOutputRight: label: 'Out R'.
+		addAudioOutput: #setOutputL: label: 'Out L';
+		addAudioOutput: #setOutputR: label: 'Out R'.
 	^ answer! !
 
-!Panner methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:15:55'!
-setInputA: aBuffer
-	inputA := aBuffer! !
+!Pan methodsFor: 'wiring' stamp: 'len 2/Feb/2026 03:11:04'!
+setInput: aBuffer
+	input := aBuffer! !
 
-!Panner methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:16:03'!
-setInputB: aBuffer
-	inputB := aBuffer! !
+!Pan methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:12:11'!
+setOutputL: aBuffer
+	outputL := aBuffer! !
 
-!Panner methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:16:43'!
-setOutputLeft: aBuffer
-	outputLeft := aBuffer! !
-
-!Panner methodsFor: 'wiring' stamp: 'len 27/Jan/2026 15:16:36'!
-setOutputRight: aBuffer
-	outputRight := aBuffer! !
+!Pan methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:11:50'!
+setOutputR: aBuffer
+	outputR := aBuffer! !
 
 !StereoMatrix methodsFor: 'controlling' stamp: 'len 27/Jan/2026 10:35:21'!
 modulateBalance: aNumber
@@ -5720,25 +5914,25 @@ initializeControls
 	self addControl: #balance min: -1.0 max: 1.0 value: 0.0
 ! !
 
-!StereoMatrix methodsFor: 'processing' stamp: 'len 31/Jan/2026 21:57:06'!
+!StereoMatrix methodsFor: 'processing' stamp: 'len 2/Feb/2026 04:12:39'!
 tick
 	| width balance |
 	self update.
 	(inputA isNil or: [inputB isNil]) ifTrue: [^ self].
-	(outputLeft isNil or: [outputRight isNil]) ifTrue: [^ self].
+	(outputL isNil or: [outputR isNil]) ifTrue: [^ self].
 	width := self get: #width.
 	balance := self get: #balance.
-	outputLeft replaceWith: inputA.
-	outputLeft += inputB.
-	outputLeft *= ((1.0 + balance) * 0.5).
-	outputRight replaceWith: outputLeft.
+	outputL replaceWith: inputA.
+	outputL += inputB.
+	outputL *= ((1.0 + balance) * 0.5).
+	outputR replaceWith: outputL.
 	aux replaceWith: inputA.
 	aux -= inputB.
 	aux *= ((1.0 - balance) * width * 0.5).
-	outputLeft += aux.
-	outputRight -= aux! !
+	outputL += aux.
+	outputR -= aux! !
 
-!StereoMatrix methodsFor: 'tools' stamp: 'len 27/Jan/2026 10:58:05'!
+!StereoMatrix methodsFor: 'tools' stamp: 'len 2/Feb/2026 04:09:58'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -5748,8 +5942,8 @@ patchable
 		addAudioInput: #setInputB: label: 'In B';
 "		addControlInput: #modulateWidth: label: 'WIdth';
 		addControlInput: #modulateBalance: label: 'Balance';"
-		addAudioOutput: #setOutputLeft: label: 'Out L';
-		addAudioOutput: #setOutputRight: label: 'Out R'.
+		addAudioOutput: #setOutputL: label: 'Out L';
+		addAudioOutput: #setOutputR: label: 'Out R'.
 	^ answer! !
 
 !StereoMatrix methodsFor: 'wiring' stamp: 'len 27/Jan/2026 01:49:43'!
@@ -5760,13 +5954,13 @@ setInputA: aBuffer
 setInputB: aBuffer
 	inputB := aBuffer! !
 
-!StereoMatrix methodsFor: 'wiring' stamp: 'len 27/Jan/2026 01:50:00'!
-setOutputLeft: aBuffer
-	outputLeft := aBuffer! !
+!StereoMatrix methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:12:44'!
+setOutputL: aBuffer
+	outputL := aBuffer! !
 
-!StereoMatrix methodsFor: 'wiring' stamp: 'len 27/Jan/2026 01:50:09'!
-setOutputRight: aBuffer
-	outputRight := aBuffer! !
+!StereoMatrix methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:12:28'!
+setOutputR: aBuffer
+	outputR := aBuffer! !
 
 !Attenuator methodsFor: 'controlling' stamp: 'len 7/Jan/2026 16:52:27'!
 input: aNumber
@@ -11544,11 +11738,52 @@ new: anIntegerPowerOfTwo
 	^ self new setSize: anIntegerPowerOfTwo
 ! !
 
-!Oversampler2x methodsFor: 'as yet unclassified' stamp: 'len 16/Jan/2026 16:10:59'!
+!Oversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:26:13'!
 initialize
 	self reset! !
 
-!Oversampler2x methodsFor: 'as yet unclassified' stamp: 'len 16/Jan/2026 16:18:20'!
+!Oversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:29:31'!
+oversampling: aNumber do: aBlock
+	| f1 f2 o1 o2 s1 s2 |
+	"1. Upsample (generate 2 subsamples):"
+	u3 := u2.
+	u2 := u1.
+	u1 := u0.
+	u0 := aNumber.
+	"Branch 1: Interpolation (Odd samples)"
+	"Using standard Cubic/Lagrange coefficients: -0.0625, 0.5625, 0.5625, -0.0625"
+	"Note: We multiply by 2 implicit gain here. The raw coeffs sum to 0.5, so we use coeffs that sum to 1.0"
+	s1 := (u0 + u3) * -0.0625 + ((u1 + u2) * 0.5625).
+	"Branch 2: Pass-through (Even samples)"
+	"Pure delay. We use u1 (center). Multiplied by 1.0 (instead of 0.5) to handle the 2x gain."
+	s2 := u1.
+	"2. Process (Apply non-linear VA filter, etc):"
+	f1 := aBlock value: s1.
+	f2 := aBlock value: s2.
+	"3. Downsample:"
+	"Standard polyphase decimation: Filter both branches and sum."
+	d3 := d2.
+	d2 := d1.
+	d1 := d0.
+	d0 := f1.
+	"Branch 1: Filter the 'odd' processed samples"
+	"We reuse the same coefficients for symmetry"
+	o1 := (d0 + d3) * -0.0625 + ((d1 + d2) * 0.5625).
+	"Branch 2: The 'even' processed samples"
+	"In downsampling, we technically average. Gain is 0.5."
+	o2 := f2 * 0.5.
+	"The o1 branch also needs the 0.5 gain for downsampling averaging."
+	^ o1 * 0.5 + o2! !
+
+!Oversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:26:13'!
+reset
+	u0 := u1 := u2 := u3 := d0 := d1 := d2 := d3 := 0.0! !
+
+!Oversampler2x2 methodsFor: 'as yet unclassified' stamp: 'len 16/Jan/2026 16:10:59'!
+initialize
+	self reset! !
+
+!Oversampler2x2 methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:06:17'!
 oversampling: aNumber do: aBlock
 	| f1 f2 o1 o2 s1 s2 |
 	"1. Upsample (generate 2 subsamples):"
@@ -11570,9 +11805,158 @@ oversampling: aNumber do: aBlock
 	o2 := f2 * 0.5.
 	^ o1 + o2! !
 
-!Oversampler2x methodsFor: 'as yet unclassified' stamp: 'len 16/Jan/2026 16:12:53'!
+!Oversampler2x2 methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:06:13'!
+oversamplingNew: aNumber do: aBlock
+	| f1 f2 o1 o2 s1 s2 |
+	"1. Upsample (generate 2 subsamples):"
+	u3 := u2.
+	u2 := u1.
+	u1 := u0.
+	u0 := aNumber.
+	"Branch 1: Interpolation (Odd samples)"
+	"Using standard Cubic/Lagrange coefficients: -0.0625, 0.5625, 0.5625, -0.0625"
+	"Note: We multiply by 2 implicit gain here. The raw coeffs sum to 0.5, so we use coeffs that sum to 1.0"
+	s1 := (u0 + u3) * -0.0625 + ((u1 + u2) * 0.5625).
+	"Branch 2: Pass-through (Even samples)"
+	"Pure delay. We use u1 (center). Multiplied by 1.0 (instead of 0.5) to handle the 2x gain."
+	s2 := u1.
+	"2. Process (Apply non-linear VA filter, etc):"
+	f1 := aBlock value: s1.
+	f2 := aBlock value: s2.
+	"3. Downsample:"
+	"Standard polyphase decimation: Filter both branches and sum."
+	d3 := d2.
+	d2 := d1.
+	d1 := d0.
+	d0 := f1.
+	"Branch 1: Filter the 'odd' processed samples"
+	"We reuse the same coefficients for symmetry"
+	o1 := (d0 + d3) * -0.0625 + ((d1 + d2) * 0.5625).
+	"Branch 2: The 'even' processed samples"
+	"In downsampling, we technically average. Gain is 0.5."
+	o2 := f2 * 0.5.
+	"The o1 branch also needs the 0.5 gain for downsampling averaging."
+	^ o1 * 0.5 + o2! !
+
+!Oversampler2x2 methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:10:19'!
+oversamplingNew4points: aNumber do: aBlock
+	| f1 f2 o1 o2 s1 s2 |
+	"1. Upsample (generate 2 subsamples):"
+	u3 := u2.
+	u2 := u1.
+	u1 := u0.
+	u0 := aNumber.
+	"Branch 1: Interpolation (Odd samples)"
+	"Using standard Cubic/Lagrange coefficients: -0.0625, 0.5625, 0.5625, -0.0625"
+	"Note: We multiply by 2 implicit gain here. The raw coeffs sum to 0.5, so we use coeffs that sum to 1.0"
+	s1 := (u0 + u3) * -0.0625 + ((u1 + u2) * 0.5625).
+	"Branch 2: Pass-through (Even samples)"
+	"Pure delay. We use u1 (center). Multiplied by 1.0 (instead of 0.5) to handle the 2x gain."
+	s2 := u1.
+	"2. Process (Apply non-linear VA filter, etc):"
+	f1 := aBlock value: s1.
+	f2 := aBlock value: s2.
+	"3. Downsample:"
+	"Standard polyphase decimation: Filter both branches and sum."
+	d3 := d2.
+	d2 := d1.
+	d1 := d0.
+	d0 := f1.
+	"Branch 1: Filter the 'odd' processed samples"
+	"We reuse the same coefficients for symmetry"
+	o1 := (d0 + d3) * -0.0625 + ((d1 + d2) * 0.5625).
+	"Branch 2: The 'even' processed samples"
+	"In downsampling, we technically average. Gain is 0.5."
+	o2 := f2 * 0.5.
+	"The o1 branch also needs the 0.5 gain for downsampling averaging."
+	^ o1 * 0.5 + o2! !
+
+!Oversampler2x2 methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 00:47:18'!
+oversamplingOld: aNumber do: aBlock
+	| f1 f2 o1 o2 s1 s2 |
+	"1. Upsample (generate 2 subsamples):"
+	u3 := u2.
+	u2 := u1.
+	u1 := u0.
+	u0 := aNumber.
+	s1 := (u0 + u3) * -0.031 + ((u1 + u2) * 0.113) + (u1 * -0.251).
+	s2 := u1 * 0.5.
+	"2. Process:"
+	f1 := aBlock value: s1.
+	f2 := aBlock value: s2.
+	"3. Downsample:"
+	d3 := d2.
+	d2 := d1.
+	d1 := d0.
+	d0 := f1.
+	o1 := (d0 + d3) * -0.031 + ((d1 + d2) * 0.113) + (d1 * -0.251).
+	o2 := f2 * 0.5.
+	^ o1 + o2! !
+
+!Oversampler2x2 methodsFor: 'as yet unclassified' stamp: 'len 16/Jan/2026 16:12:53'!
 reset
 	u0 := u1 := u2 := u3 := d0 := d1 := d2 := d3 := 0.0! !
+
+!Oversampler2x3 methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:32:05'!
+initialize
+	self reset! !
+
+!Oversampler2x3 methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:33:25'!
+oversampling: aNumber do: aBlock
+	| f1 f2 o1 o2 s1 s2 |
+	"1. Upsample (Update state)"
+	"We need a deeper history buffer for 13 taps (6 taps per branch)"
+	u5 := u4.
+	u4 := u3.
+	u3 := u2.
+	u2 := u1.
+	u1 := u0.
+	u0 := aNumber.
+	"Branch 1: The 'Filter' Branch (Odd samples)"
+	"Coefficients are derived from a Steep Blackman-Windowed Sinc."
+	"They sum to 1.0 (gain corrected)."
+	"c1 (Outer)  :  0.0366"
+	"c2 (Middle) : -0.1982"
+	"c3 (Inner)  :  1.1616"
+	s1 := ((u0 + u5) * 0.0366) + 
+	      ((u1 + u4) * -0.1982) + 
+	      ((u2 + u3) * 1.1616).
+
+	"Branch 2: The 'Delay' Branch (Even samples)"
+	"For a 13-tap centered filter, the pure delay aligns with the center of the kernel."
+	"This corresponds to the sample 'between' the filter taps, which is u2 or u3."
+	"In this specific topology (delay=3), we pass u2."
+	s2 := u2.
+
+	"2. Process (The Non-Linear Block)"
+	f1 := aBlock value: s1.
+	f2 := aBlock value: s2.
+
+	"3. Downsample (Symmetric to upsampling)"
+	"Update Downsampling State"
+	d5 := d4.
+	d4 := d3.
+	d3 := d2.
+	d2 := d1.
+	d1 := d0.
+	d0 := f1.
+
+	"Filter Branch (Processed Odd Samples)"
+	o1 := ((d0 + d5) * 0.0366) + 
+	      ((d1 + d4) * -0.1982) + 
+	      ((d2 + d3) * 1.1616).
+
+	"Delay Branch (Processed Even Samples)"
+	"Remember: Downsampling gain is 0.5"
+	o2 := f2 * 0.5.
+
+	"Sum and apply gain to o1"
+	^ (o1 * 0.5) + o2
+! !
+
+!Oversampler2x3 methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:34:38'!
+reset
+	u0 := u1 := u2 := u3 := u4 := u5 := d0 := d1 := d2 := d3 := d4 := d5 := 0.0! !
 
 !Sound methodsFor: 'playing' stamp: 'len 27/Nov/2025 02:05:00'!
 isPlaying

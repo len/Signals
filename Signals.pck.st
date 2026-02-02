@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 2 February 2026 at 3:48:05 pm'!
+'From Cuis7.7 [latest update: #7797] on 2 February 2026 at 4:20:04 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 435!
+!provides: 'Signals' 1 436!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -2372,11 +2372,10 @@ initialize
 initializeControls
 	controls := OrderedDictionary new! !
 
-!Module methodsFor: 'processing' stamp: 'len 8/Dec/2025 22:35:10'!
+!Module methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:13:16'!
 tick
 	"Read input buffers, and write to output buffers. Here's where signal processing modules do they work, processing input signals and producing output signals.
-	Always call #update first, so that the internal state is update from the (possibly modulated) controls."
-	self update! !
+	Note: assume #update was called before calling #tick, so that the internal state was updated from the (possibly modulated) controls."! !
 
 !Module methodsFor: 'testing' stamp: 'len 7/Dec/2025 00:18:27'!
 is: aSymbol
@@ -2436,10 +2435,6 @@ gateOn
 "	factor := 1.0 - (0.001 raisedTo: 1.0 / attack)"
 	increment := 1.0 / attack! !
 
-!EG methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:37:54'!
-modulateAttack: aNumber
-	self modulate: #attack by: aNumber! !
-
 !EG methodsFor: 'controlling' stamp: 'len 30/Nov/2025 02:15:00'!
 reset
 	stage := #idle.
@@ -2465,14 +2460,9 @@ initialize
 next
 	^ self subclassResponsibility! !
 
-!EG methodsFor: 'processing' stamp: 'len 8/Dec/2025 22:33:48'!
+!EG methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:13:36'!
 tick
-	self update.
 	stage = #idle ifFalse: [self triggerEvent: #output: with: self next]! !
-
-!AD methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:33:04'!
-modulateDecay: aNumber
-	self modulate: #decay by: aNumber! !
 
 !AD methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:39:13'!
 update
@@ -2513,14 +2503,6 @@ gateOff
 	self update.
 	stage := #release.
 	factor := 0.001 raisedTo: 1.0 / release! !
-
-!ADSR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:33:11'!
-modulateDecay: aNumber
-	self modulate: #decay by: aNumber! !
-
-!ADSR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:33:33'!
-modulateRelease: aNumber
-	self modulate: #release by: aNumber! !
 
 !ADSR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:38:34'!
 update
@@ -2567,14 +2549,6 @@ patchable
 		addControlInput: #release;
 		addControlOutput: #output: label: 'Out'.
 	^ answer! !
-
-!AHD methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:33:15'!
-modulateDecay: aNumber
-	self modulate: #decay by: aNumber! !
-
-!AHD methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:34:21'!
-modulateHold: aNumber
-	self modulate: #hold by: aNumber! !
 
 !AHD methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:39:31'!
 update
@@ -2624,10 +2598,6 @@ gateOff
 	stage := #release.
 	factor := 0.001 raisedTo: 1.0 / release! !
 
-!AR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:33:39'!
-modulateRelease: aNumber
-	self modulate: #release by: aNumber! !
-
 !AR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:39:44'!
 update
 	super update.
@@ -2668,10 +2638,6 @@ gateOff
 	self update.
 	stage := #release.
 	factor := 0.001 raisedTo: 1.0 / release! !
-
-!ASR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:33:43'!
-modulateRelease: aNumber
-	self modulate: #release by: aNumber! !
 
 !ASR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:39:58'!
 update
@@ -2730,10 +2696,9 @@ updateFilterCoefficients
 	k := 17.0 * (1.0 - (0.707 / Q)) max: 0.0.
 	k := k min: 17.0! !
 
-!DiodeLadder methodsFor: 'processing' stamp: 'len 29/Jan/2026 14:21:11'!
+!DiodeLadder methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:13:46'!
 tick
 	| in σ |
-	self update.
 	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
 	input ifNil:
 		[outputLP4 ifNotNil: [outputLP4 atAllPut: 0.0].
@@ -2776,10 +2741,9 @@ tick
 		outputLP2 ifNotNil: [outputLP2 at: i put: y2].
 		outputLP1 ifNotNil: [outputLP1 at: i put: y1]]! !
 
-!DiodeLadder methodsFor: 'processing' stamp: 'len 29/Jan/2026 14:45:54'!
+!DiodeLadder methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:13:50'!
 tick2
 	| in σ |
-	self update.
 	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
 	input ifNil:
 		[outputLP4 ifNotNil: [outputLP4 atAllPut: 0.0].
@@ -2856,9 +2820,9 @@ reset
 	phase := 0.0.
 	delayLine reset! !
 
-!Chorus methodsFor: 'controlling' stamp: 'len 27/Jan/2026 02:04:21'!
+!Chorus methodsFor: 'controlling' stamp: 'len 2/Feb/2026 16:14:07'!
 update
-	super update. 
+	super update.
 	increment := (self get: #speed) / self class controlRate * Float twoPi.
 	depth := self get: #depth.
 	time := self get: #time.
@@ -2881,12 +2845,11 @@ initializeControls
 	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
 	self addControl: #mix min: 0.0 max: 1.0 value: 0.5! !
 
-!Chorus methodsFor: 'processing' stamp: 'len 2/Feb/2026 04:07:11'!
+!Chorus methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:13:54'!
 tick
 	| twoPi d1 d2 d3 dry |
 	outputL ifNil: [^ self].
 	input ifNil: [outputL atAllPut: 0.0. outputR ifNotNil: [outputR atAllPut: 0.0].^ self].
-	self update.
 	twoPi := Float twoPi.
 	d1 := (phase sin * depth * 0.002 "2 ms" + (time * 0.8)) * self class sampleRate.
 	d2 := ((twoPi/3.0 + phase) sin * depth * 0.002 "2 ms" + time) * self class sampleRate.
@@ -2936,14 +2899,6 @@ setOutputL: aBuffer
 setOutputR: aBuffer
 	outputR := aBuffer! !
 
-!SVF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:06:43'!
-modulateFrequency: aNumber
-	self modulate: #frequency by: aNumber! !
-
-!SVF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:07:31'!
-modulateQ: aNumber
-	self modulate: #Q by: aNumber! !
-
 !SVF methodsFor: 'controlling' stamp: 'len 16/Oct/2025 19:38:00'!
 reset
 	s1 := s2 := 0.0! !
@@ -2959,10 +2914,9 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #Q min: 0.5 max: 20.0 value: 0.707! !
 
-!SVF methodsFor: 'processing' stamp: 'len 31/Jan/2026 21:42:28'!
+!SVF methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:14:11'!
 tick
 	| r g h |
-	self update.
 	(outputLP isNil and: [outputHP isNil and: [outputBP isNil and: [outputBPN isNil]]]) ifTrue: [^ self].
 	input ifNil:
 		[outputLP ifNotNil: [outputLP atAllPut: 0.0].
@@ -3061,9 +3015,8 @@ mixFromLeft: leftBuffer right: rightBuffer gain: gain
 		aux *= gain.
 		outputR += aux]! !
 
-!AudioIn methodsFor: 'processing' stamp: 'len 2/Feb/2026 04:10:50'!
+!AudioIn methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:14:15'!
 tick
-	self update.
 	meterLeftValue := meterLeftValue * 0.98 "dampen" max: (outputL rms max: outputL last abs).
 	meterRightValue := meterRightValue * 0.98 "dampen" max: (outputR rms max: outputR last abs).! !
 
@@ -3084,14 +3037,6 @@ setOutputL: aBuffer
 !AudioIn methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:10:28'!
 setOutputR: aBuffer
 	outputR := aBuffer! !
-
-!AudioOut methodsFor: 'controlling' stamp: 'len 18/Jan/2026 02:32:48'!
-modulateLevel: aNumber
-	self modulate: #level by: aNumber! !
-
-!AudioOut methodsFor: 'controlling' stamp: 'len 18/Jan/2026 02:32:55'!
-modulatePan: aNumber
-	self modulate: #pan by: aNumber! !
 
 !AudioOut methodsFor: 'controlling' stamp: 'len 18/Jan/2026 02:32:16'!
 setLevel: aNumber
@@ -3235,9 +3180,8 @@ read: aBuffer
 sample: anInteger
 	^ Sample buffer: (self next: anInteger)! !
 
-!Generator methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:07:58'!
+!Generator methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:14:54'!
 tick
-	self update.
 	output ifNil: [^ self].
 	self read: output! !
 
@@ -3306,10 +3250,6 @@ initializeControls
 	super initializeControls.
 	self addTuneControl: #tune! !
 
-!TunedGenerator methodsFor: 'controlling' stamp: 'len 4/Jan/2026 14:55:51'!
-modulatePitch: aNumber
-	self modulate: #tune by: aNumber / 96.0! !
-
 !TunedGenerator methodsFor: 'controlling' stamp: 'len 4/Jan/2026 14:54:25'!
 setNote: aNumber
 	note := aNumber! !
@@ -3318,13 +3258,13 @@ setNote: aNumber
 panel
 	^​ ControlPanel new addMorph: (TextControlMorph control: (controls at: #tune))! !
 
-!TunedGenerator methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:40:26'!
+!TunedGenerator methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:09:43'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
 	answer
-		addControlInput: #modulatePitch: label: 'Pitch';
+		addControlInput: #tune label: 'Pitch';
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
@@ -3408,20 +3348,19 @@ read: aBuffer PM: modulatorBuffer feedback: feedbackAmount
 		phase := oldPhase + frequency.
 		phase >= 1.0 ifTrue: [phase := phase - phase truncated]]! !
 
-!Oscillator methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:10:25'!
+!Oscillator methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:14:59'!
 tick
-	self update.
 	output ifNil: [^ self].
 	inputFM ifNotNil: [^ self read: output PM: inputFM].
 	self read: output! !
 
-!Oscillator methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:41:19'!
+!Oscillator methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:09:33'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
 	answer
-		addControlInput: #modulatePitch: label: 'Pitch';
+		addControlInput: #tune label: 'Pitch';
 		addAudioInput: #setInputFM: label: 'FM';
 		addAudioOutput: #setOutput:.
 	^ answer! !
@@ -3459,10 +3398,6 @@ wave: s at: t
 	t > 0.5 ifTrue: [^ 0.0].
 	^ self wave: s - 4 at: t * 2.0! !
 
-!Pulse methodsFor: 'controlling' stamp: 'len 16/Jan/2026 14:12:09'!
-modulateWidth: aNumber
-	self modulate: #width by: aNumber! !
-
 !Pulse methodsFor: 'controlling' stamp: 'len 22/Nov/2025 22:49:00'!
 update
 	super update.
@@ -3491,14 +3426,13 @@ read: aBuffer PWM: modulatorBuffer
 		aBuffer at: i put: self next].
 	width := base! !
 
-!Pulse methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:10:34'!
+!Pulse methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:08'!
 tick
-	self update.
 	output ifNil: [^ self].
 	inputPWM ifNotNil: [self assert: inputFM isNil. ^ self read: output PWM: inputPWM].
 	self read: output! !
 
-!Pulse methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:41:32'!
+!Pulse methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:09:51'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -3507,7 +3441,7 @@ patchable
 		waveBlock: [:x :w| x pulseWidth: w].
 	answer body addMorph: display; addMorph: self panel.
 	answer
-		addControlInput: #modulatePitch: label: 'Pitch';
+		addControlInput: #tune label: 'Pitch';
 		addControlInput: #width;
 		addAudioInput: #setInputPWM: label: 'PWM';
 		addAudioInput: #setInputFM: label: 'FM';
@@ -3517,10 +3451,6 @@ patchable
 !Pulse methodsFor: 'wiring' stamp: 'len 13/Jan/2026 13:13:53'!
 setInputPWM: aBuffer
 	inputPWM := aBuffer! !
-
-!Saw methodsFor: 'controlling' stamp: 'len 17/Jan/2026 15:22:59'!
-modulateShape: aNumber
-	self modulate: #shape by: aNumber! !
 
 !Saw methodsFor: 'controlling' stamp: 'len 17/Jan/2026 15:24:30'!
 update
@@ -3542,7 +3472,7 @@ peek
 	shape = 1.0 ifTrue: [^ phase saw: frequency].
 	^ phase triangle: frequency skew: shape! !
 
-!Saw methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:41:38'!
+!Saw methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:09:58'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -3551,15 +3481,11 @@ patchable
 		waveBlock: [:x :s| x triangleSkew: s].
 	answer body addMorph: display; addMorph: self panel.
 	answer
-		addControlInput: #modulatePitch: label: 'Pitch';
+		addControlInput: #tune label: 'Pitch';
 		addControlInput: #shape;
 		addAudioInput: #setInputFM: label: 'FM';
 		addAudioOutput: #setOutput:.
 	^ answer! !
-
-!Sine methodsFor: 'controlling' stamp: 'len 17/Jan/2026 19:24:57'!
-modulateWarp: aNumber
-	self modulate: #warp by: aNumber! !
 
 !Sine methodsFor: 'controlling' stamp: 'len 17/Jan/2026 19:25:29'!
 update
@@ -3593,7 +3519,7 @@ read: aBuffer
 	phase := α / Float twoPi.
 	phase := phase - phase truncated! !
 
-!Sine methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:41:44'!
+!Sine methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:10:02'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -3602,15 +3528,11 @@ patchable
 		waveBlock: [:x :s| (((x * Float twoPi) sin * s + x) * Float twoPi) sin].
 	answer body addMorph: display; addMorph: self panel.
 	answer
-		addControlInput: #modulatePitch: label: 'Pitch';
+		addControlInput: #tune label: 'Pitch';
 		addControlInput: #warp;
 		addAudioInput: #setInputFM: label: 'FM';
 		addAudioOutput: #setOutput:.
 	^ answer! !
-
-!TriSawPulse methodsFor: 'controlling' stamp: 'len 16/Jan/2026 14:17:50'!
-modulateShape: aNumber
-	self modulate: #shape by: aNumber! !
 
 !TriSawPulse methodsFor: 'controlling' stamp: 'len 16/Jan/2026 14:18:49'!
 update
@@ -3637,7 +3559,7 @@ peek
 	shape < 0.5 ifTrue: [^ (phase saw: frequency) * (0.5 - shape) + ((phase pulse: frequency width: shape - 0.25 * 2) * 0.577 * (shape - 0.25)) / 0.25].
 	^ (phase pulse: frequency width: shape) * 0.577! !
 
-!TriSawPulse methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:41:51'!
+!TriSawPulse methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:10:07'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -3652,7 +3574,7 @@ patchable
 						ifFalse: [x pulseWidth: s]]].
 	answer body addMorph: display; addMorph: self panel.
 	answer
-		addControlInput: #modulatePitch: label: 'Pitch';
+		addControlInput: #tune label: 'Pitch';
 		addControlInput: #shape;
 		addAudioInput: #setInputFM: label: 'FM';
 		addAudioOutput: #setOutput:.
@@ -3677,7 +3599,7 @@ initializeControls
 peek
 	^ (phase triangle: frequency) * (1.0 - shape) + ((phase * Float twoPi) sin * shape)! !
 
-!Triangle methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:41:57'!
+!Triangle methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:10:11'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -3686,7 +3608,7 @@ patchable
 		waveBlock: [:x :s| x triangle * (1.0 - s) + ((x * Float twoPi) sin * s)].
 	answer body addMorph: display; addMorph: self panel.
 	answer
-		addControlInput: #modulatePitch: label: 'Pitch';
+		addControlInput: #tune label: 'Pitch';
 		addControlInput: #shape;
 		addAudioInput: #setInputFM: label: 'FM';
 		addAudioOutput: #setOutput:.
@@ -3713,10 +3635,6 @@ waves
 !Wavetable methodsFor: 'accessing' stamp: 'len 28/Sep/2025 19:18:00'!
 wavetable: anInteger
 	^ self bank: #MW1 wavetable: anInteger! !
-
-!Wavetable methodsFor: 'controlling' stamp: 'len 14/Jan/2026 02:10:58'!
-modulatePosition: aNumber
-	self modulate: #position by: aNumber! !
 
 !Wavetable methodsFor: 'controlling' stamp: 'len 14/Jan/2026 02:11:06'!
 update
@@ -3766,7 +3684,7 @@ read: aBuffer WIM: modulatorBuffer
 		aBuffer at: i put: (aBuffer at: i) + self next]"
 	self notYetImplemented! !
 
-!Wavetable methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:42:04'!
+!Wavetable methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:10:17'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -3774,7 +3692,7 @@ patchable
 		addMorph: (WavetableControlMorph new waves: waves; control: (controls at: #position));
 		addMorph: self panel.
 	answer
-		addControlInput: #modulatePitch: label: 'Pitch';
+		addControlInput: #tune label: 'Pitch';
 		addControlInput: #position;
 		addAudioInput: #setInputFM: label: 'FM';
 		addAudioOutput: #setOutput:.
@@ -3807,10 +3725,6 @@ loadPPGWavetables
 		1 to: table size do: [:j| table at: j put: (bytes at: i * 256 * 64 + j) - 128 / 128.0].
 		table := (1 to: table size / 256) collect: [:k| table copyFrom: k-1*256+1 to: k*256].
 		{table. (i-1) printString}])! !
-
-!Supersaw methodsFor: 'controlling' stamp: 'len 1/Dec/2025 19:37:00'!
-modulateDetune: aNumber
-	self modulate: #detune by: aNumber! !
 
 !Supersaw methodsFor: 'controlling' stamp: 'len 1/Dec/2025 15:32:00'!
 reset
@@ -3935,7 +3849,7 @@ peek
 	1 to: 7 do: [:i| answer := ((phases at: i) saw: (frequencies at: i)) * (i = 4 ifTrue: [centerGain] ifFalse: [sideGain]) + answer].
 	^ answer! !
 
-!Supersaw methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:45:28'!
+!Supersaw methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:10:21'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -3943,7 +3857,7 @@ patchable
 		addMorph: ((SupersawControlMorph control: (controls at: #detune)) phases: phases);
 		addMorph: self panel.
 	answer
-		addControlInput: #modulatePitch: label: 'Pitch';
+		addControlInput: #tune label: 'Pitch';
 		addControlInput: #detune;
 		addAudioOutput: #setOutput:.
 	^ answer! !
@@ -4071,13 +3985,13 @@ read: aBuffer
 atEnd
 	^ sample atEnd! !
 
-!Multisample methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:45:33'!
+!Multisample methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:10:25'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
 	answer
-		addControlInput: #modulatePitch: label: 'Pitch';
+		addControlInput: #tune label: 'Pitch';
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
@@ -4174,10 +4088,6 @@ gateOff
 gateOn
 	self reset! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 21/Jan/2026 23:14:07'!
-modulateSpeed: aNumber
-	self modulate: #speed by: aNumber! !
-
 !Sample methodsFor: 'controlling' stamp: 'len 21/Jan/2026 22:44:13'!
 reset
 	position := (buffer size - 1) * offset.
@@ -4267,7 +4177,7 @@ panel
 		addMorph: (PluggableToggleMorph new model: self; getter: #smooth; setter: #smooth:; label: 'HQ');
 		addMorph: (PluggableToggleMorph new model: self; getter: #warp; setter: #warp:; label: 'Warp')! !
 
-!Sample methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:45:39'!
+!Sample methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:10:30'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -4275,7 +4185,7 @@ patchable
 		addMorph: (SampleDisplayMorph new sample: self);
 		addMorph: self panel.
 	answer
-		addControlInput: #modulatePitch: label: 'Pitch';
+		addControlInput: #tune label: 'Pitch';
 		addControlInput: #speed;
 		addAudioOutput: #setOutput:.
 	^ answer! !
@@ -4355,10 +4265,6 @@ fromFileNamed: aString
 	(i := samples findFirst: [:x| x abs > 0.00316]) > 0 ifTrue: [samples := samples copyFrom: i to: samples size].
 "	(i := samples findLast: [:x| x abs > 0.00316]) > 0 ifTrue: [samples := samples copyFrom: 1 to: i]."
 	^ self buffer: samples baseRate: reader sampleRate! !
-
-!ColoredNoise methodsFor: 'controlling' stamp: 'len 1/Feb/2026 03:41:08'!
-modulateColor: aNumber
-	self modulate: #color by: aNumber! !
 
 !ColoredNoise methodsFor: 'controlling' stamp: 'len 1/Feb/2026 17:53:42'!
 reset
@@ -4494,9 +4400,8 @@ next
 		jitterRange > 0 ifTrue: [counter := counter + (jitterRange * (random next * 2.0 - 1.0)) truncated]].
 	^ currentImpulse! !
 
-!Transform methodsFor: 'processing' stamp: 'len 30/Jan/2026 13:03:33'!
+!Transform methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:17'!
 tick
-	self update.
 	output ifNil: [^ self]. "actually, we should process the input anyway, if available"
 	input ifNil: [1 to: output size do: [:i| output at: i put: (self value: 0.0)]. ^ self].
 	1 to: input size do: [:i| output at: i put: (self value: (input at: i))]! !
@@ -4530,9 +4435,8 @@ updateFilterCoefficients
 	k := 17.0 * (1.0 - (0.707 / Q)) max: 0.0.
 	k := k min: 17.0! !
 
-!DiodeLadder2 methodsFor: 'processing' stamp: 'len 29/Jan/2026 15:19:55'!
+!DiodeLadder2 methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:21'!
 tick
-	self update.
 	output ifNil: [^ self]. "actually, we should process the input anyway, if available"
 	input ifNil: [1 to: output size do: [:i| output at: i put: (self value: 0.0)]. ^ self].
 	1 to: input size do: [:i| output at: i put: (self value: (input at: i))]! !
@@ -4656,14 +4560,6 @@ panel
 		addKnob: (controls at: #feedback) label: 'FB';
 		addKnob: (controls at: #damping) label: 'Damp'! !
 
-!Decimator methodsFor: 'controlling' stamp: 'len 16/Jan/2026 23:55:48'!
-modulateBR: aNumber
-	self modulate: #quantization by: aNumber! !
-
-!Decimator methodsFor: 'controlling' stamp: 'len 16/Jan/2026 23:56:22'!
-modulateSRR: aNumber
-	self modulate: #downsample by: aNumber! !
-
 !Decimator methodsFor: 'controlling' stamp: 'len 27/Sep/2025 20:49:00'!
 reset
 	holdCount := 0! !
@@ -4687,9 +4583,8 @@ initializeControls
 	(self addLogControl: #quantization min: 1.0 max: 65535.0 value: 65535.0) printer: [:x| ((x + 1 log: 2) printStringFractionDigits: 2), ' bits'].
 	(self addControl: #downsample min: 1.0 max: 8.0 value: 1.0) printer: [:x| (self class sampleRate / x) rounded printString, ' kHz']! !
 
-!Decimator methodsFor: 'processing' stamp: 'len 8/Dec/2025 22:37:37'!
+!Decimator methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:25'!
 tick
-	self update.
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	(downsample = 1.0 and: [quantization >= 65535.0]) ifTrue: [^ self].
@@ -4732,10 +4627,6 @@ patchable
 		addControlInput: #downsample label: 'SRR';
 		addAudioOutput: #setOutput:;
 		yourself! !
-
-!Echo methodsFor: 'controlling' stamp: 'len 13/Jan/2026 20:00:16'!
-modulateTime: aNumber
-	self modulate: #time by: aNumber! !
 
 !Echo methodsFor: 'controlling' stamp: 'len 26/Jan/2026 17:17:04'!
 reset
@@ -4800,12 +4691,11 @@ initializeControls
 	self addControl: #feedback min: -0.8 max: 0.8 value: 0.5.
 	self addControl: #mix min: 0.0 max: 1.0 value: 0.5! !
 
-!Flanger methodsFor: 'processing' stamp: 'len 26/Jan/2026 17:38:59'!
+!Flanger methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:31'!
 tick
 	| d |
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
-	self update.
 	d := (phase sin * depth * 0.002 "2 ms" + time max: 0.0) * self class sampleRate.
 	(phase := phase + increment) > Float twoPi ifTrue: [phase := phase - Float twoPi].
 	tap setDelayIncrement: (d - tap delay) / self class blockSize.
@@ -4828,10 +4718,6 @@ drive: aNumber
 	drive_squashed := drive * (2.0001 - drive). "2.0001 in order to avoid discontinuity at drive=2.0"
 	postgain := 1.0 / (0.33 + (drive_squashed * (pregain - 0.33))) softclip! !
 
-!Overdrive methodsFor: 'controlling' stamp: 'len 16/Jan/2026 23:54:04'!
-modulateDrive: aNumber
-	self modulate: #drive by: aNumber! !
-
 !Overdrive methodsFor: 'controlling' stamp: 'len 20/Nov/2025 16:48:00'!
 update
 	super update.
@@ -4847,9 +4733,8 @@ initializeControls
 	super initializeControls.
 	self addControl: #drive min: 0.0 max: 2.0 value: 1.0! !
 
-!Overdrive methodsFor: 'processing' stamp: 'len 8/Dec/2025 22:37:46'!
+!Overdrive methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:37'!
 tick
-	self update.
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	output replaceWith: input.
@@ -4902,12 +4787,11 @@ initializeControls
 	self addControl: #feedback min: -0.7 max: 0.7 value: 0.5.
 	self addControl: #mix min: 0.0 max: 1.0 value: 0.5! !
 
-!Phaser methodsFor: 'processing' stamp: 'len 26/Jan/2026 17:25:24'!
+!Phaser methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:49'!
 tick
 	| twoPi a |
 	output ifNil: [^ self]. "actually, we should process the input anyway, if available"
 	input ifNil: [output atAllPut: 0.0. ^ self].
-	self update.
 	twoPi := Float twoPi.
 	1 to: input size do: [:i|
 		| in out |
@@ -4975,12 +4859,11 @@ initializeControls
 	self addFrequencyControl: #speed min: 3.0 "Hz" max: 8.0 "Hz" value: 5.0 "Hz".
 	self addControl: #depth min: 0.0 max: 1.0 value: 0.1! !
 
-!Vibrato methodsFor: 'processing' stamp: 'len 26/Jan/2026 18:13:43'!
+!Vibrato methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:59'!
 tick
 	| d twoPi |
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
-	self update.
 	twoPi := Float twoPi.
 	d := (phase sin * depth * 0.002 "2 ms" + time) * self class sampleRate.
 	(phase := phase + increment) > twoPi ifTrue: [phase := phase - twoPi].
@@ -4998,14 +4881,6 @@ gain: aNumber
 offset: aNumber
 	"Set offset added to input (pre-gain) for asymmetrical folding."
 	offset := aNumber! !
-
-!Wavefolder methodsFor: 'controlling' stamp: 'len 16/Jan/2026 23:57:10'!
-modulateGain: aNumber
-	self modulate: #gain by: aNumber! !
-
-!Wavefolder methodsFor: 'controlling' stamp: 'len 16/Jan/2026 23:57:19'!
-modulateOffset: aNumber
-	self modulate: #offset by: aNumber! !
 
 !Wavefolder methodsFor: 'controlling' stamp: 'len 22/Nov/2025 22:51:00'!
 update
@@ -5047,14 +4922,6 @@ patchable
 		addAudioOutput: #setOutput:;
 		yourself! !
 
-!BPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:08:04'!
-modulateBandwidth: aNumber
-	self modulate: #bandwidth by: aNumber! !
-
-!BPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:07:09'!
-modulateFrequency: aNumber
-	self modulate: #frequency by: aNumber! !
-
 !BPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:18:45'!
 reset
 	biquad reset! !
@@ -5081,11 +4948,10 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	(self addControl: #bandwidth min: 0.1 max: 4.0 value: 1.0) printer: [:x| (x printStringFractionDigits: 2), ' oct']! !
 
-!BPF methodsFor: 'processing' stamp: 'len 27/Jan/2026 19:35:38'!
+!BPF methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:16:04'!
 tick
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
-	self update.
 	biquad write: input read: output! !
 
 !BPF methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:42:56'!
@@ -5100,14 +4966,6 @@ patchable
 		addControlInput: #bandwidth;
 		addAudioOutput: #setOutput:.
 	^ answer! !
-
-!BSF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:07:59'!
-modulateBandwidth: aNumber
-	self modulate: #bandwidth by: aNumber! !
-
-!BSF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:07:04'!
-modulateFrequency: aNumber
-	self modulate: #frequency by: aNumber! !
 
 !BSF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:41:35'!
 reset
@@ -5135,11 +4993,10 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	(self addControl: #bandwidth min: 0.1 max: 4.0 value: 1.0) printer: [:x| (x printStringFractionDigits: 2), ' oct']! !
 
-!BSF methodsFor: 'processing' stamp: 'len 27/Jan/2026 19:35:50'!
+!BSF methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:16:12'!
 tick
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
-	self update.
 	biquad write: input read: output! !
 
 !BSF methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:43:05'!
@@ -5171,11 +5028,10 @@ initializeControls
 	self addVolumeControl: #mid min: 0.001 max: 2.0 value: 1.0.
 	self addVolumeControl: #high min: 0.001 max: 2.0 value: 1.0! !
 
-!EQ3 methodsFor: 'processing' stamp: 'len 31/Jan/2026 03:38:52'!
+!EQ3 methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:16:16'!
 tick
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
-	self update.
 	lowPassLow write: input read: output.
 	output *= (self get: #low).
 	highPassMid write: input read: aux.
@@ -5185,14 +5041,6 @@ tick
 	highPassHigh write: input read: aux.
 	aux *= (self get: #high).
 	output += aux! !
-
-!HPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:06:57'!
-modulateFrequency: aNumber
-	self modulate: #frequency by: aNumber! !
-
-!HPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:07:43'!
-modulateQ: aNumber
-	self modulate: #Q by: aNumber! !
 
 !HPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:18:06'!
 reset
@@ -5220,11 +5068,10 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #Q min: 0.5 max: 10.0 value: 0.707! !
 
-!HPF methodsFor: 'processing' stamp: 'len 27/Jan/2026 19:35:22'!
+!HPF methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:16:24'!
 tick
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
-	self update.
 	biquad write: input read: output! !
 
 !HPF methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:43:13'!
@@ -5239,14 +5086,6 @@ patchable
 		addControlInput: #Q;
 		addAudioOutput: #setOutput:.
 	^ answer! !
-
-!LPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:06:51'!
-modulateFrequency: aNumber
-	self modulate: #frequency by: aNumber! !
-
-!LPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 01:07:38'!
-modulateQ: aNumber
-	self modulate: #Q by: aNumber! !
 
 !LPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:16:21'!
 reset
@@ -5274,11 +5113,10 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #Q min: 0.5 max: 10.0 value: 0.707! !
 
-!LPF methodsFor: 'processing' stamp: 'len 27/Jan/2026 19:35:45'!
+!LPF methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:16:29'!
 tick
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
-	self update.
 	biquad write: input read: output! !
 
 !LPF methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:43:22'!
@@ -5294,14 +5132,13 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!Transform2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 02:34:29'!
+!Transform2x methodsFor: 'initialization' stamp: 'len 2/Feb/2026 02:34:29'!
 initialize
 	super initialize.
 	oversampler := Oversampler2x new! !
 
-!Transform2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 00:28:36'!
+!Transform2x methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:16:34'!
 tick
-	self update.
 	output ifNil: [^ self]. "actually, we should process the input anyway, if available"
 	input ifNil: [1 to: output size do: [:i| output at: i put: (self value: 0.0)]. ^ self].
 	1 to: input size do: [:i| output at: i put: (oversampler oversampling: (input at: i) do: self)]! !
@@ -5315,14 +5152,6 @@ gain: aNumber
 offset: aNumber
 	"Set offset added to input (pre-gain) for asymmetrical folding."
 	offset := aNumber! !
-
-!Wavefolder2x methodsFor: 'controlling' stamp: 'len 2/Feb/2026 02:40:28'!
-modulateGain: aNumber
-	self modulate: #gain by: aNumber! !
-
-!Wavefolder2x methodsFor: 'controlling' stamp: 'len 2/Feb/2026 02:40:28'!
-modulateOffset: aNumber
-	self modulate: #offset by: aNumber! !
 
 !Wavefolder2x methodsFor: 'controlling' stamp: 'len 2/Feb/2026 02:40:28'!
 update
@@ -5363,14 +5192,6 @@ patchable
 		addControlInput: #offset;
 		addAudioOutput: #setOutput:;
 		yourself! !
-
-!Korg35HPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:11:57'!
-modulateFrequency: aNumber
-	self modulate: #frequency by: aNumber! !
-
-!Korg35HPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:12:38'!
-modulateResonance: aNumber
-	self modulate: #resonance by: aNumber! !
 
 !Korg35HPF methodsFor: 'controlling' stamp: 'len 16/Oct/2025 18:46:00'!
 reset
@@ -5442,14 +5263,6 @@ patchable
 		addControlInput: #resonance;
 		addAudioOutput: #setOutput:.
 	^ answer! !
-
-!Korg35LPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:11:53'!
-modulateFrequency: aNumber
-	self modulate: #frequency by: aNumber! !
-
-!Korg35LPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:12:42'!
-modulateResonance: aNumber
-	self modulate: #resonance by: aNumber! !
 
 !Korg35LPF methodsFor: 'controlling' stamp: 'len 17/Oct/2025 20:13:00'!
 reset
@@ -5567,10 +5380,6 @@ value: in
 	position := position \\ buffer size.
 	^ out! !
 
-!Amp methodsFor: 'controlling' stamp: 'len 28/Nov/2025 11:45:00'!
-modulateGain: aNumber
-	self modulate: #gain by: aNumber! !
-
 !Amp methodsFor: 'initialization' stamp: 'len 31/Jan/2026 21:50:16'!
 initialize
 	super initialize.
@@ -5581,10 +5390,9 @@ initializeControls
 	super initializeControls.
 	self addControl: #gain min: 0.0 max: 1.0 value: 0.0! !
 
-!Amp methodsFor: 'processing' stamp: 'len 31/Jan/2026 21:51:10'!
+!Amp methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:16:39'!
 tick
 	| increment |
-	self update.
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	increment := (self get: #gain) - gain / self class blockSize.
@@ -5627,10 +5435,6 @@ setInputRM: aBuffer
 setOutput: aBuffer
 	output := aBuffer! !
 
-!Balance methodsFor: 'controlling' stamp: 'len 2/Feb/2026 03:12:36'!
-modulateBalance: aNumber
-	self modulate: #balance by: aNumber! !
-
 !Balance methodsFor: 'initialization' stamp: 'len 2/Feb/2026 03:11:52'!
 initializeControls
 	super initializeControls.
@@ -5669,19 +5473,14 @@ setOutputL: aBuffer
 setOutputR: aBuffer
 	outputR := aBuffer! !
 
-!Crossfader methodsFor: 'controlling' stamp: 'len 10/Jan/2026 16:01:02'!
-modulateMix: aNumber
-	self modulate: #mix by: aNumber! !
-
 !Crossfader methodsFor: 'initialization' stamp: 'len 27/Jan/2026 15:35:09'!
 initializeControls
 	super initializeControls.
 	(self addControl: #mix min: -1.0 max: 1.0 value: 0.0) printer: [:x| 'A ', (1.0 - x * 50.0) rounded printString, '% + B ', (1.0 + x * 50.0) rounded printString, '%']! !
 
-!Crossfader methodsFor: 'processing' stamp: 'len 31/Jan/2026 21:52:56'!
+!Crossfader methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:16:43'!
 tick
 	| x |
-	self update.
 	output ifNil: [^ self].
 	x := (self get: #mix) + 1.0 / 2.0.
 	inputB ifNil:
@@ -5728,23 +5527,14 @@ setInputB: aBuffer
 setOutput: aBuffer
 	output := aBuffer! !
 
-!Mixer methodsFor: 'controlling' stamp: 'len 27/Jan/2026 15:18:03'!
-modulateGainA: aNumber
-	self modulate: #gainA by: aNumber! !
-
-!Mixer methodsFor: 'controlling' stamp: 'len 27/Jan/2026 15:18:46'!
-modulateGainB: aNumber
-	self modulate: #gainB by: aNumber! !
-
 !Mixer methodsFor: 'initialization' stamp: 'len 27/Jan/2026 15:17:58'!
 initializeControls
 	super initializeControls.
 	self addVolumeControl: #gainA value: 0.6; addVolumeControl: #gainB value: 0.6! !
 
-!Mixer methodsFor: 'processing' stamp: 'len 31/Jan/2026 21:54:30'!
+!Mixer methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:16:47'!
 tick
 	| gainA gainB |
-	self update.
 	output ifNil: [^ self].
 	gainA := self get: #gainA.
 	gainB := self get: #gainB.
@@ -5793,10 +5583,6 @@ setInputB: aBuffer
 setOutput: aBuffer
 	output := aBuffer! !
 
-!Pan methodsFor: 'controlling' stamp: 'len 10/Jan/2026 16:03:16'!
-modulatePan: aNumber
-	self modulate: #pan by: aNumber! !
-
 !Pan methodsFor: 'initialization' stamp: 'len 21/Jan/2026 15:56:54'!
 initializeControls
 	super initializeControls.
@@ -5830,14 +5616,6 @@ setOutputL: aBuffer
 setOutputR: aBuffer
 	outputR := aBuffer! !
 
-!StereoMatrix methodsFor: 'controlling' stamp: 'len 27/Jan/2026 10:35:21'!
-modulateBalance: aNumber
-	self modulate: #balance by: aNumber! !
-
-!StereoMatrix methodsFor: 'controlling' stamp: 'len 27/Jan/2026 10:35:12'!
-modulateWidth: aNumber
-	self modulate: #width by: aNumber! !
-
 !StereoMatrix methodsFor: 'initialization' stamp: 'len 27/Jan/2026 02:18:51'!
 initialize
 	super initialize.
@@ -5850,10 +5628,9 @@ initializeControls
 	self addControl: #balance min: -1.0 max: 1.0 value: 0.0
 ! !
 
-!StereoMatrix methodsFor: 'processing' stamp: 'len 2/Feb/2026 04:12:39'!
+!StereoMatrix methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:16:51'!
 tick
 	| width balance |
-	self update.
 	(inputA isNil or: [inputB isNil]) ifTrue: [^ self].
 	(outputL isNil or: [outputR isNil]) ifTrue: [^ self].
 	width := self get: #width.
@@ -5902,10 +5679,6 @@ setOutputR: aBuffer
 input: aNumber
 	value := value + aNumber! !
 
-!Attenuator methodsFor: 'controlling' stamp: 'len 7/Jan/2026 17:00:49'!
-modulateAmount: aNumber
-	self modulate: #amount by: aNumber! !
-
 !Attenuator methodsFor: 'initialization' stamp: 'len 7/Jan/2026 16:52:28'!
 initialize
 	super initialize.
@@ -5916,9 +5689,8 @@ initializeControls
 	super initializeControls.
 	(self addControl: #amount min: 0.0 max: 1.0 value: 0.0) printer: [:x| (x * 100.0) rounded printString, '%']! !
 
-!Attenuator methodsFor: 'processing' stamp: 'len 31/Jan/2026 21:58:08'!
+!Attenuator methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:16:57'!
 tick
-	self update.
 	value = 0.0 ifFalse: [self triggerEvent: #output: with: value * (self get: #amount). value := 0.0]! !
 
 !Attenuator methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:53:48'!
@@ -5940,10 +5712,6 @@ patchable
 input: aNumber
 	value := value + aNumber! !
 
-!Attenuverter methodsFor: 'controlling' stamp: 'len 7/Jan/2026 17:00:00'!
-modulateAmount: aNumber
-	self modulate: #amount by: aNumber! !
-
 !Attenuverter methodsFor: 'initialization' stamp: 'len 7/Jan/2026 16:27:06'!
 initialize
 	super initialize.
@@ -5954,9 +5722,8 @@ initializeControls
 	super initializeControls.
 	(self addControl: #amount min: -1.0 max: 1.0 value: 0.0) printer: [:x| (x * 100.0) rounded printString, '%']! !
 
-!Attenuverter methodsFor: 'processing' stamp: 'len 31/Jan/2026 21:58:31'!
+!Attenuverter methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:17:06'!
 tick
-	self update.
 	value = 0.0 ifFalse: [self triggerEvent: #output: with: value * (self get: #amount). value := 0.0]! !
 
 !Attenuverter methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:53:58'!
@@ -6022,10 +5789,6 @@ gateOff
 gateOn
 	heldValue := nil.
 	mode = #trig ifTrue: [self reset]! !
-
-!LFO methodsFor: 'controlling' stamp: 'len 2/Dec/2025 14:25:00'!
-modulateSpeed: aNumber
-	self modulate: #speed by: aNumber! !
 
 !LFO methodsFor: 'controlling' stamp: 'len 22/Jan/2026 16:03:40'!
 reset
@@ -6093,9 +5856,8 @@ peek
 	shape = #random ifTrue: [^ randomValue].
 	^ self notYetImplemented! !
 
-!LFO methodsFor: 'processing' stamp: 'len 8/Dec/2025 22:33:57'!
+!LFO methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:17:11'!
 tick
-	self update.
 	self triggerEvent: #output: with: self next! !
 
 !LFO methodsFor: 'tools' stamp: 'len 22/Jan/2026 16:18:30'!
@@ -6119,14 +5881,6 @@ patchable
 		addControlOutput: #output: label: 'Out'.
 	^ answer! !
 
-!MoogLPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:11:45'!
-modulateFrequency: aNumber
-	self modulate: #frequency by: aNumber! !
-
-!MoogLPF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:12:46'!
-modulateResonance: aNumber
-	self modulate: #resonance by: aNumber! !
-
 !MoogLPF methodsFor: 'controlling' stamp: 'len 22/Sep/2025 19:52:00'!
 reset
 	y0 := y1 := y2 := y3 := y4 := 0.0! !
@@ -6142,10 +5896,9 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #resonance min: 0.0 max: 1.0 value: 0.1! !
 
-!MoogLPF methodsFor: 'processing' stamp: 'len 31/Jan/2026 21:32:18'!
+!MoogLPF methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:17:17'!
 tick
 	| f t1 t2 p r k |
-	self update.
 	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
 	input ifNil:
 		[outputLP4 ifNotNil: [outputLP4 atAllPut: 0.0].
@@ -6224,14 +5977,6 @@ setOutputLP3: aBuffer
 setOutputLP4: aBuffer
 	outputLP4 := aBuffer! !
 
-!MoogLadder methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:12:06'!
-modulateFrequency: aNumber
-	self modulate: #frequency by: aNumber! !
-
-!MoogLadder methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:12:49'!
-modulateResonance: aNumber
-	self modulate: #resonance by: aNumber! !
-
 !MoogLadder methodsFor: 'controlling' stamp: 'len 28/Jan/2026 17:34:01'!
 reset
 	s1 := s2 := s3 := s4 := 0.0! !
@@ -6247,10 +5992,9 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #resonance min: 0.0 max: 1.0 value: 0.1! !
 
-!MoogLadder methodsFor: 'processing' stamp: 'len 31/Jan/2026 21:27:03'!
+!MoogLadder methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:17:21'!
 tick
 	| g G γ k |
-	self update.
 	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
 	input ifNil:
 		[outputLP4 ifNotNil: [outputLP4 atAllPut: 0.0].
@@ -6333,14 +6077,6 @@ setOutputLP3: aBuffer
 setOutputLP4: aBuffer
 	outputLP4 := aBuffer! !
 
-!OberheimSVF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:12:11'!
-modulateFrequency: aNumber
-	self modulate: #frequency by: aNumber! !
-
-!OberheimSVF methodsFor: 'controlling' stamp: 'len 30/Jan/2026 13:19:23'!
-modulateResonance: aNumber
-	self modulate: #resonance by: aNumber! !
-
 !OberheimSVF methodsFor: 'controlling' stamp: 'len 16/Oct/2025 19:49:00'!
 reset
 	s1 := s2 := 0.0! !
@@ -6356,10 +6092,9 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #resonance min: 0.0 max: 1.0 value: 0.0! !
 
-!OberheimSVF methodsFor: 'processing' stamp: 'len 31/Jan/2026 21:36:56'!
+!OberheimSVF methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:17:27'!
 tick
 	| g r feedback α₀ |
-	self update.
 	(outputLP isNil and: [outputHP isNil and: [outputBP isNil and: [outputBS isNil]]]) ifTrue: [^ self].
 	input ifNil:
 		[outputLP ifNotNil: [outputLP atAllPut: 0.0].
@@ -12207,13 +11942,13 @@ setSpeed: aNumber
 setVelocity: aNumber
 	velocityReceivers do: [:each| each setVelocity: aNumber]! !
 
-!Patch methodsFor: 'playing' stamp: 'len 5/Jan/2026 19:49:47'!
+!Patch methodsFor: 'playing' stamp: 'len 2/Feb/2026 16:12:08'!
 tick
 	| currentModules |
 	currentModules := modules ifNil: [self recomputeModules].
 	currentModules do: [:each| (each is: #Module) ifTrue: [each clear]].
 	trigger ifNotNil: [self playTrigger].
-	currentModules do: [:each| each tick]! !
+	currentModules do: [:each| each update; tick]! !
 
 !Pattern methodsFor: 'accessing' stamp: 'len 18/Dec/2025 16:32:38'!
 length

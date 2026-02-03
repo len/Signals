@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 3 February 2026 at 5:45:47 pm'!
+'From Cuis7.7 [latest update: #7797] on 4 February 2026 at 12:27:30 am'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 441!
+!provides: 'Signals' 1 442!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -123,6 +123,16 @@ Module subclass: #DiodeLadder
 	category: 'Signals-Etc'!
 !classDefinition: 'DiodeLadder class' category: #'Signals-Etc'!
 DiodeLadder class
+	instanceVariableNames: ''!
+
+!classDefinition: #TestSine category: #'Signals-Etc'!
+Module subclass: #TestSine
+	instanceVariableNames: 'phase output table'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Etc'!
+!classDefinition: 'TestSine class' category: #'Signals-Etc'!
+TestSine class
 	instanceVariableNames: ''!
 
 !classDefinition: #Chorus category: #'Signals-FX'!
@@ -683,6 +693,16 @@ Module subclass: #LFO
 	category: 'Signals-Modulation'!
 !classDefinition: 'LFO class' category: #'Signals-Modulation'!
 LFO class
+	instanceVariableNames: ''!
+
+!classDefinition: #LogAttenuator category: #'Signals-Modulation'!
+Module subclass: #LogAttenuator
+	instanceVariableNames: 'value'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Modulation'!
+!classDefinition: 'LogAttenuator class' category: #'Signals-Modulation'!
+LogAttenuator class
 	instanceVariableNames: ''!
 
 !classDefinition: #MoogLPF category: #'Signals-VA Filters'!
@@ -1365,6 +1385,16 @@ Object subclass: #Sound
 Sound class
 	instanceVariableNames: ''!
 
+!classDefinition: #SineTestSound category: #'Signals-Support'!
+Sound subclass: #SineTestSound
+	instanceVariableNames: 'phase'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Support'!
+!classDefinition: 'SineTestSound class' category: #'Signals-Support'!
+SineTestSound class
+	instanceVariableNames: ''!
+
 !classDefinition: #Upsampler2x category: #'Signals-Support'!
 Object subclass: #Upsampler2x
 	instanceVariableNames: 'u0 u1 u2 u3'
@@ -1557,8 +1587,8 @@ Parameters:
 State:
     - Sample counter until next impulse!
 
-!Transform commentStamp: '<historical>' prior: 0!
-A (unary) transform has one audio input and one audio output, and modifies the audio signal sample-by-sample (for each input sample, it applies a function to it producing an output sample).!
+!Transform commentStamp: 'len 4/Feb/2026 00:25:27' prior: 0!
+Abstract superclass for unary transforms, i.e. modules with one audio input and one audio output, that transform the audio signal sample-by-sample (for each input sample, they apply a function to produce an output sample). Subclasses can just implement #value:.!
 
 !DiodeLadder2 commentStamp: 'len 2/Feb/2026 18:24:19' prior: 0!
 This is a virtual analog model of the Korg 35 low-pass 12 dB/oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.!
@@ -1595,6 +1625,9 @@ This is a second order (12 dB/oct) high-pass filter based on a biquad.!
 
 !LPF commentStamp: 'len 2/Feb/2026 18:24:37' prior: 0!
 This is a second order (12 dB/oct) low-pass filter based on a biquad.!
+
+!Transform2x commentStamp: 'len 4/Feb/2026 00:25:50' prior: 0!
+An abstract superclass for transforms that internally do 2× oversampling. This is useful for implementing transforms that are not linear-time-invariant (LTI), such as saturation, wavefolding, or virtual analog filters.!
 
 !Wavefolder2x commentStamp: '<historical>' prior: 0!
 Basic wavefolder. Amplitude of input determines level of folding. Amplitudes of magnitude > 1.0 will start to fold.
@@ -1655,6 +1688,9 @@ An attenuverter is similar to an attenuator, but it can also invert the polarity
 
 !LFO commentStamp: '<historical>' prior: 0!
 Low frequency oscillator.!
+
+!LogAttenuator commentStamp: '<historical>' prior: 0!
+An attenuator scales a control signal by a number between 0 and 1. It is typically used to control modulation depth.!
 
 !MoogLPF commentStamp: 'len 2/Feb/2026 18:24:58' prior: 0!
 This is a low pass filter inspired by the classic Moog ladder filter. It's a low-pass 24 dB/oct (4 poles) resonant filter.
@@ -2414,7 +2450,7 @@ patchable
 title
 	^ self class name camelSeparatedWords! !
 
-!Module class methodsFor: 'constants' stamp: 'len 7/Dec/2025 00:24:13'!
+!Module class methodsFor: 'constants' stamp: 'len 3/Feb/2026 22:59:22'!
 blockSize
 	"Answer the size of the input and output buffers.
 	This is the number of samples processed on each tick."
@@ -2826,6 +2862,51 @@ setOutputLP3: aBuffer
 !DiodeLadder methodsFor: 'wiring' stamp: 'len 29/Jan/2026 03:00:39'!
 setOutputLP4: aBuffer
 	outputLP4 := aBuffer! !
+
+!TestSine methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 21:31:41'!
+cordicSin: theta
+	|atan x y z |
+   atan := #[0.785398163 0.463647609 0.244978663 0.124354995
+    0.062418810 0.031239833 0.015623729 0.007812341
+    0.003906230 0.001953123 0.000976562 0.000488281
+    0.000244141 0.000122070 0.000061035 0.000030518].
+	
+	
+    x := 0.607252935.
+    y := 0.0.
+    z := theta.
+
+	1 to: 16 do: [:i|
+		|dx dy|
+	        dx := (z >= 0) ifTrue:[y negated] ifFalse: [y].
+        	dy := (z >= 0) ifTrue:[ x] ifFalse:[ x negated].
+        z := z + ((z >= 0) ifTrue:[(atan at: i) negated] ifFalse: [atan at: i]).
+
+        x := x + (dx timesTwoPower: i negated).
+	y := y + (dy timesTwoPower: i negated)].
+    ^ y! !
+
+!TestSine methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 21:34:37'!
+initialize
+	super initialize.
+	phase := 0.0! !
+
+!TestSine methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 20:26:59'!
+patchable
+	^ super patchable addAudioOutput: #setOutput:; yourself! !
+
+!TestSine methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 20:25:08'!
+setOutput: aBuffer
+	output := aBuffer! !
+
+!TestSine methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 00:13:53'!
+tick
+	output ifNil: [^ self].
+	output *= 0.0.
+	1 to: output size do: [:i|
+		output at: i put: (phase * Float twoPi) sin.
+		phase := phase +​ (171.0 / self class sampleRate) \\ 1.0.
+		]! !
 
 !Chorus methodsFor: 'controlling' stamp: 'len 26/Jan/2026 17:46:23'!
 reset
@@ -4233,7 +4314,7 @@ buffer: aFloatArray baseRate: aNumber
 library
 	^ Library! !
 
-!Sample class methodsFor: 'library' stamp: 'len 22/Jan/2026 18:16:57'!
+!Sample class methodsFor: 'library' stamp: 'len 4/Feb/2026 00:16:48'!
 loadLibrary
 	"
 	Sample loadLibrary
@@ -4991,11 +5072,11 @@ tick
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	biquad write: input read: output! !
 
-!BPF methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:42:56'!
+!BPF methodsFor: 'tools' stamp: 'len 3/Feb/2026 18:08:00'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
-	display := FilterControlMorph new frequency: (controls at: #frequency); controlY: (controls at: #bandwidth).
+	display := FilterControlMorph new frequency: (controls at: #frequency); controlY: (controls at: #bandwidth); mode: #BP.
 	answer body addMorph: display.
 	answer
 		addAudioInput: #setInput:;
@@ -5030,11 +5111,11 @@ tick
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	biquad write: input read: output! !
 
-!BSF methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:43:05'!
+!BSF methodsFor: 'tools' stamp: 'len 3/Feb/2026 18:08:09'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
-	display := FilterControlMorph new frequency: (controls at: #frequency); controlY: (controls at: #bandwidth).
+	display := FilterControlMorph new frequency: (controls at: #frequency); controlY: (controls at: #bandwidth); mode: #BS.
 	answer body addMorph: display.
 	answer
 		addAudioInput: #setInput:;
@@ -5944,6 +6025,39 @@ patchable
 	answer body addMorph: row; addMorph: self panel.
 	answer
 		addControlInput: #speed;
+		addControlOutput: #output: label: 'Out'.
+	^ answer! !
+
+!LogAttenuator methodsFor: 'controlling' stamp: 'len 3/Feb/2026 18:03:22'!
+input: aNumber
+	value := value + aNumber! !
+
+!LogAttenuator methodsFor: 'initialization' stamp: 'len 3/Feb/2026 18:03:22'!
+initialize
+	super initialize.
+	value := 0.0! !
+
+!LogAttenuator methodsFor: 'initialization' stamp: 'len 3/Feb/2026 18:03:22'!
+initializeControls
+	super initializeControls.
+	(self addLogControl: #amount min: 0.0001 max: 1.0 value: 0.01) printer: [:x| (x * 100.0 printStringFractionDigits: x log truncated negated) , '%']! !
+
+!LogAttenuator methodsFor: 'processing' stamp: 'len 3/Feb/2026 18:03:22'!
+tick
+	value = 0.0 ifFalse: [self triggerEvent: #output: with: value * (self get: #amount). value := 0.0]! !
+
+!LogAttenuator methodsFor: 'tools' stamp: 'len 3/Feb/2026 18:03:22'!
+panel
+	^​ ControlPanel new addKnob: (controls at: #amount)! !
+
+!LogAttenuator methodsFor: 'tools' stamp: 'len 3/Feb/2026 18:03:22'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self panel.
+	answer
+		addControlInput: #input: label: 'In';
+		addControlInput: #amount;
 		addControlOutput: #output: label: 'Out'.
 	^ answer! !
 
@@ -11714,6 +11828,34 @@ resume
 !Sound methodsFor: 'playing' stamp: 'len 27/Nov/2025 02:02:00'!
 stop
 	AudioPlayer stopPlaying: self! !
+
+!SineTestSound methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 21:39:49'!
+initialize
+	super initialize.
+	phase := 0.0! !
+
+!SineTestSound methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 21:45:54'!
+next
+	phase := phase +​ (170.0 / 44100.0) \\ 1.0.
+	^ (phase * Float twoPi) sin * 0.25! !
+
+!SineTestSound methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 21:45:46'!
+playSampleCount: n into: anAudioBuffer startingAt: startIndex
+	| j x s |
+	j := 2 * startIndex - 1.
+	n timesRepeat:
+		[x := self next.
+		s := "(anAudioBuffer at: j) +" (x * 32767.0) asInteger.
+		s > 32767 ifTrue: [s := 32767].  "clipping!!"
+		s < -32767 ifTrue: [s := -32767].  "clipping!!"
+		anAudioBuffer at: j put: s.	
+		j := j + 1.
+		s := "(anAudioBuffer at: j) +" (x * 32767.0) asInteger.
+		s > 32767 ifTrue: [s := 32767].  "clipping!!"
+		s < -32767 ifTrue: [s := -32767].  "clipping!!"
+		anAudioBuffer at: j put: s.
+		j := j + 1].
+	^ n! !
 
 !Upsampler2x methodsFor: 'as yet unclassified' stamp: 'len 30/Jan/2026 15:09:20'!
 initialize

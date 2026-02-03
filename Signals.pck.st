@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 3 February 2026 at 2:34:46 am'!
+'From Cuis7.7 [latest update: #7797] on 3 February 2026 at 5:45:47 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 440!
+!provides: 'Signals' 1 441!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -347,7 +347,7 @@ VelvetNoise class
 
 !classDefinition: #SineSweep category: #'Signals-Utility'!
 Generator subclass: #SineSweep
-	instanceVariableNames: 'frequency phase'
+	instanceVariableNames: 'frequency phase startFrequency endFrequency'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Utility'!
@@ -1107,7 +1107,7 @@ OscilloscopeMorph class
 
 !classDefinition: #PlotMorph category: #'Signals-Morphic-Widgets'!
 BoxMorph subclass: #PlotMorph
-	instanceVariableNames: 'functions domain colors'
+	instanceVariableNames: 'functions domain colors max min font'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Widgets'!
@@ -1157,7 +1157,7 @@ SpectrumAnalyzerMorph class
 
 !classDefinition: #VectorscopeMorph category: #'Signals-Morphic-Widgets'!
 BoxMorph subclass: #VectorscopeMorph
-	instanceVariableNames: 'inputX inputY image color'
+	instanceVariableNames: 'inputX inputY scaleX scaleY image color colorHigh'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Widgets'!
@@ -1347,7 +1347,7 @@ LagrangeOversampler2x class
 
 !classDefinition: #Polyphase13TapOversampler2x category: #'Signals-Support'!
 Object subclass: #Polyphase13TapOversampler2x
-	instanceVariableNames: 'x0 x1 x2 x3 x4 x5 x6 d0 d1 d2 d3 d4 d5 d6 e0 e1'
+	instanceVariableNames: 'x1 x2 x3 x4 x5 x6 d1 d2 d3 d4 d5 d6 e1'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Support'!
@@ -4417,6 +4417,12 @@ initialize
 	super initialize.
 	self reset! !
 
+!SineSweep methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 17:21:47'!
+initializeControls
+	super initializeControls.
+	self addFrequencyControl: #start value: 20.0.
+	self addFrequencyControl: #end value: 20000.0! !
+
 !SineSweep methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 19:34:34'!
 next
 	| answer |
@@ -4425,15 +4431,17 @@ next
 	frequency := frequency * 1.00001.
 	^ answer! !
 
-!SineSweep methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 19:44:05'!
+!SineSweep methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 17:22:48'!
 reset
 	phase := 0.0.
-	frequency := 100.0 / self class sampleRate! !
+	frequency := startFrequency! !
 
-!SineSweep methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 19:28:39'!
+!SineSweep methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 17:22:40'!
 update
 	super update.
-	frequency > (20000.0 / self class sampleRate) ifTrue: [self reset]! !
+	startFrequency := (self get: #start) / self class sampleRate.
+	endFrequency := (self get: #end) / self class sampleRate.
+	frequency > endFrequency ifTrue: [self reset]! !
 
 !Transform methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:17'!
 tick
@@ -5143,7 +5151,7 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!Transform2x methodsFor: 'initialization' stamp: 'len 2/Feb/2026 22:00:22'!
+!Transform2x methodsFor: 'initialization' stamp: 'len 3/Feb/2026 17:27:53'!
 initialize
 	super initialize.
 	oversampler := Polyphase13TapOversampler2x new! !
@@ -5253,11 +5261,11 @@ initialize
 	super initialize.
 	self reset! !
 
-!Korg35HPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 13:49:38'!
+!Korg35HPF methodsFor: 'initialization' stamp: 'len 3/Feb/2026 17:26:01'!
 initializeControls
 	super initializeControls.
 	self addFrequencyControl: #frequency value: 1000.0.
-	self addControl: #resonance min: 0.0 max: 1.0 value: 0.1! !
+	(self addControl: #resonance min: 0.0 max: 1.0 value: 0.1) printer: [:x| (x * 100.0) truncated printString, '%']! !
 
 !Korg35HPF methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:54:14'!
 tick
@@ -5324,11 +5332,11 @@ initialize
 	super initialize.
 	self reset! !
 
-!Korg35LPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 13:49:47'!
+!Korg35LPF methodsFor: 'initialization' stamp: 'len 3/Feb/2026 17:26:08'!
 initializeControls
 	super initializeControls.
 	self addFrequencyControl: #frequency value: 1000.0.
-	self addControl: #resonance min: 0.0 max: 1.0 value: 0.1! !
+	(self addControl: #resonance min: 0.0 max: 1.0 value: 0.1) printer: [:x| (x * 100.0) truncated printString, '%']! !
 
 !Korg35LPF methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:54:21'!
 tick
@@ -5948,15 +5956,15 @@ initialize
 	super initialize.
 	self reset! !
 
-!MoogLPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 13:09:15'!
+!MoogLPF methodsFor: 'initialization' stamp: 'len 3/Feb/2026 17:26:18'!
 initializeControls
 	super initializeControls.
 	self addFrequencyControl: #frequency value: 1000.0.
-	self addControl: #resonance min: 0.0 max: 1.0 value: 0.1! !
+	(self addControl: #resonance min: 0.0 max: 1.0 value: 0.1) printer: [:x| (x * 100.0) truncated printString, '%']! !
 
-!MoogLPF methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:17:17'!
+!MoogLPF methodsFor: 'processing' stamp: 'len 3/Feb/2026 16:25:15'!
 tick
-	| f t1 t2 p r k |
+	| f res t1 t2 p r k |
 	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
 	input ifNil:
 		[outputLP4 ifNotNil: [outputLP4 atAllPut: 0.0].
@@ -5965,13 +5973,15 @@ tick
 		outputLP1 ifNotNil: [outputLP1 atAllPut: 0.0].
 		^ self].
 	f := (self get: #frequency) * 2.0 / self class sampleRate. "normalized frequency f / fₛ"
+	res := self get: #resonance.
+	f > 0.36 ifTrue: [res := res - ((f - 0.36) * 0.2)]. "limit resonance at high cutoff"
 	"empirical tuning:"
 	p := f * (1.8 - (0.8 * f)).
 	"k := p * 2 - 1.0."
 	k := 2.0 * (f * Float halfPi) sin - 1.0. "better tuning"
 	t1 := (1.0 - p) * 1.386249.
 	t2 := 12.0 + (t1*t1).
-	r := (self get: #resonance) * (t2 + (6.0 * t1)) / (t2 - (6.0 * t1)).
+	r := res * (t2 + (6.0 * t1)) / (t2 - (6.0 * t1)).
 	1 to: input size do: [:i|
 		| in z0 z1 z2 z3 |
 		in := input at: i.
@@ -6044,15 +6054,15 @@ initialize
 	super initialize.
 	self reset! !
 
-!MoogLadder methodsFor: 'initialization' stamp: 'len 30/Jan/2026 13:49:59'!
+!MoogLadder methodsFor: 'initialization' stamp: 'len 3/Feb/2026 17:26:23'!
 initializeControls
 	super initializeControls.
 	self addFrequencyControl: #frequency value: 1000.0.
-	self addControl: #resonance min: 0.0 max: 1.0 value: 0.1! !
+	(self addControl: #resonance min: 0.0 max: 1.0 value: 0.1) printer: [:x| (x * 100.0) truncated printString, '%']! !
 
-!MoogLadder methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:17:21'!
+!MoogLadder methodsFor: 'processing' stamp: 'len 3/Feb/2026 16:25:05'!
 tick
-	| g G γ k |
+	| f res g G γ k |
 	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
 	input ifNil:
 		[outputLP4 ifNotNil: [outputLP4 atAllPut: 0.0].
@@ -6060,12 +6070,15 @@ tick
 		outputLP2 ifNotNil: [outputLP2 atAllPut: 0.0].
 		outputLP1 ifNotNil: [outputLP1 atAllPut: 0.0].
 		^ self].
-	g := (Float pi * (self get: #frequency) / self class sampleRate) tan.
+	f := (self get: #frequency) / self class sampleRate. "normalized frequency"
+	res := self get: #resonance.
+	f > 0.18 ifTrue: [res := res - ((f - 0.18) * 0.1)]. "limit resonance at high cutoff"
+	g := (Float pi * f) tan.
 	G := g / (1.0 + g).
 	γ := G squared squared.
 	"Feedback coefficient from 0 to 4.
 	Resonance is mapped with a quadratic curve to have finer control at low resonance."
-	k := (self get: #resonance) squared * 4.0.
+	k := res squared * 3.99.
 	1 to: input size do: [:i|
 		| S in σ v1 v2 v3 v4 y1 y2 y3 y4 |
 		in := input at: i.
@@ -6144,11 +6157,11 @@ initialize
 	super initialize.
 	self reset! !
 
-!OberheimSVF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 13:44:11'!
+!OberheimSVF methodsFor: 'initialization' stamp: 'len 3/Feb/2026 17:26:33'!
 initializeControls
 	super initializeControls.
 	self addFrequencyControl: #frequency value: 1000.0.
-	self addControl: #resonance min: 0.0 max: 1.0 value: 0.0! !
+	(self addControl: #resonance min: 0.0 max: 1.0 value: 0.0) printer: [:x| (x * 100.0) truncated printString, '%']! !
 
 !OberheimSVF methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:17:27'!
 tick
@@ -8933,50 +8946,70 @@ tick
 update
 	^ self! !
 
+!PlotMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 15:48:29'!
+computeMinMax
+	(functions isEmpty or: [domain isEmpty]) ifTrue: [min := max := 0.0. ^ self].
+	min := functions min: [:f| domain min: [:x| f value: x]].
+	max := functions max: [:f| domain max: [:x| f value: x]]! !
+
 !PlotMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Oct/2025 19:40:00'!
 defaultExtent
 	^`256@128`! !
 
-!PlotMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Oct/2025 19:29:00'!
+!PlotMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 15:24:13'!
 domain: aCollection
-	domain := aCollection! !
+	domain := aCollection.
+	self computeMinMax! !
 
-!PlotMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Oct/2025 19:45:00'!
+!PlotMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 15:47:51'!
 drawFunction: f color: color on: aCanvas
 	| step h x y |
 	step := self morphWidth / domain size.
-	h := self morphHeight / 2.0.
-	y := 1.0 - (f value: domain first) * h.
-	x := 0.
-	domain allButFirstDo: [:t|
-		| x2 y2 |
-		y2 := 1.0 - (f value: t) * h.
-		x2 := x + step.
-		aCanvas line: x@y to: x2@y2 width: 1 color: color.
-		x := x2.
-		y := y2]! !
+	h := self morphHeight / (max - min max: 0.01).
+	x := 0.0.
+	y := (max - (f value: domain first)) * h.
+	aCanvas strokeWidth: 1.0 color: color do:
+		[aCanvas moveTo: x @ y.
+		domain allButFirstDo: [:t|
+			x := x + step.
+			y := (max - (f value: t)) * h.
+			aCanvas lineTo: x @ y]]! !
 
-!PlotMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Oct/2025 19:45:00'!
+!PlotMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 16:01:10'!
 drawOn: aCanvas
+	aCanvas drawString: (max printStringFractionDigits: 3) at: 4 @ 0 font: font color: Color white.
+	aCanvas drawString: (min printStringFractionDigits: 3) at: 4 @ (self morphHeight - font lineSpacing) font: font color: Color white.
+	(min < 0.0 and: [max > 0.0]) ifTrue:
+		[| y |
+		y := max / (max - min) * self morphHeight.
+		aCanvas line: 0 @ y to: self morphWidth @ y width: 1.0 color: Color gray].
 	functions with: colors do: [:f :color| self drawFunction: f color: color on: aCanvas]! !
 
-!PlotMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Oct/2025 19:39:00'!
+!PlotMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 15:52:14'!
 initialize
 	super initialize.
 	functions := OrderedCollection new.
 	colors := OrderedCollection new.
-	domain := (0.0 to: 10.0 by: 0.1) asArray! !
+	domain := (0.0 to: 10.0 by: 0.1) asArray.
+	min := -1.0.
+	max := 1.0.
+	font := FontFamily defaultFamilyPointSize: 12! !
 
 !PlotMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Oct/2025 19:40:00'!
 plot: aBlock
 	self plot: aBlock color: Color white! !
 
-!PlotMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Oct/2025 21:43:00'!
-plot: aBlock color: aColor
-	aBlock isCollection
-		ifTrue: [domain := 1 to: aBlock size. functions add: [:i| aBlock at: i]]
-		ifFalse: [functions add: aBlock].
-	colors add: aColor! !
+!PlotMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 15:28:14'!
+plot: aBlockOrCollection color: aColor
+	aBlockOrCollection isCollection
+		ifTrue: [domain := 1 to: aBlockOrCollection size. functions add: [:i| aBlockOrCollection at: i]]
+		ifFalse: [functions add: aBlockOrCollection].
+	colors add: aColor.
+	self computeMinMax! !
+
+!PlotMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 15:48:51'!
+requiresVectorCanvas
+	^ true ! !
 
 !RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Jan/2026 15:08:35'!
 defaultBufferSize
@@ -9808,21 +9841,29 @@ drawOn: aCanvas
 requiresVectorCanvas
 	^ true ! !
 
-!VectorscopeMorph methodsFor: 'initialization' stamp: 'len 3/Feb/2026 00:06:32'!
-color: aColor
-	color := aColor.
-	self redrawNeeded! !
+!VectorscopeMorph methodsFor: 'events' stamp: 'len 3/Feb/2026 17:41:37'!
+handlesMouseScroll: anEvent
+	^ anEvent anyModifierKeyPressed not! !
+
+!VectorscopeMorph methodsFor: 'events' stamp: 'len 3/Feb/2026 17:43:36'!
+mouseScroll: anEvent localPosition: localEventPosition
+	anEvent direction = #right ifTrue: [scaleX := scaleX / 1.1 max: 1 / 128.0. ^ self].
+	anEvent direction = #left ifTrue: [scaleX := scaleX * 1.1 min: 128.0. ^ self].
+	anEvent direction = #up ifTrue: [scaleY := scaleY / 1.1 max: 1 / 128.0. ^ self].
+	anEvent direction = #down ifTrue: [scaleY := scaleY * 1.1 min: 128.0]! !
 
 !VectorscopeMorph methodsFor: 'initialization' stamp: 'len 3/Feb/2026 00:08:14'!
 defaultExtent
 	^`128@128`! !
 
-!VectorscopeMorph methodsFor: 'initialization' stamp: 'len 3/Feb/2026 02:33:24'!
+!VectorscopeMorph methodsFor: 'initialization' stamp: 'len 3/Feb/2026 17:36:44'!
 initialize
 	super initialize.
 	color := PatchMorph waveformColor.
+	colorHigh := PatchMorph waveformColor2.
 	image := Form extent: self defaultExtent depth: 32.
-	image fillBlack! !
+	image fillBlack.
+	scaleX := scaleY := 1.0! !
 
 !VectorscopeMorph methodsFor: 'module' stamp: 'len 3/Feb/2026 00:09:11'!
 patchable
@@ -9846,18 +9887,20 @@ setInputY: aBuffer
 	inputY := aBuffer.
 	self reset! !
 
-!VectorscopeMorph methodsFor: 'module' stamp: 'len 3/Feb/2026 00:45:13'!
+!VectorscopeMorph methodsFor: 'module' stamp: 'len 3/Feb/2026 17:42:52'!
 tick
-	| h i x y c max |
+	| h i x0 y0 x y c cH |
 	(inputX isNil or: [inputY isNil]) ifTrue: [^ self].
-	h := image width - 1 / 2.0.
+	h := image width - 2.0 / 2.0.
 	i := 1.
 	c := image pixelValueFor: color.
-	max := image width.
+	cH := image pixelValueFor: colorHigh.
 	[(i  := i + 8) <= inputX size] whileTrue:
-		[x := (((inputX at: i) + 1.0) * h) truncated min: max.
-		y := (((inputY at: i) + 1.0) * h) truncated min: max.
-		image pixelValueAt: x @ y put: c]! !
+		[x0 := inputX at: i.
+		y0 := inputY at: i.
+		x := (((x0 * scaleX) tanh + 1.0) * h) truncated.
+		y := (((y0 * scaleY) tanh + 1.0) * h) truncated.
+		image pixelValueAt: x @ y put: ((x0 abs > 1.0 or: [y0 abs > 1.0]) ifTrue: [cH] ifFalse: [c])]! !
 
 !VectorscopeMorph methodsFor: 'module' stamp: 'len 3/Feb/2026 00:06:32'!
 update
@@ -10083,7 +10126,7 @@ addModuleCopying: aModule
 addModuleInstantiating: aClass
 	self addMorph: aClass new patchable position: (self valueOfProperty: #lastMenuOpeningPosition)! !
 
-!PatchMorph methodsFor: 'menu' stamp: 'len 3/Feb/2026 00:27:09'!
+!PatchMorph methodsFor: 'menu' stamp: 'len 3/Feb/2026 14:28:50'!
 getMenu
 	| menu submenu |
 	self setProperty: #lastMenuOpeningPosition toValue: (self internalizeFromWorld: self activeHand morphPosition).
@@ -10106,7 +10149,8 @@ getMenu
 		add: 'Oscilloscope' action: #addModuleInstantiating: argument: OscilloscopeMorph;
 		add: 'Spectrogram' action: #addModuleInstantiating: argument: SpectrogramMorph;
 		add: 'Spectrum Analyzer' action: #addModuleInstantiating: argument: SpectrumAnalyzerMorph;
-		add: 'Vectorscope' action: #addModuleInstantiating: argument: VectorscopeMorph.
+		add: 'Vectorscope' action: #addModuleInstantiating: argument: VectorscopeMorph;
+		add: 'Sine Sweep' action: #addModuleInstantiating: argument: SineSweep.
 	menu add: 'Utilities' subMenu: submenu.
 
 	Sample library ifNotNil: [:aDict|
@@ -11583,14 +11627,11 @@ new: anIntegerPowerOfTwo
 initialize
 	self reset! !
 
-!LagrangeOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:29:31'!
+!LagrangeOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 02:47:21'!
 oversampling: aNumber do: aBlock
 	| f1 f2 o1 o2 s1 s2 |
 	"1. Upsample (generate 2 subsamples):"
-	u3 := u2.
-	u2 := u1.
-	u1 := u0.
-	u0 := aNumber.
+	u3 := u2. u2 := u1. u1 := u0. u0 := aNumber.
 	"Branch 1: Interpolation (Odd samples)"
 	"Using standard Cubic/Lagrange coefficients: -0.0625, 0.5625, 0.5625, -0.0625"
 	"Note: We multiply by 2 implicit gain here. The raw coeffs sum to 0.5, so we use coeffs that sum to 1.0"
@@ -11603,10 +11644,7 @@ oversampling: aNumber do: aBlock
 	f2 := aBlock value: s2.
 	"3. Downsample:"
 	"Standard polyphase decimation: Filter both branches and sum."
-	d3 := d2.
-	d2 := d1.
-	d1 := d0.
-	d0 := f1.
+	d3 := d2. d2 := d1. d1 := d0. d0 := f1.
 	"Branch 1: Filter the 'odd' processed samples"
 	"We reuse the same coefficients for symmetry"
 	o1 := (d0 + d3) * -0.0625 + ((d1 + d2) * 0.5625).
@@ -11620,55 +11658,34 @@ oversampling: aNumber do: aBlock
 reset
 	u0 := u1 := u2 := u3 := d0 := d1 := d2 := d3 := 0.0! !
 
-!Polyphase13TapOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 21:21:34'!
+!Polyphase13TapOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 03:43:37'!
 initialize
 	self reset! !
 
-!Polyphase13TapOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 22:07:26'!
-oversampling: x do: aBlock
-	| even odd y0 y1 |
+!Polyphase13TapOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 03:55:41'!
+oversampling: x0 do: aBlock
+	| even odd d0 e0 answer |
 	"Note: we use coefficients ​-0.0083, 0.0625, 0.1958.
 	Alternatives:
 		-0.0102, 0.0736, 0.1866;
 		-0.0050, 0.0480, 0.2070."
-	"Shift input history:"
-	x6 := x5. x5 := x4. x4 := x3. x3 := x2. x2 := x1. x1 := x0. x0 := x.
 	"1. Polyphase upsample."
 	"Even phase: center tap only"
 	even := 0.5 * x3.
 	"Odd phase: half-band FIR"
 	odd := ​-0.0083 * (x0 + x6) + (0.0625 * (x1 + x5)) + (0.1958 * (x2 + x4)).
+	"Shift input history:"
+	x6 := x5. x5 := x4. x4 := x3. x3 := x2. x2 := x1. x1 := x0.
 	"2. Process at 2× rate:"
-	y0 := aBlock value: even.
-	y1 := aBlock value: odd.
+	e0 := aBlock value: even.
+	d0 := aBlock value: odd.
 	"3. Polyphase downsample. Same structure, roles reversed."
-	d6 := d5. d5 := d4. d4 := d3. d3 := d2. d2 := d1. d1 := d0. d0 := y1.
-	e1 := e0. e0 := y0.
-	^ (0.5 * e1) + (​-0.0083 * (d0 + d6) + (0.0625 * (d1 + d5)) + (0.1958 * (d2 + d4)))! !
+	answer := (0.5 * e1) + (​-0.0083 * (d0 + d6) + (0.0625 * (d1 + d5)) + (0.1958 * (d2 + d4))).
+	d6 := d5. d5 := d4. d4 := d3. d3 := d2. d2 := d1. d1 := d0.
+	e1 := e0.
+	^ answer! !
 
-!Polyphase13TapOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 21:21:34'!
-oversamplingOld: aNumber do: aBlock
-	| f1 f2 o1 o2 s1 s2 |
-	"1. Upsample (generate 2 subsamples):"
-	u3 := u2.
-	u2 := u1.
-	u1 := u0.
-	u0 := aNumber.
-	s1 := (u0 + u3) * -0.031 + ((u1 + u2) * 0.113) + (u1 * -0.251).
-	s2 := u1 * 0.5.
-	"2. Process:"
-	f1 := aBlock value: s1.
-	f2 := aBlock value: s2.
-	"3. Downsample:"
-	d3 := d2.
-	d2 := d1.
-	d1 := d0.
-	d0 := f1.
-	o1 := (d0 + d3) * -0.031 + ((d1 + d2) * 0.113) + (d1 * -0.251).
-	o2 := f2 * 0.5.
-	^ o1 + o2! !
-
-!Polyphase13TapOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 21:24:12'!
+!Polyphase13TapOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 03:43:38'!
 reset
 	x0 := x1 := x2 := x3 := x4 := x5 := x6 := d0 := d1 := d2 := d3 := d4 := d5 := d6 := e0 := e1 := 0.0! !
 
@@ -12799,6 +12816,10 @@ camelSeparatedWords
 		(ch isUppercase not and: [r atEnd not and: [r peek isUppercase]]) ifTrue: [w space]].
 	^ w contents
 ! !
+
+!BlockClosure methodsFor: '*signals' stamp: 'len 3/Feb/2026 15:45:44'!
+plot: aCollection
+	^ PlotMorph new domain: aCollection; plot: self! !
 
 !Number methodsFor: '*signals' stamp: 'len 13/Oct/2025 15:56:00'!
 centsToRatio

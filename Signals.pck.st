@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 4 February 2026 at 12:27:30 am'!
+'From Cuis7.7 [latest update: #7797] on 4 February 2026 at 2:11:41 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 442!
+!provides: 'Signals' 1 443!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -123,16 +123,6 @@ Module subclass: #DiodeLadder
 	category: 'Signals-Etc'!
 !classDefinition: 'DiodeLadder class' category: #'Signals-Etc'!
 DiodeLadder class
-	instanceVariableNames: ''!
-
-!classDefinition: #TestSine category: #'Signals-Etc'!
-Module subclass: #TestSine
-	instanceVariableNames: 'phase output table'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Etc'!
-!classDefinition: 'TestSine class' category: #'Signals-Etc'!
-TestSine class
 	instanceVariableNames: ''!
 
 !classDefinition: #Chorus category: #'Signals-FX'!
@@ -1157,7 +1147,7 @@ SampleDisplayMorph class
 
 !classDefinition: #SpectrogramMorph category: #'Signals-Morphic-Widgets'!
 BoxMorph subclass: #SpectrogramMorph
-	instanceVariableNames: 'input image position fft windowSize overlap buffer bufferIndex colormap'
+	instanceVariableNames: 'input image position fft hop buffer bufferIndex colormap'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Widgets'!
@@ -1347,7 +1337,7 @@ Downsampler2x class
 
 !classDefinition: #FFT category: #'Signals-Support'!
 Object subclass: #FFT
-	instanceVariableNames: 'nu n sinTable permTable realData imagData window'
+	instanceVariableNames: 'nu n sinTable permTable realData imagData window spectrum aux'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Support'!
@@ -2862,51 +2852,6 @@ setOutputLP3: aBuffer
 !DiodeLadder methodsFor: 'wiring' stamp: 'len 29/Jan/2026 03:00:39'!
 setOutputLP4: aBuffer
 	outputLP4 := aBuffer! !
-
-!TestSine methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 21:31:41'!
-cordicSin: theta
-	|atan x y z |
-   atan := #[0.785398163 0.463647609 0.244978663 0.124354995
-    0.062418810 0.031239833 0.015623729 0.007812341
-    0.003906230 0.001953123 0.000976562 0.000488281
-    0.000244141 0.000122070 0.000061035 0.000030518].
-	
-	
-    x := 0.607252935.
-    y := 0.0.
-    z := theta.
-
-	1 to: 16 do: [:i|
-		|dx dy|
-	        dx := (z >= 0) ifTrue:[y negated] ifFalse: [y].
-        	dy := (z >= 0) ifTrue:[ x] ifFalse:[ x negated].
-        z := z + ((z >= 0) ifTrue:[(atan at: i) negated] ifFalse: [atan at: i]).
-
-        x := x + (dx timesTwoPower: i negated).
-	y := y + (dy timesTwoPower: i negated)].
-    ^ y! !
-
-!TestSine methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 21:34:37'!
-initialize
-	super initialize.
-	phase := 0.0! !
-
-!TestSine methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 20:26:59'!
-patchable
-	^ super patchable addAudioOutput: #setOutput:; yourself! !
-
-!TestSine methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 20:25:08'!
-setOutput: aBuffer
-	output := aBuffer! !
-
-!TestSine methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 00:13:53'!
-tick
-	output ifNil: [^ self].
-	output *= 0.0.
-	1 to: output size do: [:i|
-		output at: i put: (phase * Float twoPi) sin.
-		phase := phase +​ (171.0 / self class sampleRate) \\ 1.0.
-		]! !
 
 !Chorus methodsFor: 'controlling' stamp: 'len 26/Jan/2026 17:46:23'!
 reset
@@ -4517,12 +4462,12 @@ reset
 	phase := 0.0.
 	frequency := startFrequency! !
 
-!SineSweep methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 17:22:40'!
+!SineSweep methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 03:42:13'!
 update
 	super update.
 	startFrequency := (self get: #start) / self class sampleRate.
 	endFrequency := (self get: #end) / self class sampleRate.
-	frequency > endFrequency ifTrue: [self reset]! !
+	(frequency isNil or: [frequency > endFrequency]) ifTrue: [self reset]! !
 
 !Transform methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:17'!
 tick
@@ -7586,16 +7531,16 @@ frequency: aControl
 mode: aSymbol
 	mode := aSymbol! !
 
-!FilterControlMorph methodsFor: 'drawing' stamp: 'len 1/Feb/2026 01:41:57'!
-drawBPOn: aCanvas frequency: freq Q: Q color: curveColor fill: aBoolean
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 4/Feb/2026 00:37:58'!
+drawBPOn: aCanvas frequency: freq bandwidth: bandwidth color: curveColor fill: aBoolean
 	| w h x y notch bw δ p1 p2 p3 |
 	w := self morphWidth.
 	h := self morphHeight.
 	x := freq * w.
 	y := h / 2.0.
-	bw := self notchWidth * (1.2 - Q).
+	bw := self notchWidth / (1.2 - bandwidth).
 	δ := bw / 5.0 @ 0.0.
-	notch := Q * h * 0.5.
+	notch := (1.0 - bandwidth) * h * 0.5.
 	p1 := (x - (bw / 2.0)) @ h.
 	p2 := x @ (y - notch).
 	p3 := (x + (bw / 2.0)) @ h.
@@ -7616,16 +7561,16 @@ drawBPOn: aCanvas frequency: freq Q: Q color: curveColor fill: aBoolean
 			cubicBezierTo: p3 control1: p2 + δ control2: p3 - δ;
 			lineTo: w @ h]! !
 
-!FilterControlMorph methodsFor: 'drawing' stamp: 'len 29/Jan/2026 16:28:19'!
-drawBSOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 4/Feb/2026 00:38:38'!
+drawBSOn: aCanvas frequency: freq bandwidth: bandwidth color: aColor fill: aBoolean
 	| w h x y notch bw δ p1 p2 p3 |
 	w := self morphWidth.
 	h := self morphHeight.
 	x := freq * w.
 	y := h / 2.0.
-	bw := self notchWidth * (1.2 - Q).
+	bw := self notchWidth / (1.2 - bandwidth).
 	δ := bw / 5.0 @ 0.0.
-	notch := Q negated * h * 0.5.
+	notch := (bandwidth - 1.0) * h * 0.5.
 	p1 := (x - (bw / 2.0)) @ y.
 	p2 := x @ (y - notch).
 	p3 := (x + (bw / 2.0)) @ y.
@@ -7720,7 +7665,7 @@ drawLPOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean
 			cubicBezierTo: p2 control1: p1 + δ control2: p2 - δ;
 			cubicBezierTo: p3 control1: p2 + δ control2: p3 - (δ*1.5)]! !
 
-!FilterControlMorph methodsFor: 'drawing' stamp: 'len 30/Jan/2026 15:48:02'!
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 4/Feb/2026 00:32:42'!
 drawOn: aCanvas
 	| prevClipRect |
 	self drawDecadesOn: aCanvas.
@@ -7728,19 +7673,19 @@ drawOn: aCanvas
 	aCanvas setClipRect: ((self externalizeBoundsToWorld: self localBounds) intersect: prevClipRect).
 	"draw the base values first, unless it's not modulated:"
 	(controlX modulation = 0.0 and: [controlY modulation = 0.0]) ifFalse:
-		[self drawOn: aCanvas frequency: controlX basePosition Q: controlY basePosition color: baseColor fill: false].
+		[self drawOn: aCanvas frequency: controlX basePosition Y: controlY basePosition color: baseColor fill: false].
 	"then the modulated values:"
-	self drawOn: aCanvas frequency: controlX modulatedPosition Q: controlY modulatedPosition color: color fill: true.
+	self drawOn: aCanvas frequency: controlX modulatedPosition Y: controlY modulatedPosition color: color fill: true.
 	aCanvas setClipRect: prevClipRect! !
 
-!FilterControlMorph methodsFor: 'drawing' stamp: 'len 30/Jan/2026 15:25:00'!
-drawOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean
-	mode = #LP ifTrue: [^ self drawLPOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean].
-	mode = #HP ifTrue: [^ self drawHPOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean].
-	mode = #BP ifTrue: [^ self drawBPOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean].
-	mode = #BS ifTrue: [^ self drawBSOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean].
-	self drawHPOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean.
-	self drawLPOn: aCanvas frequency: freq Q: Q color: aColor fill: aBoolean! !
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 4/Feb/2026 00:35:14'!
+drawOn: aCanvas frequency: freq Y: yParameter color: aColor fill: aBoolean
+	mode = #LP ifTrue: [^ self drawLPOn: aCanvas frequency: freq Q: yParameter color: aColor fill: aBoolean].
+	mode = #HP ifTrue: [^ self drawHPOn: aCanvas frequency: freq Q: yParameter color: aColor fill: aBoolean].
+	mode = #BP ifTrue: [^ self drawBPOn: aCanvas frequency: freq bandwidth: yParameter color: aColor fill: aBoolean].
+	mode = #BS ifTrue: [^ self drawBSOn: aCanvas frequency: freq bandwidth: yParameter color: aColor fill: aBoolean].
+	self drawHPOn: aCanvas frequency: freq Q: yParameter color: aColor fill: aBoolean.
+	self drawLPOn: aCanvas frequency: freq Q: yParameter color: aColor fill: aBoolean! !
 
 !FilterControlMorph methodsFor: 'drawing' stamp: 'len 1/Feb/2026 01:38:28'!
 highpassColor
@@ -7765,9 +7710,9 @@ initialize
 	baseColor := Color lightGray.
 	lp := hp := bp := bs := false! !
 
-!FilterControlMorph methodsFor: 'private' stamp: 'len 28/Jan/2026 17:07:46'!
+!FilterControlMorph methodsFor: 'private' stamp: 'len 4/Feb/2026 00:40:14'!
 adjustYBy: aNumber
-	super adjustYBy: (mode = #BS ifTrue: [aNumber negated] ifFalse: [aNumber])! !
+	super adjustYBy: (mode = #BP ifTrue: [aNumber negated] ifFalse: [aNumber])! !
 
 !LFOControlMorph methodsFor: 'accessing' stamp: 'len 19/Jan/2026 18:57:51'!
 lfo: anLFO
@@ -9233,7 +9178,7 @@ wantsSteps
 defaultExtent
 	^ 256@128! !
 
-!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 1/Feb/2026 19:21:55'!
+!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 13:57:47'!
 drawOn: aCanvas
 	"Draw the form, wrapping, with the current column always at the left. This produces the the impression of infinite scrolling left to right."
 	| w h p |
@@ -9241,20 +9186,20 @@ drawOn: aCanvas
 	h := image height.
 	p := position.
 	"from left to right, draw from the current column position to the last column:"
-	aCanvas image: image at: 0 @ 0 sourceRect: (p @ 0 corner: w @ h).
+	aCanvas image: image at: 1 @ 0 sourceRect: (p + 1 @ 0 corner: w @ h).
 	"and then wrap and continue drawing from the first column to the current column position - 1:"
-	aCanvas image: image at: (w - p - 1) @ 0 sourceRect: (0 @ 0 corner: p + 2 "??" @ h)! !
+	aCanvas image: image at: (w - p - 1) @ 0 sourceRect: (0 @ 0 corner: p @ h)! !
 
-!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Dec/2025 15:51:57'!
+!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 14:02:15'!
 initialize
 	super initialize.
-	fft := FFT new: 512.
+	fft := FFT new: 1024.
+	hop := (fft size * 0.5) truncated.
 	image := Form extent: self defaultExtent depth: 32.
 	image fillColor: Color transparent.
 	position := 0.
 	buffer := Float32Array new: fft size.
 	bufferIndex := 1.
-	overlap := 0.5.
 	colormap := WordArray new: Viridis size.
 	1 to: Viridis size do: [:i| colormap at: i put: (image pixelValueFor: (Viridis at: i))]! !
 
@@ -9275,11 +9220,12 @@ setInput: aBuffer
 	input := aBuffer.
 	self reset! !
 
-!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Jan/2026 13:53:36'!
+!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 14:02:32'!
 tick
-	| h j remaining k changed spectrum |
+	| h j remaining k changed spectrum s |
 	input ifNil: [^ self].
 	h := image height.
+	s := fft size / 2.0 / h.
 	changed := false.
 	j := 1.
 	remaining := input size.
@@ -9292,12 +9238,12 @@ tick
 		bufferIndex > buffer size ifTrue:
 			[spectrum := fft logSpectrumFrom: buffer.
 			1 to: h do: [:i| | v c |
-				v := spectrum at: i.
+				v := spectrum at: (i - 1 * s) truncated + 1.
 				c := colormap at: (v * (colormap size - 1)) truncated + 1.
 				image pixelValueAt: position@(h-i) put: c].
 			position := position - 1 \\ image width.
-			bufferIndex := (buffer size - 1 * overlap) truncated + 1.
-			buffer replaceFrom: 1 to: bufferIndex - 1 with: buffer startingAt: bufferIndex].
+			bufferIndex := bufferIndex - hop.
+			buffer replaceFrom: 1 to: hop with: buffer startingAt: hop + 1].
 			changed := true].
 	changed ifTrue: [self redrawNeeded]! !
 
@@ -10240,7 +10186,7 @@ addModuleCopying: aModule
 addModuleInstantiating: aClass
 	self addMorph: aClass new patchable position: (self valueOfProperty: #lastMenuOpeningPosition)! !
 
-!PatchMorph methodsFor: 'menu' stamp: 'len 3/Feb/2026 14:28:50'!
+!PatchMorph methodsFor: 'menu' stamp: 'len 4/Feb/2026 14:10:38'!
 getMenu
 	| menu submenu |
 	self setProperty: #lastMenuOpeningPosition toValue: (self internalizeFromWorld: self activeHand morphPosition).
@@ -11414,32 +11360,35 @@ basicRealData: real imagData: imag
 	realData _ real.
 	imagData _ imag! !
 
-!FFT methodsFor: 'initialization' stamp: 'jmv 3/Sep/2020 18:38:00'!
+!FFT methodsFor: 'initialization' stamp: 'len 4/Feb/2026 14:02:00'!
 nu: order
 	"Initialize variables and tables for transforming 2^nu points"
 	|  j perms k |
-	nu _ order.
-	n _ 2 bitShift: nu-1.
+	nu := order.
+	n := 2 bitShift: nu-1.
 
 	"Initialize permutation table (bit-reversed indices)"
-	j _ 0.
-	perms _ WriteStream on: (Array new: n).
+	j := 0.
+	perms := WriteStream on: (Array new: n).
 	0 to: n-2 do:
 		[:i |
 		i < j ifTrue: [perms nextPut: i+1; nextPut: j+1].
-		k _ n // 2.
-		[k <= j] whileTrue: [j _ j-k.  k _ k//2].
-		j _ j + k].
-	permTable _ perms contents asWordArray.
+		k := n // 2.
+		[k <= j] whileTrue: [j := j-k.  k := k//2].
+		j := j + k].
+	permTable := perms contents asWordArray.
 
 	"Initialize sin table 0..pi/2 in n/4 steps."
-	sinTable _ (0 to: n/4) collect: [:i | (i asFloat / (n//4) * Float pi / 2.0) sin].
+	sinTable := (0 to: n/4) collect: [:i | (i asFloat / (n//4) * Float pi / 2.0) sin].
 	
-	sinTable _ sinTable asFloat32Array.
-	realData _ Float32Array new: n.
-	imagData _ Float32Array new: n.
+	sinTable := sinTable asFloat32Array.
+	realData := Float32Array new: n.
+	imagData := Float32Array new: n.
+	
+	spectrum := Float32Array new: n // 2.
+	aux := Float32Array new: n // 2.
 
-	self initializeHammingWindow: 0.54.  "0.54 for Hamming, 0.5 for hanning"! !
+	self initializeHammingWindow: 0.5.  "0.54 for Hamming, 0.5 for hanning"! !
 
 !FFT methodsFor: 'initialization' stamp: 'jmv 3/Sep/2020 18:38:00'!
 realData: real
@@ -11586,21 +11535,22 @@ initializeTriangularWindow
 		window at: (n - i) put: v].
 ! !
 
-!FFT methodsFor: 'stft' stamp: 'len 20/Oct/2025 00:11:00'!
+!FFT methodsFor: 'stft' stamp: 'len 4/Feb/2026 14:09:25'!
 logSpectrumFrom: anArray
-	| x y |
 	realData replaceFrom: 1 to: n with: anArray startingAt: 1.
 	realData *= window.
 	imagData atAllPut: 0.0.
 	self transformForward: true.
 	"Compute the magnitudes of the complex results."
 	"Note: the results are in bottom half; the upper half is just its mirror image."
-	x := realData first: n / 2.
-	x *= x.
-	y := imagData first: n / 2.
-	y *= y.
-	x += y.
-	^ x collect: [:each| (each sqrt / n) linearToNormalizedLog]! !
+	spectrum replaceFrom: 1 to: spectrum size with: realData startingAt: 1.
+	spectrum *= spectrum.
+	aux replaceFrom: 1 to: aux size with:​ imagData startingAt: 1.
+	aux *= aux.
+	spectrum += aux.
+	spectrum *= (4.0 / n) squared. "square here because we take sqrt next"
+	1 to: spectrum size do: [:i| spectrum at: i put: (spectrum at: i) sqrt linearToNormalizedLog].
+	^ spectrum! !
 
 !FFT methodsFor: 'stft' stamp: 'len 20/Oct/2025 02:13:00'!
 spectrumFrom: anArray
@@ -13009,7 +12959,7 @@ linearToDecibelsFSPrintString
 linearToDecibelsPrintString
 	^ self linearToDecibels decibelsPrintString! !
 
-!Number methodsFor: '*signals' stamp: 'len 20/Oct/2025 00:11:00'!
+!Number methodsFor: '*signals' stamp: 'len 4/Feb/2026 04:12:12'!
 linearToNormalizedLog
 	"Map linear amplitude to a value between 0 and 1 in log scale."
 	^ ((self abs + 1.0e-8) log * 20.0 + 80.0) / 80.0 min: 1.0 max: 0.0! !

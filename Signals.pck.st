@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 4 February 2026 at 2:11:41 pm'!
+'From Cuis7.7 [latest update: #7797] on 4 February 2026 at 7:21:51 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 443!
+!provides: 'Signals' 1 444!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1147,7 +1147,7 @@ SampleDisplayMorph class
 
 !classDefinition: #SpectrogramMorph category: #'Signals-Morphic-Widgets'!
 BoxMorph subclass: #SpectrogramMorph
-	instanceVariableNames: 'input image position fft hop buffer bufferIndex colormap'
+	instanceVariableNames: 'input image position fft hop buffer bufferIndex colormap frequencyScale logSpectrum'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Widgets'!
@@ -3227,14 +3227,6 @@ tick
 value
 	^ self next! !
 
-!Generator methodsFor: 'processing' stamp: 'len 3/Oct/2025 01:02:00'!
-value: aNumber
-	^ self value! !
-
-!Generator methodsFor: 'testing' stamp: 'len 24/Sep/2025 19:09:00'!
-atEnd
-	^ false! !
-
 !Generator methodsFor: 'tools' stamp: 'len 26/Jan/2026 11:07:48'!
 bench
 	| n buffer t |
@@ -4019,10 +4011,6 @@ read: aBuffer
 	sample read: aBuffer.
 	aBuffer *= velocity! !
 
-!Multisample methodsFor: 'testing' stamp: 'len 20/Nov/2025 16:38:00'!
-atEnd
-	^ sample atEnd! !
-
 !Multisample methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:10:25'!
 patchable
 	| answer |
@@ -4203,10 +4191,6 @@ readForward: aBuffer
 readWarp: aBuffer
 	speed < 0 ifTrue: [^ self readWarpBackwards: aBuffer].
 	self readWarpForward: aBuffer! !
-
-!Sample methodsFor: 'testing' stamp: 'len 2/Jan/2026 15:07:19'!
-atEnd
-	^ position + increment > buffer size! !
 
 !Sample methodsFor: 'tools' stamp: 'len 22/Jan/2026 04:28:30'!
 panel
@@ -9178,30 +9162,59 @@ wantsSteps
 defaultExtent
 	^ 256@128! !
 
-!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 13:57:47'!
+!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 19:10:35'!
+drawNextLinearSpectrumFrame
+	| w s spectrum |
+	w := image width.
+	s := fft size / 2.0 / w.
+	spectrum := fft spectrumFrom: buffer.
+	0 to: w - 1 do: [:i| | v c |
+		v := spectrum at: (i * s) truncated + 1.
+		c := colormap at: (v * (colormap size - 1)) truncated + 1.
+		image pixelValueAt: i @ position put: c].
+	position := position - 1 \\ image height! !
+
+!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 19:12:16'!
+drawNextLogSpectrumFrame
+	| w |
+	w := image width.
+	fft logSpectrumFrom: buffer into: logSpectrum.
+	1 to: w do: [:i| | v c |
+		v := logSpectrum at: i.
+		c := colormap at: (v * (colormap size - 1)) truncated + 1.
+		image pixelValueAt: i - 1 @ position put: c].
+	position := position - 1 \\ image height! !
+
+!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 16:30:15'!
+drawNextSpectrumFrame
+	frequencyScale = #linear ifTrue: [self drawNextLinearSpectrumFrame] ifFalse: [self drawNextLogSpectrumFrame]! !
+
+!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 19:14:11'!
 drawOn: aCanvas
-	"Draw the form, wrapping, with the current column always at the left. This produces the the impression of infinite scrolling left to right."
+	"Draw the form, wrapping, with the current row always at the top. This produces the the impression of infinite scrolling top to bottom (waterfall)."
 	| w h p |
 	w := image width.
 	h := image height.
 	p := position.
 	"from left to right, draw from the current column position to the last column:"
-	aCanvas image: image at: 1 @ 0 sourceRect: (p + 1 @ 0 corner: w @ h).
+	aCanvas image: image at: 0 @ 0 sourceRect: (0 @ (p + 1) corner: w @ h).
 	"and then wrap and continue drawing from the first column to the current column position - 1:"
-	aCanvas image: image at: (w - p - 1) @ 0 sourceRect: (0 @ 0 corner: p @ h)! !
+	aCanvas image: image at: 0 @ (h - p - 2) sourceRect: (0 @ 0 corner: w @ (p - 1))! !
 
-!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 14:02:15'!
+!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 19:19:15'!
 initialize
 	super initialize.
-	fft := FFT new: 1024.
+	fft := FFT new: 512.
 	hop := (fft size * 0.5) truncated.
-	image := Form extent: self defaultExtent depth: 32.
+	image := Form extent: self defaultExtent + (0 @ 2) depth: 32.
 	image fillColor: Color transparent.
 	position := 0.
 	buffer := Float32Array new: fft size.
 	bufferIndex := 1.
 	colormap := WordArray new: Viridis size.
-	1 to: Viridis size do: [:i| colormap at: i put: (image pixelValueFor: (Viridis at: i))]! !
+	1 to: Viridis size do: [:i| colormap at: i put: (image pixelValueFor: (Viridis at: i))].
+	logSpectrum := Float32Array new: image width.
+	frequencyScale := #linear! !
 
 !SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 15:44:56'!
 patchable
@@ -9220,12 +9233,11 @@ setInput: aBuffer
 	input := aBuffer.
 	self reset! !
 
-!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 14:02:32'!
+!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 16:25:04'!
 tick
-	| h j remaining k changed spectrum s |
+	| h j remaining k changed |
 	input ifNil: [^ self].
 	h := image height.
-	s := fft size / 2.0 / h.
 	changed := false.
 	j := 1.
 	remaining := input size.
@@ -9236,12 +9248,7 @@ tick
 		remaining := remaining - k.
 		bufferIndex := bufferIndex + k.
 		bufferIndex > buffer size ifTrue:
-			[spectrum := fft logSpectrumFrom: buffer.
-			1 to: h do: [:i| | v c |
-				v := spectrum at: (i - 1 * s) truncated + 1.
-				c := colormap at: (v * (colormap size - 1)) truncated + 1.
-				image pixelValueAt: position@(h-i) put: c].
-			position := position - 1 \\ image width.
+			[self drawNextSpectrumFrame.
 			bufferIndex := bufferIndex - hop.
 			buffer replaceFrom: 1 to: hop with: buffer startingAt: hop + 1].
 			changed := true].
@@ -9867,7 +9874,7 @@ setInput: aBuffer
 	input := aBuffer.
 	self reset! !
 
-!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 28/Nov/2025 01:43:00'!
+!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 15:45:43'!
 tick
 	| j remaining k changed |
 	input ifNil: [^ self].
@@ -9884,7 +9891,7 @@ tick
 		bufferIndex := bufferIndex + k.
 		bufferIndex > buffer size ifTrue:
 			[spectrum *= 0.5.
-			spectrum +=​ ((fft logSpectrumFrom: buffer) * 0.5).
+			spectrum +=​ ((fft spectrumFrom: buffer) * 0.5).
 			bufferIndex := 1.
 			changed := true]].
 	changed ifTrue: [self redrawNeeded]! !
@@ -11535,8 +11542,23 @@ initializeTriangularWindow
 		window at: (n - i) put: v].
 ! !
 
-!FFT methodsFor: 'stft' stamp: 'len 4/Feb/2026 14:09:25'!
-logSpectrumFrom: anArray
+!FFT methodsFor: 'stft' stamp: 'len 4/Feb/2026 16:20:30'!
+logSpectrumFrom: anArray into: logArray
+	| b k |
+	self spectrumFrom: anArray.
+	b := spectrum size - 1.0.
+	k := logArray size - 1.0.
+	1 to: logArray size do: [:i|
+		| low high sum |
+		low := (b raisedTo: i - 2.0 / k) truncated + 1.
+		high := (b raisedTo: i - 1.0 / k) truncated + 1.
+		sum := 0.0.
+		low to: high do: [:j| sum := sum + (spectrum at: j)].
+		logArray at: i put: sum / (high - low + 1)].! !
+
+!FFT methodsFor: 'stft' stamp: 'len 4/Feb/2026 15:45:17'!
+spectrumFrom: anArray
+	"Answer the power spectrum of anArray. The magnitudes are in normalized logarithmic scale (from 0 to 1). The frequency bins are linear."
 	realData replaceFrom: 1 to: n with: anArray startingAt: 1.
 	realData *= window.
 	imagData atAllPut: 0.0.
@@ -11551,31 +11573,6 @@ logSpectrumFrom: anArray
 	spectrum *= (4.0 / n) squared. "square here because we take sqrt next"
 	1 to: spectrum size do: [:i| spectrum at: i put: (spectrum at: i) sqrt linearToNormalizedLog].
 	^ spectrum! !
-
-!FFT methodsFor: 'stft' stamp: 'len 20/Oct/2025 02:13:00'!
-spectrumFrom: anArray
-	realData replaceFrom: 1 to: n with: anArray startingAt: 1.
-	realData *= window.
-	imagData atAllPut: 0.0.
-	self transformForward: true.
-	^ ComplexArray real: realData imaginary: imagData! !
-
-!FFT methodsFor: 'stft' stamp: 'len 19/Oct/2025 23:31:00'!
-spectrumFrom: anArray startingAt: startIndex
-	"Forward transform a block of real data taken from from the given collection starting at the given index. Answer a block of values representing the normalized magnitudes of the frequency components."
-	| x y |
-	realData replaceFrom: 1 to: n with: anArray startingAt: startIndex.
-	realData *= window.
-	imagData atAllPut: 0.0.
-	self transformForward: true.
-	"Compute the magnitudes of the complex results."
-	"Note: the results are in bottom half; the upper half is just its mirror image."
-	x := realData first: n / 2.
-	x *= x.
-	y := imagData first: n / 2.
-	y *= y.
-	x += y.
-	^ y collect: [:each| each sqrt]! !
 
 !FFT methodsFor: 'transforming' stamp: 'di 17/Jun/1997 07:47:00'!
 permuteData

@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 4 February 2026 at 7:21:51 pm'!
+'From Cuis7.7 [latest update: #7797] on 6 February 2026 at 2:17:04 am'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 444!
+!provides: 'Signals' 1 445!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -2415,6 +2415,16 @@ tick
 	"Read input buffers, and write to output buffers. Here's where signal processing modules do they work, processing input signals and producing output signals.
 	Note: assume #update was called before calling #tick, so that the internal state was updated from the (possibly modulated) controls."! !
 
+!Module methodsFor: 'serialization' stamp: 'len 5/Feb/2026 17:49:59'!
+asJsonWithBuffers: aList
+	^ OrderedDictionary new
+		at: #settings put: self settings;
+		yourself! !
+
+!Module methodsFor: 'serialization' stamp: 'len 5/Feb/2026 14:43:18'!
+readFromJson: json buffers: aList
+	self settings: (json at: #settings)! !
+
 !Module methodsFor: 'testing' stamp: 'len 7/Dec/2025 00:18:27'!
 is: aSymbol
 	^ aSymbol == #Module or: [super is: aSymbol]! !
@@ -4192,6 +4202,22 @@ readWarp: aBuffer
 	speed < 0 ifTrue: [^ self readWarpBackwards: aBuffer].
 	self readWarpForward: aBuffer! !
 
+!Sample methodsFor: 'serialization' stamp: 'len 5/Feb/2026 15:53:03'!
+asJsonWithBuffers: aList
+	^ (super asJsonWithBuffers: aList)
+		at: #buffer put: (aList indexOf: buffer ifAbsent: [aList add: buffer. aList size]);
+		at: #baseRate put: baseRate;
+		at: #loopLength put: loopLength;
+		at: #loopEnd put: loopEnd;
+		yourself! !
+
+!Sample methodsFor: 'serialization' stamp: 'len 5/Feb/2026 15:53:44'!
+readFromJson: json buffers: aList
+	super readFromJson: json buffers: aList.
+	self buffer: (aList at: (json at: #buffer)) baseRate: (json at: #baseRate).
+	loopLength := json at: #loopLength.
+	loopEnd := json at: #loopEnd! !
+
 !Sample methodsFor: 'tools' stamp: 'len 22/Jan/2026 04:28:30'!
 panel
 	^ super panel
@@ -5935,6 +5961,19 @@ peek
 !LFO methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:17:11'!
 tick
 	self triggerEvent: #output: with: self next! !
+
+!LFO methodsFor: 'serialization' stamp: 'len 5/Feb/2026 15:51:56'!
+asJsonWithBuffers: aList
+	^ (super asJsonWithBuffers: aList)
+		at: #mode put: mode;
+		at: #bipolar put: bipolar;
+		yourself! !
+
+!LFO methodsFor: 'serialization' stamp: 'len 5/Feb/2026 15:53:26'!
+readFromJson: json buffers: aList
+	super readFromJson: json buffers: aList.
+	mode := (json at: #mode) asSymbol.
+	bipolar := json at: #bipolar! !
 
 !LFO methodsFor: 'tools' stamp: 'len 22/Jan/2026 16:18:30'!
 panel
@@ -7790,13 +7829,17 @@ color: aColor
 defaultColor
 	^ Color white! !
 
-!PinMorph methodsFor: 'accessing' stamp: 'len 20/Nov/2025 22:00:00'!
+!PinMorph methodsFor: 'accessing' stamp: 'len 5/Feb/2026 16:06:16'!
 model
-	^ (self firstOwnerSuchThat: [:m| m isKindOf: PatchableMorph]) model! !
+	^ self patchableOwner model! !
 
 !PinMorph methodsFor: 'accessing' stamp: 'len 20/Nov/2025 22:02:00'!
 patch
 	^ self firstOwnerSuchThat: [:m| m isKindOf: PatchMorph]! !
+
+!PinMorph methodsFor: 'accessing' stamp: 'len 5/Feb/2026 16:05:46'!
+patchableOwner
+	^ self firstOwnerSuchThat: [:m| m isKindOf: PatchableMorph]! !
 
 !PinMorph methodsFor: 'accessing' stamp: 'len 18/Nov/2025 18:08:00'!
 radius
@@ -10283,6 +10326,10 @@ open
 body
 	^ body! !
 
+!PatchableMorph methodsFor: 'accessing' stamp: 'len 6/Feb/2026 01:55:15'!
+inputs
+	^ inputsArea submorphs! !
+
 !PatchableMorph methodsFor: 'accessing' stamp: 'len 20/Nov/2025 22:00:00'!
 model
 	^ model! !
@@ -10291,6 +10338,10 @@ model
 model: anObject
 	model := anObject.
 	(model isKindOf: Module) ifTrue: [self setTitle: model title]! !
+
+!PatchableMorph methodsFor: 'accessing' stamp: 'len 6/Feb/2026 01:55:32'!
+outputs
+	^ outputsArea submorphs! !
 
 !PatchableMorph methodsFor: 'accessing' stamp: 'len 20/Nov/2025 22:01:00'!
 patch
@@ -12075,6 +12126,57 @@ tick
 	currentModules do: [:each| (each is: #Module) ifTrue: [each clear]].
 	trigger ifNotNil: [self playTrigger].
 	currentModules do: [:each| each update; tick]! !
+
+!Patch methodsFor: 'serialization' stamp: 'len 6/Feb/2026 02:11:16'!
+asJsonWithBuffers: aList
+	| patchables wires patchablesJson wiresJson |
+	patchables := (patchMorph submorphs select: [:m| m isKindOf: PatchableMorph]) sort: [:a :b| a morphPosition x <= b morphPosition x].
+	wires := patchMorph submorphs select: [:m| m isKindOf: WireMorph].
+	patchablesJson := patchables collect: [:each|
+		OrderedDictionary new
+			at: #class put: each model class name;
+			at: #x put: each morphPosition x;
+			at: #y put: each morphPosition y;
+			at: #module put: (each model asJsonWithBuffers: aList);
+			yourself].
+	wiresJson := wires collect: [:each|
+		OrderedDictionary new
+			at: #source put: (patchables indexOf: each source patchableOwner);
+			at: #output put: each source selector;
+			at: #target put: (patchables indexOf: each target patchableOwner);
+			at: #input put: each target selector;
+			yourself].
+	^ OrderedDictionary new
+		at: #modules put: patchablesJson;
+		at: #wires put: wiresJson;
+		yourself! !
+
+!Patch methodsFor: 'serialization' stamp: 'len 6/Feb/2026 02:15:37'!
+readFrom: aStream
+	| numberOfBuffers bufferList json patchables |
+	numberOfBuffers := aStream nextInt32BigEndian: true.
+	bufferList := (1 to: numberOfBuffers) collect: [:i| Float32Array newFromStream: aStream].
+	json := Json readFrom: aStream.
+	patchables := (json at: #modules) collect: [:each|
+		| module |
+		module := (Smalltalk at: (each at: #class) asSymbol) new.
+		module readFromJson: (each at: #module) buffers: bufferList.
+		module patchable morphPosition: (each at: #x) @ (each at: #y)].
+	patchables do: [:each| patchMorph addMorph: each].
+	(json at: #wires) do: [:each|
+		| output input |
+		output := (patchables at: (each at: #source)) outputs detect: [:one| one selector = (each at: #output)].
+		input := (patchables at: (each at: #target)) inputs detect: [:one| one selector = (each at: #input)].
+		output addConnectionTo: input]! !
+
+!Patch methodsFor: 'serialization' stamp: 'len 5/Feb/2026 17:57:19'!
+writeOn: aStream
+	| bufferList json |
+	bufferList := OrderedCollection new.
+	json := self asJsonWithBuffers: bufferList.
+	aStream nextInt32Put: bufferList size bigEndian: true.
+	bufferList do: [:each| each writeOn: aStream].
+	json jsonWriteOn: aStream! !
 
 !Pattern methodsFor: 'accessing' stamp: 'len 18/Dec/2025 16:32:38'!
 length

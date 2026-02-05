@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 6 February 2026 at 2:17:04 am'!
+'From Cuis7.7 [latest update: #7797] on 6 February 2026 at 2:26:36 am'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 445!
+!provides: 'Signals' 1 446!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -465,16 +465,6 @@ Transform subclass: #Vibrato
 Vibrato class
 	instanceVariableNames: ''!
 
-!classDefinition: #Wavefolder category: #'Signals-FX'!
-Transform subclass: #Wavefolder
-	instanceVariableNames: 'gain offset'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-FX'!
-!classDefinition: 'Wavefolder class' category: #'Signals-FX'!
-Wavefolder class
-	instanceVariableNames: ''!
-
 !classDefinition: #BPF category: #'Signals-Filters'!
 Transform subclass: #BPF
 	instanceVariableNames: 'biquad'
@@ -545,14 +535,14 @@ Transform2x subclass: #Clipper
 Clipper class
 	instanceVariableNames: ''!
 
-!classDefinition: #Wavefolder2x category: #'Signals-FX'!
-Transform2x subclass: #Wavefolder2x
+!classDefinition: #Wavefolder category: #'Signals-FX'!
+Transform2x subclass: #Wavefolder
 	instanceVariableNames: 'gain offset'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
-!classDefinition: 'Wavefolder2x class' category: #'Signals-FX'!
-Wavefolder2x class
+!classDefinition: 'Wavefolder class' category: #'Signals-FX'!
+Wavefolder class
 	instanceVariableNames: ''!
 
 !classDefinition: #Korg35HPF category: #'Signals-VA Filters'!
@@ -1594,11 +1584,6 @@ Time-domain pitch shifter based on two modulated delay lines with crossfading wi
 
 Pitch-shifting is achieved by modulating a delay line: the write pointer always advances at normal speed, but the read pointer advances faster (pitch up) or slower (pitch down). This causes discontinuities when the read pointer catches up or falls too far behind, but the discontinuities are hidden by crossfading between two delay lines running the same algorithm in parallel with a phase offset of 180°.!
 
-!Wavefolder commentStamp: '<historical>' prior: 0!
-Basic wavefolder. Amplitude of input determines level of folding. Amplitudes of magnitude > 1.0 will start to fold.
-
-Based on code from DaisySP by Nick Donaldson.!
-
 !BPF commentStamp: 'len 2/Feb/2026 18:24:24' prior: 0!
 This is a second order (12 dB/oct) band-pass filter based on a biquad.!
 
@@ -1619,7 +1604,7 @@ This is a second order (12 dB/oct) low-pass filter based on a biquad.!
 !Transform2x commentStamp: 'len 4/Feb/2026 00:25:50' prior: 0!
 An abstract superclass for transforms that internally do 2× oversampling. This is useful for implementing transforms that are not linear-time-invariant (LTI), such as saturation, wavefolding, or virtual analog filters.!
 
-!Wavefolder2x commentStamp: '<historical>' prior: 0!
+!Wavefolder commentStamp: '<historical>' prior: 0!
 Basic wavefolder. Amplitude of input determines level of folding. Amplitudes of magnitude > 1.0 will start to fold.
 
 Based on code from DaisySP by Nick Donaldson.!
@@ -4951,56 +4936,6 @@ tick
 		delayLine write: (input at: i).
 		output at: i put: tap read]! !
 
-!Wavefolder methodsFor: 'accessing' stamp: 'len 27/Sep/2025 21:35:00'!
-gain: aNumber
-	"Set input gain. Supports negative values for thru-zero."
-	gain := aNumber! !
-
-!Wavefolder methodsFor: 'accessing' stamp: 'len 27/Sep/2025 21:36:00'!
-offset: aNumber
-	"Set offset added to input (pre-gain) for asymmetrical folding."
-	offset := aNumber! !
-
-!Wavefolder methodsFor: 'controlling' stamp: 'len 22/Nov/2025 22:51:00'!
-update
-	super update.
-	gain := self get: #gain.
-	offset := self get: #offset! !
-
-!Wavefolder methodsFor: 'initialization' stamp: 'len 20/Nov/2025 00:52:00'!
-initialize
-	super initialize.
-	gain := 1.0.
-	offset := 0.0! !
-
-!Wavefolder methodsFor: 'initialization' stamp: 'len 3/Dec/2025 00:04:00'!
-initializeControls
-	super initializeControls.
-	self addControl: #gain min: -4.0 max: 4.0 value: 1.0.
-	self addControl: #offset min: -2.0 max: 2.0 value: 0.0! !
-
-!Wavefolder methodsFor: 'processing' stamp: 'len 20/Nov/2025 00:52:00'!
-value: in
-	| x ft |
-	x := in.
-	x := (x + offset) * gain.
-	ft := ((x + 1.0) * 0.5) floor.
-	x := x - (ft * 2).
-	ft odd ifTrue: [x := x negated].
-	^ x! !
-
-!Wavefolder methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:42:47'!
-patchable
-	| answer |
-	answer := PatchableMorph new model: self.
-	answer body addMorph: self panel.
-	^ answer
-		addAudioInput: #setInput:;
-		addControlInput: #gain;
-		addControlInput: #offset;
-		addAudioOutput: #setOutput:;
-		yourself! !
-
 !BPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:18:45'!
 reset
 	biquad reset! !
@@ -5198,14 +5133,7 @@ tick
 	input ifNil: [1 to: output size do: [:i| output at: i put: (self value: 0.0)]. ^ self].
 	1 to: input size do: [:i| output at: i put: (oversampler oversampling: (input at: i) do: self)]! !
 
-!Clipper methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 23:54:49'!
-initializeControls
-	super initializeControls.
-	self addVolumeControl: #pregain min: 0.25 max: 64.0 value: 1.0.
-	self addVolumeControl: #clip min: 0.063 max: 1.0 value: 1.0.
-	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0! !
-
-!Clipper methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 23:57:42'!
+!Clipper methodsFor: 'controlling' stamp: 'len 2/Feb/2026 23:57:42'!
 update
 	super update.
 	pregain := self get: #pregain.
@@ -5213,42 +5141,33 @@ update
 	negativeClip := positiveClip negated.
 	postgain := self get: #postgain! !
 
-!Clipper methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 23:57:46'!
+!Clipper methodsFor: 'initialization' stamp: 'len 2/Feb/2026 23:54:49'!
+initializeControls
+	super initializeControls.
+	self addVolumeControl: #pregain min: 0.25 max: 64.0 value: 1.0.
+	self addVolumeControl: #clip min: 0.063 max: 1.0 value: 1.0.
+	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0! !
+
+!Clipper methodsFor: 'processing' stamp: 'len 2/Feb/2026 23:57:46'!
 value: in
 	| x |
 	x := in * pregain.
 	x := x < negativeClip ifTrue: [negativeClip] ifFalse: [x > positiveClip ifTrue: [positiveClip] ifFalse: [x]].
 	^ x * postgain! !
 
-!Wavefolder2x methodsFor: 'accessing' stamp: 'len 2/Feb/2026 02:40:28'!
-gain: aNumber
-	"Set input gain. Supports negative values for thru-zero."
-	gain := aNumber! !
-
-!Wavefolder2x methodsFor: 'accessing' stamp: 'len 2/Feb/2026 02:40:28'!
-offset: aNumber
-	"Set offset added to input (pre-gain) for asymmetrical folding."
-	offset := aNumber! !
-
-!Wavefolder2x methodsFor: 'controlling' stamp: 'len 2/Feb/2026 02:40:28'!
+!Wavefolder methodsFor: 'controlling' stamp: 'len 22/Nov/2025 22:51:00'!
 update
 	super update.
 	gain := self get: #gain.
 	offset := self get: #offset! !
 
-!Wavefolder2x methodsFor: 'initialization' stamp: 'len 2/Feb/2026 02:40:28'!
-initialize
-	super initialize.
-	gain := 1.0.
-	offset := 0.0! !
-
-!Wavefolder2x methodsFor: 'initialization' stamp: 'len 2/Feb/2026 02:40:28'!
+!Wavefolder methodsFor: 'initialization' stamp: 'len 6/Feb/2026 02:23:35'!
 initializeControls
 	super initializeControls.
-	self addControl: #gain min: -4.0 max: 4.0 value: 1.0.
-	self addControl: #offset min: -2.0 max: 2.0 value: 0.0! !
+	self addControl: #gain min: -4.0 max: 4.0 value: 1.0. "negative gain values for thru-zero"
+	self addControl: #offset min: -2.0 max: 2.0 value: 0.0 "offset added to input (pre-gain) for asymmetrical folding"! !
 
-!Wavefolder2x methodsFor: 'processing' stamp: 'len 2/Feb/2026 02:40:28'!
+!Wavefolder methodsFor: 'processing' stamp: 'len 20/Nov/2025 00:52:00'!
 value: in
 	| x ft |
 	x := in.
@@ -5258,7 +5177,7 @@ value: in
 	ft odd ifTrue: [x := x negated].
 	^ x! !
 
-!Wavefolder2x methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:43:30'!
+!Wavefolder methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:42:47'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.

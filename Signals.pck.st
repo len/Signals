@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 6 February 2026 at 3:35:40 pm'!
+'From Cuis7.7 [latest update: #7797] on 6 February 2026 at 3:50:20 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 447!
+!provides: 'Signals' 1 449!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -8422,11 +8422,11 @@ moveCursorRight
 			[cursorPosition := cursorPosition + 1].
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 1/Jan/2026 16:45:55'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 6/Feb/2026 15:43:34'!
 renameTrack
 	| track |
 	track := tracker selectedTrack.
-	self request: 'Track label' initialAnswer: track label do: [:newName| track label: newName. self redrawNeeded]! !
+	self request: 'Track label' initialAnswer: (track label ifNil: ['']) do: [:newName| track label: (newName ifEmpty: []). self redrawNeeded]! !
 
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 4/Jan/2026 15:52:47'!
 setPatternLength
@@ -8512,7 +8512,7 @@ drawPatternOn: aCanvas
 				x := trackWidth + x].
 		y := y + lineSpacing]! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 18/Jan/2026 20:30:13'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 6/Feb/2026 15:47:14'!
 drawTracksOn: aCanvas
 	| color textColor charWidth trackWidth x mask headerLineWidth |
 	charWidth := font widthOf: $X.
@@ -8520,7 +8520,7 @@ drawTracksOn: aCanvas
 	headerLineWidth := charWidth / 2.0.
 	x := charWidth * 2.5.
 	mask := tracker selectedMask.
-	tracker tracks withIndexDo: [:track :i| | trackColor |
+	tracker tracks withIndexDo: [:track :i| | trackColor trackLabel |
 		trackColor := track color.
 		aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: (trackColor alpha: (i = tracker cursorTrack ifTrue: [0.15] ifFalse: [0.1])).
 		((mask at: i) and: [track enabled])
@@ -8531,7 +8531,9 @@ drawTracksOn: aCanvas
 				[color := trackColor darker: 0.25.
 				textColor := Color white darker: 0.25].
 		aCanvas fillRectangle: (x @ 0 extent: trackWidth @ headerLineWidth) color: color.
-		aCanvas drawString: track label asString at: x+1 @ 8 font: labelFont color: textColor.
+		trackLabel := i printString.
+		track label ifNotNil: [:aString| trackLabel := trackLabel, ' ', aString].
+		aCanvas drawString: trackLabel at: x+(trackWidth - (labelFont widthOfString: trackLabel) / 2.0) @ 8 font: labelFont color: textColor.
 		x := x + trackWidth.
 		track muted ifTrue: [aCanvas drawString: 'M' at: (x - (font widthOf: $M)) @ 9 font: font color: textColor].
 		track soloed ifTrue: [aCanvas drawString: 'S' at: (x - (font widthOfString: 'SM') - 4 @ 9) font: font color: textColor].
@@ -12748,12 +12750,12 @@ deleteTrack: anInteger
 	cursorTrack := cursorTrack min: tracks size.
 	self triggerEvent: #tracksChanged! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 6/Jan/2026 15:24:06'!
+!Tracker methodsFor: 'tracks' stamp: 'len 6/Feb/2026 15:49:39'!
 insertTrack: anInteger
 	| answer |
 	answer := Track new setTracker: self.
-	answer label: 'Track ', (tracks size + 1) printString.
-	answer color: (Color okl: 0.7 c: 0.4 h: (137.5 / 3) * (tracks size + 4) \\ 360.0).
+	"answer label: 'Track ', (tracks size + 1) printString."
+	answer color: (Color okl: 0.7 c: 0.4 h: (137.5 / 5) * (tracks size "+ 4") \\ 360.0).
 	tracks := (tracks copyFrom: 1 to: anInteger - 1), {answer}, (tracks copyFrom: anInteger to: tracks size).
 	patterns do: [:each| each insertTrack: anInteger].
 	masks := masks collect: [:each| (each copyFrom: 1 to: anInteger - 1), {true}, (each copyFrom: anInteger to: each size)].

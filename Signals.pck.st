@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 6 February 2026 at 2:26:36 am'!
+'From Cuis7.7 [latest update: #7797] on 6 February 2026 at 3:35:40 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 446!
+!provides: 'Signals' 1 447!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -12154,6 +12154,32 @@ setRandomEntries
 					4 atRandom = 1 ifTrue: [trig fx2: (('01234567890ABCDEFEGHPQRXYZ' atRandom asciiValue bitShift: 8) bitOr: 256 atRandom - 1)].
 					self track: t at: i put: trig]]]]! !
 
+!Pattern methodsFor: 'serialization' stamp: 'len 6/Feb/2026 15:32:46'!
+asJson
+	| answer blocksJson |
+	answer := OrderedDictionary new.
+	answer at: #length put: length.
+	blocksJson := blocks collect: [:eachBlock|
+		| blockJson |
+		blockJson := OrderedCollection new.
+		eachBlock ifNotNil:
+			[eachBlock withIndexDo: [:each :i|
+				each ifNotNil:
+					[blockJson add: (OrderedDictionary new at: #line put: i; at: #trigger put: each asJson; yourself)]]].
+		blockJson asArray].
+	answer at: #blocks put: blocksJson.
+	^ answer! !
+
+!Pattern methodsFor: 'serialization' stamp: 'len 6/Feb/2026 15:34:16'!
+readFromJson: json
+	| blocksJson |
+	length := json at: #length.
+	blocksJson := json at: #blocks.
+	blocks := Array new: blocksJson size.
+	blocksJson withIndexDo: [:eachBlockJson :t|
+		eachBlockJson do: [:rowJson|
+			self track: t at: (rowJson at: #line) put: (Trigger new readFromJson: (rowJson at: #trigger))]]! !
+
 !Pattern methodsFor: 'testing' stamp: 'len 29/Dec/2025 16:38:32'!
 hasReferenceToPatch: anInteger
 	^ blocks anySatisfy: [:block| block notNil and: [block anySatisfy: [:trigger| trigger notNil and: [trigger instrument = anInteger]]]]! !
@@ -12857,6 +12883,25 @@ velocity
 !Trigger methodsFor: 'accessing' stamp: 'len 19/Dec/2025 19:13:43'!
 velocity: anInteger
 	velocity := anInteger! !
+
+!Trigger methodsFor: 'serialization' stamp: 'len 6/Feb/2026 15:11:33'!
+asJson
+	| answer |
+	answer := OrderedDictionary new.
+	note ifNotNil: [answer at: #note put: note].
+	instrument ifNotNil: [answer at: #instrument put: instrument].
+	velocity ifNotNil: [answer at: #velocity put: velocity].
+	fx1 ifNotNil: [answer at: #fx1 put: fx1].
+	fx2 ifNotNil: [answer at: #fx2 put: fx2].
+	^ answer! !
+
+!Trigger methodsFor: 'serialization' stamp: 'len 6/Feb/2026 15:13:53'!
+readFromJson: json
+	note := json at: #note ifAbsent: [].
+	instrument := json at: #instrument ifAbsent: [].
+	velocity := json at: #velocity ifAbsent: [].
+	fx1 := json at: #fx1 ifAbsent: [].
+	fx2 := json at: #fx2 ifAbsent: []! !
 
 !Trigger methodsFor: 'testing' stamp: 'len 31/Dec/2025 19:53:46'!
 hasTrackVolumeChange

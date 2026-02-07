@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 6 February 2026 at 3:50:20 pm'!
+'From Cuis7.7 [latest update: #7797] on 7 February 2026 at 7:20:08 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 449!
+!provides: 'Signals' 1 450!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -7245,11 +7245,11 @@ drawOn: aCanvas
 maximumSegmentWidth
 	^ self morphWidth / 3.0! !
 
-!ADSRControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:08:24'!
+!ADSRControlMorph methodsFor: 'events' stamp: 'len 6/Feb/2026 17:56:15'!
 mouseScroll: anEvent localPosition: localEventPosition
 	| step w a d s r control |
 	step := anEvent shiftPressed ifTrue: [self fineStep] ifFalse: [self coarseStep].
-	anEvent isVertical ifTrue:
+	(anEvent direction = #up or: [anEvent direction = #down]) ifTrue:
 		[anEvent direction = #up ifTrue: [step := step negated].
 		sustain basePosition: sustain basePosition + step.
 		self showBalloon: sustain printedBaseValueWithLabel.
@@ -7381,11 +7381,11 @@ drawOn: aCanvas
 maximumSegmentWidth
 	^ self morphWidth / 2.0! !
 
-!ASRControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:09:28'!
+!ASRControlMorph methodsFor: 'events' stamp: 'len 6/Feb/2026 17:57:39'!
 mouseScroll: anEvent localPosition: localEventPosition
 	| step w a s r control |
 	step := anEvent shiftPressed ifTrue: [self fineStep] ifFalse: [self coarseStep].
-	anEvent isVertical ifTrue:
+	(anEvent direction = #up or: [anEvent direction = #down]) ifTrue:
 		[anEvent direction = #up ifTrue: [step := step negated].
 		sustain basePosition: sustain basePosition + step.
 		self showBalloon: sustain printedBaseValue.
@@ -8338,13 +8338,12 @@ yForMeterValue: aNumber
 handlesMouseScroll: anEvent
 	^ anEvent anyModifierKeyPressed not! !
 
-!MultitrackMeterMorph methodsFor: 'events' stamp: 'len 24/Jan/2026 14:21:39'!
+!MultitrackMeterMorph methodsFor: 'events' stamp: 'len 6/Feb/2026 17:57:18'!
 mouseScroll: anEvent localPosition: localEventPosition
 	| step |
 	step := 0.01.
 	anEvent shiftPressed ifTrue: [step := step * 0.1].
-	anEvent isVertical ifFalse: [^ self].
-	anEvent direction = #up ifTrue: [step := step negated].
+	anEvent direction = #up ifTrue: [step := step negated] ifFalse: [anEvent direction = #down ifFalse: [^ self]].
 	tracker level: tracker level + step.
 	self showBalloon: tracker level linearToDecibelsPrintString! !
 
@@ -8433,7 +8432,7 @@ setPatternLength
 	tracker isPlaying ifTrue: [^ self].
 	self request: 'Pattern length' initialAnswer: tracker selectedPattern length printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| tracker setSelectedPatternLength: s asNumber. self redrawNeeded]! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 9/Jan/2026 17:02:19'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 7/Feb/2026 19:18:55'!
 drawCursorOn: aCanvas
 	| lineSpacing charWidth cursorWidth x y cursorRect |
 	lineSpacing := font lineSpacing.
@@ -8441,7 +8440,7 @@ drawCursorOn: aCanvas
 	y := self morphHeight / 2.0.
 	aCanvas fillRectangle: (0 @ y extent: self morphWidth @ lineSpacing) color: (Color white alpha: 0.1).
 	cursorWidth := cursorPosition = 1 ifTrue: [3] ifFalse: [1].
-	x := (Track tracksWidthInCharacters + 0.5) * (tracker cursorTrack - 1) + 2.5 + cursorPosition - 1.
+	x := (self tracksWidthInCharacters + 0.5) * (tracker cursorTrack - 1) + 2.5 + cursorPosition - 1.
 	cursorPosition > 1 ifTrue: [x := x + 2.5].
 	cursorPosition > 3 ifTrue: [x := x + 0.5].
 	cursorPosition > 5 ifTrue: [x := x + 0.5].
@@ -8457,13 +8456,13 @@ drawOn: aCanvas
 	self drawCursorOn: aCanvas.
 	self drawPatternOn: aCanvas! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 10/Jan/2026 23:03:27'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 7/Feb/2026 19:19:00'!
 drawPatternOn: aCanvas
 	| lineSpacing charWidth y unsetColor  noteColor velocityColor fxColor pattern endLine middle startLine darkColor lightColor xLeft xRight beatColor trackWidth |
 	pattern := tracker selectedPattern.
 	lineSpacing := font lineSpacing.
 	charWidth := font widthOf: $X.
-	trackWidth := charWidth * (Track tracksWidthInCharacters + 0.5).
+	trackWidth := charWidth * (self tracksWidthInCharacters + 0.5).
 	unsetColor := Color lightGray.
 	noteColor := Color white.
 	velocityColor := Color lemonPhosphor.
@@ -8512,11 +8511,11 @@ drawPatternOn: aCanvas
 				x := trackWidth + x].
 		y := y + lineSpacing]! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 6/Feb/2026 15:47:14'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 7/Feb/2026 19:19:07'!
 drawTracksOn: aCanvas
 	| color textColor charWidth trackWidth x mask headerLineWidth |
 	charWidth := font widthOf: $X.
-	trackWidth := charWidth * Track tracksWidthInCharacters.
+	trackWidth := charWidth * self tracksWidthInCharacters.
 	headerLineWidth := charWidth / 2.0.
 	x := charWidth * 2.5.
 	mask := tracker selectedMask.
@@ -8539,6 +8538,10 @@ drawTracksOn: aCanvas
 		track soloed ifTrue: [aCanvas drawString: 'S' at: (x - (font widthOfString: 'SM') - 4 @ 9) font: font color: textColor].
 		x := x + (charWidth/2.0)].
 	aCanvas fillRectangle: (x @ 0 corner: extent x @ headerLineWidth) color: Color darkGray! !
+
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 7/Feb/2026 19:18:41'!
+tracksWidthInCharacters
+	^ 15! !
 
 !PatternEditorMorph methodsFor: 'events' stamp: 'len 20/Jan/2026 16:32:26'!
 handleCommandHotkey: anEvent
@@ -8644,11 +8647,11 @@ keyStroke: anEvent
 	(self handleKeyStroke: anEvent) ifTrue: [anEvent wasHandled: true. ^ self].
 	^ super keyStroke: anEvent! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 21/Jan/2026 16:06:24'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 7/Feb/2026 19:19:21'!
 mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
 	| charWidth trackWidth x |
 	charWidth := font widthOf: $X.
-	trackWidth := charWidth * Track tracksWidthInCharacters + (charWidth/2.0).
+	trackWidth := charWidth * self tracksWidthInCharacters + (charWidth/2.0).
 	x := localEventPosition x - (charWidth * 2.5).
 	x < 0.0 ifTrue: [^ self].
 	tracker setCursorTrack: (x / trackWidth) truncated + 1! !
@@ -8658,11 +8661,11 @@ keyboardFocusChange: aBoolean
 	aBoolean ifTrue: [self startBlinking] ifFalse: [self stopBlinking].
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'geometry' stamp: 'len 31/Dec/2025 23:16:15'!
+!PatternEditorMorph methodsFor: 'geometry' stamp: 'len 7/Feb/2026 19:19:15'!
 minimumExtent
 	| n |
 	n := tracker tracks size.
-	^ (font widthOf: $X) * (n * (Track tracksWidthInCharacters + 0.5) + 4.5) @ (font lineSpacing * 16)! !
+	^ (font widthOf: $X) * (n * (self tracksWidthInCharacters + 0.5) + 4.5) @ (font lineSpacing * 16)! !
 
 !PatternEditorMorph methodsFor: 'initialization' stamp: 'len 9/Jan/2026 15:21:31'!
 initialize
@@ -8678,11 +8681,11 @@ initialize
 	pauseBlinking := false.
 	self initializeEmptyTriggerImage! !
 
-!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 10/Jan/2026 23:02:20'!
+!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 7/Feb/2026 19:19:11'!
 initializeEmptyTriggerImage
 	| charWidth trackWidth color |
 	charWidth := font widthOf: $X.
-	trackWidth := charWidth * Track tracksWidthInCharacters.
+	trackWidth := charWidth * self tracksWidthInCharacters.
 	emptyTriggerImage := Form extent: trackWidth @ font lineSpacing depth: Display depth.
 	color := Color lightGray.
 	(VectorCanvas onForm: emptyTriggerImage)
@@ -12321,10 +12324,6 @@ tick
 	trigger ifNotNil: [ticksToTrigger > 0 ifTrue: [ticksToTrigger := ticksToTrigger - 1] ifFalse: [self playTrigger]].
 	patch ifNotNil: [patch tick]! !
 
-!Track class methodsFor: 'as yet unclassified' stamp: 'len 24/Dec/2025 22:58:50'!
-tracksWidthInCharacters
-	^ 15! !
-
 !Tracker methodsFor: 'accessing' stamp: 'len 16/Dec/2025 17:27:25'!
 bpm
 	^ bpm! !
@@ -12782,10 +12781,16 @@ selectedMask
 selectedTrack
 	^ tracks at: cursorTrack! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 31/Dec/2025 22:50:11'!
+!Tracker methodsFor: 'tracks' stamp: 'len 6/Feb/2026 18:56:04'!
 swapTrack: anInteger with: anotherInteger
+	| color1 |
 	anInteger = anotherInteger ifTrue: [^ self].
 	tracks swap: anInteger with: anotherInteger.
+	"swap track colors:"
+	color1 := (tracks at: anInteger) color.
+	(tracks at: anInteger) color: (tracks at: anotherInteger) color.
+	(tracks at: anotherInteger) color: color1.
+	"swap pattern blocks and masks:"
 	patterns do: [:each| each swapTrack: anInteger with: anotherInteger].
 	masks := masks collect: [:each| each swap: anInteger with: anotherInteger].
 	self triggerEvent: #tracksChanged! !

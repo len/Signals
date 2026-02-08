@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 8 February 2026 at 9:39:22 pm'!
+'From Cuis7.7 [latest update: #7797] on 9 February 2026 at 2:49:13 am'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 451!
+!provides: 'Signals' 1 452!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -506,16 +506,6 @@ Transform subclass: #Transform2x
 Transform2x class
 	instanceVariableNames: ''!
 
-!classDefinition: #AsymmetricSaturator category: #'Signals-Shapers'!
-Transform2x subclass: #AsymmetricSaturator
-	instanceVariableNames: 'pregain postgain bias dc'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Shapers'!
-!classDefinition: 'AsymmetricSaturator class' category: #'Signals-Shapers'!
-AsymmetricSaturator class
-	instanceVariableNames: ''!
-
 !classDefinition: #DiodeClipper category: #'Signals-Shapers'!
 Transform2x subclass: #DiodeClipper
 	instanceVariableNames: 'pregain clip bias dc postgain dry'
@@ -524,6 +514,16 @@ Transform2x subclass: #DiodeClipper
 	category: 'Signals-Shapers'!
 !classDefinition: 'DiodeClipper class' category: #'Signals-Shapers'!
 DiodeClipper class
+	instanceVariableNames: ''!
+
+!classDefinition: #Foldback category: #'Signals-Shapers'!
+Transform2x subclass: #Foldback
+	instanceVariableNames: 'pregain fold bias postgain dry'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Shapers'!
+!classDefinition: 'Foldback class' category: #'Signals-Shapers'!
+Foldback class
 	instanceVariableNames: ''!
 
 !classDefinition: #HardClipper category: #'Signals-Shapers'!
@@ -536,14 +536,14 @@ Transform2x subclass: #HardClipper
 HardClipper class
 	instanceVariableNames: ''!
 
-!classDefinition: #Saturator category: #'Signals-Shapers'!
-Transform2x subclass: #Saturator
-	instanceVariableNames: 'pregain postgain'
+!classDefinition: #Rectifier category: #'Signals-Shapers'!
+Transform2x subclass: #Rectifier
+	instanceVariableNames: 'mode pregain bias postgain dry'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Shapers'!
-!classDefinition: 'Saturator class' category: #'Signals-Shapers'!
-Saturator class
+!classDefinition: 'Rectifier class' category: #'Signals-Shapers'!
+Rectifier class
 	instanceVariableNames: ''!
 
 !classDefinition: #TubeSaturator category: #'Signals-Shapers'!
@@ -558,7 +558,7 @@ TubeSaturator class
 
 !classDefinition: #Wavefolder category: #'Signals-Shapers'!
 Transform2x subclass: #Wavefolder
-	instanceVariableNames: 'gain offset'
+	instanceVariableNames: 'gain bias'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Shapers'!
@@ -614,6 +614,16 @@ Transform subclass: #Overdrive
 	category: 'Signals-Shapers'!
 !classDefinition: 'Overdrive class' category: #'Signals-Shapers'!
 Overdrive class
+	instanceVariableNames: ''!
+
+!classDefinition: #Saturator category: #'Signals-Shapers'!
+Transform subclass: #Saturator
+	instanceVariableNames: 'pregain postgain bias dc'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Shapers'!
+!classDefinition: 'Saturator class' category: #'Signals-Shapers'!
+Saturator class
 	instanceVariableNames: ''!
 
 !classDefinition: #TapeSaturator category: #'Signals-Shapers'!
@@ -1659,22 +1669,22 @@ This is a second order (12 dB/oct) low-pass filter based on a biquad.!
 !Transform2x commentStamp: 'len 4/Feb/2026 00:25:50' prior: 0!
 An abstract superclass for transforms that internally do 2× oversampling. This is useful for implementing transforms that are not linear-time-invariant (LTI), such as saturation, wavefolding, or virtual analog filters.!
 
-!AsymmetricSaturator commentStamp: '<historical>' prior: 0!
-This saturator introduces controlled asymmetry into the soft-clipping curve, creating a mix of even and odd harmonics. Bias can be adjusted to shape the harmonic content and can optionally scale with drive for subtle dynamic behavior.
-
-It is ideal for adding musical warmth, thickness, or subtle tonal color to signals, especially when a slightly uneven saturation character is desired. Unlike tape saturation, it does not apply pre- or post-filtering, keeping its effect primarily in the nonlinearity.!
-
 !DiodeClipper commentStamp: 'len 8/Feb/2026 21:27:18' prior: 0!
 This module implements a threshold-based nonlinear clipping stage inspired by diode conduction. The signal remains linear below the forward voltage and transitions into soft clipping above it, producing a harder and more mid-focused character than smooth saturation.
 
 It is well suited for aggressive distortion, synth and guitar-style clipping, and parallel distortion effects, with controllable asymmetry to shape even harmonics and bite.!
 
+!Foldback commentStamp: '<historical>' prior: 0!
+Foldback distortion reflects the signal back into a fixed amplitude window once it exceeds a fold level.
+Unlike clipping or saturation, the transfer function is non-monotonic, producing inharmonic and metallic spectra that increase in complexity with input level. Foldback is primarily a sound-design tool and can alias strongly at high levels; parallel mixing or filtering is usually required for controlled results.!
+
 !HardClipper commentStamp: 'len 8/Feb/2026 18:21:46' prior: 0!
 This module applies a strict limiting nonlinearity to the input signal, producing immediate clipping at a defined threshold. This generates strong odd and even harmonics and introduces audible harshness at high levels.
 It is best used for aggressive distortion effects, peak limiting, or to create characterful saturation in synths or drums.!
 
-!Saturator commentStamp: 'len 8/Feb/2026 18:31:38' prior: 0!
-This module provides a symmetric soft-clipping stage using a smooth nonlinearity (softclip, Pade approxiimation of tanh). It produces harmonic enhancement without extreme compression, retaining most of the original waveform shape. It is useful for subtle coloration, adding warmth, and soft dynamic compression.!
+!Rectifier commentStamp: '<historical>' prior: 0!
+A rectifier applies half- or full-wave rectification to the signal, removing or inverting its negative portion.
+This destroys waveform symmetry and introduces strong even harmonics and DC components. Rectification is not a saturation process but a nonlinear waveshaping operation often used for timbral transformation or subharmonic-like effects.!
 
 !TubeSaturator commentStamp: '<historical>' prior: 0!
 This saturator emulates the characteristic soft-knee saturation of vacuum tube circuits. It emphasizes odd harmonics with a slightly sharper knee than standard soft saturation, producing a “round” and harmonically rich tone.
@@ -1706,6 +1716,11 @@ This module implements a soft, smooth overdrive using a polynomial softclip curv
 It is suitable for thickening signals without harsh distortion, and it can be used to add warmth or subtle harmonic content.
 
 Based on code from Emilie Gillet for the Plaits eurorack module.!
+
+!Saturator commentStamp: 'len 9/Feb/2026 02:33:04' prior: 0!
+This module provides a soft-clipping stage using a smooth nonlinearity (softclip, Pade approxiimation of tanh). When bias is zero it is symmetric and introduces only odd harmonics. When bias is not zero it becomes asymmetric and introduces a mix of even and odd harmonics. Bias can be adjusted to shape the harmonic content and can optionally scale with drive for subtle dynamic behavior.
+
+It is ideal for adding musical warmth, thickness, or subtle tonal color to signals. Unlike tape saturation, it does not apply pre- or post-filtering, keeping its effect primarily in the nonlinearity.!
 
 !TapeSaturator commentStamp: '<historical>' prior: 0!
 This saturator models the nonlinearity and frequency-dependent behavior of analog tape saturation. It uses a soft asymmetric curve with pre-emphasis and post low-pass filtering, producing drive-dependent compression, harmonic generation, and “tape color” such as high-frequency roll-off and low-end warmth.
@@ -5124,25 +5139,6 @@ tick
 	input ifNil: [1 to: output size do: [:i| output at: i put: (self value: 0.0)]. ^ self].
 	1 to: input size do: [:i| output at: i put: (oversampler oversampling: (input at: i) do: self)]! !
 
-!AsymmetricSaturator methodsFor: 'controlling' stamp: 'len 8/Feb/2026 16:38:40'!
-update
-	super update.
-	pregain := (self get: #pregain) * 1.8. "empirical calibration by 1.8 factor"
-	postgain := self get: #postgain.
-	bias := (self get: #bias) * 0.5 * pregain sqrt. "bias scaled by pregain preserving low-drive subtetly"
-	dc := bias softclip "precompute this just to save a multiplication per sample"! !
-
-!AsymmetricSaturator methodsFor: 'initialization' stamp: 'len 8/Feb/2026 13:43:33'!
-initializeControls
-	super initializeControls.
-	self addVolumeControl: #pregain min: 0.25 max: 64.0 value: 1.0.
-	self addQuadraticControl: #bias min: -0.05 max: 0.05 value: 0.0.
-	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0! !
-
-!AsymmetricSaturator methodsFor: 'processing' stamp: 'len 8/Feb/2026 16:29:18'!
-value: in
-	^ ((in * pregain + bias) softclip - dc) * postgain! !
-
 !DiodeClipper methodsFor: 'controlling' stamp: 'len 8/Feb/2026 21:29:44'!
 update
 	| mix |
@@ -5174,6 +5170,41 @@ diodeclip: x
 	(δ := x abs - clip) > 0.0 ifFalse: [^ x].
 	^ δ / (4.0 * δ +1.0) * x sign! !
 
+!Foldback methodsFor: 'controlling' stamp: 'len 9/Feb/2026 00:31:56'!
+update
+	| mix |
+	super update.
+	pregain := self get: #pregain.
+	fold := self get: #fold.
+	bias := (self get: #bias) * pregain sqrt.
+	mix := self get: #mix.
+	postgain := (self get: #postgain) * mix.
+	dry := 1.0 - mix! !
+
+!Foldback methodsFor: 'initialization' stamp: 'len 9/Feb/2026 00:31:27'!
+initializeControls
+	super initializeControls.
+	self addVolumeControl: #pregain min: 0.25 max: 8.0 value: 1.0.
+	self addControl: #fold min: 0.1 max: 1.0 value: 0.6. "fold level"
+	self addControl: #bias min: -1.0 max: 1.0 value: 0.0.
+	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0.
+	self addDryWetControl: #mix! !
+
+!Foldback methodsFor: 'processing' stamp: 'len 9/Feb/2026 00:37:08'!
+value: in
+	^ in * dry + ((self foldback: in * pregain + bias) * postgain)! !
+
+!Foldback methodsFor: 'private' stamp: 'len 9/Feb/2026 00:47:32'!
+foldback: x
+	| y d |
+	(y := x abs) > fold ifFalse: [^ x].
+	y := y - fold.
+	d := 4.0 * fold.
+	y := y - (d * (y / d) floor).
+	y > (2.0 * fold) ifTrue: [y := d - y].
+	y := y - fold.
+	^​ y * x sign! !
+
 !HardClipper methodsFor: 'controlling' stamp: 'len 8/Feb/2026 18:27:22'!
 update
 	| mix |
@@ -5200,21 +5231,44 @@ value: in
 	x := x < negativeClip ifTrue: [negativeClip] ifFalse: [x > positiveClip ifTrue: [positiveClip] ifFalse: [x]].
 	^ in * dry + (x * postgain)! !
 
-!Saturator methodsFor: 'controlling' stamp: 'len 7/Feb/2026 19:36:22'!
-update
-	super update.
-	pregain := (self get: #pregain) * 1.8. "empirical calibration by 1.8 factor"
-	postgain := self get: #postgain! !
+!Rectifier methodsFor: 'accessing' stamp: 'len 9/Feb/2026 00:23:05'!
+mode
+	^ mode! !
 
-!Saturator methodsFor: 'initialization' stamp: 'len 7/Feb/2026 19:22:50'!
+!Rectifier methodsFor: 'accessing' stamp: 'len 9/Feb/2026 00:23:10'!
+mode: aSymbol
+	mode := aSymbol.
+	self changed! !
+
+!Rectifier methodsFor: 'initialization' stamp: 'len 9/Feb/2026 00:17:30'!
+initialize
+	super initialize.
+	mode := #full "full, half, soft"! !
+
+!Rectifier methodsFor: 'initialization' stamp: 'len 9/Feb/2026 00:17:00'!
 initializeControls
 	super initializeControls.
-	self addVolumeControl: #pregain min: 0.25 max: 64.0 value: 1.0.
-	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0! !
+	self addVolumeControl: #pregain min: 0.25 max: 8.0 value: 1.0.
+	self addControl: #bias min: -1.0 max: 1.0 value: 0.0.
+	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0.
+	self addDryWetControl: #mix! !
 
-!Saturator methodsFor: 'processing' stamp: 'len 7/Feb/2026 19:27:46'!
+!Rectifier methodsFor: 'controlling' stamp: 'len 9/Feb/2026 00:18:28'!
+update
+	| mix |
+	super update.
+	pregain := self get: #pregain.
+	bias := (self get: #bias) * pregain sqrt.
+	mix := self get: #mix.
+	postgain := (self get: #postgain) * mix.
+	dry := 1.0 - mix! !
+
+!Rectifier methodsFor: 'processing' stamp: 'len 9/Feb/2026 00:58:09'!
 value: in
-	^ (in * pregain) softclip * postgain! !
+	| x |
+	x := in * pregain + bias.
+	x := mode == #half ifTrue: [x max: 0.0] ifFalse: [mode == #full ifTrue: [x abs] ifFalse: [(x*x + 1e-4) sqrt]].
+	^ in * dry + (x * postgain)! !
 
 !TubeSaturator methodsFor: 'controlling' stamp: 'len 8/Feb/2026 21:32:26'!
 update
@@ -5256,33 +5310,40 @@ value: in
 	y := postlpf value: y * postgain.
 	^​ y - (dcblock value: y)! !
 
-!Wavefolder methodsFor: 'controlling' stamp: 'len 22/Nov/2025 22:51:00'!
+!TubeSaturator methodsFor: 'tools' stamp: 'len 9/Feb/2026 02:44:57'!
+patchable
+	^ super patchable
+		addControlInput: #drive;
+		addControlInput: #bias;
+		yourself! !
+
+!Wavefolder methodsFor: 'controlling' stamp: 'len 9/Feb/2026 02:41:51'!
 update
 	super update.
 	gain := self get: #gain.
-	offset := self get: #offset! !
+	bias := self get: #bias! !
 
-!Wavefolder methodsFor: 'initialization' stamp: 'len 6/Feb/2026 02:23:35'!
+!Wavefolder methodsFor: 'initialization' stamp: 'len 8/Feb/2026 02:41:57'!
 initializeControls
 	super initializeControls.
 	self addControl: #gain min: -4.0 max: 4.0 value: 1.0. "negative gain values for thru-zero"
-	self addControl: #offset min: -2.0 max: 2.0 value: 0.0 "offset added to input (pre-gain) for asymmetrical folding"! !
+	self addControl: #bias min: -2.0 max: 2.0 value: 0.0 "offset added to input (pre-gain) for asymmetrical folding"! !
 
-!Wavefolder methodsFor: 'processing' stamp: 'len 20/Nov/2025 00:52:00'!
+!Wavefolder methodsFor: 'processing' stamp: 'len 8/Feb/2026 02:41:45'!
 value: in
 	| x ft |
 	x := in.
-	x := (x + offset) * gain.
+	x := (x + bias) * gain.
 	ft := ((x + 1.0) * 0.5) floor.
 	x := x - (ft * 2).
 	ft odd ifTrue: [x := x negated].
 	^ x! !
 
-!Wavefolder methodsFor: 'tools' stamp: 'len 8/Feb/2026 19:44:50'!
+!Wavefolder methodsFor: 'tools' stamp: 'len 8/Feb/2026 02:43:58'!
 patchable
 	^ super patchable
 		addControlInput: #gain;
-		addControlInput: #offset;
+		addControlInput: #bias;
 		yourself! !
 
 !Korg35HPF methodsFor: 'controlling' stamp: 'len 16/Oct/2025 18:46:00'!
@@ -5545,6 +5606,25 @@ patchable
 		addAudioOutput: #setOutput:;
 		yourself! !
 
+!Saturator methodsFor: 'controlling' stamp: 'len 8/Feb/2026 16:38:40'!
+update
+	super update.
+	pregain := (self get: #pregain) * 1.8. "empirical calibration by 1.8 factor"
+	postgain := self get: #postgain.
+	bias := (self get: #bias) * 0.5 * pregain sqrt. "bias scaled by pregain preserving low-drive subtetly"
+	dc := bias softclip "precompute this just to save a multiplication per sample"! !
+
+!Saturator methodsFor: 'initialization' stamp: 'len 8/Feb/2026 13:43:33'!
+initializeControls
+	super initializeControls.
+	self addVolumeControl: #pregain min: 0.25 max: 64.0 value: 1.0.
+	self addQuadraticControl: #bias min: -0.05 max: 0.05 value: 0.0.
+	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0! !
+
+!Saturator methodsFor: 'processing' stamp: 'len 8/Feb/2026 16:29:18'!
+value: in
+	^ ((in * pregain + bias) softclip - dc) * postgain! !
+
 !TapeSaturator methodsFor: 'controlling' stamp: 'len 8/Feb/2026 16:39:03'!
 update
 	super update.
@@ -5583,6 +5663,13 @@ value: in
 	y := ((x + bias) * nonlinearityGain) tanh - dc.
 	"post lowpass:"
 	^​ (postlpf value: y) * postgain! !
+
+!TapeSaturator methodsFor: 'tools' stamp: 'len 9/Feb/2026 02:45:08'!
+patchable
+	^ super patchable
+		addControlInput: #drive;
+		addControlInput: #bias;
+		yourself! !
 
 !MultiTapDelayLine methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 15:01:05'!
 delays: delayList gains: gainList
@@ -9151,9 +9238,9 @@ color: aColor
 	color := aColor.
 	self redrawNeeded! !
 
-!OscilloscopeMorph methodsFor: 'initialization' stamp: 'len 3/Feb/2026 00:05:41'!
+!OscilloscopeMorph methodsFor: 'initialization' stamp: 'len 9/Feb/2026 01:07:22'!
 defaultExtent
-	^`128@64`! !
+	^`144@96`! !
 
 !OscilloscopeMorph methodsFor: 'initialization' stamp: 'len 30/Nov/2025 01:45:00'!
 initialize

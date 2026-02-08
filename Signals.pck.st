@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 7 February 2026 at 7:20:08 pm'!
+'From Cuis7.7 [latest update: #7797] on 8 February 2026 at 9:39:22 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 450!
+!provides: 'Signals' 1 451!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -12,6 +12,7 @@ SystemOrganization addCategory: #'Signals-Envelopes'!
 SystemOrganization addCategory: #'Signals-Levels'!
 SystemOrganization addCategory: #'Signals-Filters'!
 SystemOrganization addCategory: #'Signals-VA Filters'!
+SystemOrganization addCategory: #'Signals-Shapers'!
 SystemOrganization addCategory: #'Signals-FX'!
 SystemOrganization addCategory: #'Signals-IO'!
 SystemOrganization addCategory: #'Signals-Utility'!
@@ -395,16 +396,6 @@ Transform subclass: #Comb
 Comb class
 	instanceVariableNames: ''!
 
-!classDefinition: #Decimator category: #'Signals-FX'!
-Transform subclass: #Decimator
-	instanceVariableNames: 'quantization downsample holdCount heldValue'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-FX'!
-!classDefinition: 'Decimator class' category: #'Signals-FX'!
-Decimator class
-	instanceVariableNames: ''!
-
 !classDefinition: #Echo category: #'Signals-FX'!
 Transform subclass: #Echo
 	instanceVariableNames: 'delayLine tap'
@@ -423,16 +414,6 @@ Transform subclass: #Flanger
 	category: 'Signals-FX'!
 !classDefinition: 'Flanger class' category: #'Signals-FX'!
 Flanger class
-	instanceVariableNames: ''!
-
-!classDefinition: #Overdrive category: #'Signals-FX'!
-Transform subclass: #Overdrive
-	instanceVariableNames: 'drive pregain postgain'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-FX'!
-!classDefinition: 'Overdrive class' category: #'Signals-FX'!
-Overdrive class
 	instanceVariableNames: ''!
 
 !classDefinition: #Phaser category: #'Signals-FX'!
@@ -525,23 +506,63 @@ Transform subclass: #Transform2x
 Transform2x class
 	instanceVariableNames: ''!
 
-!classDefinition: #Clipper category: #'Signals-FX'!
-Transform2x subclass: #Clipper
-	instanceVariableNames: 'pregain negativeClip positiveClip postgain'
+!classDefinition: #AsymmetricSaturator category: #'Signals-Shapers'!
+Transform2x subclass: #AsymmetricSaturator
+	instanceVariableNames: 'pregain postgain bias dc'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-FX'!
-!classDefinition: 'Clipper class' category: #'Signals-FX'!
-Clipper class
+	category: 'Signals-Shapers'!
+!classDefinition: 'AsymmetricSaturator class' category: #'Signals-Shapers'!
+AsymmetricSaturator class
 	instanceVariableNames: ''!
 
-!classDefinition: #Wavefolder category: #'Signals-FX'!
+!classDefinition: #DiodeClipper category: #'Signals-Shapers'!
+Transform2x subclass: #DiodeClipper
+	instanceVariableNames: 'pregain clip bias dc postgain dry'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Shapers'!
+!classDefinition: 'DiodeClipper class' category: #'Signals-Shapers'!
+DiodeClipper class
+	instanceVariableNames: ''!
+
+!classDefinition: #HardClipper category: #'Signals-Shapers'!
+Transform2x subclass: #HardClipper
+	instanceVariableNames: 'pregain negativeClip positiveClip postgain dry'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Shapers'!
+!classDefinition: 'HardClipper class' category: #'Signals-Shapers'!
+HardClipper class
+	instanceVariableNames: ''!
+
+!classDefinition: #Saturator category: #'Signals-Shapers'!
+Transform2x subclass: #Saturator
+	instanceVariableNames: 'pregain postgain'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Shapers'!
+!classDefinition: 'Saturator class' category: #'Signals-Shapers'!
+Saturator class
+	instanceVariableNames: ''!
+
+!classDefinition: #TubeSaturator category: #'Signals-Shapers'!
+Transform2x subclass: #TubeSaturator
+	instanceVariableNames: 'prehpf prelpf drive postgain postlpf dcblock'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Shapers'!
+!classDefinition: 'TubeSaturator class' category: #'Signals-Shapers'!
+TubeSaturator class
+	instanceVariableNames: ''!
+
+!classDefinition: #Wavefolder category: #'Signals-Shapers'!
 Transform2x subclass: #Wavefolder
 	instanceVariableNames: 'gain offset'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-FX'!
-!classDefinition: 'Wavefolder class' category: #'Signals-FX'!
+	category: 'Signals-Shapers'!
+!classDefinition: 'Wavefolder class' category: #'Signals-Shapers'!
 Wavefolder class
 	instanceVariableNames: ''!
 
@@ -573,6 +594,36 @@ Transform subclass: #Limiter
 	category: 'Signals-Levels'!
 !classDefinition: 'Limiter class' category: #'Signals-Levels'!
 Limiter class
+	instanceVariableNames: ''!
+
+!classDefinition: #Decimator category: #'Signals-Shapers'!
+Transform subclass: #Decimator
+	instanceVariableNames: 'quantization downsample holdCount heldValue'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Shapers'!
+!classDefinition: 'Decimator class' category: #'Signals-Shapers'!
+Decimator class
+	instanceVariableNames: ''!
+
+!classDefinition: #Overdrive category: #'Signals-Shapers'!
+Transform subclass: #Overdrive
+	instanceVariableNames: 'pregain postgain'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Shapers'!
+!classDefinition: 'Overdrive class' category: #'Signals-Shapers'!
+Overdrive class
+	instanceVariableNames: ''!
+
+!classDefinition: #TapeSaturator category: #'Signals-Shapers'!
+Transform subclass: #TapeSaturator
+	instanceVariableNames: 'prehpf drive nonlinearityGain tone bias dc postgain postlpf'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Shapers'!
+!classDefinition: 'TapeSaturator class' category: #'Signals-Shapers'!
+TapeSaturator class
 	instanceVariableNames: ''!
 
 !classDefinition: #MultiTapDelayLine category: #'Signals-Support'!
@@ -1345,6 +1396,16 @@ Object subclass: #LagrangeOversampler2x
 LagrangeOversampler2x class
 	instanceVariableNames: ''!
 
+!classDefinition: #OnePole category: #'Signals-Support'!
+Object subclass: #OnePole
+	instanceVariableNames: 'a y'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Support'!
+!classDefinition: 'OnePole class' category: #'Signals-Support'!
+OnePole class
+	instanceVariableNames: ''!
+
 !classDefinition: #Polyphase13TapOversampler2x category: #'Signals-Support'!
 Object subclass: #Polyphase13TapOversampler2x
 	instanceVariableNames: 'x1 x2 x3 x4 x5 x6 d1 d2 d3 d4 d5 d6 e1'
@@ -1573,12 +1634,6 @@ Abstract superclass for unary transforms, i.e. modules with one audio input and 
 !DiodeLadder2 commentStamp: 'len 2/Feb/2026 18:24:19' prior: 0!
 This is a virtual analog model of the Korg 35 low-pass 12 dB/oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.!
 
-!Decimator commentStamp: '<historical>' prior: 0!
-A simple bitcrusher and sample rate reducer.!
-
-!Overdrive commentStamp: '<historical>' prior: 0!
-Based on code from Emilie Gillet for the Plaits eurorack module.!
-
 !PitchShifter commentStamp: '<historical>' prior: 0!
 Time-domain pitch shifter based on two modulated delay lines with crossfading windows. This is the algorithm of the Eventide H3000 Ultra-Harmonizer.
 
@@ -1604,6 +1659,30 @@ This is a second order (12 dB/oct) low-pass filter based on a biquad.!
 !Transform2x commentStamp: 'len 4/Feb/2026 00:25:50' prior: 0!
 An abstract superclass for transforms that internally do 2× oversampling. This is useful for implementing transforms that are not linear-time-invariant (LTI), such as saturation, wavefolding, or virtual analog filters.!
 
+!AsymmetricSaturator commentStamp: '<historical>' prior: 0!
+This saturator introduces controlled asymmetry into the soft-clipping curve, creating a mix of even and odd harmonics. Bias can be adjusted to shape the harmonic content and can optionally scale with drive for subtle dynamic behavior.
+
+It is ideal for adding musical warmth, thickness, or subtle tonal color to signals, especially when a slightly uneven saturation character is desired. Unlike tape saturation, it does not apply pre- or post-filtering, keeping its effect primarily in the nonlinearity.!
+
+!DiodeClipper commentStamp: 'len 8/Feb/2026 21:27:18' prior: 0!
+This module implements a threshold-based nonlinear clipping stage inspired by diode conduction. The signal remains linear below the forward voltage and transitions into soft clipping above it, producing a harder and more mid-focused character than smooth saturation.
+
+It is well suited for aggressive distortion, synth and guitar-style clipping, and parallel distortion effects, with controllable asymmetry to shape even harmonics and bite.!
+
+!HardClipper commentStamp: 'len 8/Feb/2026 18:21:46' prior: 0!
+This module applies a strict limiting nonlinearity to the input signal, producing immediate clipping at a defined threshold. This generates strong odd and even harmonics and introduces audible harshness at high levels.
+It is best used for aggressive distortion effects, peak limiting, or to create characterful saturation in synths or drums.!
+
+!Saturator commentStamp: 'len 8/Feb/2026 18:31:38' prior: 0!
+This module provides a symmetric soft-clipping stage using a smooth nonlinearity (softclip, Pade approxiimation of tanh). It produces harmonic enhancement without extreme compression, retaining most of the original waveform shape. It is useful for subtle coloration, adding warmth, and soft dynamic compression.!
+
+!TubeSaturator commentStamp: '<historical>' prior: 0!
+This saturator emulates the characteristic soft-knee saturation of vacuum tube circuits. It emphasizes odd harmonics with a slightly sharper knee than standard soft saturation, producing a “round” and harmonically rich tone.
+
+Tube saturation adds harmonics and weight to a sound, specially in the lower mids. It adds a grit or bite in the higher frequencies and enhances detail and presence without sounding too harsh.
+
+This module is suited for musical overdrive on guitars, synths, or mix buses, where a classic tube-like warmth and gentle compression is desired.!
+
 !Wavefolder commentStamp: '<historical>' prior: 0!
 Basic wavefolder. Amplitude of input determines level of folding. Amplitudes of magnitude > 1.0 will start to fold.
 
@@ -1618,6 +1697,22 @@ See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 This is a virtual analog model of the Korg 35 low-pass 12 dB/oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.
 
 See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
+
+!Decimator commentStamp: '<historical>' prior: 0!
+A simple bitcrusher and sample rate reducer.!
+
+!Overdrive commentStamp: 'len 8/Feb/2026 18:20:54' prior: 0!
+This module implements a soft, smooth overdrive using a polynomial softclip curve. It emphasizes odd harmonics and produces gentle saturation that compresses dynamically at higher input levels.
+It is suitable for thickening signals without harsh distortion, and it can be used to add warmth or subtle harmonic content.
+
+Based on code from Emilie Gillet for the Plaits eurorack module.!
+
+!TapeSaturator commentStamp: '<historical>' prior: 0!
+This saturator models the nonlinearity and frequency-dependent behavior of analog tape saturation. It uses a soft asymmetric curve with pre-emphasis and post low-pass filtering, producing drive-dependent compression, harmonic generation, and “tape color” such as high-frequency roll-off and low-end warmth.
+
+Tape saturation comes from driving a physical tape too hard. It's great at smoothing out transients in a pleasant way. Adds glue, making elements feel more cohesive and introduces compression and roundness to a sound.
+
+This module is ideal for adding analog-style warmth, subtle compression, and musical coloration to audio.!
 
 !MultiTapDelayLine commentStamp: '<historical>' prior: 0!
 This is based on Squeak's original ReverbSound by John Maloney.!
@@ -2298,6 +2393,10 @@ update
 !Module methodsFor: 'controls and modulations' stamp: 'len 27/Jan/2026 16:47:43'!
 addControl: aSymbol min: min max: max value: defaultValue
 	^ controls at: aSymbol put: ((Control min: min max: max value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
+
+!Module methodsFor: 'controls and modulations' stamp: 'len 8/Feb/2026 18:24:35'!
+addDryWetControl: aSymbol
+	^ (self addControl: aSymbol min: 0.0 max: 1.0 value: 1.0) printer: [:x| (x * 100) truncated printString, '%']! !
 
 !Module methodsFor: 'controls and modulations' stamp: 'len 1/Feb/2026 15:45:37'!
 addFrequencyControl: aSymbol min: min max: max value: defaultValue
@@ -3302,11 +3401,10 @@ update
 	super update.
 	frequency := ((self get: #tune) + note) semitonesToHertz / self class sampleRate! !
 
-!Oscillator methodsFor: 'initialization' stamp: 'len 4/Jan/2026 14:56:23'!
+!Oscillator methodsFor: 'initialization' stamp: 'len 8/Feb/2026 13:44:51'!
 initialize
 	super initialize.
-	self reset.
-	frequency := note semitonesToHertz! !
+	self reset! !
 
 !Oscillator methodsFor: 'processing' stamp: 'len 5/Dec/2025 15:02:14'!
 next
@@ -4624,74 +4722,6 @@ panel
 		addKnob: (controls at: #feedback) label: 'FB';
 		addKnob: (controls at: #damping) label: 'Damp'! !
 
-!Decimator methodsFor: 'controlling' stamp: 'len 27/Sep/2025 20:49:00'!
-reset
-	holdCount := 0! !
-
-!Decimator methodsFor: 'controlling' stamp: 'len 8/Jan/2026 21:29:58'!
-update
-	super update.
-	quantization := self get: #quantization.
-	downsample := self get: #downsample! !
-
-!Decimator methodsFor: 'initialization' stamp: 'len 8/Jan/2026 21:27:24'!
-initialize
-	super initialize.
-	quantization := 65535.0.
-	downsample := 1.0.
-	self reset! !
-
-!Decimator methodsFor: 'initialization' stamp: 'len 23/Jan/2026 15:17:58'!
-initializeControls
-	super initializeControls.
-	(self addLogControl: #quantization min: 1.0 max: 65535.0 value: 65535.0) printer: [:x| ((x + 1 log: 2) printStringFractionDigits: 2), ' bits'].
-	(self addControl: #downsample min: 1.0 max: 8.0 value: 1.0) printer: [:x| (self class sampleRate / x) rounded printString, ' kHz']! !
-
-!Decimator methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:25'!
-tick
-	output ifNil: [^ self].
-	input ifNil: [output atAllPut: 0.0. ^ self].
-	(downsample = 1.0 and: [quantization >= 65535.0]) ifTrue: [^ self].
-	1 to: input size do: [:i|
-		"downsampling via sample & hold:"
-		holdCount > 0 ifFalse: "reset holdCount and take and process a new sample value"
-			[holdCount := holdCount + downsample.
-			heldValue := input at: i.
-			"apply bitcrusher:"
-			quantization < 65535.0 ifTrue: [heldValue := (heldValue * quantization) rounded / quantization]].
-		holdCount := holdCount - 1.
-		output at: i put: heldValue]! !
-
-!Decimator methodsFor: 'processing' stamp: 'len 20/Nov/2025 01:21:00'!
-value: in
-	(downsample = 1.0 and: [quantization >= 65535.0]) ifTrue: [^ in].
-	"downsampling via sample & hold:"
-	holdCount > 0 ifFalse: "reset holdCount and take and process a new sample value"
-		[holdCount := holdCount + downsample.
-		heldValue := in.
-		"apply bitcrusher:"
-		quantization < 65535.0 ifTrue: [heldValue := (heldValue * quantization) rounded / quantization]].
-	holdCount := holdCount - 1.
-	^ heldValue! !
-
-!Decimator methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:49:11'!
-panel
-	^​ ControlPanel new
-		addKnob: (controls at: #quantization) label: 'BR';
-		addKnob: (controls at: #downsample) label: 'SRR'! !
-
-!Decimator methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:42:29'!
-patchable
-	| answer |
-	answer := PatchableMorph new model: self.
-	answer body addMorph: self panel.
-	^ answer
-		addAudioInput: #setInput:;
-		addControlInput: #quantization label: 'BR';
-		addControlInput: #downsample label: 'SRR';
-		addAudioOutput: #setOutput:;
-		yourself! !
-
 !Echo methodsFor: 'controlling' stamp: 'len 26/Jan/2026 17:17:04'!
 reset
 	delayLine reset.
@@ -4769,57 +4799,6 @@ tick
 		out := tap read.
 		delayLine write: out * feedback + in.
 		output at: i put: in * (1.0 - mix) + (out * mix)]! !
-
-!Overdrive methodsFor: 'accessing' stamp: 'len 31/Jan/2026 16:18:20'!
-drive: aNumber
-	"Set a drive amount from 0 to 2."
-	| drive_2 pre_gain_a pre_gain_b drive_squashed |
-	drive := aNumber.
-	drive_2 := drive * drive.
-	pre_gain_a := drive * 0.5.
-	pre_gain_b := drive_2 * drive_2 * drive * 24.0.
-	pregain := pre_gain_a + ((pre_gain_b - pre_gain_a) * drive_2).
-	drive_squashed := drive * (2.0001 - drive). "2.0001 in order to avoid discontinuity at drive=2.0"
-	postgain := 1.0 / (0.33 + (drive_squashed * (pregain - 0.33))) softclip! !
-
-!Overdrive methodsFor: 'controlling' stamp: 'len 20/Nov/2025 16:48:00'!
-update
-	super update.
-	self drive: (self get: #drive)! !
-
-!Overdrive methodsFor: 'initialization' stamp: 'len 12/Oct/2025 19:42:00'!
-initialize
-	super initialize.
-	self drive: 1.0! !
-
-!Overdrive methodsFor: 'initialization' stamp: 'len 20/Nov/2025 16:49:00'!
-initializeControls
-	super initializeControls.
-	self addControl: #drive min: 0.0 max: 2.0 value: 1.0! !
-
-!Overdrive methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:37'!
-tick
-	output ifNil: [^ self].
-	input ifNil: [output atAllPut: 0.0. ^ self].
-	output replaceWith: input.
-	output *= pregain.
-	output softclip.
-	output *= postgain! !
-
-!Overdrive methodsFor: 'processing' stamp: 'len 20/Nov/2025 00:39:00'!
-value: in
-	^ (in * pregain) softclip * postgain! !
-
-!Overdrive methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:42:38'!
-patchable
-	| answer |
-	answer := PatchableMorph new model: self.
-	answer body addMorph: self panel.
-	^ answer
-		addAudioInput: #setInput:;
-		addControlInput: #drive;
-		addAudioOutput: #setOutput:;
-		yourself! !
 
 !Phaser methodsFor: 'controlling' stamp: 'len 26/Jan/2026 13:42:09'!
 reset
@@ -4940,9 +4919,10 @@ tick
 reset
 	biquad reset! !
 
-!BPF methodsFor: 'controlling' stamp: 'len 2/Feb/2026 18:21:42'!
+!BPF methodsFor: 'controlling' stamp: 'len 8/Feb/2026 14:50:10'!
 update
 	super update.
+	biquad undenormalize.
 	biquad bp: (self get: #frequency) / self class sampleRate Q: 1.0 / (2.0 * (0.5 * 2.0 log * (self get: #bandwidth)) sinh)! !
 
 !BPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 00:57:46'!
@@ -4979,9 +4959,10 @@ patchable
 reset
 	biquad reset! !
 
-!BSF methodsFor: 'controlling' stamp: 'len 2/Feb/2026 18:21:14'!
+!BSF methodsFor: 'controlling' stamp: 'len 8/Feb/2026 14:50:20'!
 update
 	super update.
+	biquad undenormalize.
 	biquad bs: (self get: #frequency) / self class sampleRate Q: 1.0 / (2.0 * (0.5 * 2.0 log * (self get: #bandwidth)) sinh)! !
 
 !BSF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 00:57:49'!
@@ -5013,6 +4994,14 @@ patchable
 		addControlInput: #bandwidth;
 		addAudioOutput: #setOutput:.
 	^ answer! !
+
+!EQ3 methodsFor: 'controlling' stamp: 'len 8/Feb/2026 14:51:14'!
+update
+	super update.
+	lowPassLow undenormalize.
+	highPassMid undenormalize.
+	lowPassMid undenormalize.
+	highPassHigh undenormalize! !
 
 !EQ3 methodsFor: 'initialization' stamp: 'len 31/Jan/2026 03:39:10'!
 initialize
@@ -5048,9 +5037,10 @@ tick
 reset
 	biquad reset! !
 
-!HPF methodsFor: 'controlling' stamp: 'len 2/Feb/2026 18:20:20'!
+!HPF methodsFor: 'controlling' stamp: 'len 8/Feb/2026 14:52:12'!
 update
 	super update.
+	biquad undenormalize.
 	biquad hp: (self get: #frequency) / self class sampleRate Q: (self get: #Q)! !
 
 !HPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 00:57:32'!
@@ -5087,9 +5077,10 @@ patchable
 reset
 	biquad reset! !
 
-!LPF methodsFor: 'controlling' stamp: 'len 2/Feb/2026 18:19:58'!
+!LPF methodsFor: 'controlling' stamp: 'len 8/Feb/2026 14:52:21'!
 update
 	super update.
+	biquad undenormalize.
 	biquad lp: (self get: #frequency) / self class sampleRate Q: (self get: #Q)! !
 
 !LPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 00:57:38'!
@@ -5133,27 +5124,137 @@ tick
 	input ifNil: [1 to: output size do: [:i| output at: i put: (self value: 0.0)]. ^ self].
 	1 to: input size do: [:i| output at: i put: (oversampler oversampling: (input at: i) do: self)]! !
 
-!Clipper methodsFor: 'controlling' stamp: 'len 2/Feb/2026 23:57:42'!
+!AsymmetricSaturator methodsFor: 'controlling' stamp: 'len 8/Feb/2026 16:38:40'!
 update
+	super update.
+	pregain := (self get: #pregain) * 1.8. "empirical calibration by 1.8 factor"
+	postgain := self get: #postgain.
+	bias := (self get: #bias) * 0.5 * pregain sqrt. "bias scaled by pregain preserving low-drive subtetly"
+	dc := bias softclip "precompute this just to save a multiplication per sample"! !
+
+!AsymmetricSaturator methodsFor: 'initialization' stamp: 'len 8/Feb/2026 13:43:33'!
+initializeControls
+	super initializeControls.
+	self addVolumeControl: #pregain min: 0.25 max: 64.0 value: 1.0.
+	self addQuadraticControl: #bias min: -0.05 max: 0.05 value: 0.0.
+	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0! !
+
+!AsymmetricSaturator methodsFor: 'processing' stamp: 'len 8/Feb/2026 16:29:18'!
+value: in
+	^ ((in * pregain + bias) softclip - dc) * postgain! !
+
+!DiodeClipper methodsFor: 'controlling' stamp: 'len 8/Feb/2026 21:29:44'!
+update
+	| mix |
+	super update.
+	pregain := self get: #pregain.
+	clip := self get: #clip.
+	bias := (self get: #bias) * pregain sqrt.
+	dc := self diodeclip: bias.
+	mix := self get: #mix.
+	postgain := (self get: #postgain) * mix.
+	dry := 1.0 - mix! !
+
+!DiodeClipper methodsFor: 'initialization' stamp: 'len 8/Feb/2026 21:29:35'!
+initializeControls
+	super initializeControls.
+	self addVolumeControl: #pregain min: 1.0 max: 16.0 value: 2.0.
+	self addControl: #clip min: 0.1 max: 1.0 value: 0.6.
+	self addControl: #bias min: -0.3 max: 0.3 value: 0.0.
+	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0.
+	self addDryWetControl: #mix! !
+
+!DiodeClipper methodsFor: 'processing' stamp: 'len 8/Feb/2026 21:24:44'!
+value: in
+	^ in * dry + (((self diodeclip: in * pregain + bias) - dc) * postgain)! !
+
+!DiodeClipper methodsFor: 'private' stamp: 'len 8/Feb/2026 21:29:24'!
+diodeclip: x
+	| δ |
+	(δ := x abs - clip) > 0.0 ifFalse: [^ x].
+	^ δ / (4.0 * δ +1.0) * x sign! !
+
+!HardClipper methodsFor: 'controlling' stamp: 'len 8/Feb/2026 18:27:22'!
+update
+	| mix |
 	super update.
 	pregain := self get: #pregain.
 	positiveClip := self get: #clip.
 	negativeClip := positiveClip negated.
-	postgain := self get: #postgain! !
+	mix := self get: #mix.
+	postgain := (self get: #postgain) * mix.
+	dry := 1.0 - mix! !
 
-!Clipper methodsFor: 'initialization' stamp: 'len 2/Feb/2026 23:54:49'!
+!HardClipper methodsFor: 'initialization' stamp: 'len 8/Feb/2026 18:24:42'!
 initializeControls
 	super initializeControls.
 	self addVolumeControl: #pregain min: 0.25 max: 64.0 value: 1.0.
 	self addVolumeControl: #clip min: 0.063 max: 1.0 value: 1.0.
-	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0! !
+	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0.
+	self addDryWetControl: #mix! !
 
-!Clipper methodsFor: 'processing' stamp: 'len 2/Feb/2026 23:57:46'!
+!HardClipper methodsFor: 'processing' stamp: 'len 8/Feb/2026 18:27:37'!
 value: in
 	| x |
 	x := in * pregain.
 	x := x < negativeClip ifTrue: [negativeClip] ifFalse: [x > positiveClip ifTrue: [positiveClip] ifFalse: [x]].
-	^ x * postgain! !
+	^ in * dry + (x * postgain)! !
+
+!Saturator methodsFor: 'controlling' stamp: 'len 7/Feb/2026 19:36:22'!
+update
+	super update.
+	pregain := (self get: #pregain) * 1.8. "empirical calibration by 1.8 factor"
+	postgain := self get: #postgain! !
+
+!Saturator methodsFor: 'initialization' stamp: 'len 7/Feb/2026 19:22:50'!
+initializeControls
+	super initializeControls.
+	self addVolumeControl: #pregain min: 0.25 max: 64.0 value: 1.0.
+	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0! !
+
+!Saturator methodsFor: 'processing' stamp: 'len 7/Feb/2026 19:27:46'!
+value: in
+	^ (in * pregain) softclip * postgain! !
+
+!TubeSaturator methodsFor: 'controlling' stamp: 'len 8/Feb/2026 21:32:26'!
+update
+	super update.
+	drive := self get: #drive.
+	postgain := self get: #postgain.
+	prelpf frequency: (self get: #tone) / (self class sampleRate * 2). "* 2 because we oversample 2x"
+	prehpf undenormalize.
+	prelpf undenormalize.
+	postlpf undenormalize.
+	dcblock undenormalize! !
+
+!TubeSaturator methodsFor: 'initialization' stamp: 'len 8/Feb/2026 14:37:22'!
+initialize
+	super initialize.
+	prehpf := OnePole new frequency: 120.0 / (self class sampleRate * 2). "* 2 because we oversample 2x"
+	prelpf := OnePole new. "frequency set from the tone control"
+	postlpf := OnePole new frequency: 18000.0 / (self class sampleRate * 2).
+	dcblock := OnePole new frequency: 10.0 / (self class sampleRate * 2)! !
+
+!TubeSaturator methodsFor: 'initialization' stamp: 'len 8/Feb/2026 21:32:41'!
+initializeControls
+	super initializeControls.
+	self addVolumeControl: #drive min: 0.25 max: 64.0 value: 1.0.
+	self addFrequencyControl: #tone min: 8000.0 max: 14000.0 value: 10000.0. "8 to 14 khz"
+	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0! !
+
+!TubeSaturator methodsFor: 'processing' stamp: 'len 8/Feb/2026 21:32:26'!
+value: in
+	| x y |
+	"hpf before the nonlinearity prevents low-frequency pumping, keeps bass clean while distoring mids/highs:"
+	x := in - (prehpf value: in).
+	"lpf before the nonlinearity prevents harsh hf from entering distorion, and makes saturation thicker and darker:"
+	x := prelpf value: x.
+	x := x * drive + 0.01. "add tube grid bias 0.01; useful range 0.01-0.03"
+	y := ((-0.25 * x + 0.5) * x + 0.7) * x. "tube nonlinearity, coefficients for triode-like curve"
+	y := (y * 0.85) softclip. "soft ceiling"
+	"lowpass filter after the nonlinearity tames aliasing, mimics tube hf roll-off and reduces fizz:"
+	y := postlpf value: y * postgain.
+	^​ y - (dcblock value: y)! !
 
 !Wavefolder methodsFor: 'controlling' stamp: 'len 22/Nov/2025 22:51:00'!
 update
@@ -5177,16 +5278,11 @@ value: in
 	ft odd ifTrue: [x := x negated].
 	^ x! !
 
-!Wavefolder methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:42:47'!
+!Wavefolder methodsFor: 'tools' stamp: 'len 8/Feb/2026 19:44:50'!
 patchable
-	| answer |
-	answer := PatchableMorph new model: self.
-	answer body addMorph: self panel.
-	^ answer
-		addAudioInput: #setInput:;
+	^ super patchable
 		addControlInput: #gain;
 		addControlInput: #offset;
-		addAudioOutput: #setOutput:;
 		yourself! !
 
 !Korg35HPF methodsFor: 'controlling' stamp: 'len 16/Oct/2025 18:46:00'!
@@ -5339,6 +5435,154 @@ value: in
 	error := in abs - peak.
 	peak := (error > 0 ifTrue: [0.05] ifFalse: [0.00002]) * error + peak.
 	^ in * (peak <= 1.0 ifTrue: [0.8] ifFalse: [0.8 / peak])! !
+
+!Decimator methodsFor: 'controlling' stamp: 'len 27/Sep/2025 20:49:00'!
+reset
+	holdCount := 0! !
+
+!Decimator methodsFor: 'controlling' stamp: 'len 8/Jan/2026 21:29:58'!
+update
+	super update.
+	quantization := self get: #quantization.
+	downsample := self get: #downsample! !
+
+!Decimator methodsFor: 'initialization' stamp: 'len 8/Jan/2026 21:27:24'!
+initialize
+	super initialize.
+	quantization := 65535.0.
+	downsample := 1.0.
+	self reset! !
+
+!Decimator methodsFor: 'initialization' stamp: 'len 23/Jan/2026 15:17:58'!
+initializeControls
+	super initializeControls.
+	(self addLogControl: #quantization min: 1.0 max: 65535.0 value: 65535.0) printer: [:x| ((x + 1 log: 2) printStringFractionDigits: 2), ' bits'].
+	(self addControl: #downsample min: 1.0 max: 8.0 value: 1.0) printer: [:x| (self class sampleRate / x) rounded printString, ' kHz']! !
+
+!Decimator methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:25'!
+tick
+	output ifNil: [^ self].
+	input ifNil: [output atAllPut: 0.0. ^ self].
+	(downsample = 1.0 and: [quantization >= 65535.0]) ifTrue: [^ self].
+	1 to: input size do: [:i|
+		"downsampling via sample & hold:"
+		holdCount > 0 ifFalse: "reset holdCount and take and process a new sample value"
+			[holdCount := holdCount + downsample.
+			heldValue := input at: i.
+			"apply bitcrusher:"
+			quantization < 65535.0 ifTrue: [heldValue := (heldValue * quantization) rounded / quantization]].
+		holdCount := holdCount - 1.
+		output at: i put: heldValue]! !
+
+!Decimator methodsFor: 'processing' stamp: 'len 20/Nov/2025 01:21:00'!
+value: in
+	(downsample = 1.0 and: [quantization >= 65535.0]) ifTrue: [^ in].
+	"downsampling via sample & hold:"
+	holdCount > 0 ifFalse: "reset holdCount and take and process a new sample value"
+		[holdCount := holdCount + downsample.
+		heldValue := in.
+		"apply bitcrusher:"
+		quantization < 65535.0 ifTrue: [heldValue := (heldValue * quantization) rounded / quantization]].
+	holdCount := holdCount - 1.
+	^ heldValue! !
+
+!Decimator methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:49:11'!
+panel
+	^​ ControlPanel new
+		addKnob: (controls at: #quantization) label: 'BR';
+		addKnob: (controls at: #downsample) label: 'SRR'! !
+
+!Decimator methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:42:29'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self panel.
+	^ answer
+		addAudioInput: #setInput:;
+		addControlInput: #quantization label: 'BR';
+		addControlInput: #downsample label: 'SRR';
+		addAudioOutput: #setOutput:;
+		yourself! !
+
+!Overdrive methodsFor: 'controlling' stamp: 'len 7/Feb/2026 19:26:01'!
+update
+	| drive drive_2 pre_gain_a pre_gain_b drive_squashed |
+	super update.
+	drive := self get: #drive.
+	drive_2 := drive * drive.
+	pre_gain_a := drive * 0.5.
+	pre_gain_b := drive_2 * drive_2 * drive * 24.0.
+	pregain := pre_gain_a + ((pre_gain_b - pre_gain_a) * drive_2).
+	drive_squashed := drive * (2.0001 - drive). "2.0001 in order to avoid discontinuity at drive=2.0"
+	postgain := 1.0 / (0.33 + (drive_squashed * (pregain - 0.33))) softclip! !
+
+!Overdrive methodsFor: 'initialization' stamp: 'len 20/Nov/2025 16:49:00'!
+initializeControls
+	super initializeControls.
+	self addControl: #drive min: 0.0 max: 2.0 value: 1.0! !
+
+!Overdrive methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:37'!
+tick
+	output ifNil: [^ self].
+	input ifNil: [output atAllPut: 0.0. ^ self].
+	output replaceWith: input.
+	output *= pregain.
+	output softclip.
+	output *= postgain! !
+
+!Overdrive methodsFor: 'processing' stamp: 'len 20/Nov/2025 00:39:00'!
+value: in
+	^ (in * pregain) softclip * postgain! !
+
+!Overdrive methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:42:38'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self panel.
+	^ answer
+		addAudioInput: #setInput:;
+		addControlInput: #drive;
+		addAudioOutput: #setOutput:;
+		yourself! !
+
+!TapeSaturator methodsFor: 'controlling' stamp: 'len 8/Feb/2026 16:39:03'!
+update
+	super update.
+	drive := self get: #drive.
+	bias := (self get: #bias) * 0.5 * drive sqrt. "bias scaled with drive, more subtle at low drive"
+	nonlinearityGain := ((drive + 1.0) log: 2.0) * 0.5 + 1.5.
+	dc := (bias * nonlinearityGain) tanh.
+	tone := self get: #tone.
+	postgain := self get: #postgain.
+	"darker at high drive:"
+	postlpf frequency: ((drive * 0.08) tanh * 12000.0 + 6000.0) / self class sampleRate. "6 kHz to 18 kHz"
+	prehpf undenormalize.
+	postlpf undenormalize! !
+
+!TapeSaturator methodsFor: 'initialization' stamp: 'len 8/Feb/2026 15:24:55'!
+initialize
+	super initialize.
+	prehpf := OnePole new frequency: 4000.0 / self class sampleRate.
+	postlpf := OnePole new! !
+
+!TapeSaturator methodsFor: 'initialization' stamp: 'len 8/Feb/2026 16:21:34'!
+initializeControls
+	super initializeControls.
+	self addVolumeControl: #drive min: 1.0 max: 16.0 value: 1.0.
+	self addControl: #bias min: -0.5 max: 0.5 value: 0.0.
+	self addControl: #tone min: -1.0 max: 1.0 value: 0.0.
+	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0! !
+
+!TapeSaturator methodsFor: 'processing' stamp: 'len 8/Feb/2026 16:21:19'!
+value: in
+	| x y |
+	x := in * drive.
+	"pre-emphasis:"
+	x := x + ((x - (prehpf value: x)) * tone).
+	"tape saturation:"
+	y := ((x + bias) * nonlinearityGain) tanh - dc.
+	"post lowpass:"
+	^​ (postlpf value: y) * postgain! !
 
 !MultiTapDelayLine methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 15:01:05'!
 delays: delayList gains: gainList
@@ -8511,7 +8755,7 @@ drawPatternOn: aCanvas
 				x := trackWidth + x].
 		y := y + lineSpacing]! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 7/Feb/2026 19:19:07'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Feb/2026 15:56:59'!
 drawTracksOn: aCanvas
 	| color textColor charWidth trackWidth x mask headerLineWidth |
 	charWidth := font widthOf: $X.
@@ -8521,7 +8765,7 @@ drawTracksOn: aCanvas
 	mask := tracker selectedMask.
 	tracker tracks withIndexDo: [:track :i| | trackColor trackLabel |
 		trackColor := track color.
-		aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: (trackColor alpha: (i = tracker cursorTrack ifTrue: [0.15] ifFalse: [0.1])).
+		aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: (trackColor alpha: (i = tracker cursorTrack ifTrue: [0.1] ifFalse: [0.01])).
 		((mask at: i) and: [track enabled])
 			ifTrue:
 				[color := trackColor.
@@ -8605,7 +8849,7 @@ handleInputKey: anEvent
 		^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 22/Jan/2026 17:42:15'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 8/Feb/2026 15:58:32'!
 handleKeyStroke: anEvent
 	((anEvent rawMacOptionKeyPressed or: [anEvent controlKeyPressed]) and: [self handleOptionHotkey: anEvent]) ifTrue: [^ true].
 	(anEvent commandAltKeyPressed and: [self handleCommandHotkey: anEvent]) ifTrue: [^ true].
@@ -8619,7 +8863,7 @@ handleKeyStroke: anEvent
 	anEvent isEnd ifTrue: [tracker moveCursorLineBottom. ^ true].
 	anEvent keyCharacter = $\ ifTrue:
 		[anEvent wasHandled: true.
-		anEvent commandAltKeyPressed ifTrue: [tracker toggleTrackSolo] ifFalse: [tracker toggleTrackMute]. ^ self].
+		anEvent commandAltKeyPressed ifTrue: [tracker toggleTrackSolo] ifFalse: [tracker toggleTrackMute]. ^ true].
 	(anEvent anyModifierKeyPressed not and: [self handleInputKey: anEvent]) ifTrue: [^ true].
 	^ false! !
 
@@ -9168,7 +9412,7 @@ drawOn: aCanvas
 	"and then wrap and continue drawing from the first column to the current column position - 1:"
 	aCanvas image: image at: 0 @ (h - p - 2) sourceRect: (0 @ 0 corner: w @ (p - 1))! !
 
-!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 19:19:15'!
+!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 8/Feb/2026 14:01:30'!
 initialize
 	super initialize.
 	fft := FFT new: 512.
@@ -10160,12 +10404,12 @@ addModuleCopying: aModule
 addModuleInstantiating: aClass
 	self addMorph: aClass new patchable position: (self valueOfProperty: #lastMenuOpeningPosition)! !
 
-!PatchMorph methodsFor: 'menu' stamp: 'len 4/Feb/2026 14:10:38'!
+!PatchMorph methodsFor: 'menu' stamp: 'len 7/Feb/2026 19:46:33'!
 getMenu
 	| menu submenu |
 	self setProperty: #lastMenuOpeningPosition toValue: (self internalizeFromWorld: self activeHand morphPosition).
 	menu := MenuMorph new defaultTarget: self.
-	#('Oscillators' 'Noise' 'Modulation' 'Envelopes' 'Levels' 'Filters' 'VA Filters' 'FX') do: [:subcategory|
+	#('Oscillators' 'Noise' 'Modulation' 'Envelopes' 'Levels' 'Filters' 'VA Filters' 'Shapers' 'FX') do: [:subcategory|
 		submenu := MenuMorph new defaultTarget: self.
 		(SystemOrganization classesAt: 'Signals-', subcategory)
 			do: [:each| each hasSubclasses ifFalse: [submenu add: each name camelSeparatedWords action: #addModuleInstantiating: argument: each]].
@@ -11171,6 +11415,12 @@ peaking: frequency Q: Q gain: gain
 reset
 	x1 := y1 := x2 := y2 := 0.0! !
 
+!Biquad methodsFor: 'controlling' stamp: 'len 8/Feb/2026 14:54:51'!
+undenormalize
+	"Clear any denormal state."
+	y1 abs < 1.0e-15 ifTrue: [y1 := 0.0].
+	y2 abs < 1.0e-15 ifTrue: [y2 := 0.0]! !
+
 !Biquad methodsFor: 'initialization' stamp: 'len 25/Jan/2026 16:16:29'!
 initialize
 	c0 := 1.0.
@@ -11693,6 +11943,28 @@ oversampling: aNumber do: aBlock
 !LagrangeOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:26:13'!
 reset
 	u0 := u1 := u2 := u3 := d0 := d1 := d2 := d3 := 0.0! !
+
+!OnePole methodsFor: 'as yet unclassified' stamp: 'len 8/Feb/2026 14:34:24'!
+frequency: frequency
+	a := (Float pi * frequency * -2.0) exp! !
+
+!OnePole methodsFor: 'as yet unclassified' stamp: 'len 8/Feb/2026 14:34:39'!
+initialize
+	a := 1.0.
+	self reset! !
+
+!OnePole methodsFor: 'as yet unclassified' stamp: 'len 8/Feb/2026 14:54:09'!
+reset
+	y := 0.0! !
+
+!OnePole methodsFor: 'as yet unclassified' stamp: 'len 8/Feb/2026 14:54:09'!
+undenormalize
+	"Clear any denormal state."
+	y abs < 1.0e-15 ifTrue: [y := 0.0]! !
+
+!OnePole methodsFor: 'as yet unclassified' stamp: 'len 8/Feb/2026 14:54:09'!
+value: in
+	^ y := (1.0 - a) * in + (a * y)! !
 
 !Polyphase13TapOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 03:43:37'!
 initialize

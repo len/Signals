@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 9 February 2026 at 9:48:17 pm'!
+'From Cuis7.7 [latest update: #7797] on 10 February 2026 at 12:45:49 am'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 453!
+!provides: 'Signals' 1 454!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -734,6 +734,16 @@ Module subclass: #Attenuverter
 	category: 'Signals-Modulation'!
 !classDefinition: 'Attenuverter class' category: #'Signals-Modulation'!
 Attenuverter class
+	instanceVariableNames: ''!
+
+!classDefinition: #EnvelopeFollower category: #'Signals-Modulation'!
+Module subclass: #EnvelopeFollower
+	instanceVariableNames: 'mode attack release input envelope'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Modulation'!
+!classDefinition: 'EnvelopeFollower class' category: #'Signals-Modulation'!
+EnvelopeFollower class
 	instanceVariableNames: ''!
 
 !classDefinition: #LFO category: #'Signals-Modulation'!
@@ -1776,10 +1786,10 @@ The module performs no dynamics processing or loudness compensation beyond the f
 !
 
 !Attenuator commentStamp: '<historical>' prior: 0!
-An attenuator scales a control signal by a number between 0 and 1. It is typically used to control modulation depth.!
+An attenuator scales a control signal (multiplies it by a number). It is typically used to control modulation depth.!
 
 !Attenuverter commentStamp: '<historical>' prior: 0!
-An attenuverter is similar to an attenuator, but it can also invert the polarity of the signal. It scales a control signal by a number between -1 and 1. When the knob is at 12 o'clock the resulting signal is 0, and bellow that it is inverted.!
+An attenuverter is similar to an attenuator, but it can also invert the polarity of the signal. It scales a control signal by a number that can be negative. When the knob is at 12 o'clock the resulting signal is 0, and bellow that it is inverted.!
 
 !LFO commentStamp: '<historical>' prior: 0!
 Low frequency oscillator.!
@@ -6061,10 +6071,10 @@ initialize
 	super initialize.
 	value := 0.0! !
 
-!Attenuator methodsFor: 'initialization' stamp: 'len 15/Jan/2026 20:31:05'!
+!Attenuator methodsFor: 'initialization' stamp: 'len 10/Feb/2026 00:36:32'!
 initializeControls
 	super initializeControls.
-	(self addControl: #amount min: 0.0 max: 1.0 value: 0.0) printer: [:x| (x * 100.0) rounded printString, '%']! !
+	(self addControl: #amount min: 0.0 max: 2.0 value: 0.0) printer: [:x| (x * 100.0) rounded printString, '%']! !
 
 !Attenuator methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:16:57'!
 tick
@@ -6094,10 +6104,10 @@ initialize
 	super initialize.
 	value := 0.0! !
 
-!Attenuverter methodsFor: 'initialization' stamp: 'len 15/Jan/2026 20:31:55'!
+!Attenuverter methodsFor: 'initialization' stamp: 'len 10/Feb/2026 00:37:33'!
 initializeControls
 	super initializeControls.
-	(self addControl: #amount min: -1.0 max: 1.0 value: 0.0) printer: [:x| (x * 100.0) rounded printString, '%']! !
+	(self addControl: #amount min: -2.0 max: 2.0 value: 0.0) printer: [:x| (x * 100.0) rounded printString, '%']! !
 
 !Attenuverter methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:17:06'!
 tick
@@ -6117,6 +6127,56 @@ patchable
 		addControlInput: #amount;
 		addControlOutput: #output: label: 'Out'.
 	^ answer! !
+
+!EnvelopeFollower methodsFor: 'controlling' stamp: 'len 10/Feb/2026 00:14:45'!
+reset
+	envelope := 0.0! !
+
+!EnvelopeFollower methodsFor: 'controlling' stamp: 'len 10/Feb/2026 00:32:05'!
+update
+	super update.
+	attack := (-1.0 / ((self get: #attack) * self class controlRate)) exp.
+	release := (-1.0 / ((self get: #release) * self class controlRate)) exp! !
+
+!EnvelopeFollower methodsFor: 'initialization' stamp: 'len 10/Feb/2026 00:28:47'!
+initialize
+	super initialize.
+	mode := #rms. "peak, rms"
+	self reset! !
+
+!EnvelopeFollower methodsFor: 'initialization' stamp: 'len 10/Feb/2026 00:12:58'!
+initializeControls
+	super initializeControls.
+	self addTimeControl: #attack min: 0.001 "1 ms" max: 0.05 "50 ms" value: 0.01 "10 ms".
+	self addTimeControl: #release min: 0.01 "10 ms" max: 0.5 "500 ms" value: 0.1 "100 ms"! !
+
+!EnvelopeFollower methodsFor: 'processing' stamp: 'len 10/Feb/2026 00:22:28'!
+tick
+	| level |
+	level := self level.
+	envelope := (level > envelope
+		ifTrue: [envelope * attack + (level * (1.0 - attack))]
+		ifFalse: [envelope * release + (level * (1.0 - release))]).
+	self triggerEvent: #output: with: envelope! !
+
+!EnvelopeFollower methodsFor: 'tools' stamp: 'len 10/Feb/2026 00:30:21'!
+patchable
+	^ super patchable
+		addAudioInput: #setInput: label: 'In';
+"		addControlInput: #attack;
+		addControlInput: #release;"
+		addControlOutput: #output: label: 'Envelope';
+		yourself! !
+
+!EnvelopeFollower methodsFor: 'wiring' stamp: 'len 10/Feb/2026 00:26:43'!
+setInput: aBuffer
+	input := aBuffer! !
+
+!EnvelopeFollower methodsFor: 'private' stamp: 'len 10/Feb/2026 00:17:58'!
+level
+	mode = #peak ifTrue: [^ input peak].
+	mode = #rms ifTrue: [^ input rms].
+	^ self notYetImplemented! !
 
 !LFO methodsFor: 'accessing' stamp: 'len 20/Jan/2026 15:56:54'!
 bipolar

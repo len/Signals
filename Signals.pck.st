@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 9 February 2026 at 2:49:13 am'!
+'From Cuis7.7 [latest update: #7797] on 9 February 2026 at 9:48:17 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 452!
+!provides: 'Signals' 1 453!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -584,6 +584,16 @@ Transform2x subclass: #Korg35LPF
 	category: 'Signals-VA Filters'!
 !classDefinition: 'Korg35LPF class' category: #'Signals-VA Filters'!
 Korg35LPF class
+	instanceVariableNames: ''!
+
+!classDefinition: #Compressor category: #'Signals-Levels'!
+Transform subclass: #Compressor
+	instanceVariableNames: 'detector'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Levels'!
+!classDefinition: 'Compressor class' category: #'Signals-Levels'!
+Compressor class
 	instanceVariableNames: ''!
 
 !classDefinition: #Limiter category: #'Signals-Levels'!
@@ -5485,6 +5495,21 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
+!Compressor methodsFor: 'as yet unclassified' stamp: 'len 9/Feb/2026 14:22:43'!
+initialize
+	super initialize.
+	detector := #peak "peak / rms"! !
+
+!Compressor methodsFor: 'as yet unclassified' stamp: 'len 9/Feb/2026 14:26:30'!
+initializeControls
+	super initializeControls.
+	self addVolumeControl: #threshold min: 0.001 "-60 dB" max: 1.0 value: 0.126.
+	(self addLogControl: #ratio min: 1.0 max: 20.0 value: 4.0) printer: [:x| (x printStringFractionDigits: 1), ':1'].
+	self addTimeControl: #attack min: 0.0001 "0.1 ms" max: 0.1 "100 ms" value: 0.01 "10 ms".
+	self addTimeControl: #release min: 0.01 "10 ms" max: 1.5 "s" value: 0.1 "100 ms".
+	self addVolumeControl: #knee min: 1.0 max: 4.0 "+12 dB" value: 2.0 "+6 dB".
+	self addVolumeControl: #makeup min: 0.25 "-12 dB" max: 16.0 "+24 dB" value: 1.0! !
+
 !Limiter methodsFor: 'initialization' stamp: 'len 20/Nov/2025 16:10:00'!
 initialize
 	super initialize.
@@ -6637,6 +6662,14 @@ drawOn: aCanvas
 		fillRectangle: rect color: color cornerRadius: 8.0;
 		frameRectangle: rect borderWidth: borderWidth  color: borderColor cornerRadius: 8.0! !
 
+!TrackerWindow methodsFor: 'actions' stamp: 'len 9/Feb/2026 20:43:12'!
+openProject
+	^ self! !
+
+!TrackerWindow methodsFor: 'actions' stamp: 'len 9/Feb/2026 20:43:18'!
+saveProject
+	^ self! !
+
 !TrackerWindow methodsFor: 'actions' stamp: 'len 7/Jan/2026 14:25:54'!
 setBPM
 	self request: 'BPM' initialAnswer: model bpm printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| model bpm: s asNumber]! !
@@ -6650,12 +6683,14 @@ toggleLowerPane
 	lowerPane visible: lowerPane visible not.
 	patchEditor layoutSpec proportionalHeight: (lowerPane visible ifTrue: [0.38] ifFalse: [1.0])! !
 
-!TrackerWindow methodsFor: 'events' stamp: 'len 22/Jan/2026 17:48:38'!
+!TrackerWindow methodsFor: 'events' stamp: 'len 9/Feb/2026 20:41:58'!
 keyStroke: anEvent
 	anEvent isSpace ifTrue: [model togglePlay. ^ true].
 	anEvent commandAltKeyPressed ifTrue:
 		[anEvent keyCharacter = $f ifTrue: [anEvent wasHandled: true. ^ self setBPM].
 		anEvent keyCharacter = $b ifTrue: [anEvent wasHandled: true. ^ self setLPB].
+		anEvent keyCharacter = $o ifTrue: [anEvent wasHandled: true. ^ self openProject].
+		anEvent keyCharacter = $s ifTrue: [anEvent wasHandled: true. ^ self saveProject].
 		anEvent keyCharacter = $j ifTrue: [anEvent wasHandled: true. ^ self toggleLowerPane]].
 	^ super keyStroke: anEvent! !
 
@@ -8518,8 +8553,8 @@ wantsSteps
 drawOn: aCanvas
 "	aCanvas fillRectangle: self localBounds color: Color black"! !
 
-!ZoomerMorph methodsFor: 'event handling testing' stamp: 'len 22/Nov/2025 11:43:00'!
-allowsMorphDrop
+!ZoomerMorph methodsFor: 'event handling testing' stamp: 'len 9/Feb/2026 21:01:23'!
+allowsSubmorphDrag
 	^ true! !
 
 !ZoomerMorph methodsFor: 'event handling testing' stamp: 'len 15/Nov/2025 15:11:00'!
@@ -8580,13 +8615,31 @@ clipboardPaste
 	patchMorph := submorphs detect: [:any| any isKindOf: PatchMorph] ifNone: [^ self].
 	patchMorph addMorph: clipboard copy patchable position: ((patchMorph internalizeFromWorld: self activeHand morphPosition))! !
 
+!PatchEditorMorph methodsFor: 'actions' stamp: 'len 9/Feb/2026 19:44:05'!
+exportPatch
+	| patch |
+	patch := tracker selectedPatch ifNil: [^ self].
+	self request: 'Patch label' initialAnswer: patch label do: [:newName|
+		patch label: newName.
+		(self class package packageDirectory / 'patches' // (newName, '.patch')) writeStreamDo: [:s| patch writeOn: s].
+		tracker triggerEvent: #patchesChanged]! !
+
+!PatchEditorMorph methodsFor: 'actions' stamp: 'len 9/Feb/2026 20:54:43'!
+importPatch
+	| patch |
+	patch := tracker selectedPatch ifNil: [^ self].
+	self request: 'Patch label' initialAnswer: patch label do: [:newName|
+		patch label: newName.
+		(self class package packageDirectory / 'patches' // (newName, '.patch')) readStreamDo: [:s| patch readFrom: s binary].
+		tracker triggerEvent: #patchesChanged]! !
+
 !PatchEditorMorph methodsFor: 'actions' stamp: 'len 20/Jan/2026 16:11:36'!
 renamePatch
 	| patch |
 	patch := tracker selectedPatch ifNil: [^ self].
 	self request: 'Patch label' initialAnswer: patch label do: [:newName| patch label: newName. tracker triggerEvent: #patchesChanged]! !
 
-!PatchEditorMorph methodsFor: 'events' stamp: 'len 21/Jan/2026 16:14:42'!
+!PatchEditorMorph methodsFor: 'events' stamp: 'len 9/Feb/2026 19:00:17'!
 keyStroke: anEvent
 	(anEvent rawMacOptionKeyPressed or: [anEvent controlKeyPressed]) ifTrue:
 		[anEvent isArrowLeft ifTrue:
@@ -8600,7 +8653,9 @@ keyStroke: anEvent
 	anEvent commandAltKeyPressed ifTrue:
 		[anEvent keyCharacter = $n ifTrue: [anEvent wasHandled: true. ^ tracker addPatch].
 		anEvent keyCharacter = $N ifTrue: [anEvent wasHandled: true. ^ tracker deletePatch].
-		anEvent keyCharacter = $r ifTrue: [anEvent wasHandled: true. self renamePatch. ^ self].
+		anEvent keyCharacter = $r ifTrue: [anEvent wasHandled: true. ^ self renamePatch].
+		anEvent keyCharacter = $e ifTrue: [anEvent wasHandled: true. ^ self exportPatch].
+		anEvent keyCharacter = $i ifTrue: [anEvent wasHandled: true. ^ self importPatch].
 		anEvent keyCharacter = $c ifTrue: [anEvent wasHandled: true. ^ self clipboardCopy].
 		anEvent keyCharacter = $x ifTrue: [anEvent wasHandled: true. ^ self clipboardCut].
 		anEvent keyCharacter = $v ifTrue: [anEvent wasHandled: true. ^ self clipboardPaste]].
@@ -10459,17 +10514,25 @@ wantsSteps
 drawOn: aCanvas
 	^ self! !
 
-!PatchMorph methodsFor: 'event handling testing' stamp: 'len 22/Nov/2025 11:43:00'!
+!PatchMorph methodsFor: 'events' stamp: 'len 9/Feb/2026 21:00:50'!
+aboutToBeGrabbedBy: aHand
+	^ MoverMorph new target: self; offset: (self owner internalizeFromWorld: aHand morphPosition) - self morphPosition! !
+
+!PatchMorph methodsFor: 'events' stamp: 'len 22/Nov/2025 11:43:00'!
 allowsMorphDrop
 	^ true! !
 
-!PatchMorph methodsFor: 'event handling testing' stamp: 'len 11/Nov/2025 22:23:00'!
+!PatchMorph methodsFor: 'events' stamp: 'len 9/Feb/2026 21:08:22'!
 allowsSubmorphDrag
 	^ true! !
 
 !PatchMorph methodsFor: 'geometry services' stamp: 'len 18/Nov/2025 22:52:00'!
 fullIncludesPixel: aPoint
 	^ true! !
+
+!PatchMorph methodsFor: 'geometry services' stamp: 'len 9/Feb/2026 21:39:32'!
+includesPixel: aPoint
+	^ submorphs noneSatisfy: [:m| m fullIncludesPixel: aPoint]! !
 
 !PatchMorph methodsFor: 'layout' stamp: 'len 5/Jan/2026 22:27:47'!
 someSubmorphPositionOrExtentChanged
@@ -12434,12 +12497,19 @@ asJsonWithBuffers: aList
 		at: #wires put: wiresJson;
 		yourself! !
 
-!Patch methodsFor: 'serialization' stamp: 'len 6/Feb/2026 02:15:37'!
+!Patch methodsFor: 'serialization' stamp: 'len 9/Feb/2026 20:57:33'!
 readFrom: aStream
-	| numberOfBuffers bufferList json patchables |
+	| numberOfBuffers bufferList json |
+	aStream useBytes.
 	numberOfBuffers := aStream nextInt32BigEndian: true.
 	bufferList := (1 to: numberOfBuffers) collect: [:i| Float32Array newFromStream: aStream].
+	aStream useCharacters.
 	json := Json readFrom: aStream.
+	^ self readFromJson: json buffers: bufferList! !
+
+!Patch methodsFor: 'serialization' stamp: 'len 9/Feb/2026 16:24:49'!
+readFromJson: json buffers: bufferList
+	| patchables |
 	patchables := (json at: #modules) collect: [:each|
 		| module |
 		module := (Smalltalk at: (each at: #class) asSymbol) new.
@@ -13087,6 +13157,57 @@ toggleFollowPlayhead
 togglePlay
 	self isPlaying ifTrue: [self stop] ifFalse: [self play]! !
 
+!Tracker methodsFor: 'serialization' stamp: 'len 9/Feb/2026 16:21:14'!
+asJsonWithBuffers: bufferList
+	^ OrderedDictionary new
+		at: #bpm put: bpm;
+		at: #lpb put: lpb;
+		at: #swing put: swing;
+		at: #level put: level;
+		at: #tracks put: (tracks collect: [:each| each label ifNil: ['']]); "just the labels"
+		at: #sequence put: (self patternNumbers withIndexCollect: [:p :i|
+			OrderedDictionary new
+				at: #pattern put: p;
+				at: #mask put: (masks at: i);
+				yourself]);
+		at: #patterns put: (patterns collect: [:each| each asJson]);
+		at: #patches put: (patches collect: [:each| each asJsonWithBuffers: bufferList]);
+		yourself! !
+
+!Tracker methodsFor: 'serialization' stamp: 'len 9/Feb/2026 20:57:54'!
+readFrom: aStream
+	| numberOfBuffers bufferList json |
+	aStream useBytes.
+	numberOfBuffers := aStream nextInt32BigEndian: true.
+	bufferList := (1 to: numberOfBuffers) collect: [:i| Float32Array newFromStream: aStream].
+	aStream useCharacters.
+	json := Json readFrom: aStream.
+	^ self readFromJson: json buffers: bufferList! !
+
+!Tracker methodsFor: 'serialization' stamp: 'len 9/Feb/2026 16:30:48'!
+readFromJson: json buffers: bufferList
+	| uniquePatterns |
+	bpm := json at: #bpm.
+	lpb := json at: #lpb.
+	swing := json at: #swing.
+	level := json at: #level.
+	tracks := #().
+	(json at: #tracks) do: [:each| self addTrack label: each].
+	uniquePatterns := (json at: #patterns) collect: [:each| Pattern new readFromJson: each].
+	patterns := (json at: #sequence) collect: [:each| uniquePatterns at: (each at: #pattern)].
+	masks := (json at: #sequence) collect: [:each| each at: #mask].
+	patches := #().
+	(json at: #patches) do: [:each| self addPatch readFromJson: each buffers: bufferList]! !
+
+!Tracker methodsFor: 'serialization' stamp: 'len 9/Feb/2026 16:22:08'!
+writeOn: aStream
+	| bufferList json |
+	bufferList := OrderedCollection new.
+	json := self asJsonWithBuffers: bufferList.
+	aStream nextInt32Put: bufferList size bigEndian: true.
+	bufferList do: [:each| each writeOn: aStream].
+	json jsonWriteOn: aStream! !
+
 !Tracker methodsFor: 'tracks' stamp: 'len 7/Jan/2026 02:44:14'!
 addTrack
 	self insertTrack: tracks size + 1! !
@@ -13707,6 +13828,14 @@ violetBeam
 !Color class methodsFor: '*signals' stamp: 'len 24/Jan/2026 22:48:39'!
 violetBeamLight
 	^ `Color fromHexString: '#C4AAFF'`! !
+
+!Morph methodsFor: '*signals' stamp: 'len 9/Feb/2026 20:50:05'!
+asJsonWithBuffers: bufferList
+	^ OrderedDictionary new! !
+
+!Morph methodsFor: '*signals' stamp: 'len 9/Feb/2026 20:50:43'!
+readFromJson: json buffers: bufferList
+	^ self! !
 Wavetable initialize!
 Supersaw initialize!
 SpectrogramMorph initialize!

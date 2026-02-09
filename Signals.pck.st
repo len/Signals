@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 10 February 2026 at 12:45:49 am'!
+'From Cuis7.7 [latest update: #7797] on 10 February 2026 at 1:47:49 am'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 454!
+!provides: 'Signals' 1 455!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -588,7 +588,7 @@ Korg35LPF class
 
 !classDefinition: #Compressor category: #'Signals-Levels'!
 Transform subclass: #Compressor
-	instanceVariableNames: 'detector'
+	instanceVariableNames: 'mode'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Levels'!
@@ -5505,10 +5505,10 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!Compressor methodsFor: 'as yet unclassified' stamp: 'len 9/Feb/2026 14:22:43'!
+!Compressor methodsFor: 'as yet unclassified' stamp: 'len 10/Feb/2026 00:49:27'!
 initialize
 	super initialize.
-	detector := #peak "peak / rms"! !
+	mode := #peak "peak / rms"! !
 
 !Compressor methodsFor: 'as yet unclassified' stamp: 'len 9/Feb/2026 14:26:30'!
 initializeControls
@@ -12870,6 +12870,15 @@ peakLeft
 peakRight
 	^ peakRight := peakRight * 0.95! !
 
+!Tracker methodsFor: 'accessing' stamp: 'len 10/Feb/2026 01:41:17'!
+swing
+	^ swing! !
+
+!Tracker methodsFor: 'accessing' stamp: 'len 10/Feb/2026 01:41:03'!
+swing: aNumber
+	swing := aNumber min: 1.0 max: 0.0.
+	self triggerEvent: #swingChanged! !
+
 !Tracker methodsFor: 'accessing' stamp: 'len 16/Dec/2025 21:18:23'!
 tracks
 	^ tracks! !
@@ -12986,7 +12995,7 @@ setCursorTrack: anInteger
 	cursorTrack := anInteger.
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'initialization' stamp: 'len 24/Jan/2026 18:00:36'!
+!Tracker methodsFor: 'initialization' stamp: 'len 10/Feb/2026 01:38:23'!
 initialize
 	tracks := #().
 	patches := #().
@@ -12994,7 +13003,7 @@ initialize
 	masks := #().
 	bpm := 175.
 	lpb := 4.
-	swing := 0.
+	swing := 0.0.
 	level := 1.0.
 	cursorPattern := 1.
 	cursorLine := 1.
@@ -13143,9 +13152,9 @@ play
 	self triggerEvent: #playheadChanged.
 	self triggerEvent: #playingStatusChanged! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 23/Jan/2026 00:55:48'!
+!Tracker methodsFor: 'playing' stamp: 'len 10/Feb/2026 01:38:58'!
 playLine
-	| pattern mask |
+	| pattern mask ticksPerLine ticksSwing |
 	"Advance playhead:"
 	playheadLine := playheadLine + 1.
 	playheadLine > (patterns at: playheadPattern) length ifTrue:
@@ -13162,18 +13171,22 @@ playLine
 	pattern := self playingPattern.
 	mask := self playingMask.
 	tracks withIndexDo: [:track :i|
-		(mask at: i) ifTrue: [(pattern track: i at: playheadLine) ifNotNil: [:aTrigger| track scheduleTrigger: aTrigger]]]! !
+		(mask at: i) ifTrue: [(pattern track: i at: playheadLine) ifNotNil: [:aTrigger| track scheduleTrigger: aTrigger]]].
+	ticksPerLine := Module controlRate * 60.0 / (bpm * lpb).
+	ticksToLine := ticksToLine + ticksPerLine.
+	ticksSwing := ticksPerLine * 0.333* swing squared.
+	(playheadLine \\ lpb) even ifTrue: [ticksSwing := ticksSwing negated].
+	ticksToLine := ticksToLine + ticksSwing! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 24/Jan/2026 18:11:47'!
+!Tracker methodsFor: 'playing' stamp: 'len 10/Feb/2026 01:22:45'!
 playSampleCount: n into: anAudioBuffer startingAt: startIndex
-	| blockSize ticksPerMinute i masterGain |
+	| blockSize i masterGain |
 	blockSize := Module blockSize.
-	ticksPerMinute := Module sampleRate / Module blockSize * 60.0.
 	i := startIndex.
 	self assert: n \\ blockSize = 0.
 	masterGain := level * 0.25. "leave -12 dB of headroom"
 	n // blockSize timesRepeat:
-		[ticksToLine > 0 ifTrue: [ticksToLine := ticksToLine - 1] ifFalse: [self playLine. ticksToLine := ticksPerMinute / (bpm * lpb) + ticksToLine].
+		[ticksToLine > 0 ifTrue: [ticksToLine := ticksToLine - 1] ifFalse: [self playLine].
 		leftBuffer atAllPut: 0.0.
 		rightBuffer atAllPut: 0.0.
 		tracks do: [:track| track tick; mixIntoLeft: leftBuffer right: rightBuffer].

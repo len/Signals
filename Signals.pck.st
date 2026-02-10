@@ -1,18 +1,19 @@
-'From Cuis7.7 [latest update: #7797] on 10 February 2026 at 1:47:49 am'!
+'From Cuis7.7 [latest update: #7797] on 10 February 2026 at 3:14:28 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 455!
+!provides: 'Signals' 1 456!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
 SystemOrganization addCategory: #'Signals-Oscillators'!
 SystemOrganization addCategory: #'Signals-Noise'!
 SystemOrganization addCategory: #'Signals-Samples'!
+SystemOrganization addCategory: #'Signals-Mix'!
 SystemOrganization addCategory: #'Signals-Modulation'!
 SystemOrganization addCategory: #'Signals-Envelopes'!
-SystemOrganization addCategory: #'Signals-Levels'!
 SystemOrganization addCategory: #'Signals-Filters'!
 SystemOrganization addCategory: #'Signals-VA Filters'!
 SystemOrganization addCategory: #'Signals-Shapers'!
+SystemOrganization addCategory: #'Signals-Dynamics'!
 SystemOrganization addCategory: #'Signals-FX'!
 SystemOrganization addCategory: #'Signals-IO'!
 SystemOrganization addCategory: #'Signals-Utility'!
@@ -54,6 +55,16 @@ ActiveModel subclass: #Module
 	category: 'Signals-Kernel'!
 !classDefinition: 'Module class' category: #'Signals-Kernel'!
 Module class
+	instanceVariableNames: ''!
+
+!classDefinition: #Amp category: #'Signals-Dynamics'!
+Module subclass: #Amp
+	instanceVariableNames: 'input gain output inputRM'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Dynamics'!
+!classDefinition: 'Amp class' category: #'Signals-Dynamics'!
+Amp class
 	instanceVariableNames: ''!
 
 !classDefinition: #EG category: #'Signals-Envelopes'!
@@ -366,6 +377,26 @@ Module subclass: #Transform
 Transform class
 	instanceVariableNames: ''!
 
+!classDefinition: #Compressor category: #'Signals-Dynamics'!
+Transform subclass: #Compressor
+	instanceVariableNames: 'mode'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Dynamics'!
+!classDefinition: 'Compressor class' category: #'Signals-Dynamics'!
+Compressor class
+	instanceVariableNames: ''!
+
+!classDefinition: #Limiter category: #'Signals-Dynamics'!
+Transform subclass: #Limiter
+	instanceVariableNames: 'peak ceiling release gain'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Dynamics'!
+!classDefinition: 'Limiter class' category: #'Signals-Dynamics'!
+Limiter class
+	instanceVariableNames: ''!
+
 !classDefinition: #DiodeLadder2 category: #'Signals-Etc'!
 Transform subclass: #DiodeLadder2
 	instanceVariableNames: 's1 s2 s3 s4 vc1 vc2 vc3 vc4 vout k g'
@@ -586,26 +617,6 @@ Transform2x subclass: #Korg35LPF
 Korg35LPF class
 	instanceVariableNames: ''!
 
-!classDefinition: #Compressor category: #'Signals-Levels'!
-Transform subclass: #Compressor
-	instanceVariableNames: 'mode'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Levels'!
-!classDefinition: 'Compressor class' category: #'Signals-Levels'!
-Compressor class
-	instanceVariableNames: ''!
-
-!classDefinition: #Limiter category: #'Signals-Levels'!
-Transform subclass: #Limiter
-	instanceVariableNames: 'peak'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Levels'!
-!classDefinition: 'Limiter class' category: #'Signals-Levels'!
-Limiter class
-	instanceVariableNames: ''!
-
 !classDefinition: #Decimator category: #'Signals-Shapers'!
 Transform subclass: #Decimator
 	instanceVariableNames: 'quantization downsample holdCount heldValue'
@@ -656,63 +667,53 @@ Transform subclass: #MultiTapDelayLine
 MultiTapDelayLine class
 	instanceVariableNames: ''!
 
-!classDefinition: #Amp category: #'Signals-Levels'!
-Module subclass: #Amp
-	instanceVariableNames: 'input gain output inputRM'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Levels'!
-!classDefinition: 'Amp class' category: #'Signals-Levels'!
-Amp class
-	instanceVariableNames: ''!
-
-!classDefinition: #Balance category: #'Signals-Levels'!
+!classDefinition: #Balance category: #'Signals-Mix'!
 Module subclass: #Balance
 	instanceVariableNames: 'inputA inputB outputL outputR'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Levels'!
-!classDefinition: 'Balance class' category: #'Signals-Levels'!
+	category: 'Signals-Mix'!
+!classDefinition: 'Balance class' category: #'Signals-Mix'!
 Balance class
 	instanceVariableNames: ''!
 
-!classDefinition: #Crossfader category: #'Signals-Levels'!
+!classDefinition: #Crossfader category: #'Signals-Mix'!
 Module subclass: #Crossfader
 	instanceVariableNames: 'inputA inputB output'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Levels'!
-!classDefinition: 'Crossfader class' category: #'Signals-Levels'!
+	category: 'Signals-Mix'!
+!classDefinition: 'Crossfader class' category: #'Signals-Mix'!
 Crossfader class
 	instanceVariableNames: ''!
 
-!classDefinition: #Mixer category: #'Signals-Levels'!
+!classDefinition: #Mixer category: #'Signals-Mix'!
 Module subclass: #Mixer
 	instanceVariableNames: 'inputA inputB output'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Levels'!
-!classDefinition: 'Mixer class' category: #'Signals-Levels'!
+	category: 'Signals-Mix'!
+!classDefinition: 'Mixer class' category: #'Signals-Mix'!
 Mixer class
 	instanceVariableNames: ''!
 
-!classDefinition: #Pan category: #'Signals-Levels'!
+!classDefinition: #Pan category: #'Signals-Mix'!
 Module subclass: #Pan
 	instanceVariableNames: 'input outputL outputR'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Levels'!
-!classDefinition: 'Pan class' category: #'Signals-Levels'!
+	category: 'Signals-Mix'!
+!classDefinition: 'Pan class' category: #'Signals-Mix'!
 Pan class
 	instanceVariableNames: ''!
 
-!classDefinition: #StereoMatrix category: #'Signals-Levels'!
+!classDefinition: #StereoMatrix category: #'Signals-Mix'!
 Module subclass: #StereoMatrix
 	instanceVariableNames: 'inputA inputB outputL outputR aux'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Levels'!
-!classDefinition: 'StereoMatrix class' category: #'Signals-Levels'!
+	category: 'Signals-Mix'!
+!classDefinition: 'StereoMatrix class' category: #'Signals-Mix'!
 StereoMatrix class
 	instanceVariableNames: ''!
 
@@ -1518,7 +1519,7 @@ Track class
 
 !classDefinition: #Tracker category: #'Signals-Tracker'!
 Object subclass: #Tracker
-	instanceVariableNames: 'tracks patches patterns masks bpm lpb swing level cursorPattern cursorLine cursorTrack cursorPatch playheadPattern playheadLine followPlayhead anyTrackSoloed ticksToLine leftBuffer rightBuffer peakLeft peakRight'
+	instanceVariableNames: 'tracks patches patterns masks label bpm lpb swing level cursorPattern cursorLine cursorTrack cursorPatch playheadPattern playheadLine followPlayhead anyTrackSoloed ticksToLine leftBuffer rightBuffer peakLeft peakRight'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Tracker'!
@@ -1549,6 +1550,9 @@ Controls can have different curves, e.g. linear (like a control to morph the wav
 
 !Module commentStamp: '<historical>' prior: 0!
 This is an abstract superclass for signal processing modules.!
+
+!Amp commentStamp: '<historical>' prior: 0!
+An amplifier just multiplies the input signal by a gain parameter, typically modulated by an envolope. When the gain parameter changes, the actual gain is varied smoothly by sample to avoid clicks or zipper noise.!
 
 !EG commentStamp: '<historical>' prior: 0!
 Abstract superclass for envelope generators.!
@@ -1661,6 +1665,10 @@ State:
 !Transform commentStamp: 'len 4/Feb/2026 00:25:27' prior: 0!
 Abstract superclass for unary transforms, i.e. modules with one audio input and one audio output, that transform the audio signal sample-by-sample (for each input sample, they apply a function to produce an output sample). Subclasses can just implement #value:.!
 
+!Limiter commentStamp: 'len 10/Feb/2026 14:50:17' prior: 0!
+A feed-forward peak limiter with fast attack, adjustable release, and smoothed gain.
+Prevents signal peaks from exceeding a fixed ceiling without altering level below threshold.!
+
 !DiodeLadder2 commentStamp: 'len 2/Feb/2026 18:24:19' prior: 0!
 This is a virtual analog model of the Korg 35 low-pass 12 dB/oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.!
 
@@ -1752,9 +1760,6 @@ This module is ideal for adding analog-style warmth, subtle compression, and mus
 !MultiTapDelayLine commentStamp: '<historical>' prior: 0!
 This is based on Squeak's original ReverbSound by John Maloney.!
 
-!Amp commentStamp: '<historical>' prior: 0!
-An amplifier just multiplies the input signal by a gain parameter, typically modulated by an envolope. When the gain parameter changes, the actual gain is varied smoothly by sample to avoid clicks or zipper noise.!
-
 !StereoMatrix commentStamp: '<historical>' prior: 0!
 Linear stereo transform based on a Mid/Side representation.
 
@@ -1786,16 +1791,19 @@ The module performs no dynamics processing or loudness compensation beyond the f
 !
 
 !Attenuator commentStamp: '<historical>' prior: 0!
-An attenuator scales a control signal (multiplies it by a number). It is typically used to control modulation depth.!
+An attenuator scales a control signal by a positive number. It is typically used to control modulation depth.!
 
 !Attenuverter commentStamp: '<historical>' prior: 0!
 An attenuverter is similar to an attenuator, but it can also invert the polarity of the signal. It scales a control signal by a number that can be negative. When the knob is at 12 o'clock the resulting signal is 0, and bellow that it is inverted.!
+
+!EnvelopeFollower commentStamp: 'len 10/Feb/2026 14:59:57' prior: 0!
+Control-rate envelope follower with selectable peak or RMS detection and independent attack and release times.!
 
 !LFO commentStamp: '<historical>' prior: 0!
 Low frequency oscillator.!
 
 !LogAttenuator commentStamp: '<historical>' prior: 0!
-An attenuator scales a control signal by a number between 0 and 1. It is typically used to control modulation depth.!
+An attenuator scales a control signal by a positive number. It is typically used to control modulation depth.!
 
 !MoogLPF commentStamp: 'len 2/Feb/2026 18:24:58' prior: 0!
 This is a low pass filter inspired by the classic Moog ladder filter. It's a low-pass 24 dB/oct (4 poles) resonant filter.
@@ -2582,6 +2590,61 @@ controlRate
 !Module class methodsFor: 'constants' stamp: 'len 6/Dec/2025 15:31:46'!
 sampleRate
 	^ AudioPlayer sampleRate! !
+
+!Amp methodsFor: 'initialization' stamp: 'len 31/Jan/2026 21:50:16'!
+initialize
+	super initialize.
+	gain := 0.0! !
+
+!Amp methodsFor: 'initialization' stamp: 'len 2/Dec/2025 23:42:00'!
+initializeControls
+	super initializeControls.
+	self addControl: #gain min: 0.0 max: 1.0 value: 0.0! !
+
+!Amp methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:16:39'!
+tick
+	| increment |
+	output ifNil: [^ self].
+	input ifNil: [output atAllPut: 0.0. ^ self].
+	increment := (self get: #gain) - gain / self class blockSize.
+	(gain = 0.0 and: [increment = 0.0]) ifTrue: [output atAllPut: 0.0. ^ self].
+	increment = 0.0 
+		ifTrue:
+			[output replaceWith: input.
+			output *= gain]
+		ifFalse:
+			[1 to: input size do: [:i|
+				gain := gain + increment.
+				output at: i put: (input at: i) * gain]].
+	inputRM ifNotNil: [output *= inputRM]! !
+
+!Amp methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:56:14'!
+panel
+	^ ControlPanel new addVerticalSlider: (controls at: #gain)! !
+
+!Amp methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:43:59'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self panel.
+	answer
+		addAudioInput: #setInput:;
+		addControlInput: #gain;
+		addAudioInput: #setInputRM: label: 'RM';
+		addAudioOutput: #setOutput:.
+	^ answer! !
+
+!Amp methodsFor: 'wiring' stamp: 'len 25/Nov/2025 22:29:00'!
+setInput: aBuffer
+	input := aBuffer! !
+
+!Amp methodsFor: 'wiring' stamp: 'len 13/Jan/2026 13:14:40'!
+setInputRM: aBuffer
+	inputRM := aBuffer! !
+
+!Amp methodsFor: 'wiring' stamp: 'len 25/Nov/2025 22:29:00'!
+setOutput: aBuffer
+	output := aBuffer! !
 
 !EG methodsFor: 'accessing' stamp: 'len 6/Jan/2026 18:33:45'!
 stage
@@ -4622,6 +4685,49 @@ setInput: aBuffer
 setOutput: aBuffer
 	output := aBuffer! !
 
+!Compressor methodsFor: 'as yet unclassified' stamp: 'len 10/Feb/2026 00:49:27'!
+initialize
+	super initialize.
+	mode := #peak "peak / rms"! !
+
+!Compressor methodsFor: 'as yet unclassified' stamp: 'len 9/Feb/2026 14:26:30'!
+initializeControls
+	super initializeControls.
+	self addVolumeControl: #threshold min: 0.001 "-60 dB" max: 1.0 value: 0.126.
+	(self addLogControl: #ratio min: 1.0 max: 20.0 value: 4.0) printer: [:x| (x printStringFractionDigits: 1), ':1'].
+	self addTimeControl: #attack min: 0.0001 "0.1 ms" max: 0.1 "100 ms" value: 0.01 "10 ms".
+	self addTimeControl: #release min: 0.01 "10 ms" max: 1.5 "s" value: 0.1 "100 ms".
+	self addVolumeControl: #knee min: 1.0 max: 4.0 "+12 dB" value: 2.0 "+6 dB".
+	self addVolumeControl: #makeup min: 0.25 "-12 dB" max: 16.0 "+24 dB" value: 1.0! !
+
+!Limiter methodsFor: 'controlling' stamp: 'len 10/Feb/2026 14:38:00'!
+update
+	super update.
+	ceiling := self get: #ceiling.
+	release := (-1.0 / ((self get: #release) * self class sampleRate)) exp! !
+
+!Limiter methodsFor: 'initialization' stamp: 'len 10/Feb/2026 14:42:12'!
+initialize
+	super initialize.
+	peak := 0.5.
+	gain := 1.0! !
+
+!Limiter methodsFor: 'initialization' stamp: 'len 10/Feb/2026 14:54:00'!
+initializeControls
+	super initializeControls.
+	self addVolumeControl: #ceiling min: 0.5 "-12 dB" max: 1.0 value: 0.985.
+	self addTimeControl: #release min: 0.005 "5 ms" max: 0.2 "200 ms" value: 0.05 "50 ms"! !
+
+!Limiter methodsFor: 'processing' stamp: 'len 10/Feb/2026 14:51:58'!
+value: in
+	| error |
+	"peak detector:"
+	error := in abs - peak.
+	peak := (error > 0.0 ifTrue: [0.05] ifFalse: [release]) * error + peak.
+	"gain computer and smoothing:"
+	gain := ((peak <= ceiling ifTrue: [1.0] ifFalse: [1.0 / peak]) - gain) * 0.01 + gain.
+	^ in * gain! !
+
 !DiodeLadder2 methodsFor: 'controlling' stamp: 'len 29/Jan/2026 15:28:49'!
 reset
 	s1 := s2 := s3 := s4 := vc1 := vc2 := vc3 := vc4 := vout := 0.0! !
@@ -5505,33 +5611,6 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!Compressor methodsFor: 'as yet unclassified' stamp: 'len 10/Feb/2026 00:49:27'!
-initialize
-	super initialize.
-	mode := #peak "peak / rms"! !
-
-!Compressor methodsFor: 'as yet unclassified' stamp: 'len 9/Feb/2026 14:26:30'!
-initializeControls
-	super initializeControls.
-	self addVolumeControl: #threshold min: 0.001 "-60 dB" max: 1.0 value: 0.126.
-	(self addLogControl: #ratio min: 1.0 max: 20.0 value: 4.0) printer: [:x| (x printStringFractionDigits: 1), ':1'].
-	self addTimeControl: #attack min: 0.0001 "0.1 ms" max: 0.1 "100 ms" value: 0.01 "10 ms".
-	self addTimeControl: #release min: 0.01 "10 ms" max: 1.5 "s" value: 0.1 "100 ms".
-	self addVolumeControl: #knee min: 1.0 max: 4.0 "+12 dB" value: 2.0 "+6 dB".
-	self addVolumeControl: #makeup min: 0.25 "-12 dB" max: 16.0 "+24 dB" value: 1.0! !
-
-!Limiter methodsFor: 'initialization' stamp: 'len 20/Nov/2025 16:10:00'!
-initialize
-	super initialize.
-	peak := 0.5! !
-
-!Limiter methodsFor: 'processing' stamp: 'len 20/Nov/2025 16:12:00'!
-value: in
-	| error |
-	error := in abs - peak.
-	peak := (error > 0 ifTrue: [0.05] ifFalse: [0.00002]) * error + peak.
-	^ in * (peak <= 1.0 ifTrue: [0.8] ifFalse: [0.8 / peak])! !
-
 !Decimator methodsFor: 'controlling' stamp: 'len 27/Sep/2025 20:49:00'!
 reset
 	holdCount := 0! !
@@ -5741,61 +5820,6 @@ value: in
 	buffer at: i put: out.
 	position := position \\ buffer size.
 	^ out! !
-
-!Amp methodsFor: 'initialization' stamp: 'len 31/Jan/2026 21:50:16'!
-initialize
-	super initialize.
-	gain := 0.0! !
-
-!Amp methodsFor: 'initialization' stamp: 'len 2/Dec/2025 23:42:00'!
-initializeControls
-	super initializeControls.
-	self addControl: #gain min: 0.0 max: 1.0 value: 0.0! !
-
-!Amp methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:16:39'!
-tick
-	| increment |
-	output ifNil: [^ self].
-	input ifNil: [output atAllPut: 0.0. ^ self].
-	increment := (self get: #gain) - gain / self class blockSize.
-	(gain = 0.0 and: [increment = 0.0]) ifTrue: [output atAllPut: 0.0. ^ self].
-	increment = 0.0 
-		ifTrue:
-			[output replaceWith: input.
-			output *= gain]
-		ifFalse:
-			[1 to: input size do: [:i|
-				gain := gain + increment.
-				output at: i put: (input at: i) * gain]].
-	inputRM ifNotNil: [output *= inputRM]! !
-
-!Amp methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:56:14'!
-panel
-	^ ControlPanel new addVerticalSlider: (controls at: #gain)! !
-
-!Amp methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:43:59'!
-patchable
-	| answer |
-	answer := PatchableMorph new model: self.
-	answer body addMorph: self panel.
-	answer
-		addAudioInput: #setInput:;
-		addControlInput: #gain;
-		addAudioInput: #setInputRM: label: 'RM';
-		addAudioOutput: #setOutput:.
-	^ answer! !
-
-!Amp methodsFor: 'wiring' stamp: 'len 25/Nov/2025 22:29:00'!
-setInput: aBuffer
-	input := aBuffer! !
-
-!Amp methodsFor: 'wiring' stamp: 'len 13/Jan/2026 13:14:40'!
-setInputRM: aBuffer
-	inputRM := aBuffer! !
-
-!Amp methodsFor: 'wiring' stamp: 'len 25/Nov/2025 22:29:00'!
-setOutput: aBuffer
-	output := aBuffer! !
 
 !Balance methodsFor: 'initialization' stamp: 'len 2/Feb/2026 03:11:52'!
 initializeControls
@@ -6150,13 +6174,14 @@ initializeControls
 	self addTimeControl: #attack min: 0.001 "1 ms" max: 0.05 "50 ms" value: 0.01 "10 ms".
 	self addTimeControl: #release min: 0.01 "10 ms" max: 0.5 "500 ms" value: 0.1 "100 ms"! !
 
-!EnvelopeFollower methodsFor: 'processing' stamp: 'len 10/Feb/2026 00:22:28'!
+!EnvelopeFollower methodsFor: 'processing' stamp: 'len 10/Feb/2026 15:01:23'!
 tick
 	| level |
 	level := self level.
 	envelope := (level > envelope
 		ifTrue: [envelope * attack + (level * (1.0 - attack))]
 		ifFalse: [envelope * release + (level * (1.0 - release))]).
+	envelope < 1.0e-15 ifTrue: [envelope := 0.0].
 	self triggerEvent: #output: with: envelope! !
 
 !EnvelopeFollower methodsFor: 'tools' stamp: 'len 10/Feb/2026 00:30:21'!
@@ -6722,13 +6747,16 @@ drawOn: aCanvas
 		fillRectangle: rect color: color cornerRadius: 8.0;
 		frameRectangle: rect borderWidth: borderWidth  color: borderColor cornerRadius: 8.0! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 9/Feb/2026 20:43:12'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 10/Feb/2026 15:12:23'!
 openProject
-	^ self! !
+	self request: 'Project name' initialAnswer: '' do: [:newName|
+		(self class package packageDirectory / 'projects' // (newName, '.song')) readStreamDo: [:s| model readFrom: s binary]]! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 9/Feb/2026 20:43:18'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 10/Feb/2026 15:07:35'!
 saveProject
-	^ self! !
+	self request: 'Project name' initialAnswer: (model label ifNil: '') do: [:newName|
+		model label: newName.
+		(self class package packageDirectory / 'projects' // (newName, '.song')) writeStreamDo: [:s| model writeOn: s]]! !
 
 !TrackerWindow methodsFor: 'actions' stamp: 'len 7/Jan/2026 14:25:54'!
 setBPM
@@ -8675,29 +8703,29 @@ clipboardPaste
 	patchMorph := submorphs detect: [:any| any isKindOf: PatchMorph] ifNone: [^ self].
 	patchMorph addMorph: clipboard copy patchable position: ((patchMorph internalizeFromWorld: self activeHand morphPosition))! !
 
-!PatchEditorMorph methodsFor: 'actions' stamp: 'len 9/Feb/2026 19:44:05'!
+!PatchEditorMorph methodsFor: 'actions' stamp: 'len 10/Feb/2026 15:10:29'!
 exportPatch
 	| patch |
 	patch := tracker selectedPatch ifNil: [^ self].
-	self request: 'Patch label' initialAnswer: patch label do: [:newName|
+	self request: 'Patch name' initialAnswer: patch label do: [:newName|
 		patch label: newName.
 		(self class package packageDirectory / 'patches' // (newName, '.patch')) writeStreamDo: [:s| patch writeOn: s].
 		tracker triggerEvent: #patchesChanged]! !
 
-!PatchEditorMorph methodsFor: 'actions' stamp: 'len 9/Feb/2026 20:54:43'!
+!PatchEditorMorph methodsFor: 'actions' stamp: 'len 10/Feb/2026 15:10:22'!
 importPatch
 	| patch |
 	patch := tracker selectedPatch ifNil: [^ self].
-	self request: 'Patch label' initialAnswer: patch label do: [:newName|
+	self request: 'Patch name' initialAnswer: patch label do: [:newName|
 		patch label: newName.
 		(self class package packageDirectory / 'patches' // (newName, '.patch')) readStreamDo: [:s| patch readFrom: s binary].
 		tracker triggerEvent: #patchesChanged]! !
 
-!PatchEditorMorph methodsFor: 'actions' stamp: 'len 20/Jan/2026 16:11:36'!
+!PatchEditorMorph methodsFor: 'actions' stamp: 'len 10/Feb/2026 15:10:36'!
 renamePatch
 	| patch |
 	patch := tracker selectedPatch ifNil: [^ self].
-	self request: 'Patch label' initialAnswer: patch label do: [:newName| patch label: newName. tracker triggerEvent: #patchesChanged]! !
+	self request: 'Patch name' initialAnswer: patch label do: [:newName| patch label: newName. tracker triggerEvent: #patchesChanged]! !
 
 !PatchEditorMorph methodsFor: 'events' stamp: 'len 9/Feb/2026 19:00:17'!
 keyStroke: anEvent
@@ -10614,12 +10642,12 @@ addModuleCopying: aModule
 addModuleInstantiating: aClass
 	self addMorph: aClass new patchable position: (self valueOfProperty: #lastMenuOpeningPosition)! !
 
-!PatchMorph methodsFor: 'menu' stamp: 'len 7/Feb/2026 19:46:33'!
+!PatchMorph methodsFor: 'menu' stamp: 'len 10/Feb/2026 01:56:49'!
 getMenu
 	| menu submenu |
 	self setProperty: #lastMenuOpeningPosition toValue: (self internalizeFromWorld: self activeHand morphPosition).
 	menu := MenuMorph new defaultTarget: self.
-	#('Oscillators' 'Noise' 'Modulation' 'Envelopes' 'Levels' 'Filters' 'VA Filters' 'Shapers' 'FX') do: [:subcategory|
+	#('Oscillators' 'Noise' 'Mix' 'Modulation' 'Envelopes' 'Filters' 'VA Filters' 'Shapers' 'Dynamics' 'FX') do: [:subcategory|
 		submenu := MenuMorph new defaultTarget: self.
 		(SystemOrganization classesAt: 'Signals-', subcategory)
 			do: [:each| each hasSubclasses ifFalse: [submenu add: each name camelSeparatedWords action: #addModuleInstantiating: argument: each]].
@@ -12826,6 +12854,15 @@ bpm: anInteger
 followPlayhead
 	^ followPlayhead! !
 
+!Tracker methodsFor: 'accessing' stamp: 'len 10/Feb/2026 15:05:40'!
+label
+	^ label! !
+
+!Tracker methodsFor: 'accessing' stamp: 'len 10/Feb/2026 15:05:55'!
+label: aString
+	label := aString.
+	self triggerEvent: #labelChanged! !
+
 !Tracker methodsFor: 'accessing' stamp: 'len 24/Jan/2026 14:02:29'!
 level
 	^ level! !
@@ -13152,7 +13189,7 @@ play
 	self triggerEvent: #playheadChanged.
 	self triggerEvent: #playingStatusChanged! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 10/Feb/2026 01:38:58'!
+!Tracker methodsFor: 'playing' stamp: 'len 10/Feb/2026 14:26:09'!
 playLine
 	| pattern mask ticksPerLine ticksSwing |
 	"Advance playhead:"
@@ -13174,7 +13211,7 @@ playLine
 		(mask at: i) ifTrue: [(pattern track: i at: playheadLine) ifNotNil: [:aTrigger| track scheduleTrigger: aTrigger]]].
 	ticksPerLine := Module controlRate * 60.0 / (bpm * lpb).
 	ticksToLine := ticksToLine + ticksPerLine.
-	ticksSwing := ticksPerLine * 0.333* swing squared.
+	ticksSwing := ticksPerLine * 0.333 * swing squared.
 	(playheadLine \\ lpb) even ifTrue: [ticksSwing := ticksSwing negated].
 	ticksToLine := ticksToLine + ticksSwing! !
 

@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 12 February 2026 at 3:20:01 pm'!
+'From Cuis7.7 [latest update: #7797] on 12 February 2026 at 6:40:54 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 457!
+!provides: 'Signals' 1 458!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1269,7 +1269,7 @@ SpectrogramMorph class
 
 !classDefinition: #SpectrumAnalyzerMorph category: #'Signals-Morphic-Widgets'!
 BoxMorph subclass: #SpectrumAnalyzerMorph
-	instanceVariableNames: 'input color spectrum fft buffer bufferIndex'
+	instanceVariableNames: 'input color spectrum fft buffer bufferIndex frequencyScale displayMode'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Widgets'!
@@ -8633,12 +8633,12 @@ isConnected
 uninstallDisconnectedSignals
 	^ self! !
 
-!PinMorph methodsFor: 'drawing' stamp: 'len 25/Jan/2026 19:50:16'!
+!PinMorph methodsFor: 'drawing' stamp: 'len 12/Feb/2026 16:36:46'!
 drawOn: aCanvas
 	voltage > 0.01
 		ifTrue:
 			[| bc fc bw |
-			voltage > 1.0 ifTrue: [fc := bc := Color roseCathode] ifFalse: [fc := color alpha: voltage sqrt. bc := color].
+			voltage > 1.0 ifTrue: [fc := bc := Color redCathode] ifFalse: [fc := color alpha: voltage sqrt. bc := color].
 			bw := self borderWidth + ((voltage sqrt min: 1.0) * 2.0).
 			aCanvas strokeWidth: bw color: bc fillColor: fc do:
 				[self drawShapeOn: aCanvas]]
@@ -9151,10 +9151,10 @@ update
 	self removeAllMorphs.
 	tracker selectedPatch ifNotNil: [:aPatch| self addMorph: aPatch patchMorph]! !
 
-!MultitrackMeterMorph methodsFor: 'drawing' stamp: 'len 24/Jan/2026 22:52:36'!
+!MultitrackMeterMorph methodsFor: 'drawing' stamp: 'len 12/Feb/2026 16:36:41'!
 colorForMeterValue: aNumber
 	"White up to -12 dB, yellow from -12 dB to -3 dB, red over -3 dB."
-	^ aNumber > 0.7 ifTrue: [Color roseCathode] ifFalse: [aNumber > 0.25 ifTrue: [Color lemonPhosphor] ifFalse: [Color white]]! !
+	^ aNumber > 0.7 ifTrue: [Color redCathode] ifFalse: [aNumber > 0.25 ifTrue: [Color lemonPhosphor] ifFalse: [Color white]]! !
 
 !MultitrackMeterMorph methodsFor: 'drawing' stamp: 'len 24/Jan/2026 22:25:33'!
 drawOn: aCanvas
@@ -9985,10 +9985,6 @@ stepTime
 wantsSteps
 	^ true! !
 
-!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 27/Nov/2025 22:43:00'!
-defaultExtent
-	^ 256@128! !
-
 !SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 19:10:35'!
 drawNextLinearSpectrumFrame
 	| w s spectrum |
@@ -10016,38 +10012,24 @@ drawNextLogSpectrumFrame
 drawNextSpectrumFrame
 	frequencyScale = #linear ifTrue: [self drawNextLinearSpectrumFrame] ifFalse: [self drawNextLogSpectrumFrame]! !
 
-!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 19:14:11'!
-drawOn: aCanvas
-	"Draw the form, wrapping, with the current row always at the top. This produces the the impression of infinite scrolling top to bottom (waterfall)."
-	| w h p |
-	w := image width.
-	h := image height.
-	p := position.
-	"from left to right, draw from the current column position to the last column:"
-	aCanvas image: image at: 0 @ 0 sourceRect: (0 @ (p + 1) corner: w @ h).
-	"and then wrap and continue drawing from the first column to the current column position - 1:"
-	aCanvas image: image at: 0 @ (h - p - 2) sourceRect: (0 @ 0 corner: w @ (p - 1))! !
+!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:05:57'!
+frequencyScale
+	^ frequencyScale! !
 
-!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 8/Feb/2026 14:01:30'!
-initialize
-	super initialize.
-	fft := FFT new: 512.
-	hop := (fft size * 0.5) truncated.
-	image := Form extent: self defaultExtent + (0 @ 2) depth: 32.
-	image fillColor: Color transparent.
-	position := 0.
-	buffer := Float32Array new: fft size.
-	bufferIndex := 1.
-	colormap := WordArray new: Viridis size.
-	1 to: Viridis size do: [:i| colormap at: i put: (image pixelValueFor: (Viridis at: i))].
-	logSpectrum := Float32Array new: image width.
-	frequencyScale := #linear! !
+!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:06:12'!
+frequencyScale: aSymbol
+	frequencyScale := aSymbol.
+	self changed! !
 
-!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 15:44:56'!
+!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:21:42'!
 patchable
-	| answer |
+	| answer panel |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self.
+	panel := answer body addPanel.
+	panel
+		addMorph: (PluggableChoiceMorph new options: #(256 512 1024 2048 4096); model: self; getter: #windowSize; setter: #windowSize:);
+		addMorph: (PluggableChoiceMorph new options: #(linear log); model: self; getter: #frequencyScale; setter: #frequencyScale:).
 	answer addAudioInput: #setInput:.
 	^ answer! !
 
@@ -10084,6 +10066,46 @@ tick
 !SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 19:10:16'!
 update
 	^ self! !
+
+!SpectrogramMorph methodsFor: 'initialization' stamp: 'len 27/Nov/2025 22:43:00'!
+defaultExtent
+	^ 256@128! !
+
+!SpectrogramMorph methodsFor: 'initialization' stamp: 'len 12/Feb/2026 18:14:44'!
+initialize
+	super initialize.
+	self windowSize: 512.
+	image := Form extent: self defaultExtent + (0 @ 2) depth: 32.
+	image fillColor: Color transparent.
+	position := 0.
+	colormap := WordArray new: Viridis size.
+	1 to: Viridis size do: [:i| colormap at: i put: (image pixelValueFor: (Viridis at: i))].
+	logSpectrum := Float32Array new: image width.
+	frequencyScale := #linear! !
+
+!SpectrogramMorph methodsFor: 'initialization' stamp: 'len 12/Feb/2026 18:14:33'!
+windowSize
+	^ fft size! !
+
+!SpectrogramMorph methodsFor: 'initialization' stamp: 'len 12/Feb/2026 18:14:23'!
+windowSize: n
+	fft := FFT new: n.
+	hop := (fft size * 0.5) truncated.
+	buffer := Float32Array new: fft size.
+	bufferIndex := 1.
+	self changed! !
+
+!SpectrogramMorph methodsFor: 'drawing' stamp: 'len 4/Feb/2026 19:14:11'!
+drawOn: aCanvas
+	"Draw the form, wrapping, with the current row always at the top. This produces the the impression of infinite scrolling top to bottom (waterfall)."
+	| w h p |
+	w := image width.
+	h := image height.
+	p := position.
+	"from left to right, draw from the current column position to the last column:"
+	aCanvas image: image at: 0 @ 0 sourceRect: (0 @ (p + 1) corner: w @ h).
+	"and then wrap and continue drawing from the first column to the current column position - 1:"
+	aCanvas image: image at: 0 @ (h - p - 2) sourceRect: (0 @ 0 corner: w @ (p - 1))! !
 
 !SpectrogramMorph class methodsFor: 'as yet unclassified' stamp: 'len 18/Oct/2025 15:33:00'!
 initialize
@@ -10612,7 +10634,16 @@ initializeViridis
 defaultExtent
 	^`256@128`! !
 
-!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 25/Oct/2025 14:43:00'!
+!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:24:19'!
+displayMode
+	^ displayMode! !
+
+!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:24:10'!
+displayMode: aSymbol
+	displayMode := aSymbol.
+	self changed! !
+
+!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:01:47'!
 drawBarsOn: aCanvas
 	| step x h n |
 	n := spectrum size asFloat.
@@ -10622,11 +10653,11 @@ drawBarsOn: aCanvas
 	1 to: spectrum size do: [:i|
 		| v y |
 		y := (1.0 - (v := spectrum at: i)) * h.
-		v := v max: 0.1. "make it a bit more visible on black background"
+		v := v min: 0.99 max: 0.1. "make it a bit more visible on black background"
 		aCanvas line: x@y to: x@h width: step color: (Viridis at: (v * Viridis size + 1.0) truncated).
 		x := x + step]! !
 
-!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 25/Oct/2025 15:12:00'!
+!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:00:48'!
 drawLogBarsOn: aCanvas
 	| step x h  |
 	step := self morphWidth / 20.0.
@@ -10635,7 +10666,7 @@ drawLogBarsOn: aCanvas
 	1 to: spectrum size do: [:i|
 		| v y |
 		y := (1.0 - (v := spectrum at: i)) * h.
-		v := v max: 0.1. "make it a bit more visible on black background"
+		v := v min: 0.99 max: 0.1. "make it a bit more visible on black background"
 		aCanvas fillRectangle: (x@y corner: x+step@h) color: (Viridis at: (v * Viridis size + 1.0) truncated).
 		x := x + step.
 		step := step * 0.95]! !
@@ -10656,9 +10687,11 @@ drawLogOutlineOn: aCanvas
 		y := y2.
 		step := step * 0.95]! !
 
-!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 25/Oct/2025 15:10:00'!
+!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:25:59'!
 drawOn: aCanvas
-	self drawLogBarsOn: aCanvas! !
+	frequencyScale = #linear ifTrue:
+		[^ displayMode = #bars ifTrue: [self drawBarsOn: aCanvas] ifFalse: [self drawOutlineOn: aCanvas]].
+	^ displayMode = #bars ifTrue: [self drawLogBarsOn: aCanvas] ifFalse: [self drawLogOutlineOn: aCanvas]! !
 
 !SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 25/Oct/2025 14:40:00'!
 drawOutlineOn: aCanvas
@@ -10675,20 +10708,33 @@ drawOutlineOn: aCanvas
 		x := x2.
 		y := y2]! !
 
-!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Oct/2025 15:50:00'!
+!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:23:41'!
+frequencyScale
+	^ frequencyScale! !
+
+!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:23:31'!
+frequencyScale: aSymbol
+	frequencyScale := aSymbol.
+	self changed! !
+
+!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:26:46'!
 initialize
 	super initialize.
 	color := Color white.
-	fft := FFT new: 256.
-	spectrum := Float32Array new: fft size / 2.
-	buffer := Float32Array new: fft size.
-	bufferIndex := 1! !
+	frequencyScale := #linear.
+	displayMode := #bars.
+	self windowSize: 512! !
 
-!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 15:45:01'!
+!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:26:08'!
 patchable
-	| answer |
+	| answer panel |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self.
+	panel := answer body addPanel.
+	panel
+		addMorph: (PluggableChoiceMorph new options: #(256 512 1024 2048 4096); model: self; getter: #windowSize; setter: #windowSize:);
+		addMorph: (PluggableChoiceMorph new options: #(linear log); model: self; getter: #frequencyScale; setter: #frequencyScale:);
+		addMorph: (PluggableChoiceMorph new options: #(bars outline); model: self; getter: #displayMode; setter: #displayMode:).
 	answer addAudioInput: #setInput:.
 	^ answer! !
 
@@ -10726,6 +10772,18 @@ tick
 !SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 19:10:25'!
 update
 	^ self! !
+
+!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:23:14'!
+windowSize
+	^ fft size! !
+
+!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:22:58'!
+windowSize: n
+	fft := FFT new: n.
+	spectrum := Float32Array new: fft size / 2.
+	buffer := Float32Array new: fft size.
+	bufferIndex := 1.
+	self changed! !
 
 !VectorscopeMorph methodsFor: 'drawing' stamp: 'len 3/Feb/2026 00:23:19'!
 drawOn: aCanvas
@@ -11102,23 +11160,17 @@ lowsColor
 midsColor
 	^ `Color okl: 0.65 c: 0.35 h: 130.0`! !
 
-!PatchMorph class methodsFor: 'colors' stamp: 'len 12/Feb/2026 15:13:35'!
+!PatchMorph class methodsFor: 'colors' stamp: 'len 12/Feb/2026 16:44:25'!
 waveformColor
-	^ `Color okl: 0.8 c: 0.12 h: 211.8`
-"	^ Color cyanPhosphor mixed: 0.4 with: Color white"! !
+	^ `Color okl: 0.8 c: 0.13 h: 220.0`! !
 
-!PatchMorph class methodsFor: 'colors' stamp: 'len 12/Feb/2026 15:13:41'!
+!PatchMorph class methodsFor: 'colors' stamp: 'len 12/Feb/2026 16:44:39'!
 waveformColor2
-	^ `Color okl: 0.8 c: 0.12 h: 334.6`
-"	^ Color magentaGlow mixed: 0.4 with: Color white"! !
+	^ `Color okl: 0.8 c: 0.13 h: 350.0`! !
 
-!PatchMorph class methodsFor: 'colors' stamp: 'len 12/Feb/2026 15:13:47'!
+!PatchMorph class methodsFor: 'colors' stamp: 'len 12/Feb/2026 16:44:18'!
 waveformColor3
-	^ `Color okl: 0.8 c: 0.12 h: 92.0`! !
-
-!PatchMorph class methodsFor: 'as yet unclassified' stamp: 'len 29/Dec/2025 19:04:00'!
-open
-	^ ZoomerMorph new addMorph: self new; openInWorld! !
+	^ `Color okl: 0.8 c: 0.13 h: 80.0` "not exactly centered between the other two.."! !
 
 !PatchableMorph methodsFor: 'accessing' stamp: 'len 17/Nov/2025 19:49:00'!
 body

@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 12 February 2026 at 6:40:54 pm'!
+'From Cuis7.7 [latest update: #7797] on 13 February 2026 at 1:35:24 am'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 458!
+!provides: 'Signals' 1 460!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -319,7 +319,7 @@ Multisample class
 
 !classDefinition: #Sample category: #'Signals-Samples'!
 TunedGenerator subclass: #Sample
-	instanceVariableNames: 'buffer baseRate loopEnd loopLength offset speed smooth warp cycle released position increment'
+	instanceVariableNames: 'buffer baseRate loopEnd loopLength offset speed smooth warp cycle released position increment label'
 	classVariableNames: 'Library'
 	poolDictionaries: ''
 	category: 'Signals-Samples'!
@@ -837,14 +837,14 @@ LinearLayoutMorph subclass: #ControlPanel
 ControlPanel class
 	instanceVariableNames: ''!
 
-!classDefinition: #PatchableBodyMorph category: #'Signals-Morphic-Patches'!
-LinearLayoutMorph subclass: #PatchableBodyMorph
+!classDefinition: #RoundedLinearLayoutMorph category: #'Signals-Morphic-Support'!
+LinearLayoutMorph subclass: #RoundedLinearLayoutMorph
 	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Morphic-Patches'!
-!classDefinition: 'PatchableBodyMorph class' category: #'Signals-Morphic-Patches'!
-PatchableBodyMorph class
+	category: 'Signals-Morphic-Support'!
+!classDefinition: 'RoundedLinearLayoutMorph class' category: #'Signals-Morphic-Support'!
+RoundedLinearLayoutMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #TrackerWindow category: #'Signals-Morphic-Tracker'!
@@ -1059,7 +1059,7 @@ LFOControlMorph class
 
 !classDefinition: #WaveshaperControlMorph category: #'Signals-Morphic-Controls'!
 XYControlMorph subclass: #WaveshaperControlMorph
-	instanceVariableNames: 'color mode wave valueX valueY'
+	instanceVariableNames: 'color mode wave valueX valueY image'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Controls'!
@@ -1079,7 +1079,7 @@ XYVariableWaveControlMorph class
 
 !classDefinition: #PinMorph category: #'Signals-Morphic-Patches'!
 BoxMorph subclass: #PinMorph
-	instanceVariableNames: 'color selector connections focused voltage'
+	instanceVariableNames: 'color selector connections focused level'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Patches'!
@@ -1339,7 +1339,7 @@ PatchMorph class
 
 !classDefinition: #PatchableMorph category: #'Signals-Morphic-Patches'!
 PlacedMorph subclass: #PatchableMorph
-	instanceVariableNames: 'inputsArea outputsArea body title model'
+	instanceVariableNames: 'inputsArea outputsArea body flap title model'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Patches'!
@@ -4299,6 +4299,14 @@ baseRate: aNumber
 buffer
 	^ buffer! !
 
+!Sample methodsFor: 'accessing' stamp: 'len 13/Feb/2026 00:17:23'!
+label
+	^ label! !
+
+!Sample methodsFor: 'accessing' stamp: 'len 13/Feb/2026 00:17:19'!
+label: aString
+	label := aString! !
+
 !Sample methodsFor: 'accessing' stamp: 'len 6/Oct/2025 19:45:00'!
 loopEnd
 	^ loopEnd! !
@@ -4366,14 +4374,15 @@ update
 	increment := baseRate * ((self get: #tune) + note - 60) semitonesToRatio / self class sampleRate.
 	warp ifFalse: [increment := increment * speed abs]! !
 
-!Sample methodsFor: 'copying' stamp: 'len 21/Jan/2026 23:15:51'!
+!Sample methodsFor: 'copying' stamp: 'len 13/Feb/2026 00:25:49'!
 copy
 	^ (self class buffer: buffer baseRate: baseRate)
 		settings: self settings;
 		loopEnd: loopEnd;
 		loopLength: loopLength;
 		smooth: smooth;
-		warp: warp! !
+		warp: warp;
+		label: label! !
 
 !Sample methodsFor: 'initialization' stamp: 'len 21/Jan/2026 23:00:53'!
 initialize
@@ -4423,21 +4432,24 @@ readWarp: aBuffer
 	speed < 0 ifTrue: [^ self readWarpBackwards: aBuffer].
 	self readWarpForward: aBuffer! !
 
-!Sample methodsFor: 'serialization' stamp: 'len 5/Feb/2026 15:53:03'!
+!Sample methodsFor: 'serialization' stamp: 'len 13/Feb/2026 00:17:52'!
 asJsonWithBuffers: aList
 	^ (super asJsonWithBuffers: aList)
 		at: #buffer put: (aList indexOf: buffer ifAbsent: [aList add: buffer. aList size]);
 		at: #baseRate put: baseRate;
 		at: #loopLength put: loopLength;
 		at: #loopEnd put: loopEnd;
+		at: #label put: (label ifNil: ['']);
 		yourself! !
 
-!Sample methodsFor: 'serialization' stamp: 'len 5/Feb/2026 15:53:44'!
+!Sample methodsFor: 'serialization' stamp: 'len 13/Feb/2026 00:18:14'!
 readFromJson: json buffers: aList
 	super readFromJson: json buffers: aList.
 	self buffer: (aList at: (json at: #buffer)) baseRate: (json at: #baseRate).
 	loopLength := json at: #loopLength.
-	loopEnd := json at: #loopEnd! !
+	loopEnd := json at: #loopEnd.
+	label := json at: #label.
+	label isEmpty ifTrue: [label := nil]! !
 
 !Sample methodsFor: 'tools' stamp: 'len 22/Jan/2026 04:28:30'!
 panel
@@ -4446,10 +4458,11 @@ panel
 		addMorph: (PluggableToggleMorph new model: self; getter: #smooth; setter: #smooth:; label: 'HQ');
 		addMorph: (PluggableToggleMorph new model: self; getter: #warp; setter: #warp:; label: 'Warp')! !
 
-!Sample methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:10:30'!
+!Sample methodsFor: 'tools' stamp: 'len 13/Feb/2026 00:24:19'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
+	label ifNotNil: [answer setTitle: label].
 	answer body
 		addMorph: (SampleDisplayMorph new sample: self);
 		addMorph: self panel.
@@ -4497,19 +4510,22 @@ trimSilence
 library
 	^ Library! !
 
-!Sample class methodsFor: 'library' stamp: 'len 10/Feb/2026 17:55:49'!
+!Sample class methodsFor: 'library' stamp: 'len 13/Feb/2026 00:25:06'!
+load: fileName label: aString
+	^ (Library at: aString put: (self fromFileNamed: fileName)) label: aString! !
+
+!Sample class methodsFor: 'library' stamp: 'len 13/Feb/2026 00:23:01'!
 loadLibrary
 	"
 	Sample loadLibrary
 	"
 	
 	Library := OrderedDictionary new.
-	Library
-		at: 'Amen 152 BPM' put: (self fromFileNamed: '/Users/len/Cuis/samples/breaks152/000_AMEN.WAV');
-		at: 'pad2' put: (self fromFileNamed: '/Users/len/Cuis/samples/pads/pad2.wav') trimSilence;
-		at: 'pad3' put: (self fromFileNamed: '/Users/len/Cuis/samples/pads/pad3.wav') trimSilence;
-		at: 'pad4' put: (self fromFileNamed: '/Users/len/Cuis/samples/pads/pad4.wav') trimSilence;
-		at: 'pad5' put: (self fromFileNamed: '/Users/len/Cuis/samples/pads/pad5.wav') trimSilence! !
+	self load: '/Users/len/Cuis/samples/breaks152/000_AMEN.WAV' label: 'Amen 152 BPM'.
+	(self load: '/Users/len/Cuis/samples/pads/pad2.wav' label: 'Pad 2') trimSilence.
+	(self load: '/Users/len/Cuis/samples/pads/pad3.wav' label: 'Pad 3') trimSilence.
+	(self load: '/Users/len/Cuis/samples/pads/pad4.wav' label: 'Pad 4') trimSilence.
+	(self load: '/Users/len/Cuis/samples/pads/pad5.wav' label: 'Pad 5') trimSilence! !
 
 !Sample class methodsFor: 'instance creation' stamp: 'len 2/Jan/2026 16:58:08'!
 buffer: aFloatArray
@@ -4527,10 +4543,10 @@ buffer: aFloatArray sampleRate: aNumber
 buffer: aFloatArray sampleRate: aNumber rootNote: anotherNumber
 	^ self buffer: aFloatArray baseRate: aNumber * (60 - anotherNumber) semitonesToRatio! !
 
-!Sample class methodsFor: 'instance creation' stamp: 'len 10/Feb/2026 17:55:17'!
-fromFileNamed: aString
+!Sample class methodsFor: 'instance creation' stamp: 'len 13/Feb/2026 00:20:07'!
+fromFileNamed: fileName
 	| reader samples |
-	reader := WAVFileReader new readFromFileNamed: aString.
+	reader := WAVFileReader new readFromFileNamed: fileName.
 	"If stereo, sum channels:"
 	samples := reader channels = 2 ifTrue: [reader leftSamples + reader rightSamples] ifFalse: [reader leftSamples].
 	"Remove DC offset:"
@@ -5352,9 +5368,9 @@ panel
 		addKnob: (controls at: #postgain) label: 'Output';
 		addKnob: (controls at: #mix) label: 'Mix'! !
 
-!DiodeClipper methodsFor: 'tools' stamp: 'len 12/Feb/2026 14:34:00'!
+!DiodeClipper methodsFor: 'tools' stamp: 'len 12/Feb/2026 22:26:05'!
 patchable
-	| answer display |
+	| answer display inputPin |
 	answer := PatchableMorph new model: self.
 	display := WaveshaperControlMorph new
 		color: PatchMorph waveformColor2;
@@ -5362,9 +5378,9 @@ patchable
 		bias: (controls at: #bias);
 		waveBlock: [:t :c| | x δ | x := t * 2.0 - 1.0. (δ := x abs - c) > 0.0 ifTrue: [(δ / (4.0 * δ + 1.0) + c) * x sign] ifFalse: [x]].
 	answer body addMorph: display; addMorph: self panel.
-	answer
-		addAudioInput: #setInput:;
-		addAudioOutput: #setOutput:.
+	inputPin := answer addAudioInput: #setInput:.
+	inputPin when: #level: send: #drawLevel: to: display.
+	answer addAudioOutput: #setOutput:.
 	^ answer! !
 
 !DiodeClipper methodsFor: 'private' stamp: 'len 12/Feb/2026 01:20:57'!
@@ -5833,7 +5849,7 @@ patchable
 		addAudioOutput: #setOutput:;
 		yourself! !
 
-!Saturator methodsFor: 'controlling' stamp: 'len 8/Feb/2026 16:38:40'!
+!Saturator methodsFor: 'controlling' stamp: 'len 12/Feb/2026 21:31:43'!
 update
 	super update.
 	pregain := (self get: #pregain) * 1.8. "empirical calibration by 1.8 factor"
@@ -5858,9 +5874,9 @@ panel
 		addKnob: (controls at: #bias) label: 'Bias';
 		addKnob: (controls at: #postgain) label: 'Output'! !
 
-!Saturator methodsFor: 'tools' stamp: 'len 12/Feb/2026 14:34:22'!
+!Saturator methodsFor: 'tools' stamp: 'len 12/Feb/2026 21:31:55'!
 patchable
-	| answer display |
+	| answer display inputPin |
 	answer := PatchableMorph new model: self.
 	display := WaveshaperControlMorph new
 		color: PatchMorph waveformColor2;
@@ -5868,8 +5884,9 @@ patchable
 		bias: (controls at: #bias);
 		waveBlock: [:x :g| ((x * 2.0 - 1.0) * g) softclip].
 	answer body addMorph: display; addMorph: self panel.
+	inputPin := answer addAudioInput: #setInput:.
+	inputPin when: #level: send: #drawLevel: to: display.
 	answer
-		addAudioInput: #setInput:;
 		addControlInput: #pregain;
 		addAudioOutput: #setOutput:.
 	^ answer! !
@@ -5920,9 +5937,9 @@ panel
 		addKnob: (controls at: #tone) label: 'Tone';
 		addKnob: (controls at: #postgain) label: 'Output'! !
 
-!TapeSaturator methodsFor: 'tools' stamp: 'len 12/Feb/2026 14:34:27'!
+!TapeSaturator methodsFor: 'tools' stamp: 'len 13/Feb/2026 00:34:53'!
 patchable
-	| answer display |
+	| answer display inputPin |
 	answer := PatchableMorph new model: self.
 	display := WaveshaperControlMorph new
 		color: PatchMorph waveformColor2;
@@ -5932,9 +5949,11 @@ patchable
 			| nlg |
 			nlg := (g + 1.0 log: 2.0) * 0.5 + 1.5.
 			(((x * 2.0 - 1.0) * g) * nlg) tanh].
-	answer body addMorph: display; addMorph: self panel.
+	answer body addMorph: display.
+	answer flap addMorph: self panel.
+	inputPin := answer addAudioInput: #setInput:.
+	inputPin when: #level: send: #drawLevel: to: display.
 	answer
-		addAudioInput: #setInput:;
 		addControlInput: #drive;
 		addAudioOutput: #setOutput:.
 	^ answer! !
@@ -6585,22 +6604,21 @@ readFromJson: json buffers: aList
 	mode := (json at: #mode) asSymbol.
 	bipolar := json at: #bipolar! !
 
-!LFO methodsFor: 'tools' stamp: 'len 22/Jan/2026 16:18:30'!
+!LFO methodsFor: 'tools' stamp: 'len 13/Feb/2026 01:01:14'!
 panel
 	^ ControlPanel new
-		addMorph: (PluggableChoiceMorph new options: #(sine square rise fall random); model: self; getter: #shape; setter: #shape:);
 		addMorph: (PluggableChoiceMorph new options: #(free trig hold); model: self; getter: #mode; setter: #mode:);
-		addMorph: (PluggableToggleMorph new model: self; getter: #sync; setter: #sync:; label: '♩')
-! !
+		addMorph: (PluggableToggleMorph new model: self; getter: #sync; setter: #sync:; label: '♩');
+		addMorph: (PluggableToggleMorph new model: self; getter: #bipolar; setter: #bipolar:; label: '±');
+		addMorph: (PluggableChoiceMorph new options: #(sine square rise fall random); model: self; getter: #shape; setter: #shape:)! !
 
-!LFO methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:36:56'!
+!LFO methodsFor: 'tools' stamp: 'len 13/Feb/2026 01:00:18'!
 patchable
-	| answer display row |
+	| answer display |
 	answer := PatchableMorph new model: self.
 	display := LFOControlMorph new lfo: self.
-	row := LinearLayoutMorph newRow color: Color transparent.
-	row addMorph: (PluggableToggleMorph new model: self; getter: #bipolar; setter: #bipolar:; label: '±'); addMorph: display.
-	answer body addMorph: row; addMorph: self panel.
+	answer body addMorph: display.
+	answer flap addMorph: self panel.
 	answer
 		addControlInput: #speed;
 		addControlOutput: #output: label: 'Out'.
@@ -6989,35 +7007,7 @@ initialize
 	layoutObject := RowLayout new gap: self defaultGap.
 	color := Color transparent! !
 
-!PatchableBodyMorph methodsFor: 'as yet unclassified' stamp: 'len 30/Jan/2026 15:05:52'!
-addPanel
-	| answer |
-	answer := ControlPanel new.
-"	answer := LinearLayoutMorph newRow gap: 12; color: Color transparent."
-	self addMorph: answer.
-	^ answer! !
-
-!PatchableBodyMorph methodsFor: 'as yet unclassified' stamp: 'len 24/Jan/2026 14:29:23'!
-defaultBorderColor
-	^ Color lightGray! !
-
-!PatchableBodyMorph methodsFor: 'as yet unclassified' stamp: 'len 24/Jan/2026 14:29:34'!
-defaultBorderWidth
-	^ 1! !
-
-!PatchableBodyMorph methodsFor: 'as yet unclassified' stamp: 'len 24/Jan/2026 14:28:41'!
-defaultColor
-	^ Color fromHexString: '#141414'! !
-
-!PatchableBodyMorph methodsFor: 'as yet unclassified' stamp: 'len 24/Jan/2026 14:29:08'!
-defaultGap
-	^ 10! !
-
-!PatchableBodyMorph methodsFor: 'as yet unclassified' stamp: 'len 24/Jan/2026 14:28:55'!
-defaultPadding
-	^ 4 @ 4! !
-
-!PatchableBodyMorph methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 19:19:39'!
+!RoundedLinearLayoutMorph methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 19:19:39'!
 drawOn: aCanvas
 	| rect |
 	rect := self localBounds.
@@ -7117,7 +7107,7 @@ moveUp
 update: aSymbol
 	self redrawNeeded! !
 
-!PluggableChoiceMorph methodsFor: 'drawing' stamp: 'len 27/Jan/2026 19:19:39'!
+!PluggableChoiceMorph methodsFor: 'drawing' stamp: 'len 13/Feb/2026 00:51:55'!
 drawOn: aCanvas
 	| string |
 "	aCanvas
@@ -7126,8 +7116,7 @@ drawOn: aCanvas
 "
 	string := (model perform: getter) asString.
 	aCanvas
-		frameRectangle: (0@0 extent: self minimumExtent) borderWidth: 1 color: color cornerRadius: 6;
-"		fillRoundRectangle: ((0@0 extent: self minimumExtent) insetBy: 1) color: Color black radius: 6;"
+"		frameRectangle: (0@0 extent: self minimumExtent) borderWidth: 1 color: color cornerRadius: 6;"
 		drawString: string at: 3@0 font: font color: color.
 "	aCanvas frameRectangle: (0@0 extent: self minimumExtent) borderWidth: 1 color: color.
 	aCanvas drawString: string asString at: 3 @ 0 font: font color: color.
@@ -8428,9 +8417,9 @@ waveAt: t
 	v == #fall ifTrue: [^ (0.5 - t) * 2.0].
 	self notYetImplemented! !
 
-!LFOControlMorph methodsFor: 'initialization' stamp: 'len 21/Jan/2026 23:21:48'!
+!LFOControlMorph methodsFor: 'initialization' stamp: 'len 13/Feb/2026 01:03:43'!
 defaultExtent
-	^ `144@64`! !
+	^ `128@64`! !
 
 !LFOControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 22:59:37'!
 initialize
@@ -8469,9 +8458,27 @@ color: aColor
 defaultExtent
 	^ `128@64`! !
 
-!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 14:36:59'!
+!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 22:48:01'!
+drawLevel: aNumber
+	| x0 δ |
+	x0 := image width * (valueX + 1.0) / 2.0.
+	δ := aNumber * image width / 2.0.
+	image fill: (x0 - δ @ 0 extent: δ * 2.0 @ image height) fillColor: (PatchMorph waveformColor alpha: aNumber).
+
+	image fill: (x0 + δ @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor.
+	image fill: (x0 - δ - 1 @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor
+
+"	| t x v h |
+	t := ((aNumber min: 1.0 max: -1.0) + 1.0) / 2.0.
+	x := t * image width.
+	v := self waveAt: t.
+	h := (v + 1.0) / 2.0 * image height.
+	image fill: (x @ (image height // 2) extent: 3 @ (image height // 2 - h)) fillColor: Color white "! !
+
+!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 19:19:07'!
 drawOn: aCanvas
 	| step stepX t x y h steps m |
+	aCanvas image: image at: 0 @ 0.
 	m := self morphWidth / 2.0.
 	x := valueX * m + m.
 	aCanvas strokeWidth: 1.0 color: Color lightGray dashedStrokeBits: 2r1110000000 do:
@@ -8491,10 +8498,12 @@ drawOn: aCanvas
 			x := x + stepX.
 			aCanvas lineTo: x @ y]]! !
 
-!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 14:21:58'!
+!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 22:42:14'!
 initialize
 	super initialize.
 	color := PatchMorph waveformColor2.
+	image := Form extent: self defaultExtent depth: 32.
+	image fillColor: PatchMorph panelColor.
 	controlY := Control min: 0.0 max: 0.0 value: 0.0! !
 
 !WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 14:34:40'!
@@ -8502,11 +8511,24 @@ shape: aControl
 	self controlY: aControl.
 	valueY := aControl value! !
 
+!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 23:45:33'!
+step
+	image fill: image boundingBox rule: Form blend fillColor: (PatchMorph panelColor alpha: 0.2).
+	self redrawNeeded! !
+
+!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 19:24:07'!
+stepTime
+	^ 100! !
+
 !WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Feb/2026 18:58:59'!
 update: anObject
 	super update: anObject.
 	valueX := controlX value.
 	valueY := controlY value! !
+
+!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 19:20:28'!
+wantsSteps
+	^ true! !
 
 !WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 14:24:40'!
 waveAt: aNumber
@@ -8588,6 +8610,12 @@ color: aColor
 defaultColor
 	^ Color white! !
 
+!PinMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 21:29:09'!
+level: aNumber
+	level := aNumber abs.
+	self triggerEvent: #level: with: level.
+	self redrawNeeded! !
+
 !PinMorph methodsFor: 'accessing' stamp: 'len 5/Feb/2026 16:06:16'!
 model
 	^ self patchableOwner model! !
@@ -8612,15 +8640,6 @@ selector
 selector: aSymbol
 	selector := aSymbol! !
 
-!PinMorph methodsFor: 'accessing' stamp: 'len 26/Nov/2025 15:27:00'!
-voltage
-	^ voltage! !
-
-!PinMorph methodsFor: 'accessing' stamp: 'len 26/Nov/2025 15:57:00'!
-voltage: aNumber
-	voltage := aNumber.
-	self redrawNeeded! !
-
 !PinMorph methodsFor: 'connections' stamp: 'len 17/Nov/2025 16:26:00'!
 connections
 	^ connections! !
@@ -8633,13 +8652,14 @@ isConnected
 uninstallDisconnectedSignals
 	^ self! !
 
-!PinMorph methodsFor: 'drawing' stamp: 'len 12/Feb/2026 16:36:46'!
+!PinMorph methodsFor: 'drawing' stamp: 'len 12/Feb/2026 21:27:57'!
 drawOn: aCanvas
-	voltage > 0.01
+	| m |
+	(m := level abs) > 0.01
 		ifTrue:
 			[| bc fc bw |
-			voltage > 1.0 ifTrue: [fc := bc := Color redCathode] ifFalse: [fc := color alpha: voltage sqrt. bc := color].
-			bw := self borderWidth + ((voltage sqrt min: 1.0) * 2.0).
+			m > 1.0 ifTrue: [fc := bc := Color redCathode] ifFalse: [fc := color alpha: (m raisedTo: 0.25). bc := color].
+			bw := self borderWidth + ((m sqrt min: 1.0) * 2.0).
 			aCanvas strokeWidth: bw color: bc fillColor: fc do:
 				[self drawShapeOn: aCanvas]]
 		ifFalse:
@@ -8682,17 +8702,17 @@ requiresVectorCanvas
 defaultExtent
 	^ 24 @ 24! !
 
-!PinMorph methodsFor: 'initialization' stamp: 'len 26/Nov/2025 15:10:00'!
+!PinMorph methodsFor: 'initialization' stamp: 'len 12/Feb/2026 21:09:08'!
 initialize
 	super initialize.
 	color := self defaultColor.
 	connections := #().
 	focused := false.
-	voltage := 0.0! !
+	level := 0.0! !
 
-!PinMorph methodsFor: 'stepping' stamp: 'len 8/Dec/2025 22:51:28'!
+!PinMorph methodsFor: 'stepping' stamp: 'len 12/Feb/2026 21:26:27'!
 step
-	voltage > 0.01 ifTrue: [voltage := voltage * 0.5. self redrawNeeded]! !
+	level abs > 0.01 ifTrue: [level := level * 0.5. self redrawNeeded]! !
 
 !PinMorph methodsFor: 'stepping' stamp: 'len 26/Nov/2025 15:22:00'!
 stepTime
@@ -8756,14 +8776,14 @@ dragLeave: event
 		aHandMorph submorphs do:
 			[:each| (each isKindOf: ConnectorMorph) ifTrue: [each beDashed]]]! !
 
-!AudioInputPinMorph methodsFor: 'accessing' stamp: 'len 31/Jan/2026 16:35:51'!
+!AudioInputPinMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 21:09:08'!
 balloonText
-	voltage > 0.0001 ifFalse: [^ self name].
-	^ self name, ' (', voltage linearToDecibelsFSPrintString, ')'! !
+	level > 0.0001 ifFalse: [^ self name].
+	^ self name, ' (', level linearToDecibelsFSPrintString, ')'! !
 
-!AudioInputPinMorph methodsFor: 'connections' stamp: 'len 31/Jan/2026 19:05:55'!
+!AudioInputPinMorph methodsFor: 'connections' stamp: 'len 12/Feb/2026 21:10:38'!
 uninstallDisconnectedSignals
-	self isConnected ifFalse: [self voltage:​ 0.0. self model perform: selector with: nil]! !
+	self isConnected ifFalse: [self level:​ 0.0. self model perform: selector with: nil]! !
 
 !AudioInputPinMorph methodsFor: 'dropping/grabbing' stamp: 'len 19/Jan/2026 19:31:12'!
 wantsDroppedMorph: aMorph event: evt
@@ -8805,10 +8825,10 @@ drawShapeOn: aCanvas
 wantsDroppedMorph: aMorph event: evt
 	^ (aMorph isKindOf: ConnectorMorph) and: [(aMorph source isKindOf: ControlOutputPinMorph) and: [aMorph source arity >= self arity]]! !
 
-!OutputPinMorph methodsFor: 'accessing' stamp: 'len 26/Nov/2025 18:25:00'!
-voltage: aNumber
-	super voltage:​ aNumber.
-	connections do: [:each| each voltage: aNumber].
+!OutputPinMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 21:11:05'!
+level: aNumber
+	super level:​ aNumber.
+	connections do: [:each| each level: aNumber].
 "	wires do: [:each| each redrawNeeded]"! !
 
 !OutputPinMorph methodsFor: 'connections' stamp: 'len 26/Nov/2025 18:25:00'!
@@ -8865,10 +8885,15 @@ initialize
 	connections := #().
 	wires := #()! !
 
-!AudioOutputPinMorph methodsFor: 'accessing' stamp: 'len 31/Jan/2026 16:36:01'!
+!AudioOutputPinMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 21:09:08'!
 balloonText
-	voltage > 0.0001 ifFalse: [^ self name].
-	^ self name, ' (', voltage linearToDecibelsFSPrintString, ')'! !
+	level > 0.0001 ifFalse: [^ self name].
+	^ self name, ' (', level linearToDecibelsFSPrintString, ')'! !
+
+!AudioOutputPinMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 23:39:03'!
+buffer
+	"Each audio output owns a buffer."
+	^ buffer! !
 
 !AudioOutputPinMorph methodsFor: 'connections' stamp: 'len 26/Nov/2025 18:12:00'!
 installConnectionTo: anInput
@@ -8882,18 +8907,18 @@ uninstallConnectionTo: anInput
 "	anInput model perform: anInput selector with: nil.
 	connections isEmpty ifTrue: [self model perform: selector with: nil]"! !
 
-!AudioOutputPinMorph methodsFor: 'connections' stamp: 'len 31/Jan/2026 19:06:03'!
+!AudioOutputPinMorph methodsFor: 'connections' stamp: 'len 12/Feb/2026 21:11:34'!
 uninstallDisconnectedSignals
-	self isConnected ifFalse: [self voltage:​ 0.0. self model perform: selector with: nil]! !
+	self isConnected ifFalse: [self level:​ 0.0. self model perform: selector with: nil]! !
 
 !AudioOutputPinMorph methodsFor: 'initialization' stamp: 'len 7/Dec/2025 00:22:35'!
 initialize
 	super initialize.
 	buffer := Float32Array new: Module blockSize! !
 
-!AudioOutputPinMorph methodsFor: 'stepping' stamp: 'len 31/Jan/2026 19:03:27'!
+!AudioOutputPinMorph methodsFor: 'stepping' stamp: 'len 12/Feb/2026 22:18:55'!
 step
-	self isConnected ifTrue: [self voltage:​ (buffer at: 1) abs].
+	self isConnected ifTrue: [self level:​ "buffer first abs" buffer rms].
 	super step! !
 
 !ControlOutputPinMorph methodsFor: 'accessing' stamp: 'len 30/Nov/2025 10:56:00'!
@@ -8933,9 +8958,9 @@ drawShapeOn: aCanvas
 	y₀ := extent y / 2.0.
 	aCanvas moveTo: 0 @ y₀; lineTo: x₀ - r @ y₀; lineTo: x₀ - r @ (y₀ + r); lineTo: x₀ + r @ y₀; lineTo: x₀ - r @ (y₀ - r); lineTo: x₀ - r @ y₀"! !
 
-!ControlOutputPinMorph methodsFor: 'stepping' stamp: 'len 25/Jan/2026 17:15:19'!
+!ControlOutputPinMorph methodsFor: 'stepping' stamp: 'len 12/Feb/2026 21:12:07'!
 startStepping
-	self model when: selector send: #voltage: to: self.
+	self model when: selector send: #level: to: self.
 	super startStepping! !
 
 !ScrollerMorph methodsFor: 'drawing' stamp: 'len 10/Jan/2026 15:31:15'!
@@ -9786,10 +9811,11 @@ addSample: aNumber
 	currentPosition > samples size ifTrue: [currentPosition := 1].
 	samples at: currentPosition put: (aNumber min: 1.0 max: -1.0)! !
 
-!OscilloscopeMorph methodsFor: 'module' stamp: 'len 2/Feb/2026 15:44:49'!
+!OscilloscopeMorph methodsFor: 'module' stamp: 'len 13/Feb/2026 00:26:58'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
+	answer setTitle: 'Oscilloscope'.
 	answer body addMorph: self.
 	answer addAudioInput: #setInput:.
 	^ answer! !
@@ -9924,11 +9950,11 @@ stepTime
 wantsSteps
 	^ true! !
 
-!SampleDisplayMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Jan/2026 16:59:14'!
+!SampleDisplayMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 22:40:54'!
 computeImage
 	| h canvas x y step waveform alphaColor |
 	image := Form extent: self defaultExtent depth: Display depth.
-	image fillColor: Color black.
+	image fillColor: "Color black. " PatchMorph panelColor.
 	h := self defaultExtent y.
 	waveform := sample buffer.
 	canvas := BitBltCanvas onForm: image.
@@ -10021,15 +10047,17 @@ frequencyScale: aSymbol
 	frequencyScale := aSymbol.
 	self changed! !
 
-!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:21:42'!
+!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 13/Feb/2026 00:47:13'!
 patchable
 	| answer panel |
 	answer := PatchableMorph new model: self.
+	answer setTitle: 'Spectogram'.
 	answer body addMorph: self.
-	panel := answer body addPanel.
+	panel := ControlPanel new.
 	panel
 		addMorph: (PluggableChoiceMorph new options: #(256 512 1024 2048 4096); model: self; getter: #windowSize; setter: #windowSize:);
 		addMorph: (PluggableChoiceMorph new options: #(linear log); model: self; getter: #frequencyScale; setter: #frequencyScale:).
+	answer flap addMorph: panel.
 	answer addAudioInput: #setInput:.
 	^ answer! !
 
@@ -10725,16 +10753,18 @@ initialize
 	displayMode := #bars.
 	self windowSize: 512! !
 
-!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:26:08'!
+!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 13/Feb/2026 00:48:23'!
 patchable
 	| answer panel |
 	answer := PatchableMorph new model: self.
+	answer setTitle: 'Spectrum Analyzer'.
 	answer body addMorph: self.
-	panel := answer body addPanel.
+	panel := ControlPanel new.
 	panel
 		addMorph: (PluggableChoiceMorph new options: #(256 512 1024 2048 4096); model: self; getter: #windowSize; setter: #windowSize:);
 		addMorph: (PluggableChoiceMorph new options: #(linear log); model: self; getter: #frequencyScale; setter: #frequencyScale:);
 		addMorph: (PluggableChoiceMorph new options: #(bars outline); model: self; getter: #displayMode; setter: #displayMode:).
+	answer flap addMorph: panel.
 	answer addAudioInput: #setInput:.
 	^ answer! !
 
@@ -10817,10 +10847,11 @@ initialize
 	image fillBlack.
 	scaleX := scaleY := 1.0! !
 
-!VectorscopeMorph methodsFor: 'module' stamp: 'len 3/Feb/2026 00:09:11'!
+!VectorscopeMorph methodsFor: 'module' stamp: 'len 13/Feb/2026 00:27:15'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
+	answer setTitle: 'Vectorscope'.
 	answer body addMorph: self.
 	answer addAudioInput: #setInputX: label: 'X'; addAudioInput: #setInputY: label: 'Y'.
 	^ answer! !
@@ -10917,7 +10948,7 @@ computeImage
 defaultExtent
 	^ `512 @ 128`! !
 
-!WaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Oct/2025 20:14:00'!
+!WaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 22:37:39'!
 drawOn: aCanvas
 	aCanvas stencil: (image magnifyTo: self morphExtent) at: 0@0 color: color! !
 
@@ -11160,6 +11191,10 @@ lowsColor
 midsColor
 	^ `Color okl: 0.65 c: 0.35 h: 130.0`! !
 
+!PatchMorph class methodsFor: 'colors' stamp: 'len 12/Feb/2026 22:39:58'!
+panelColor
+	^ `Color fromHexString: '#141414'`! !
+
 !PatchMorph class methodsFor: 'colors' stamp: 'len 12/Feb/2026 16:44:25'!
 waveformColor
 	^ `Color okl: 0.8 c: 0.13 h: 220.0`! !
@@ -11168,13 +11203,21 @@ waveformColor
 waveformColor2
 	^ `Color okl: 0.8 c: 0.13 h: 350.0`! !
 
-!PatchMorph class methodsFor: 'colors' stamp: 'len 12/Feb/2026 16:44:18'!
+!PatchMorph class methodsFor: 'colors' stamp: 'len 13/Feb/2026 01:10:25'!
 waveformColor3
-	^ `Color okl: 0.8 c: 0.13 h: 80.0` "not exactly centered between the other two.."! !
+	^ `Color okl: 0.8 c: 0.13 h: 90.0`! !
+
+!PatchMorph class methodsFor: 'colors' stamp: 'len 13/Feb/2026 01:11:35'!
+waveformColor4
+	^ `Color okl: 0.8 c: 0.13 h: 135.0`! !
 
 !PatchableMorph methodsFor: 'accessing' stamp: 'len 17/Nov/2025 19:49:00'!
 body
 	^ body! !
+
+!PatchableMorph methodsFor: 'accessing' stamp: 'len 13/Feb/2026 00:29:02'!
+flap
+	^ flap! !
 
 !PatchableMorph methodsFor: 'accessing' stamp: 'len 6/Feb/2026 01:55:15'!
 inputs
@@ -11281,29 +11324,37 @@ keyStroke: aKeyboardEvent
 			ifTrue: [self model inspect. aKeyboardEvent wasHandled: true. ^ self]].
 	^ super keyStroke: aKeyboardEvent! !
 
-!PatchableMorph methodsFor: 'events' stamp: 'len 22/Jan/2026 04:14:10'!
+!PatchableMorph methodsFor: 'events' stamp: 'len 13/Feb/2026 00:44:43'!
 mouseEnter: anEvent
 	body borderColor: Color veryVeryLightGray.
 	title morphPosition: body morphPosition x @ title morphHeight negated.
-	title visible: true! !
+	title visible: true.
+	flap hasSubmorphs ifTrue:
+		[flap morphPosition: body morphPosition x @ body morphHeight.
+		flap morphExtent: body morphWidth @ flap morphHeight.
+		flap visible: true]! !
 
-!PatchableMorph methodsFor: 'events' stamp: 'len 24/Jan/2026 14:38:31'!
+!PatchableMorph methodsFor: 'events' stamp: 'len 13/Feb/2026 00:31:09'!
 mouseLeave: anEvent
 	body borderColor: body defaultBorderColor.
-	title visible: false! !
+	title visible: false.
+	flap visible: false! !
 
-!PatchableMorph methodsFor: 'initialization' stamp: 'len 24/Jan/2026 14:37:45'!
+!PatchableMorph methodsFor: 'initialization' stamp: 'len 13/Feb/2026 01:33:23'!
 initialize
 	| container |
 	super initialize.
 	container := LinearLayoutMorph newRow gap: 1; color: Color transparent.
 	inputsArea := LinearLayoutMorph newColumn padding: 0@0; gap: 0; color: Color transparent.
 	outputsArea := LinearLayoutMorph newColumn padding: 0@0; gap: 0; color: Color transparent.
-	body := PatchableBodyMorph newColumn.
+	body := RoundedLinearLayoutMorph newColumn gap: 10; padding: 4 @ 4; borderWidth: 1; borderColor: Color lightGray; color: PatchMorph panelColor.
 	container addMorph: inputsArea; addMorph: body; addMorph: outputsArea.
 	self addMorph: container.
 	self addMorph: (title := LabelMorph contents: '' fontSize: 12 emphasis: 1) position: 0 @ -24.
-	title visible: false! !
+	title visible: false.
+	flap := LinearLayoutMorph newColumn gap: 10; padding: 4 @ 8; "borderWidth: 0; borderColor: Color lightGray; color: PatchMorph panelColor" color: (Color black alpha: 0.7).
+	self addMorph: flap.
+	flap visible: false! !
 
 !PatchableMorph methodsFor: 'private' stamp: 'len 27/Nov/2025 18:20:00'!
 uninstallDisconnectedSignals

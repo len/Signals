@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 13 February 2026 at 1:35:24 am'!
+'From Cuis7.7 [latest update: #7797] on 13 February 2026 at 8:05:33 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 460!
+!provides: 'Signals' 1 461!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -537,46 +537,6 @@ Transform subclass: #Transform2x
 Transform2x class
 	instanceVariableNames: ''!
 
-!classDefinition: #DiodeClipper category: #'Signals-Shapers'!
-Transform2x subclass: #DiodeClipper
-	instanceVariableNames: 'pregain clip bias dc postgain dry'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Shapers'!
-!classDefinition: 'DiodeClipper class' category: #'Signals-Shapers'!
-DiodeClipper class
-	instanceVariableNames: ''!
-
-!classDefinition: #Foldback category: #'Signals-Shapers'!
-Transform2x subclass: #Foldback
-	instanceVariableNames: 'pregain fold bias postgain dry'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Shapers'!
-!classDefinition: 'Foldback class' category: #'Signals-Shapers'!
-Foldback class
-	instanceVariableNames: ''!
-
-!classDefinition: #HardClipper category: #'Signals-Shapers'!
-Transform2x subclass: #HardClipper
-	instanceVariableNames: 'pregain negativeClip positiveClip postgain dry'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Shapers'!
-!classDefinition: 'HardClipper class' category: #'Signals-Shapers'!
-HardClipper class
-	instanceVariableNames: ''!
-
-!classDefinition: #Rectifier category: #'Signals-Shapers'!
-Transform2x subclass: #Rectifier
-	instanceVariableNames: 'mode pregain bias postgain dry'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Shapers'!
-!classDefinition: 'Rectifier class' category: #'Signals-Shapers'!
-Rectifier class
-	instanceVariableNames: ''!
-
 !classDefinition: #TubeSaturator category: #'Signals-Shapers'!
 Transform2x subclass: #TubeSaturator
 	instanceVariableNames: 'prehpf prelpf drive postgain postlpf dcblock'
@@ -587,9 +547,69 @@ Transform2x subclass: #TubeSaturator
 TubeSaturator class
 	instanceVariableNames: ''!
 
+!classDefinition: #Waveshaper category: #'Signals-Shapers'!
+Transform2x subclass: #Waveshaper
+	instanceVariableNames: 'pregain bias dc postgain dry'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Shapers'!
+!classDefinition: 'Waveshaper class' category: #'Signals-Shapers'!
+Waveshaper class
+	instanceVariableNames: ''!
+
+!classDefinition: #DiodeClipper category: #'Signals-Shapers'!
+Waveshaper subclass: #DiodeClipper
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Shapers'!
+!classDefinition: 'DiodeClipper class' category: #'Signals-Shapers'!
+DiodeClipper class
+	instanceVariableNames: ''!
+
+!classDefinition: #Foldback category: #'Signals-Shapers'!
+Waveshaper subclass: #Foldback
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Shapers'!
+!classDefinition: 'Foldback class' category: #'Signals-Shapers'!
+Foldback class
+	instanceVariableNames: ''!
+
+!classDefinition: #HardClipper category: #'Signals-Shapers'!
+Waveshaper subclass: #HardClipper
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Shapers'!
+!classDefinition: 'HardClipper class' category: #'Signals-Shapers'!
+HardClipper class
+	instanceVariableNames: ''!
+
+!classDefinition: #Rectifier category: #'Signals-Shapers'!
+Waveshaper subclass: #Rectifier
+	instanceVariableNames: 'mode'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Shapers'!
+!classDefinition: 'Rectifier class' category: #'Signals-Shapers'!
+Rectifier class
+	instanceVariableNames: ''!
+
+!classDefinition: #SoftClipper category: #'Signals-Shapers'!
+Waveshaper subclass: #SoftClipper
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Shapers'!
+!classDefinition: 'SoftClipper class' category: #'Signals-Shapers'!
+SoftClipper class
+	instanceVariableNames: ''!
+
 !classDefinition: #Wavefolder category: #'Signals-Shapers'!
-Transform2x subclass: #Wavefolder
-	instanceVariableNames: 'gain bias'
+Waveshaper subclass: #Wavefolder
+	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Shapers'!
@@ -635,16 +655,6 @@ Transform subclass: #Overdrive
 	category: 'Signals-Shapers'!
 !classDefinition: 'Overdrive class' category: #'Signals-Shapers'!
 Overdrive class
-	instanceVariableNames: ''!
-
-!classDefinition: #Saturator category: #'Signals-Shapers'!
-Transform subclass: #Saturator
-	instanceVariableNames: 'pregain postgain bias dc'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Shapers'!
-!classDefinition: 'Saturator class' category: #'Signals-Shapers'!
-Saturator class
 	instanceVariableNames: ''!
 
 !classDefinition: #TapeSaturator category: #'Signals-Shapers'!
@@ -955,6 +965,16 @@ ControlMorph subclass: #VariableWaveControlMorph
 	category: 'Signals-Morphic-Controls'!
 !classDefinition: 'VariableWaveControlMorph class' category: #'Signals-Morphic-Controls'!
 VariableWaveControlMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #SymmetricWaveshaperControlMorph category: #'Signals-Morphic-Controls'!
+VariableWaveControlMorph subclass: #SymmetricWaveshaperControlMorph
+	instanceVariableNames: 'image'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'SymmetricWaveshaperControlMorph class' category: #'Signals-Morphic-Controls'!
+SymmetricWaveshaperControlMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #WavetableControlMorph category: #'Signals-Morphic-Controls'!
@@ -1737,8 +1757,15 @@ This is a second order (12 dB/oct) low-pass filter based on a biquad.!
 !Transform2x commentStamp: 'len 4/Feb/2026 00:25:50' prior: 0!
 An abstract superclass for transforms that internally do 2× oversampling. This is useful for implementing transforms that are not linear-time-invariant (LTI), such as saturation, wavefolding, or virtual analog filters.!
 
-!DiodeClipper commentStamp: 'len 8/Feb/2026 21:27:18' prior: 0!
-This module implements a threshold-based nonlinear clipping stage inspired by diode conduction. The signal remains linear below the forward voltage and transitions into soft clipping above it, producing a harder and more mid-focused character than smooth saturation.
+!TubeSaturator commentStamp: '<historical>' prior: 0!
+This saturator emulates the characteristic soft-knee saturation of vacuum tube circuits. It emphasizes odd harmonics with a slightly sharper knee than standard soft saturation, producing a “round” and harmonically rich tone.
+
+Tube saturation adds harmonics and weight to a sound, specially in the lower mids. It adds a grit or bite in the higher frequencies and enhances detail and presence without sounding too harsh.
+
+This module is suited for musical overdrive on guitars, synths, or mix buses, where a classic tube-like warmth and gentle compression is desired.!
+
+!DiodeClipper commentStamp: '<historical>' prior: 0!
+This module implements a nonlinear clipping stage inspired by diode conduction. The signal remains linear below the forward voltage and transitions into soft clipping above it, producing a harder and more mid-focused character than smooth saturation.
 
 It is well suited for aggressive distortion, synth and guitar-style clipping, and parallel distortion effects, with controllable asymmetry to shape even harmonics and bite.!
 
@@ -1746,20 +1773,18 @@ It is well suited for aggressive distortion, synth and guitar-style clipping, an
 Foldback distortion reflects the signal back into a fixed amplitude window once it exceeds a fold level.
 Unlike clipping or saturation, the transfer function is non-monotonic, producing inharmonic and metallic spectra that increase in complexity with input level. Foldback is primarily a sound-design tool and can alias strongly at high levels; parallel mixing or filtering is usually required for controlled results.!
 
-!HardClipper commentStamp: 'len 8/Feb/2026 18:21:46' prior: 0!
-This module applies a strict limiting nonlinearity to the input signal, producing immediate clipping at a defined threshold. This generates strong odd and even harmonics and introduces audible harshness at high levels.
+!HardClipper commentStamp: '<historical>' prior: 0!
+This module applies a strict limiting nonlinearity to the input signal, producing immediate clipping at a ±1.0. This generates strong odd and even harmonics and introduces audible harshness at high levels.
 It is best used for aggressive distortion effects, peak limiting, or to create characterful saturation in synths or drums.!
 
 !Rectifier commentStamp: '<historical>' prior: 0!
 A rectifier applies half- or full-wave rectification to the signal, removing or inverting its negative portion.
 This destroys waveform symmetry and introduces strong even harmonics and DC components. Rectification is not a saturation process but a nonlinear waveshaping operation often used for timbral transformation or subharmonic-like effects.!
 
-!TubeSaturator commentStamp: '<historical>' prior: 0!
-This saturator emulates the characteristic soft-knee saturation of vacuum tube circuits. It emphasizes odd harmonics with a slightly sharper knee than standard soft saturation, producing a “round” and harmonically rich tone.
+!SoftClipper commentStamp: '<historical>' prior: 0!
+This module provides a soft-clipping stage using a smooth nonlinearity (softclip, Pade approxiimation of tanh). When bias is zero it is symmetric and introduces only odd harmonics. When bias is not zero it becomes asymmetric and introduces a mix of even and odd harmonics. Bias can be adjusted to shape the harmonic content and can optionally scale with drive for subtle dynamic behavior.
 
-Tube saturation adds harmonics and weight to a sound, specially in the lower mids. It adds a grit or bite in the higher frequencies and enhances detail and presence without sounding too harsh.
-
-This module is suited for musical overdrive on guitars, synths, or mix buses, where a classic tube-like warmth and gentle compression is desired.!
+It is ideal for adding musical warmth, thickness, or subtle tonal color to signals. Unlike tape saturation, it does not apply pre- or post-filtering, keeping its effect primarily in the nonlinearity.!
 
 !Wavefolder commentStamp: '<historical>' prior: 0!
 Basic wavefolder. Amplitude of input determines level of folding. Amplitudes of magnitude > 1.0 will start to fold.
@@ -1784,11 +1809,6 @@ This module implements a soft, smooth overdrive using a polynomial softclip curv
 It is suitable for thickening signals without harsh distortion, and it can be used to add warmth or subtle harmonic content.
 
 Based on code from Emilie Gillet for the Plaits eurorack module.!
-
-!Saturator commentStamp: 'len 9/Feb/2026 02:33:04' prior: 0!
-This module provides a soft-clipping stage using a smooth nonlinearity (softclip, Pade approxiimation of tanh). When bias is zero it is symmetric and introduces only odd harmonics. When bias is not zero it becomes asymmetric and introduces a mix of even and odd harmonics. Bias can be adjusted to shape the harmonic content and can optionally scale with drive for subtle dynamic behavior.
-
-It is ideal for adding musical warmth, thickness, or subtle tonal color to signals. Unlike tape saturation, it does not apply pre- or post-filtering, keeping its effect primarily in the nonlinearity.!
 
 !TapeSaturator commentStamp: '<historical>' prior: 0!
 This saturator models the nonlinearity and frequency-dependent behavior of analog tape saturation. It uses a soft asymmetric curve with pre-emphasis and post low-pass filtering, producing drive-dependent compression, harmonic generation, and “tape color” such as high-frequency roll-off and low-end warmth.
@@ -5336,180 +5356,6 @@ internalSampleRate
 	"The internal sample rate is doubled."
 	^ self class sampleRate * 2! !
 
-!DiodeClipper methodsFor: 'controlling' stamp: 'len 8/Feb/2026 21:29:44'!
-update
-	| mix |
-	super update.
-	pregain := self get: #pregain.
-	clip := self get: #clip.
-	bias := (self get: #bias) * pregain sqrt.
-	dc := self diodeclip: bias.
-	mix := self get: #mix.
-	postgain := (self get: #postgain) * mix.
-	dry := 1.0 - mix! !
-
-!DiodeClipper methodsFor: 'initialization' stamp: 'len 12/Feb/2026 01:26:01'!
-initializeControls
-	super initializeControls.
-	self addVolumeControl: #pregain min: 1.0 max: 16.0 value: 2.0.
-	self addVolumeControl: #clip min: 0.063 max: 1.0 value: 0.6.
-	self addControl: #bias min: -0.3 max: 0.3 value: 0.0.
-	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0.
-	self addDryWetControl: #mix! !
-
-!DiodeClipper methodsFor: 'processing' stamp: 'len 11/Feb/2026 20:23:20'!
-value: in
-	^ in * dry + (((self diodeclip: in * pregain + bias) - dc) * postgain)! !
-
-!DiodeClipper methodsFor: 'tools' stamp: 'len 12/Feb/2026 14:35:25'!
-panel
-	^​ ControlPanel new
-		addKnob: (controls at: #pregain) label: 'Input';
-		addKnob: (controls at: #postgain) label: 'Output';
-		addKnob: (controls at: #mix) label: 'Mix'! !
-
-!DiodeClipper methodsFor: 'tools' stamp: 'len 12/Feb/2026 22:26:05'!
-patchable
-	| answer display inputPin |
-	answer := PatchableMorph new model: self.
-	display := WaveshaperControlMorph new
-		color: PatchMorph waveformColor2;
-		shape: (controls at: #clip);
-		bias: (controls at: #bias);
-		waveBlock: [:t :c| | x δ | x := t * 2.0 - 1.0. (δ := x abs - c) > 0.0 ifTrue: [(δ / (4.0 * δ + 1.0) + c) * x sign] ifFalse: [x]].
-	answer body addMorph: display; addMorph: self panel.
-	inputPin := answer addAudioInput: #setInput:.
-	inputPin when: #level: send: #drawLevel: to: display.
-	answer addAudioOutput: #setOutput:.
-	^ answer! !
-
-!DiodeClipper methodsFor: 'private' stamp: 'len 12/Feb/2026 01:20:57'!
-diodeclip: x
-	| δ |
-	(δ := x abs - clip) > 0.0 ifFalse: [^ x].
-	^ (δ / (4.0 * δ + 1.0) + clip) * x sign! !
-
-!Foldback methodsFor: 'controlling' stamp: 'len 9/Feb/2026 00:31:56'!
-update
-	| mix |
-	super update.
-	pregain := self get: #pregain.
-	fold := self get: #fold.
-	bias := (self get: #bias) * pregain sqrt.
-	mix := self get: #mix.
-	postgain := (self get: #postgain) * mix.
-	dry := 1.0 - mix! !
-
-!Foldback methodsFor: 'initialization' stamp: 'len 9/Feb/2026 00:31:27'!
-initializeControls
-	super initializeControls.
-	self addVolumeControl: #pregain min: 0.25 max: 8.0 value: 1.0.
-	self addControl: #fold min: 0.1 max: 1.0 value: 0.6. "fold level"
-	self addControl: #bias min: -1.0 max: 1.0 value: 0.0.
-	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0.
-	self addDryWetControl: #mix! !
-
-!Foldback methodsFor: 'processing' stamp: 'len 9/Feb/2026 00:37:08'!
-value: in
-	^ in * dry + ((self foldback: in * pregain + bias) * postgain)! !
-
-!Foldback methodsFor: 'private' stamp: 'len 12/Feb/2026 01:14:15'!
-foldback: x
-	| y d |
-	(y := x abs) <= fold ifTrue: [^ x].
-	y := y - fold.
-	d := 4.0 * fold.
-	y := y - (d * (y / d) floor).
-	y > (2.0 * fold) ifTrue: [y := d - y].
-	y := y - fold.
-	^​ y! !
-
-!HardClipper methodsFor: 'controlling' stamp: 'len 8/Feb/2026 18:27:22'!
-update
-	| mix |
-	super update.
-	pregain := self get: #pregain.
-	positiveClip := self get: #clip.
-	negativeClip := positiveClip negated.
-	mix := self get: #mix.
-	postgain := (self get: #postgain) * mix.
-	dry := 1.0 - mix! !
-
-!HardClipper methodsFor: 'initialization' stamp: 'len 8/Feb/2026 18:24:42'!
-initializeControls
-	super initializeControls.
-	self addVolumeControl: #pregain min: 0.25 max: 64.0 value: 1.0.
-	self addVolumeControl: #clip min: 0.063 max: 1.0 value: 1.0.
-	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0.
-	self addDryWetControl: #mix! !
-
-!HardClipper methodsFor: 'processing' stamp: 'len 8/Feb/2026 18:27:37'!
-value: in
-	| x |
-	x := in * pregain.
-	x := x < negativeClip ifTrue: [negativeClip] ifFalse: [x > positiveClip ifTrue: [positiveClip] ifFalse: [x]].
-	^ in * dry + (x * postgain)! !
-
-!HardClipper methodsFor: 'tools' stamp: 'len 12/Feb/2026 05:33:15'!
-panel
-	^​ ControlPanel new
-		addKnob: (controls at: #pregain) label: 'Input';
-		addKnob: (controls at: #postgain) label: 'Output';
-		addKnob: (controls at: #mix) label: 'Mix'! !
-
-!HardClipper methodsFor: 'tools' stamp: 'len 11/Feb/2026 22:59:05'!
-patchable
-	| answer display |
-	answer := PatchableMorph new model: self.
-	display := VariableWaveControlMorph new
-		color: PatchMorph waveformColor2;
-		control: (controls at: #clip);
-		waveBlock: [:t :c| | x | x := t * 2.0 - 1.0. x abs < c ifTrue: [x] ifFalse: [c * x sign]].
-	answer body addMorph: display; addMorph: self panel.
-	answer
-		addAudioInput: #setInput:;
-		addAudioOutput: #setOutput:.
-	^ answer! !
-
-!Rectifier methodsFor: 'accessing' stamp: 'len 9/Feb/2026 00:23:05'!
-mode
-	^ mode! !
-
-!Rectifier methodsFor: 'accessing' stamp: 'len 9/Feb/2026 00:23:10'!
-mode: aSymbol
-	mode := aSymbol.
-	self changed! !
-
-!Rectifier methodsFor: 'initialization' stamp: 'len 9/Feb/2026 00:17:30'!
-initialize
-	super initialize.
-	mode := #full "full, half, soft"! !
-
-!Rectifier methodsFor: 'initialization' stamp: 'len 9/Feb/2026 00:17:00'!
-initializeControls
-	super initializeControls.
-	self addVolumeControl: #pregain min: 0.25 max: 8.0 value: 1.0.
-	self addControl: #bias min: -1.0 max: 1.0 value: 0.0.
-	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0.
-	self addDryWetControl: #mix! !
-
-!Rectifier methodsFor: 'controlling' stamp: 'len 9/Feb/2026 00:18:28'!
-update
-	| mix |
-	super update.
-	pregain := self get: #pregain.
-	bias := (self get: #bias) * pregain sqrt.
-	mix := self get: #mix.
-	postgain := (self get: #postgain) * mix.
-	dry := 1.0 - mix! !
-
-!Rectifier methodsFor: 'processing' stamp: 'len 9/Feb/2026 00:58:09'!
-value: in
-	| x |
-	x := in * pregain + bias.
-	x := mode == #half ifTrue: [x max: 0.0] ifFalse: [mode == #full ifTrue: [x abs] ifFalse: [(x*x + 1e-4) sqrt]].
-	^ in * dry + (x * postgain)! !
-
 !TubeSaturator methodsFor: 'controlling' stamp: 'len 12/Feb/2026 14:45:28'!
 update
 	super update.
@@ -5529,10 +5375,10 @@ initialize
 	postlpf := OnePole new pole: 18000.0 / self internalSampleRate. "18 khz"
 	dcblock := OnePole new pole: 10.0 / self internalSampleRate "10 hz"! !
 
-!TubeSaturator methodsFor: 'initialization' stamp: 'len 8/Feb/2026 21:32:41'!
+!TubeSaturator methodsFor: 'initialization' stamp: 'len 13/Feb/2026 16:00:05'!
 initializeControls
 	super initializeControls.
-	self addVolumeControl: #drive min: 0.25 max: 64.0 value: 1.0.
+	self addVolumeControl: #drive min: 1.0 max: 16.0 value: 1.0.
 	self addFrequencyControl: #tone min: 8000.0 max: 14000.0 value: 10000.0. "8 to 14 khz"
 	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0! !
 
@@ -5556,51 +5402,124 @@ panel
 		addKnob: (controls at: #tone) label: 'Tone';
 		addKnob: (controls at: #postgain) label: 'Output'! !
 
-!TubeSaturator methodsFor: 'tools' stamp: 'len 11/Feb/2026 22:59:09'!
+!TubeSaturator methodsFor: 'tools' stamp: 'len 13/Feb/2026 19:40:37'!
 patchable
-	| answer display |
+	| answer display inputPin |
 	answer := PatchableMorph new model: self.
-	display := VariableWaveControlMorph new
-		color: PatchMorph waveformColor2;
+	display := SymmetricWaveshaperControlMorph new
 		control: (controls at: #drive);
 		waveBlock: [:x :g| ((x * 2.0 - 1.0) * g sqrt) softclip].
-	answer body addMorph: display; addMorph: self panel.
-	answer
-		addAudioInput: #setInput:;
-		addControlInput: #drive;
-		addAudioOutput: #setOutput:.
+	answer body addMorph: display.
+	answer flap addMorph: self panel.
+	inputPin := answer addAudioInput: #setInput:.
+	inputPin when: #level: send: #drawLevel: to: display.
 	^ answer
-	
-! !
+		addControlInput: #drive;
+		addAudioOutput: #setOutput:;
+		yourself! !
 
-!Wavefolder methodsFor: 'controlling' stamp: 'len 9/Feb/2026 02:41:51'!
+!Waveshaper methodsFor: 'controlling' stamp: 'len 13/Feb/2026 19:00:21'!
 update
+	| mix |
 	super update.
-	gain := self get: #gain.
-	bias := self get: #bias! !
+	pregain := self get: #pregain.
+	bias := (self get: #bias) * pregain sqrt.
+	dc := self apply: bias.
+	mix := self get: #mix.
+	postgain := (self get: #postgain) * mix.
+	dry := 1.0 - mix! !
 
-!Wavefolder methodsFor: 'initialization' stamp: 'len 8/Feb/2026 02:41:57'!
+!Waveshaper methodsFor: 'initialization' stamp: 'len 13/Feb/2026 16:32:41'!
 initializeControls
 	super initializeControls.
-	self addControl: #gain min: -4.0 max: 4.0 value: 1.0. "negative gain values for thru-zero"
-	self addControl: #bias min: -2.0 max: 2.0 value: 0.0 "offset added to input (pre-gain) for asymmetrical folding"! !
+	self addVolumeControl: #pregain min: 1.0 max: 16.0 value: 1.0.
+	self addQuadraticControl: #bias min: -0.5 max: 0.5 value: 0.0.
+	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0.
+	self addDryWetControl: #mix! !
 
-!Wavefolder methodsFor: 'processing' stamp: 'len 8/Feb/2026 02:41:45'!
+!Waveshaper methodsFor: 'processing' stamp: 'len 13/Feb/2026 19:00:21'!
+apply: x
+	^ self subclassResponsibility! !
+
+!Waveshaper methodsFor: 'processing' stamp: 'len 13/Feb/2026 19:00:21'!
 value: in
-	| x ft |
-	x := in.
-	x := (x + bias) * gain.
-	ft := ((x + 1.0) * 0.5) floor.
-	x := x - (ft * 2).
-	ft odd ifTrue: [x := x negated].
-	^ x! !
+	^ in * dry + (((self apply: in * pregain + bias) - dc) * postgain)! !
 
-!Wavefolder methodsFor: 'tools' stamp: 'len 8/Feb/2026 02:43:58'!
+!Waveshaper methodsFor: 'tools' stamp: 'len 13/Feb/2026 19:47:24'!
+panel
+	^​ ControlPanel new
+"		addKnob: (controls at: #pregain) label: 'Input';"
+		addKnob: (controls at: #postgain) label: 'Output';
+		addKnob: (controls at: #mix) label: 'Mix'! !
+
+!Waveshaper methodsFor: 'tools' stamp: 'len 13/Feb/2026 19:37:54'!
 patchable
-	^ super patchable
-		addControlInput: #gain;
-		addControlInput: #bias;
-		yourself! !
+	| answer display inputPin |
+	answer := PatchableMorph new model: self.
+	display := WaveshaperControlMorph new
+		shape: (controls at: #pregain);
+		bias: (controls at: #bias);
+		waveBlock: [:t :g| (self apply: (t * 2.0 - 1.0) * g)].
+	answer body addMorph: display.
+	answer flap addMorph: self panel.
+	inputPin := answer addAudioInput: #setInput:.
+	inputPin when: #level: send: #drawLevel: to: display.
+	answer addAudioOutput: #setOutput:.
+	^ answer! !
+
+!DiodeClipper methodsFor: 'processing' stamp: 'len 13/Feb/2026 19:00:21'!
+apply: x
+	| δ |
+	(δ := x abs - 0.8 "clip at 0.8") > 0.0 ifFalse: [^ x].
+	^ (δ / (4.0 * δ + 1.0) + 0.8 "clip at 0.8") * x sign! !
+
+!Foldback methodsFor: 'processing' stamp: 'len 13/Feb/2026 19:08:18'!
+apply: x
+	| y d |
+	(y := x abs) <= 1.0 ifTrue: [^ x].
+	y := y - 1.0.
+	d := 4.0.
+	y := y - (d * (y / d) floor).
+	y > 2.0 ifTrue: [y := d - y].
+	y := y - 1.0.
+	^​ y! !
+
+!HardClipper methodsFor: 'processing' stamp: 'len 13/Feb/2026 19:00:21'!
+apply: x
+	^​ x < -1.0 ifTrue: [-1.0] ifFalse: [x > 1.0 ifTrue: [1.0] ifFalse: [x]]! !
+
+!Rectifier methodsFor: 'accessing' stamp: 'len 9/Feb/2026 00:23:05'!
+mode
+	^ mode! !
+
+!Rectifier methodsFor: 'accessing' stamp: 'len 9/Feb/2026 00:23:10'!
+mode: aSymbol
+	mode := aSymbol.
+	self changed! !
+
+!Rectifier methodsFor: 'initialization' stamp: 'len 9/Feb/2026 00:17:30'!
+initialize
+	super initialize.
+	mode := #full "full, half, soft"! !
+
+!Rectifier methodsFor: 'controlling' stamp: 'len 13/Feb/2026 20:01:29'!
+update
+	super update.
+	dc := 0.0 "should we?"! !
+
+!Rectifier methodsFor: 'processing' stamp: 'len 13/Feb/2026 19:02:26'!
+apply: x
+	^ mode == #half ifTrue: [x max: 0.0] ifFalse: [mode == #full ifTrue: [x abs] ifFalse: [(x*x + 1e-4) sqrt]]! !
+
+!SoftClipper methodsFor: 'processing' stamp: 'len 13/Feb/2026 19:00:21'!
+apply: x
+	^ x softclip! !
+
+!Wavefolder methodsFor: 'processing' stamp: 'len 13/Feb/2026 19:06:03'!
+apply: x
+	| f |
+	f := ((x + 1.0) * 0.5) floor.
+	^ f odd ifTrue: [(f * 2) - x] ifFalse: [x - (f * 2)]! !
 
 !Korg35HPF methodsFor: 'controlling' stamp: 'len 16/Oct/2025 18:46:00'!
 reset
@@ -5833,63 +5752,20 @@ tick
 value: in
 	^ (in * pregain) softclip * postgain! !
 
-!Overdrive methodsFor: 'tools' stamp: 'len 11/Feb/2026 22:59:14'!
-patchable
-	| answer display |
-	answer := PatchableMorph new model: self.
-	display := VariableWaveControlMorph new
-		morphExtent: 64 @ 64;
-		color: PatchMorph waveformColor2;
-		control: (controls at: #drive);
-		waveBlock: [:x :g| ((x * 2.0 - 1.0) * g squared) softclip].
-	answer body addMorph: display.
-	^ answer
-		addAudioInput: #setInput:;
-		addControlInput: #drive;
-		addAudioOutput: #setOutput:;
-		yourself! !
-
-!Saturator methodsFor: 'controlling' stamp: 'len 12/Feb/2026 21:31:43'!
-update
-	super update.
-	pregain := (self get: #pregain) * 1.8. "empirical calibration by 1.8 factor"
-	postgain := self get: #postgain.
-	bias := (self get: #bias) * 0.5 * pregain sqrt. "bias scaled by pregain preserving low-drive subtetly"
-	dc := bias softclip "precompute this just to save a multiplication per sample"! !
-
-!Saturator methodsFor: 'initialization' stamp: 'len 8/Feb/2026 13:43:33'!
-initializeControls
-	super initializeControls.
-	self addVolumeControl: #pregain min: 0.25 max: 64.0 value: 1.0.
-	self addQuadraticControl: #bias min: -0.05 max: 0.05 value: 0.0.
-	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0! !
-
-!Saturator methodsFor: 'processing' stamp: 'len 8/Feb/2026 16:29:18'!
-value: in
-	^ ((in * pregain + bias) softclip - dc) * postgain! !
-
-!Saturator methodsFor: 'tools' stamp: 'len 12/Feb/2026 05:36:15'!
-panel
-	^​ ControlPanel new
-		addKnob: (controls at: #bias) label: 'Bias';
-		addKnob: (controls at: #postgain) label: 'Output'! !
-
-!Saturator methodsFor: 'tools' stamp: 'len 12/Feb/2026 21:31:55'!
+!Overdrive methodsFor: 'tools' stamp: 'len 13/Feb/2026 19:45:30'!
 patchable
 	| answer display inputPin |
 	answer := PatchableMorph new model: self.
-	display := WaveshaperControlMorph new
-		color: PatchMorph waveformColor2;
-		shape: (controls at: #pregain);
-		bias: (controls at: #bias);
-		waveBlock: [:x :g| ((x * 2.0 - 1.0) * g) softclip].
-	answer body addMorph: display; addMorph: self panel.
+	display := SymmetricWaveshaperControlMorph new
+		control: (controls at: #drive);
+		waveBlock: [:x :g| ((x * 2.0 - 1.0) * g squared) softclip].
+	answer body addMorph: display.
 	inputPin := answer addAudioInput: #setInput:.
 	inputPin when: #level: send: #drawLevel: to: display.
-	answer
-		addControlInput: #pregain;
-		addAudioOutput: #setOutput:.
-	^ answer! !
+	^ answer
+		addControlInput: #drive;
+		addAudioOutput: #setOutput:;
+		yourself! !
 
 !TapeSaturator methodsFor: 'controlling' stamp: 'len 12/Feb/2026 14:47:08'!
 update
@@ -5911,11 +5787,11 @@ initialize
 	prehpf := OnePole new pole: 4000.0 / self class sampleRate. "4 khz"
 	postlpf := OnePole new! !
 
-!TapeSaturator methodsFor: 'initialization' stamp: 'len 8/Feb/2026 16:21:34'!
+!TapeSaturator methodsFor: 'initialization' stamp: 'len 13/Feb/2026 15:48:51'!
 initializeControls
 	super initializeControls.
 	self addVolumeControl: #drive min: 1.0 max: 16.0 value: 1.0.
-	self addControl: #bias min: -0.5 max: 0.5 value: 0.0.
+	self addQuadraticControl: #bias min: -0.5 max: 0.5 value: 0.0.
 	self addControl: #tone min: -1.0 max: 1.0 value: 0.0.
 	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0! !
 
@@ -5937,12 +5813,11 @@ panel
 		addKnob: (controls at: #tone) label: 'Tone';
 		addKnob: (controls at: #postgain) label: 'Output'! !
 
-!TapeSaturator methodsFor: 'tools' stamp: 'len 13/Feb/2026 00:34:53'!
+!TapeSaturator methodsFor: 'tools' stamp: 'len 13/Feb/2026 19:40:56'!
 patchable
 	| answer display inputPin |
 	answer := PatchableMorph new model: self.
 	display := WaveshaperControlMorph new
-		color: PatchMorph waveformColor2;
 		shape: (controls at: #drive);
 		bias: (controls at: #bias);
 		waveBlock: [:x :g|
@@ -5953,10 +5828,10 @@ patchable
 	answer flap addMorph: self panel.
 	inputPin := answer addAudioInput: #setInput:.
 	inputPin when: #level: send: #drawLevel: to: display.
-	answer
+	^ answer
 		addControlInput: #drive;
-		addAudioOutput: #setOutput:.
-	^ answer! !
+		addAudioOutput: #setOutput:;
+		yourself! !
 
 !MultiTapDelayLine methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 15:01:05'!
 delays: delayList gains: gainList
@@ -7450,17 +7325,21 @@ defaultColor
 defaultFontSize
 	^ 14! !
 
+!ControlMorph methodsFor: 'accessing' stamp: 'len 13/Feb/2026 15:57:17'!
+defaultLabelFontSize
+	^ 10! !
+
 !ControlMorph methodsFor: 'accessing' stamp: 'len 19/Nov/2025 19:08:00'!
 inactiveColor
 	^ self hasKeyboardFocus ifTrue: [Color veryLightGray] ifFalse: [Color lightGray]! !
 
-!ControlMorph methodsFor: 'building' stamp: 'len 27/Jan/2026 10:25:08'!
+!ControlMorph methodsFor: 'building' stamp: 'len 13/Feb/2026 15:35:33'!
 withLabel: aString
 	^ LinearLayoutMorph newColumn
 		color: Color transparent;
 		gap: 4;
 		addMorph: self;
-		addMorph: (LabelMorph contents: aString fontSize: self defaultFontSize)! !
+		addMorph: (LabelMorph contents: aString fontSize: self defaultLabelFontSize)! !
 
 !ControlMorph methodsFor: 'dependency mechanism' stamp: 'len 20/Jan/2026 15:17:15'!
 update: anObject
@@ -7563,7 +7442,7 @@ drawOn: aCanvas
 			ifTrue: [aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: Float pi sweep: Float pi * 1.6 * (vMod - 0.5)]
 			ifFalse: [aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: Float pi * 0.2 sweep: Float pi * 1.6 * vMod]]! !
 
-!SliderControlMorph methodsFor: 'drawing' stamp: 'len 20/Jan/2026 15:00:41'!
+!SliderControlMorph methodsFor: 'drawing' stamp: 'len 13/Feb/2026 19:59:57'!
 drawHorizontalOn: aCanvas
 	| v vMod w h basePos modulatedPos |
 	v := control basePosition.
@@ -7581,13 +7460,13 @@ drawHorizontalOn: aCanvas
 			[aCanvas
 				fillRectangle: (0 @ 8 corner: modulatedPos @ (h - 8)) color: color;
 				fillRectangle: (modulatedPos @ 8 corner: w @ (h - 8)) color: self inactiveColor].
-	aCanvas line: basePos @ 4 to: basePos @ (h - 4) width: 2 color: color! !
+	aCanvas line: basePos @ 8 to: basePos @ (h - 8) width: 3 color: color! !
 
 !SliderControlMorph methodsFor: 'drawing' stamp: 'len 14/Oct/2025 15:55:00'!
 drawOn: aCanvas
 	self isHorizontal ifTrue: [self drawHorizontalOn: aCanvas] ifFalse: [self drawVerticalOn: aCanvas]! !
 
-!SliderControlMorph methodsFor: 'drawing' stamp: 'len 20/Jan/2026 15:03:11'!
+!SliderControlMorph methodsFor: 'drawing' stamp: 'len 13/Feb/2026 20:04:55'!
 drawVerticalOn: aCanvas
 	| v vMod w h basePos modulatedPos |
 	v := control basePosition.
@@ -7605,7 +7484,7 @@ drawVerticalOn: aCanvas
 			[aCanvas
 				fillRectangle: (8 @ 0 corner: w - 8 @ modulatedPos) color: self inactiveColor;
 				fillRectangle: (8 @ modulatedPos corner: w - 8 @ h) color: color].
-	aCanvas line: 4 @ basePos to: w - 4 @ basePos width: 2 color: color! !
+		aCanvas line: 8 @ basePos to: w - 8 @ basePos width: 3 color: color! !
 
 !SliderControlMorph methodsFor: 'initialization' stamp: 'len 20/Jan/2026 15:20:31'!
 defaultExtent
@@ -7754,6 +7633,46 @@ initialize
 	super initialize.
 	color := PatchMorph waveformColor.
 	currentShape := 0.0! !
+
+!SymmetricWaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 13/Feb/2026 19:49:29'!
+defaultExtent
+	^ `96@64`! !
+
+!SymmetricWaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 13/Feb/2026 19:32:00'!
+initialize
+	super initialize.
+	color := PatchMorph waveformColor2.
+	image := Form extent: self defaultExtent depth: 32.
+	image fillColor: PatchMorph panelColor.
+! !
+
+!SymmetricWaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 13/Feb/2026 19:34:06'!
+drawLevel: aNumber
+	| x0 δ |
+	x0 := image width * 0.5.
+	δ := aNumber * x0.
+	image fill: (x0 - δ @ 0 extent: δ * 2.0 @ image height) fillColor: (PatchMorph waveformColor alpha: aNumber).
+
+	image fill: (x0 + δ @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor.
+	image fill: (x0 - δ - 1 @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor! !
+
+!SymmetricWaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 13/Feb/2026 19:32:19'!
+drawOn: aCanvas
+	aCanvas image: image at: 0 @ 0.
+	super drawOn: aCanvas! !
+
+!SymmetricWaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 13/Feb/2026 19:32:42'!
+step
+	image fill: image boundingBox rule: Form blend fillColor: (PatchMorph panelColor alpha: 0.3).
+	self redrawNeeded! !
+
+!SymmetricWaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 13/Feb/2026 19:32:47'!
+stepTime
+	^ 100! !
+
+!SymmetricWaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 13/Feb/2026 19:32:58'!
+wantsSteps
+	^ true! !
 
 !WavetableControlMorph methodsFor: 'initialization' stamp: 'len 17/Jan/2026 00:19:57'!
 defaultExtent
@@ -8445,20 +8364,35 @@ wantsSteps
 adjustXBy: aNumber
 	super adjustXBy: aNumber * -4.0! !
 
-!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 14:25:23'!
+!WaveshaperControlMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 14:25:23'!
 bias: aControl
 	self controlX: aControl.
 	valueX := aControl value! !
 
-!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 14:22:21'!
+!WaveshaperControlMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 14:22:21'!
 color: aColor
 	color := aColor! !
 
-!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Feb/2026 18:58:59'!
-defaultExtent
-	^ `128@64`! !
+!WaveshaperControlMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 14:34:40'!
+shape: aControl
+	self controlY: aControl.
+	valueY := aControl value! !
 
-!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 22:48:01'!
+!WaveshaperControlMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 14:24:40'!
+waveAt: aNumber
+	^ wave value: aNumber value: valueY! !
+
+!WaveshaperControlMorph methodsFor: 'accessing' stamp: 'len 11/Feb/2026 18:58:59'!
+waveBlock: aBlock
+	wave := aBlock! !
+
+!WaveshaperControlMorph methodsFor: 'dependency mechanism' stamp: 'len 11/Feb/2026 18:58:59'!
+update: anObject
+	super update: anObject.
+	valueX := controlX value.
+	valueY := controlY value! !
+
+!WaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 12/Feb/2026 22:48:01'!
 drawLevel: aNumber
 	| x0 δ |
 	x0 := image width * (valueX + 1.0) / 2.0.
@@ -8475,7 +8409,7 @@ drawLevel: aNumber
 	h := (v + 1.0) / 2.0 * image height.
 	image fill: (x @ (image height // 2) extent: 3 @ (image height // 2 - h)) fillColor: Color white "! !
 
-!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 19:19:07'!
+!WaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 12/Feb/2026 19:19:07'!
 drawOn: aCanvas
 	| step stepX t x y h steps m |
 	aCanvas image: image at: 0 @ 0.
@@ -8498,7 +8432,11 @@ drawOn: aCanvas
 			x := x + stepX.
 			aCanvas lineTo: x @ y]]! !
 
-!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 22:42:14'!
+!WaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 13/Feb/2026 19:48:40'!
+defaultExtent
+	^ `96@64`! !
+
+!WaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 12/Feb/2026 22:42:14'!
 initialize
 	super initialize.
 	color := PatchMorph waveformColor2.
@@ -8506,37 +8444,18 @@ initialize
 	image fillColor: PatchMorph panelColor.
 	controlY := Control min: 0.0 max: 0.0 value: 0.0! !
 
-!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 14:34:40'!
-shape: aControl
-	self controlY: aControl.
-	valueY := aControl value! !
-
-!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 23:45:33'!
+!WaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 13/Feb/2026 19:21:29'!
 step
-	image fill: image boundingBox rule: Form blend fillColor: (PatchMorph panelColor alpha: 0.2).
+	image fill: image boundingBox rule: Form blend fillColor: (PatchMorph panelColor alpha: 0.3).
 	self redrawNeeded! !
 
-!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 19:24:07'!
+!WaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 12/Feb/2026 19:24:07'!
 stepTime
 	^ 100! !
 
-!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Feb/2026 18:58:59'!
-update: anObject
-	super update: anObject.
-	valueX := controlX value.
-	valueY := controlY value! !
-
-!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 19:20:28'!
+!WaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 12/Feb/2026 19:20:28'!
 wantsSteps
 	^ true! !
-
-!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 14:24:40'!
-waveAt: aNumber
-	^ wave value: aNumber value: valueY! !
-
-!WaveshaperControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Feb/2026 18:58:59'!
-waveBlock: aBlock
-	wave := aBlock! !
 
 !XYVariableWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Feb/2026 19:16:48'!
 color: aColor
@@ -11340,7 +11259,7 @@ mouseLeave: anEvent
 	title visible: false.
 	flap visible: false! !
 
-!PatchableMorph methodsFor: 'initialization' stamp: 'len 13/Feb/2026 01:33:23'!
+!PatchableMorph methodsFor: 'initialization' stamp: 'len 13/Feb/2026 16:08:29'!
 initialize
 	| container |
 	super initialize.
@@ -11352,7 +11271,7 @@ initialize
 	self addMorph: container.
 	self addMorph: (title := LabelMorph contents: '' fontSize: 12 emphasis: 1) position: 0 @ -24.
 	title visible: false.
-	flap := LinearLayoutMorph newColumn gap: 10; padding: 4 @ 8; "borderWidth: 0; borderColor: Color lightGray; color: PatchMorph panelColor" color: (Color black alpha: 0.7).
+	flap := RoundedLinearLayoutMorph newColumn gap: 10; padding: 4 @ 8; "borderWidth: 0; borderColor: Color lightGray; color: PatchMorph panelColor" color: (Color black alpha: 0.6).
 	self addMorph: flap.
 	flap visible: false! !
 

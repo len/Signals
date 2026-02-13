@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 13 February 2026 at 8:05:33 pm'!
+'From Cuis7.7 [latest update: #7797] on 14 February 2026 at 2:55:51 am'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 461!
+!provides: 'Signals' 1 462!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -567,16 +567,6 @@ Waveshaper subclass: #DiodeClipper
 DiodeClipper class
 	instanceVariableNames: ''!
 
-!classDefinition: #Foldback category: #'Signals-Shapers'!
-Waveshaper subclass: #Foldback
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Shapers'!
-!classDefinition: 'Foldback class' category: #'Signals-Shapers'!
-Foldback class
-	instanceVariableNames: ''!
-
 !classDefinition: #HardClipper category: #'Signals-Shapers'!
 Waveshaper subclass: #HardClipper
 	instanceVariableNames: ''
@@ -585,16 +575,6 @@ Waveshaper subclass: #HardClipper
 	category: 'Signals-Shapers'!
 !classDefinition: 'HardClipper class' category: #'Signals-Shapers'!
 HardClipper class
-	instanceVariableNames: ''!
-
-!classDefinition: #Rectifier category: #'Signals-Shapers'!
-Waveshaper subclass: #Rectifier
-	instanceVariableNames: 'mode'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Shapers'!
-!classDefinition: 'Rectifier class' category: #'Signals-Shapers'!
-Rectifier class
 	instanceVariableNames: ''!
 
 !classDefinition: #SoftClipper category: #'Signals-Shapers'!
@@ -1769,17 +1749,9 @@ This module implements a nonlinear clipping stage inspired by diode conduction. 
 
 It is well suited for aggressive distortion, synth and guitar-style clipping, and parallel distortion effects, with controllable asymmetry to shape even harmonics and bite.!
 
-!Foldback commentStamp: '<historical>' prior: 0!
-Foldback distortion reflects the signal back into a fixed amplitude window once it exceeds a fold level.
-Unlike clipping or saturation, the transfer function is non-monotonic, producing inharmonic and metallic spectra that increase in complexity with input level. Foldback is primarily a sound-design tool and can alias strongly at high levels; parallel mixing or filtering is usually required for controlled results.!
-
 !HardClipper commentStamp: '<historical>' prior: 0!
 This module applies a strict limiting nonlinearity to the input signal, producing immediate clipping at a ±1.0. This generates strong odd and even harmonics and introduces audible harshness at high levels.
 It is best used for aggressive distortion effects, peak limiting, or to create characterful saturation in synths or drums.!
-
-!Rectifier commentStamp: '<historical>' prior: 0!
-A rectifier applies half- or full-wave rectification to the signal, removing or inverting its negative portion.
-This destroys waveform symmetry and introduces strong even harmonics and DC components. Rectification is not a saturation process but a nonlinear waveshaping operation often used for timbral transformation or subharmonic-like effects.!
 
 !SoftClipper commentStamp: '<historical>' prior: 0!
 This module provides a soft-clipping stage using a smooth nonlinearity (softclip, Pade approxiimation of tanh). When bias is zero it is symmetric and introduces only odd harmonics. When bias is not zero it becomes asymmetric and introduces a mix of even and odd harmonics. Bias can be adjusted to shape the harmonic content and can optionally scale with drive for subtle dynamic behavior.
@@ -1787,9 +1759,8 @@ This module provides a soft-clipping stage using a smooth nonlinearity (softclip
 It is ideal for adding musical warmth, thickness, or subtle tonal color to signals. Unlike tape saturation, it does not apply pre- or post-filtering, keeping its effect primarily in the nonlinearity.!
 
 !Wavefolder commentStamp: '<historical>' prior: 0!
-Basic wavefolder. Amplitude of input determines level of folding. Amplitudes of magnitude > 1.0 will start to fold.
-
-Based on code from DaisySP by Nick Donaldson.!
+Foldback distortion reflects the signal back when it exceeds 0 dB.
+Unlike clipping or saturation, the transfer function is non-monotonic, producing inharmonic and metallic spectra that increase in complexity with input level. Foldback is primarily a sound-design tool and can alias strongly at high levels; parallel mixing or filtering is usually required for controlled results.!
 
 !Korg35HPF commentStamp: 'len 2/Feb/2026 18:24:43' prior: 0!
 This is a virtual analog model of the Korg 35 high-pass 12 dB/oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.
@@ -5452,7 +5423,7 @@ panel
 		addKnob: (controls at: #postgain) label: 'Output';
 		addKnob: (controls at: #mix) label: 'Mix'! !
 
-!Waveshaper methodsFor: 'tools' stamp: 'len 13/Feb/2026 19:37:54'!
+!Waveshaper methodsFor: 'tools' stamp: 'len 14/Feb/2026 00:45:19'!
 patchable
 	| answer display inputPin |
 	answer := PatchableMorph new model: self.
@@ -5464,62 +5435,39 @@ patchable
 	answer flap addMorph: self panel.
 	inputPin := answer addAudioInput: #setInput:.
 	inputPin when: #level: send: #drawLevel: to: display.
-	answer addAudioOutput: #setOutput:.
-	^ answer! !
+	^ answer
+		addControlInput: #pregain;
+		addAudioOutput: #setOutput:;
+		yourself! !
 
-!DiodeClipper methodsFor: 'processing' stamp: 'len 13/Feb/2026 19:00:21'!
+!DiodeClipper methodsFor: 'processing' stamp: 'len 14/Feb/2026 00:28:33'!
 apply: x
 	| δ |
-	(δ := x abs - 0.8 "clip at 0.8") > 0.0 ifFalse: [^ x].
-	^ (δ / (4.0 * δ + 1.0) + 0.8 "clip at 0.8") * x sign! !
-
-!Foldback methodsFor: 'processing' stamp: 'len 13/Feb/2026 19:08:18'!
-apply: x
-	| y d |
-	(y := x abs) <= 1.0 ifTrue: [^ x].
-	y := y - 1.0.
-	d := 4.0.
-	y := y - (d * (y / d) floor).
-	y > 2.0 ifTrue: [y := d - y].
-	y := y - 1.0.
-	^​ y! !
+	(δ := x abs - 0.8 "threshold at 0.8") > 0.0 ifFalse: [^ x].
+	^ (δ / (4.0 * δ + 1.0) + 0.8 "threshold at 0.8") * x sign! !
 
 !HardClipper methodsFor: 'processing' stamp: 'len 13/Feb/2026 19:00:21'!
 apply: x
 	^​ x < -1.0 ifTrue: [-1.0] ifFalse: [x > 1.0 ifTrue: [1.0] ifFalse: [x]]! !
 
-!Rectifier methodsFor: 'accessing' stamp: 'len 9/Feb/2026 00:23:05'!
-mode
-	^ mode! !
-
-!Rectifier methodsFor: 'accessing' stamp: 'len 9/Feb/2026 00:23:10'!
-mode: aSymbol
-	mode := aSymbol.
-	self changed! !
-
-!Rectifier methodsFor: 'initialization' stamp: 'len 9/Feb/2026 00:17:30'!
-initialize
-	super initialize.
-	mode := #full "full, half, soft"! !
-
-!Rectifier methodsFor: 'controlling' stamp: 'len 13/Feb/2026 20:01:29'!
-update
-	super update.
-	dc := 0.0 "should we?"! !
-
-!Rectifier methodsFor: 'processing' stamp: 'len 13/Feb/2026 19:02:26'!
-apply: x
-	^ mode == #half ifTrue: [x max: 0.0] ifFalse: [mode == #full ifTrue: [x abs] ifFalse: [(x*x + 1e-4) sqrt]]! !
-
 !SoftClipper methodsFor: 'processing' stamp: 'len 13/Feb/2026 19:00:21'!
 apply: x
 	^ x softclip! !
 
-!Wavefolder methodsFor: 'processing' stamp: 'len 13/Feb/2026 19:06:03'!
+!Wavefolder methodsFor: 'processing' stamp: 'len 14/Feb/2026 02:54:24'!
 apply: x
 	| f |
 	f := ((x + 1.0) * 0.5) floor.
-	^ f odd ifTrue: [(f * 2) - x] ifFalse: [x - (f * 2)]! !
+	^ f odd ifTrue: [(f * 2) - x] ifFalse: [x - (f * 2)]
+
+"alternative
+apply: x
+	| y |
+	(y := x abs - 1.0) <= 0.0 ifTrue: [^ x].
+	y := y - (4.0 * (y / 4.0) floor).
+	y abs > 2.0 ifTrue: [y := 4.0 - y].
+	y := 1.0 - y.
+	^ x sign * y"! !
 
 !Korg35HPF methodsFor: 'controlling' stamp: 'len 16/Oct/2025 18:46:00'!
 reset

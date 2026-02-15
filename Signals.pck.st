@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 14 February 2026 at 2:55:51 am'!
+'From Cuis7.7 [latest update: #7797] on 15 February 2026 at 9:48:41 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 462!
+!provides: 'Signals' 1 463!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -297,6 +297,26 @@ TunedGenerator subclass: #Supersaw
 Supersaw class
 	instanceVariableNames: ''!
 
+!classDefinition: #TonewheelOrgan category: #'Signals-Oscillators'!
+TunedGenerator subclass: #TonewheelOrgan
+	instanceVariableNames: 'phases frequencies amplitudes click random released'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Oscillators'!
+!classDefinition: 'TonewheelOrgan class' category: #'Signals-Oscillators'!
+TonewheelOrgan class
+	instanceVariableNames: ''!
+
+!classDefinition: #TransistorOrgan category: #'Signals-Oscillators'!
+TunedGenerator subclass: #TransistorOrgan
+	instanceVariableNames: 'phases frequencies amplitudes released filter'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Oscillators'!
+!classDefinition: 'TransistorOrgan class' category: #'Signals-Oscillators'!
+TransistorOrgan class
+	instanceVariableNames: ''!
+
 !classDefinition: #VOSIM category: #'Signals-Oscillators'!
 TunedGenerator subclass: #VOSIM
 	instanceVariableNames: 'carrierPhase formant1Phase formant2Phase carrierFrequency formant1Frequency formant2Frequency carrierShape'
@@ -309,7 +329,7 @@ VOSIM class
 
 !classDefinition: #Multisample category: #'Signals-Samples'!
 TunedGenerator subclass: #Multisample
-	instanceVariableNames: 'keymap velocity sample'
+	instanceVariableNames: 'keymap velocity sample label'
 	classVariableNames: 'Library'
 	poolDictionaries: ''
 	category: 'Signals-Samples'!
@@ -1519,7 +1539,7 @@ Upsampler2x class
 
 !classDefinition: #WAVFileReader category: #'Signals-Support'!
 Object subclass: #WAVFileReader
-	instanceVariableNames: 'stream channels bitsPerSample samplingRate leftSamples rightSamples'
+	instanceVariableNames: 'stream channels bitsPerSample sampleRate leftSamples rightSamples'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Support'!
@@ -1657,11 +1677,17 @@ Emulation of the Roland JP-8000 and JP-8080 supersaw oscillator based on Adam Sz
 
 [1] Szabo, Adam; "How to Emulate the Super Saw"; Skolan för datavetenskap och kommunikation, Kungliga Tekniska högskolan, 2010.!
 
+!TonewheelOrgan commentStamp: '<historical>' prior: 0!
+This is a monophonic simplified model of a Hammond organ.!
+
+!TransistorOrgan commentStamp: '<historical>' prior: 0!
+This is a monophonic simplified model of a transistor organ like a Vox Continental.!
+
 !VOSIM commentStamp: '<historical>' prior: 0!
 This is a VOSIM (VOcal SIMulation) oscillator based on the synthesis method developed by Kaegi and Tempelaars in the 1970s. The oscillator consists of two sine waves multiplied by and sync'ed to a carrier. Ported from plaits/dsp/oscillator/vosim_oscillator.h by Emilie Gillet.!
 
 !Multisample commentStamp: '<historical>' prior: 0!
-A multisample is the basis of a rompler (from "ROM" and "sampler"). It generates sounds from a set of recordings (samples) of an instrument for different keys and velocities. Given a MIDI key and velocity value, it chooses the sample closest to the desired key and velocity and repitches it by playing it faster or slower.
+A multisample is the basis of a rompler (from "ROM" and "sampler"). It generates sounds from a set of recordings of an instrument playing different notes at different velocities. Given a MIDI key and velocity value, it chooses the sample closest to the desired key and velocity and repitches it by playing it faster or slower.
 !
 
 !Sample commentStamp: '<historical>' prior: 0!
@@ -2736,11 +2762,11 @@ initializeControls
 	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01.
 	self addTimeControl: #decay min: 0.001 max: 2.0 value: 0.5! !
 
-!AD methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:45:01'!
+!AD methodsFor: 'processing' stamp: 'len 15/Feb/2026 00:08:04'!
 next
 	stage = #attack ifTrue:
 		["value := (1.0 - value) * factor + value." value := value + increment.
-		value >= 0.999 ifTrue: [stage := #decay. factor := 0.001 "-60 dB" raisedTo: 1.0 / decay].
+		value >= 0.999 ifTrue: [value := 1.0. stage := #decay. factor := 0.001 "-60 dB" raisedTo: 1.0 / decay].
 		^ value * velocity].
 	stage = #decay ifTrue:
 		[value := value * factor.
@@ -2782,11 +2808,11 @@ initializeControls
 	self addVolumeControl: #sustain value: 0.6.
 	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0! !
 
-!ADSR methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:46:07'!
+!ADSR methodsFor: 'processing' stamp: 'len 15/Feb/2026 00:07:49'!
 next
 	stage = #attack ifTrue:
 		["value := (1.0 - value) * factor + value." value := value + increment.
-		value >= 0.999 ifTrue: [stage := #decay. factor := 0.001 "-60 dB" raisedTo: 1.0 / decay].
+		value >= 0.999 ifTrue: [value := 1.0. stage := #decay. factor := 0.001 "-60 dB" raisedTo: 1.0 / decay].
 		^ value * velocity].
 	stage = #decay ifTrue:
 		[value := (value - sustain) * factor + sustain.
@@ -3324,10 +3350,10 @@ initialize
 	level := levelLeft := levelRight := 0.5.
 	meterLeftValue := meterRightValue := 0.0! !
 
-!AudioOut methodsFor: 'initialization' stamp: 'len 21/Jan/2026 15:56:17'!
+!AudioOut methodsFor: 'initialization' stamp: 'len 14/Feb/2026 23:51:25'!
 initializeControls
 	super initializeControls.
-	self addVolumeControl: #level value: 0.5.
+	self addVolumeControl: #level min: 0.001 "-60 dB" max: 4.0 value: 0.5.
 	(self addControl: #pan min: -1.0 max: 1.0 value: 0.0) printer: [:x| x abs < 0.01 ifTrue: ['Center'] ifFalse: [(x abs * 100.0) rounded printString, '% ', (x < 0.0 ifTrue: ['L'] ifFalse: ['R'])]]! !
 
 !AudioOut methodsFor: 'mixing' stamp: 'len 24/Jan/2026 22:11:37'!
@@ -3957,20 +3983,20 @@ initialize
 	self loadMW1Wavetables.
 	self loadPPGWavetables! !
 
-!Wavetable class methodsFor: 'class initialization' stamp: 'len 3/Jan/2026 03:05:31'!
+!Wavetable class methodsFor: 'class initialization' stamp: 'len 15/Feb/2026 15:39:53'!
 loadMW1Wavetables
-	Banks at: #MW1 put: (('/Users/len/Cuis/samples/mw1_wavetables' asDirectoryEntry files asSortedCollection: [:a :b| a name <= b name]) asArray collect: [:each|
+	Banks at: #MW1 put: (((Sample samplesDirectory / 'mw1_wavetables') files asSortedCollection: [:a :b| a name <= b name]) asArray collect: [:each|
 		| label allTables table |
 		label := (each name findTokens: '-.') second.
 		allTables := (WAVFileReader new readFromFileEntry: each) leftSamples.
 		table := (1 to: allTables size / 128) collect: [:i| allTables copyFrom: i-1*128+1 to: i*128].
 		{table. label}])! !
 
-!Wavetable class methodsFor: 'class initialization' stamp: 'len 3/Oct/2025 15:57:00'!
+!Wavetable class methodsFor: 'class initialization' stamp: 'len 15/Feb/2026 15:40:48'!
 loadPPGWavetables
 	| bytes |
 	"32 wavetables, with 64 waves each, and 256 signed bytes per wave:"
-	bytes := '/Users/len/Cuis/samples/ppg.bin' asFileEntry binaryContents.
+	bytes := (Sample samplesDirectory // 'ppg.bin') binaryContents.
 	Banks at: #PPG put: ((0 to: 31) collect: [:i|
 		| table |
 		table := Float32Array new: 256 * 64.
@@ -4134,6 +4160,168 @@ initialize
 			+ 0.6717417634) * x
 			+ 0.0030115596]! !
 
+!TonewheelOrgan methodsFor: 'controlling' stamp: 'len 14/Feb/2026 16:22:06'!
+gateOff
+	released := true! !
+
+!TonewheelOrgan methodsFor: 'controlling' stamp: 'len 14/Feb/2026 16:21:58'!
+gateOn
+	click := self get: #click.
+	released := false! !
+
+!TonewheelOrgan methodsFor: 'controlling' stamp: 'len 14/Feb/2026 16:03:45'!
+reset
+	super reset.
+	phases atAllPut: 0.0! !
+
+!TonewheelOrgan methodsFor: 'controlling' stamp: 'len 14/Feb/2026 22:28:00'!
+update
+	| f0 |
+	super update.
+	f0 := ((self get: #tune) + note) semitonesToHertz.
+	#(0.5 1.5 1.0 2.0 3.0 4.0 5.0 6.0 8.0) withIndexDo: [:each :i| frequencies at: i put: (self foldback: f0 * each) / self class sampleRate].
+	#('16''' '5¹/₃''' '8''' '4''' '2²/₃''' '2''' '1³/₅''' '1¹/₃''' '1''') withIndexDo: [:each :i| amplitudes at: i put: (self get: each)]! !
+
+!TonewheelOrgan methodsFor: 'initialization' stamp: 'len 14/Feb/2026 16:27:26'!
+initialize
+	super initialize.
+	phases := Float32Array new: 9.
+	frequencies := Float32Array new: 9.
+	amplitudes := Float32Array new: 9.
+	released := true.
+	random := Random new! !
+
+!TonewheelOrgan methodsFor: 'initialization' stamp: 'len 14/Feb/2026 23:49:46'!
+initializeControls
+	super initializeControls.
+	self addVolumeControl: #'16''' value: 0.001.
+	self addVolumeControl: #'5¹/₃''' value: 0.001.
+	self addVolumeControl: #'8''' value: 0.001.
+	self addVolumeControl: #'4''' value: 0.001.
+	self addVolumeControl: #'2²/₃''' value: 0.001.
+	self addVolumeControl: #'2''' value: 0.001.
+	self addVolumeControl: #'1³/₅''' value: 0.001.
+	self addVolumeControl: #'1¹/₃''' value: 0.001.
+	self addVolumeControl: #'1''' value: 0.001.
+	self addVolumeControl: #click min: 0.001 max: 1.0 value: 0.6! !
+
+!TonewheelOrgan methodsFor: 'processing' stamp: 'len 14/Feb/2026 16:06:17'!
+next
+	| answer |
+	answer := self peek.
+	phases += frequencies.
+	1 to: 9 do: [:i| | t | (t := phases at: i) >= 1.0 ifTrue: [phases at: i put: t - t truncated]].
+	^ answer! !
+
+!TonewheelOrgan methodsFor: 'processing' stamp: 'len 14/Feb/2026 19:12:04'!
+peek
+	| answer |
+	released ifTrue: [^ 0.0].
+	answer := 0.0.
+	1 to: 9 do: [:i| answer := ((phases at: i) * Float twoPi) sin * (amplitudes at: i) + answer].
+	click > 0.01 ifTrue: [answer := (random next * 2.0 - 1.0) * click + answer. click := click * 0.8]. 
+	^ answer! !
+
+!TonewheelOrgan methodsFor: 'tools' stamp: 'len 14/Feb/2026 22:30:45'!
+patchable
+	| answer drawbars |
+	answer := PatchableMorph new model: self.
+	drawbars := ControlPanel new.
+	#('16''' '5¹/₃''' '8''' '4''' '2²/₃''' '2''' '1³/₅''' '1¹/₃''' '1''') do: [:each| drawbars addVerticalSlider: (controls at: each) label: each asPlainString].
+	answer body
+		addMorph: drawbars;
+		addMorph: self panel.
+	answer
+		addControlInput: #tune label: 'Pitch';
+		addAudioOutput: #setOutput:.
+	^ answer! !
+
+!TonewheelOrgan methodsFor: 'private' stamp: 'len 14/Feb/2026 16:31:33'!
+foldback: aFrequency
+	"If a frequency is below 32 Hz or above 6 kHz, map it the closest pitch class within range."
+	| answer |
+	answer := aFrequency.
+	[answer > 6000.0] whileTrue: [answer := answer * 0.5].
+	[answer < 32.0] whileTrue: [answer := answer * 2.0].
+	^ answer! !
+
+!TransistorOrgan methodsFor: 'controlling' stamp: 'len 14/Feb/2026 17:01:20'!
+gateOff
+	released := true! !
+
+!TransistorOrgan methodsFor: 'controlling' stamp: 'len 14/Feb/2026 17:16:19'!
+gateOn
+	released := false! !
+
+!TransistorOrgan methodsFor: 'controlling' stamp: 'len 14/Feb/2026 17:15:36'!
+reset
+	super reset.
+	phases atAllPut: 0.0.
+	filter reset! !
+
+!TransistorOrgan methodsFor: 'controlling' stamp: 'len 14/Feb/2026 22:32:43'!
+update
+	| f0 r4 |
+	super update.
+	f0 := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
+	#(0.5 1.0 2.0 3.0 4.0 5.0 8.0) withIndexDo: [:each :i| frequencies at: i put: f0 * each].
+	r4 := self get: #'IV'. "maps to 2²/₃' , 2', 1³/₅' and 1'"
+	amplitudes
+		at: 1 put: (self get: #'16''');
+		at: 2 put: (self get: #'8''');
+		at: 3 put: (self get: #'4''');
+		at: 4 put: r4;
+		at: 5 put: r4;
+		at: 6 put: r4;
+		at: 7 put: r4! !
+
+!TransistorOrgan methodsFor: 'initialization' stamp: 'len 14/Feb/2026 17:44:42'!
+initialize
+	super initialize.
+	phases := Float32Array new: 7.
+	frequencies := Float32Array new: 7.
+	amplitudes := Float32Array new: 7.
+	released := true.
+	filter := OnePole new pole: 6000.0 / self class sampleRate "6 kHz"! !
+
+!TransistorOrgan methodsFor: 'initialization' stamp: 'len 14/Feb/2026 23:50:05'!
+initializeControls
+	super initializeControls.
+	self addVolumeControl: #'16''' value: 0.001.
+	self addVolumeControl: #'8''' value: 0.001.
+	self addVolumeControl: #'4''' value: 0.001.
+	self addVolumeControl: #'IV' value: 0.001! !
+
+!TransistorOrgan methodsFor: 'processing' stamp: 'len 14/Feb/2026 17:15:23'!
+next
+	| answer |
+	answer := filter value: self peek.
+	phases += frequencies.
+	1 to: 5 do: [:i| | t | (t := phases at: i) >= 1.0 ifTrue: [phases at: i put: t - t truncated]].
+	^ answer! !
+
+!TransistorOrgan methodsFor: 'processing' stamp: 'len 14/Feb/2026 17:16:09'!
+peek
+	| answer |
+	released ifTrue: [^ 0.0].
+	answer := 0.0.
+	1 to: 5 do: [:i| answer := ((phases at: i) pulse: (frequencies at: i) width: 0.35) * (amplitudes at: i) + answer].
+	^ answer! !
+
+!TransistorOrgan methodsFor: 'tools' stamp: 'len 14/Feb/2026 22:32:00'!
+patchable
+	| answer drawbars |
+	answer := PatchableMorph new model: self.
+	drawbars := ControlPanel new.
+	#('16''' '8''' '4''' 'IV') do: [:each| drawbars addVerticalSlider: (controls at: each) label: each asPlainString].
+	answer body
+		addMorph: drawbars;
+		addMorph: self panel.
+	answer
+		addControlInput: #tune label: 'Pitch';
+		addAudioOutput: #setOutput:.
+	^ answer! !
+
 !VOSIM methodsFor: 'controlling' stamp: 'len 2/Jan/2026 01:10:32'!
 update
 	| f1 f2 vowelIndex |
@@ -4195,88 +4383,150 @@ panel
 		addKnob: (controls at: #shape) label: 'Shape';
 		addKnob: (controls at: #vowel) label: 'Vowel'! !
 
+!Multisample methodsFor: 'accessing' stamp: 'len 15/Feb/2026 20:26:14'!
+label
+	^ label! !
+
+!Multisample methodsFor: 'accessing' stamp: 'len 15/Feb/2026 20:26:08'!
+label: aString
+	label := aString! !
+
 !Multisample methodsFor: 'controlling' stamp: 'len 21/Jan/2026 04:38:16'!
 gateOff
 	sample ifNotNil: [sample gateOff]! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 21/Jan/2026 04:37:45'!
+!Multisample methodsFor: 'controlling' stamp: 'len 15/Feb/2026 20:51:24'!
 gateOn
-	| samplesByVelocity |
-	samplesByVelocity := keymap at: note.
-	sample := (samplesByVelocity at: ((velocity * (samplesByVelocity size - 1)) truncated + 1 min: samplesByVelocity size)) copy reset.
-	sample gateOn! !
+	self reset! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 30/Nov/2025 02:15:00'!
+!Multisample methodsFor: 'controlling' stamp: 'len 15/Feb/2026 20:41:02'!
 reset
-	sample ifNotNil: [sample reset]! !
+	sample := nil! !
 
 !Multisample methodsFor: 'controlling' stamp: 'len 2/Dec/2025 14:33:00'!
 setVelocity: aNumber
 	velocity := aNumber! !
 
-!Multisample methodsFor: 'copying' stamp: 'len 19/Jan/2026 19:51:44'!
+!Multisample methodsFor: 'controlling' stamp: 'len 15/Feb/2026 21:45:34'!
+update
+	| frequency key closestKey speedFactor samplesByVelocity |
+	super update.
+	sample ifNotNil: [^ self].
+	frequency := ((self get: #tune) + note) semitonesToHertz.
+	key := frequency hertzToSemitones.
+	closestKey := keymap keys detectMin: [:x| (x - key) abs].
+	speedFactor := key semitonesToHertz / closestKey semitonesToHertz.
+	samplesByVelocity := keymap at: closestKey.
+	sample := (samplesByVelocity at: ((velocity * (samplesByVelocity size - 1)) truncated + 1 min: samplesByVelocity size)) copy.
+	sample baseRate: sample baseRate * speedFactor.
+	sample reset.
+	sample update! !
+
+!Multisample methodsFor: 'copying' stamp: 'len 15/Feb/2026 21:02:02'!
 copy
-	^ super copy keymap: keymap! !
+	^ super copy keymap: keymap; label: label! !
 
 !Multisample methodsFor: 'initialization' stamp: 'len 15/Jan/2026 19:14:25'!
 initialize
 	super initialize.
 	velocity := 0.5! !
 
-!Multisample methodsFor: 'initialization' stamp: 'len 20/Nov/2025 16:39:00'!
-keymap: anArray
-	keymap := anArray! !
+!Multisample methodsFor: 'initialization' stamp: 'len 15/Feb/2026 20:24:57'!
+keymap: aDictionary
+	keymap := aDictionary! !
 
-!Multisample methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:11:36'!
+!Multisample methodsFor: 'processing' stamp: 'len 15/Feb/2026 21:33:14'!
 read: aBuffer
-	sample ifNil: [^ aBuffer *= 0.0].
+	sample ifNil: [^ aBuffer atAllPut: 0.0].
 	sample read: aBuffer.
-	aBuffer *= velocity! !
+	aBuffer *= velocity "sqrt"! !
 
-!Multisample methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:10:25'!
+!Multisample methodsFor: 'tools' stamp: 'len 15/Feb/2026 20:42:04'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
+	label ifNotNil: [answer setTitle: label].
 	answer body addMorph: self panel.
 	answer
 		addControlInput: #tune label: 'Pitch';
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!Multisample class methodsFor: 'as yet unclassified' stamp: 'len 3/Dec/2025 02:12:00'!
+!Multisample class methodsFor: 'library' stamp: 'len 3/Dec/2025 02:12:00'!
 library
 	^ Library! !
 
-!Multisample class methodsFor: 'as yet unclassified' stamp: 'len 3/Dec/2025 02:07:00'!
-loadLibrary
-	"
-	MultiSample loadLibrary
-	"
-	
-	Library := Dictionary new.
-	Library at: 'Rhodes' put: self loadRhodes! !
+!Multisample class methodsFor: 'library' stamp: 'len 15/Feb/2026 21:03:13'!
+loadBookerT
+	| keymap |
+	keymap := Dictionary new.
+	#('B' 'F') with: #(59 65) do: [:noteName :centerKey|
+		1 to: 7 do: [:octave|
+			| filename reader bufferSlow bufferFast midiKey |
+			"slow:"
+			filename := 'BookerT (slow) - booker_slow_', noteName, octave printString.
+			reader := WAVFileReader new readFromFileEntry: Sample samplesDirectory / 'BookerT' // (filename, 'L.wav').
+			bufferSlow := reader leftSamples.
+			reader := WAVFileReader new readFromFileEntry: Sample samplesDirectory / 'BookerT' // (filename, 'R.wav').
+			bufferSlow += reader leftSamples.
+			midiKey := (octave - 4) * 12 + centerKey.
+			"fast:"
+			filename := 'BookerT (fast) - booker_fast_', noteName, octave printString.
+			reader := WAVFileReader new readFromFileEntry: Sample samplesDirectory / 'BookerT' // (filename, 'L.wav').
+			bufferFast := reader leftSamples.
+			reader := WAVFileReader new readFromFileEntry: Sample samplesDirectory / 'BookerT' // (filename, 'R.wav').
+			bufferFast += reader leftSamples.
+			midiKey := (octave - 4) * 12 + centerKey.
+			keymap at: midiKey put:
+				{Sample buffer: bufferSlow sampleRate: 44100.0.
+				Sample buffer: bufferFast sampleRate: 44100.0}]].
+	^ self new label: 'BookerT'; keymap: keymap! !
 
-!Multisample class methodsFor: 'as yet unclassified' stamp: 'len 3/Dec/2025 00:09:00'!
-loadRhodes
+!Multisample class methodsFor: 'library' stamp: 'len 15/Feb/2026 21:05:44'!
+loadJRhodes
 	| samples keymap |
 	samples := Dictionary new.
-	'/Users/len/Cuis/samples/jrhodes3' asDirectoryEntry files do: [:each|
-		| tokens sampledSound midiKey velocityLayer buffer |
+	(Sample samplesDirectory / 'jrhodes3') files do: [:each|
+		| reader tokens midiKey velocityLayer buffer |
 		tokens := each name findTokens: '_'.
 		midiKey := tokens first asNumber.
 		velocityLayer := tokens second asNumber.
-		sampledSound := each wavContents.
-		buffer := Float32Array new: sampledSound samples size.
-		1 to: buffer size do: [:i| buffer at: i put: (sampledSound samples at: i) / 32767.0].
-		(samples at: midiKey ifAbsentPut: [Dictionary new]) at: velocityLayer put: (Sample buffer: buffer)].
-	samples := samples collect: [:each| each associations sorted reversed collect: #value].
-	keymap := ((0 to: 127) collect: [:k|
-		| closestKey speedFactor closestSamples |
-		closestKey := samples keys detectMin: [:x| (x - k) abs].
-		speedFactor := k semitonesToHertz / closestKey semitonesToHertz.
-		closestSamples := samples at: closestKey.
-		closestSamples collect: [:each| each copy speed: each speed * speedFactor]]).
-	^ self new keymap: keymap! !
+		reader := WAVFileReader new readFromFileEntry: each.
+		"If stereo, sum channels:"
+		buffer := reader channels = 2 ifTrue: [reader leftSamples + reader rightSamples] ifFalse: [reader leftSamples].
+		"Remove DC offset:"
+		buffer -= (buffer sum / buffer size).
+		(samples at: midiKey ifAbsentPut: [Dictionary new]) at: velocityLayer put: (Sample buffer: buffer sampleRate: reader sampleRate)].
+	keymap := samples collect: [:each| each associations sorted reversed collect: #value].
+	^ self new label: 'J-Rhodes'; keymap: keymap! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 15/Feb/2026 20:19:11'!
+loadLibrary
+	"
+	Multisample loadLibrary
+	"
+	
+	Library := Dictionary new.
+	Library
+		at: 'J-Rhodes' put: self loadJRhodes;
+		at: 'BookerT' put: self loadBookerT;
+		at: 'Universe' put: self loadUniverse! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 15/Feb/2026 21:02:31'!
+loadUniverse
+	| keymap |
+	keymap := Dictionary new.
+	#('C' 'F#') with: #(60 66) do: [:noteName :centerKey|
+		#(3 4 5 6) do: [:octave|
+			| filename reader buffer midiKey |
+			filename := 'Universe - Choir Aahs ', noteName, octave printString.
+			reader := WAVFileReader new readFromFileEntry: Sample samplesDirectory / 'Universe' // (filename, 'L.wav').
+			buffer := reader leftSamples.
+			reader := WAVFileReader new readFromFileEntry: Sample samplesDirectory / 'Universe' // (filename, 'R.wav').
+			buffer += reader leftSamples.
+			midiKey := (octave - 4) * 12 + centerKey.
+			keymap at: midiKey put: {Sample buffer: buffer sampleRate: 44100.0}]].
+	^ self new label: 'Universe'; keymap: keymap! !
 
 !Sample methodsFor: 'accessing' stamp: 'len 2/Jan/2026 14:42:45'!
 baseRate
@@ -4505,18 +4755,22 @@ library
 load: fileName label: aString
 	^ (Library at: aString put: (self fromFileNamed: fileName)) label: aString! !
 
-!Sample class methodsFor: 'library' stamp: 'len 13/Feb/2026 00:23:01'!
+!Sample class methodsFor: 'library' stamp: 'len 15/Feb/2026 15:29:21'!
 loadLibrary
 	"
 	Sample loadLibrary
 	"
 	
 	Library := OrderedDictionary new.
-	self load: '/Users/len/Cuis/samples/breaks152/000_AMEN.WAV' label: 'Amen 152 BPM'.
-	(self load: '/Users/len/Cuis/samples/pads/pad2.wav' label: 'Pad 2') trimSilence.
-	(self load: '/Users/len/Cuis/samples/pads/pad3.wav' label: 'Pad 3') trimSilence.
-	(self load: '/Users/len/Cuis/samples/pads/pad4.wav' label: 'Pad 4') trimSilence.
-	(self load: '/Users/len/Cuis/samples/pads/pad5.wav' label: 'Pad 5') trimSilence! !
+	self load: self samplesDirectory / 'breaks152' // '000_AMEN.WAV' label: 'Amen 152 BPM'.
+	(self load: self samplesDirectory / 'pads' // 'pad2.wav' label: 'Pad 2') trimSilence.
+	(self load: self samplesDirectory / 'pads' // 'pad3.wav' label: 'Pad 3') trimSilence.
+	(self load: self samplesDirectory / 'pads' // 'pad4.wav' label: 'Pad 4') trimSilence.
+	(self load: self samplesDirectory / 'pads' // 'pad5.wav' label: 'Pad 5') trimSilence.! !
+
+!Sample class methodsFor: 'library' stamp: 'len 15/Feb/2026 15:41:08'!
+samplesDirectory
+	^ self package packageDirectory / 'samples'! !
 
 !Sample class methodsFor: 'instance creation' stamp: 'len 2/Jan/2026 16:58:08'!
 buffer: aFloatArray
@@ -4747,10 +5001,10 @@ initialize
 	super initialize.
 	mode := #peak "peak / rms"! !
 
-!Compressor methodsFor: 'as yet unclassified' stamp: 'len 9/Feb/2026 14:26:30'!
+!Compressor methodsFor: 'as yet unclassified' stamp: 'len 14/Feb/2026 23:50:21'!
 initializeControls
 	super initializeControls.
-	self addVolumeControl: #threshold min: 0.001 "-60 dB" max: 1.0 value: 0.126.
+	self addVolumeControl: #threshold value: 0.126.
 	(self addLogControl: #ratio min: 1.0 max: 20.0 value: 4.0) printer: [:x| (x printStringFractionDigits: 1), ':1'].
 	self addTimeControl: #attack min: 0.0001 "0.1 ms" max: 0.1 "100 ms" value: 0.01 "10 ms".
 	self addTimeControl: #release min: 0.01 "10 ms" max: 1.5 "s" value: 0.1 "100 ms".
@@ -6103,11 +6357,13 @@ initializeControls
 	self addControl: #balance min: -1.0 max: 1.0 value: 0.0
 ! !
 
-!StereoMatrix methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:16:51'!
+!StereoMatrix methodsFor: 'processing' stamp: 'len 14/Feb/2026 19:47:38'!
 tick
 	| width balance |
-	(inputA isNil or: [inputB isNil]) ifTrue: [^ self].
-	(outputL isNil or: [outputR isNil]) ifTrue: [^ self].
+	(inputA isNil or: [inputB isNil]) ifTrue:
+		[outputL ifNotNil: [outputL atAllPut: 0.0].
+		outputR ifNotNil: [outputR atAllPut: 0.0].
+		^ self].
 	width := self get: #width.
 	balance := self get: #balance.
 	outputL replaceWith: inputA.
@@ -6806,6 +7062,10 @@ addKnob: aControl label: labelString
 !ControlPanel methodsFor: 'building' stamp: 'len 27/Jan/2026 14:58:36'!
 addVerticalSlider: aControl
 	self addMorph: (SliderControlMorph control: aControl)! !
+
+!ControlPanel methodsFor: 'building' stamp: 'len 14/Feb/2026 22:29:16'!
+addVerticalSlider: aControl label: aString
+	self addMorph: ((SliderControlMorph control: aControl) withLabel: aString)! !
 
 !ControlPanel methodsFor: 'drawing' stamp: 'len 25/Nov/2025 00:29:00'!
 drawOn: aCanvas
@@ -7594,15 +7854,14 @@ initialize
 	image fillColor: PatchMorph panelColor.
 ! !
 
-!SymmetricWaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 13/Feb/2026 19:34:06'!
+!SymmetricWaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 15/Feb/2026 15:23:14'!
 drawLevel: aNumber
 	| x0 δ |
 	x0 := image width * 0.5.
 	δ := aNumber * x0.
 	image fill: (x0 - δ @ 0 extent: δ * 2.0 @ image height) fillColor: (PatchMorph waveformColor alpha: aNumber).
-
 	image fill: (x0 + δ @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor.
-	image fill: (x0 - δ - 1 @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor! !
+	image fill: (x0 - δ @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor! !
 
 !SymmetricWaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 13/Feb/2026 19:32:19'!
 drawOn: aCanvas
@@ -8340,15 +8599,20 @@ update: anObject
 	valueX := controlX value.
 	valueY := controlY value! !
 
-!WaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 12/Feb/2026 22:48:01'!
+!WaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 15/Feb/2026 15:21:58'!
 drawLevel: aNumber
 	| x0 δ |
 	x0 := image width * (valueX + 1.0) / 2.0.
 	δ := aNumber * image width / 2.0.
 	image fill: (x0 - δ @ 0 extent: δ * 2.0 @ image height) fillColor: (PatchMorph waveformColor alpha: aNumber).
-
 	image fill: (x0 + δ @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor.
-	image fill: (x0 - δ - 1 @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor
+	image fill: (x0 - δ @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor
+
+"	h := image height / 2.0.
+	y := (1.0 - (self waveAt: x0 - δ / image width)) * h.
+	image fill: (x0 + δ @ (h - y) extent: 1 @ h) fillColor: PatchMorph waveformColor.
+	y := (1.0 - (self waveAt: x0 + δ / image width)) * h.
+	image fill: (x0 - δ @ h extent: 1 @ y) fillColor: PatchMorph waveformColor"
 
 "	| t x v h |
 	t := ((aNumber min: 1.0 max: -1.0) + 1.0) / 2.0.
@@ -8357,13 +8621,13 @@ drawLevel: aNumber
 	h := (v + 1.0) / 2.0 * image height.
 	image fill: (x @ (image height // 2) extent: 3 @ (image height // 2 - h)) fillColor: Color white "! !
 
-!WaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 12/Feb/2026 19:19:07'!
+!WaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 15/Feb/2026 15:15:34'!
 drawOn: aCanvas
 	| step stepX t x y h steps m |
 	aCanvas image: image at: 0 @ 0.
 	m := self morphWidth / 2.0.
 	x := valueX * m + m.
-	aCanvas strokeWidth: 1.0 color: Color lightGray dashedStrokeBits: 2r1110000000 do:
+	aCanvas strokeWidth: 1.0 color: Color white dashedStrokeBits: 2r1111000000 do:
 		[aCanvas moveTo: x @ 0; lineTo: x @ self morphHeight].
 	steps := 64.
 	step := 1.0 / (steps + 1).
@@ -8392,9 +8656,9 @@ initialize
 	image fillColor: PatchMorph panelColor.
 	controlY := Control min: 0.0 max: 0.0 value: 0.0! !
 
-!WaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 13/Feb/2026 19:21:29'!
+!WaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 15/Feb/2026 15:13:22'!
 step
-	image fill: image boundingBox rule: Form blend fillColor: (PatchMorph panelColor alpha: 0.3).
+	image fill: image boundingBox rule: Form blend fillColor: (PatchMorph panelColor alpha: 0.1).
 	self redrawNeeded! !
 
 !WaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 12/Feb/2026 19:24:07'!
@@ -12726,7 +12990,7 @@ readFromFileEntry: fileEntry
 readFromFileNamed: fileName
 	^ self readFromFileEntry: fileName asFileEntry! !
 
-!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 31/Dec/2025 14:40:44'!
+!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 15/Feb/2026 15:36:14'!
 readFromStream: fileStream
 	| header data type blockAlign |
 	stream := fileStream.
@@ -12739,7 +13003,7 @@ readFromStream: fileStream
 	channels := self next16BitWord.
 	(channels < 1 or: [channels > 2])
 		ifTrue: [^ self error: 'Unexpected number of wave channels'].
-	samplingRate := self next32BitWord.
+	sampleRate := self next32BitWord.
 	stream skip: 4. "skip average bytes per second"
 	blockAlign := self next16BitWord.
 	bitsPerSample := self next16BitWord.
@@ -12786,9 +13050,9 @@ readWaveChunk: chunkType
 rightSamples
 	^ rightSamples! !
 
-!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 2/Jan/2026 01:36:42'!
+!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 15/Feb/2026 15:36:14'!
 sampleRate
-	^ samplingRate! !
+	^ sampleRate! !
 
 !Patch methodsFor: 'accessing' stamp: 'len 28/Dec/2025 15:47:17'!
 label
@@ -12860,12 +13124,12 @@ noteOn: midiKey
 	noteReceivers do: [:each| each setNote: midiKey].
 	gateReceivers do: [:each| each gateOn]! !
 
-!Patch methodsFor: 'playing' stamp: 'len 6/Jan/2026 16:28:20'!
+!Patch methodsFor: 'playing' stamp: 'len 15/Feb/2026 20:34:37'!
 playTrigger
-	trigger note ifNotNil: [:note| note >= 0 ifTrue: [self noteOn: note] ifFalse: [self noteOff]].
 	trigger velocity ifNotNil: [:vel| self setVelocity: vel / 255.0].
 	trigger fx1 ifNotNil: [:fx| self handleFX: fx].
 	trigger fx2 ifNotNil: [:fx| self handleFX: fx].
+	trigger note ifNotNil: [:note| note >= 0 ifTrue: [self noteOn: note] ifFalse: [self noteOff]].
 	trigger := nil! !
 
 !Patch methodsFor: 'playing' stamp: 'len 22/Jan/2026 16:26:29'!
@@ -13352,17 +13616,13 @@ moveCursorLineUp: anInteger
 			ifFalse: [cursorLine := 1]].
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 7/Jan/2026 13:55:41'!
+!Tracker methodsFor: 'cursor' stamp: 'len 14/Feb/2026 19:59:57'!
 moveCursorPatchLeft
-	cursorPatch > 1 ifFalse: [^ self].
-	cursorPatch := cursorPatch - 1.
-	self triggerEvent: #patchesChanged! !
+	self setCursorPatch: cursorPatch - 1! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 7/Jan/2026 13:55:41'!
+!Tracker methodsFor: 'cursor' stamp: 'len 14/Feb/2026 20:00:02'!
 moveCursorPatchRight
-	cursorPatch < patches size ifFalse: [^ self].
-	cursorPatch := cursorPatch + 1.
-	self triggerEvent: #patchesChanged! !
+	self setCursorPatch: cursorPatch + 1! !
 
 !Tracker methodsFor: 'cursor' stamp: 'len 10/Jan/2026 22:28:13'!
 moveCursorPatternDown
@@ -13378,23 +13638,26 @@ moveCursorPatternUp
 	cursorLine := cursorLine min: self selectedPattern length.
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 1/Jan/2026 15:25:11'!
+!Tracker methodsFor: 'cursor' stamp: 'len 14/Feb/2026 19:54:17'!
 moveCursorTrackLeft
-	cursorTrack > 1 ifFalse: [^ self].
-	cursorTrack := cursorTrack - 1.
-	self triggerEvent: #cursorChanged! !
+	self setCursorTrack: cursorTrack - 1! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 1/Jan/2026 15:25:25'!
+!Tracker methodsFor: 'cursor' stamp: 'len 14/Feb/2026 19:54:07'!
 moveCursorTrackRight
-	cursorTrack < tracks size ifFalse: [^ self].
-	cursorTrack := cursorTrack + 1.
-	self triggerEvent: #cursorChanged! !
+	self setCursorTrack: cursorTrack + 1! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 21/Jan/2026 16:03:46'!
+!Tracker methodsFor: 'cursor' stamp: 'len 14/Feb/2026 19:59:33'!
+setCursorPatch: anInteger
+	((anInteger between: 1 and: patches size) and: [cursorPatch ~= anInteger]) ifFalse: [^ self].
+	cursorPatch := anInteger.
+	self triggerEvent: #patchesChanged! !
+
+!Tracker methodsFor: 'cursor' stamp: 'len 14/Feb/2026 19:57:32'!
 setCursorTrack: anInteger
 	((anInteger between: 1 and: tracks size) and: [cursorTrack ~= anInteger]) ifFalse: [^ self].
 	cursorTrack := anInteger.
-	self triggerEvent: #cursorChanged! !
+	self triggerEvent: #cursorChanged.
+	self selectedTrack patch ifNotNil: [:aPatch| self setCursorPatch: (patches indexOf: aPatch)]! !
 
 !Tracker methodsFor: 'initialization' stamp: 'len 10/Feb/2026 01:38:23'!
 initialize
@@ -13695,12 +13958,12 @@ deleteTrack
 	tracks size > 1 ifFalse: [^ self]. "don't delete last track"
 	self deleteTrack: cursorTrack! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 1/Jan/2026 16:49:41'!
+!Tracker methodsFor: 'tracks' stamp: 'len 14/Feb/2026 19:56:21'!
 deleteTrack: anInteger
 	tracks := (tracks copyFrom: 1 to: anInteger - 1), (tracks copyFrom: anInteger + 1 to: tracks size).
 	patterns do: [:each| each deleteTrack: anInteger].
 	masks := masks collect: [:each| (each copyFrom: 1 to: anInteger - 1), (each copyFrom: anInteger + 1 to: each size)].
-	cursorTrack := cursorTrack min: tracks size.
+	self setCursorTrack: (cursorTrack min: tracks size).
 	self triggerEvent: #tracksChanged! !
 
 !Tracker methodsFor: 'tracks' stamp: 'len 6/Feb/2026 15:49:39'!

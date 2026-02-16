@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 15 February 2026 at 9:48:41 pm'!
+'From Cuis7.7 [latest update: #7797] on 17 February 2026 at 1:28:13 am'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 463!
+!provides: 'Signals' 1 464!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1227,14 +1227,14 @@ BoxMorph subclass: #SequencerMorph
 SequencerMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #TransportBarMorph category: #'Signals-Morphic-Tracker'!
-BoxMorph subclass: #TransportBarMorph
+!classDefinition: #TrackerBarMorph category: #'Signals-Morphic-Tracker'!
+BoxMorph subclass: #TrackerBarMorph
 	instanceVariableNames: 'tracker font'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Tracker'!
-!classDefinition: 'TransportBarMorph class' category: #'Signals-Morphic-Tracker'!
-TransportBarMorph class
+!classDefinition: 'TrackerBarMorph class' category: #'Signals-Morphic-Tracker'!
+TrackerBarMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #OscilloscopeMorph category: #'Signals-Morphic-Widgets'!
@@ -1579,7 +1579,7 @@ Track class
 
 !classDefinition: #Tracker category: #'Signals-Tracker'!
 Object subclass: #Tracker
-	instanceVariableNames: 'tracks patches patterns masks label bpm lpb swing level cursorPattern cursorLine cursorTrack cursorPatch playheadPattern playheadLine followPlayhead anyTrackSoloed ticksToLine leftBuffer rightBuffer peakLeft peakRight'
+	instanceVariableNames: 'tracks patches patterns masks label bpm lpb swing level inputCenterKey cursorPattern cursorLine cursorTrack cursorPatch playheadPattern playheadLine followPlayhead anyTrackSoloed ticksToLine leftBuffer rightBuffer peakLeft peakRight'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Tracker'!
@@ -3983,20 +3983,20 @@ initialize
 	self loadMW1Wavetables.
 	self loadPPGWavetables! !
 
-!Wavetable class methodsFor: 'class initialization' stamp: 'len 15/Feb/2026 15:39:53'!
+!Wavetable class methodsFor: 'class initialization' stamp: 'len 17/Feb/2026 01:23:17'!
 loadMW1Wavetables
-	Banks at: #MW1 put: (((Sample samplesDirectory / 'mw1_wavetables') files asSortedCollection: [:a :b| a name <= b name]) asArray collect: [:each|
+	Banks at: #MW1 put: (((Sample samplesDirectory / 'wavetables' / 'mw1_wavetables') files asSortedCollection: [:a :b| a name <= b name]) asArray collect: [:each|
 		| label allTables table |
 		label := (each name findTokens: '-.') second.
 		allTables := (WAVFileReader new readFromFileEntry: each) leftSamples.
 		table := (1 to: allTables size / 128) collect: [:i| allTables copyFrom: i-1*128+1 to: i*128].
 		{table. label}])! !
 
-!Wavetable class methodsFor: 'class initialization' stamp: 'len 15/Feb/2026 15:40:48'!
+!Wavetable class methodsFor: 'class initialization' stamp: 'len 17/Feb/2026 01:23:27'!
 loadPPGWavetables
 	| bytes |
 	"32 wavetables, with 64 waves each, and 256 signed bytes per wave:"
-	bytes := (Sample samplesDirectory // 'ppg.bin') binaryContents.
+	bytes := (Sample samplesDirectory / 'wavetables' // 'ppg.bin') binaryContents.
 	Banks at: #PPG put: ((0 to: 31) collect: [:i|
 		| table |
 		table := Float32Array new: 256 * 64.
@@ -4435,11 +4435,28 @@ initialize
 keymap: aDictionary
 	keymap := aDictionary! !
 
-!Multisample methodsFor: 'processing' stamp: 'len 15/Feb/2026 21:33:14'!
+!Multisample methodsFor: 'processing' stamp: 'len 16/Feb/2026 18:23:25'!
 read: aBuffer
 	sample ifNil: [^ aBuffer atAllPut: 0.0].
-	sample read: aBuffer.
-	aBuffer *= velocity "sqrt"! !
+	sample read: aBuffer! !
+
+!Multisample methodsFor: 'serialization' stamp: 'len 16/Feb/2026 16:35:47'!
+asJsonWithBuffers: aList
+	| keymapJson |
+	keymapJson := Dictionary new.
+	keymap keysAndValuesDo: [:key :value| keymapJson at: key put: (value collect: [:each| each asJsonWithBuffers: aList])].
+	^ (super asJsonWithBuffers: aList)
+		at: #keymap put: keymapJson;
+		at: #label put: (label ifNil: ['']);
+		yourself! !
+
+!Multisample methodsFor: 'serialization' stamp: 'len 16/Feb/2026 16:37:40'!
+readFromJson: json buffers: aList
+	super readFromJson: json buffers: aList.
+	keymap := Dictionary new.
+	(json at: #keymap) keysAndValuesDo: [:key :value| keymap at: key put: (value collect: [:each| Sample new readFromJson: each buffers: aList])].
+	label := json at: #label.
+	label isEmpty ifTrue: [label := nil]! !
 
 !Multisample methodsFor: 'tools' stamp: 'len 15/Feb/2026 20:42:04'!
 patchable
@@ -4456,7 +4473,7 @@ patchable
 library
 	^ Library! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 15/Feb/2026 21:03:13'!
+!Multisample class methodsFor: 'library' stamp: 'len 16/Feb/2026 23:45:54'!
 loadBookerT
 	| keymap |
 	keymap := Dictionary new.
@@ -4465,28 +4482,60 @@ loadBookerT
 			| filename reader bufferSlow bufferFast midiKey |
 			"slow:"
 			filename := 'BookerT (slow) - booker_slow_', noteName, octave printString.
-			reader := WAVFileReader new readFromFileEntry: Sample samplesDirectory / 'BookerT' // (filename, 'L.wav').
+			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'BookerT' // (filename, 'L.wav').
 			bufferSlow := reader leftSamples.
-			reader := WAVFileReader new readFromFileEntry: Sample samplesDirectory / 'BookerT' // (filename, 'R.wav').
+			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'BookerT' // (filename, 'R.wav').
 			bufferSlow += reader leftSamples.
 			midiKey := (octave - 4) * 12 + centerKey.
 			"fast:"
 			filename := 'BookerT (fast) - booker_fast_', noteName, octave printString.
-			reader := WAVFileReader new readFromFileEntry: Sample samplesDirectory / 'BookerT' // (filename, 'L.wav').
+			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'BookerT' // (filename, 'L.wav').
 			bufferFast := reader leftSamples.
-			reader := WAVFileReader new readFromFileEntry: Sample samplesDirectory / 'BookerT' // (filename, 'R.wav').
+			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'BookerT' // (filename, 'R.wav').
 			bufferFast += reader leftSamples.
 			midiKey := (octave - 4) * 12 + centerKey.
 			keymap at: midiKey put:
-				{Sample buffer: bufferSlow sampleRate: 44100.0.
-				Sample buffer: bufferFast sampleRate: 44100.0}]].
+				{Sample buffer: bufferSlow sampleRate: reader sampleRate.
+				Sample buffer: bufferFast sampleRate: reader sampleRate}]].
 	^ self new label: 'BookerT'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 15/Feb/2026 21:05:44'!
+!Multisample class methodsFor: 'library' stamp: 'len 16/Feb/2026 23:46:03'!
+loadFarfisa
+	"Farfisa with full drawbars."
+	"TODO: loop points"
+	| keymap |
+	keymap := Dictionary new.
+	(self multisamplesDirectory / 'Farfisa Full') files do: [:each|
+		(each name endsWith: 'wav') ifTrue:
+			[| midiKey reader buffer |
+			midiKey := ((each name findTokens: '-') at: 3) asNumber.
+			reader := WAVFileReader new readFromFileEntry: each.
+			buffer := reader leftSamples + reader rightSamples.
+			keymap at: midiKey put: {Sample buffer: buffer sampleRate: reader sampleRate}]].
+	^ self new label: 'Farfisa Full'; keymap: keymap! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 00:07:42'!
+loadFlute
+	"Iowa Flute with vibrato."
+	| keymap loopEnds loopStarts |
+	keymap := Dictionary new.
+	loopStarts := #(34450 26762 44612 71936 46705 38999 39460 24578).
+	loopEnds := #(43574 46263 53413 79843 56135 48309 56490 44364).
+	#('C3' 'C4' 'C5' 'C6' 'E4' 'G3' 'G4' 'G5') withIndexDo: [:noteName :i|
+		| filename reader buffer |
+		filename := 'Flute - Flute_vib_loud_', noteName, '.wav'.
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'MCO' // filename.
+		buffer := reader leftSamples.
+		keymap at: noteName nameToSemitones put:
+			{(Sample buffer: buffer sampleRate: reader sampleRate)
+				loopStart: (loopStarts at: i) loopEnd: (loopEnds at: i)}].
+	^ self new label: 'Iowa Flute'; keymap: keymap! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 16/Feb/2026 23:46:15'!
 loadJRhodes
 	| samples keymap |
 	samples := Dictionary new.
-	(Sample samplesDirectory / 'jrhodes3') files do: [:each|
+	(self multisamplesDirectory / 'jrhodes3') files do: [:each|
 		| reader tokens midiKey velocityLayer buffer |
 		tokens := each name findTokens: '_'.
 		midiKey := tokens first asNumber.
@@ -4500,7 +4549,7 @@ loadJRhodes
 	keymap := samples collect: [:each| each associations sorted reversed collect: #value].
 	^ self new label: 'J-Rhodes'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 15/Feb/2026 20:19:11'!
+!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 00:08:11'!
 loadLibrary
 	"
 	Multisample loadLibrary
@@ -4510,23 +4559,83 @@ loadLibrary
 	Library
 		at: 'J-Rhodes' put: self loadJRhodes;
 		at: 'BookerT' put: self loadBookerT;
-		at: 'Universe' put: self loadUniverse! !
+		at: 'Sal House' put: self loadSalHouse;
+		at: 'Squire Bass' put: self loadSquireBass;
+		at: 'Vibraphone' put: self loadVibraphone;
+		at: 'Farfisa' put: self loadFarfisa;
+		at: 'Jazz Trumpet' put: self loadTrumpet;
+		at: 'Iowa Flute' put: self loadFlute! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 15/Feb/2026 21:02:31'!
-loadUniverse
+!Multisample class methodsFor: 'library' stamp: 'len 16/Feb/2026 23:46:30'!
+loadSalHouse
+	"Salamander Dance Piano."
+	| keymap loopEnds loopStarts |
+	keymap := Dictionary new.
+	loopStarts := #(107982 92482 89379 115826 101727 106100 68930).
+	loopEnds := #(150000 150000 130000 150000 140000 140000 100000).
+	#('F#2' 'A2' 'D#3' 'G#3' 'C4' 'E4' 'A4') withIndexDo: [:noteName :i|
+		| filename reader buffer |
+		filename := 'Sal House - Sal House ', noteName.
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Sal House' // (filename, 'L.wav').
+		buffer := reader leftSamples.
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Sal House' // (filename, 'R.wav').
+		buffer += reader leftSamples.
+		keymap at: noteName nameToSemitones put:
+			{(Sample buffer: buffer sampleRate: reader sampleRate)
+				loopStart: (loopStarts at: i) loopEnd: (loopEnds at: i)}].
+	^ self new label: 'Sal House'; keymap: keymap! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 16/Feb/2026 23:46:39'!
+loadSquireBass
+	"Fender Squire Bass."
+	| keymap loopEnds loopStarts |
+	keymap := Dictionary new.
+	loopStarts := #(79113 84099 84199 77199 78199 76199 76199 76199).
+	loopEnds := #(83410 88099 87805 80959 83589 81018 80709 80019).
+	#('e' 'a' 'd' 'e2' 'g' 'a2' 'd2' 'g2') withIndexDo: [:noteName :i|
+		| filename reader buffer |
+		filename := 'squirebass - ', noteName, '.wav'.
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Fender Squire Bass' // filename.
+		buffer := reader leftSamples.
+		keymap at: (#('E1' 'A1' 'D2' 'E2' 'G2' 'A2' 'D3' 'G3') at: i) nameToSemitones put:
+			{(Sample buffer: buffer sampleRate: reader sampleRate)
+				loopStart: (loopStarts at: i) loopEnd: (loopEnds at: i)}].
+	^ self new label: 'Squire Bass'; keymap: keymap! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 16/Feb/2026 23:58:12'!
+loadTrumpet
+	"Trumpet."
+	| keymap loopEnds loopStarts |
+	keymap := Dictionary new.
+	loopStarts := #(32756 34185 34354 30936 23450 26253 23301 35003 35161 28474 28531 15862).
+	loopEnds := #(42813 41059 41565 37152 29373 32307 29482 41563 41574 34864 34486 21850).
+	#('F#3' 'A3' 'C4' 'D#4' 'G4' 'A#4' 'C#5' 'D#5' 'G5' 'B5' 'C#6' 'E6') withIndexDo: [:noteName :i|
+		| filename reader buffer |
+		filename := 'Trumpet - Trumpet ', noteName, ':0.wav'.
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'MCO' // filename.
+		buffer := reader leftSamples.
+		keymap at: noteName nameToSemitones put:
+			{(Sample buffer: buffer sampleRate: reader sampleRate)
+				loopStart: (loopStarts at: i) loopEnd: (loopEnds at: i)}].
+	^ self new label: 'Jazz Trumpet'; keymap: keymap! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 16/Feb/2026 23:46:50'!
+loadVibraphone
 	| keymap |
 	keymap := Dictionary new.
-	#('C' 'F#') with: #(60 66) do: [:noteName :centerKey|
-		#(3 4 5 6) do: [:octave|
-			| filename reader buffer midiKey |
-			filename := 'Universe - Choir Aahs ', noteName, octave printString.
-			reader := WAVFileReader new readFromFileEntry: Sample samplesDirectory / 'Universe' // (filename, 'L.wav').
+	#(55 59 66 70 74 77 80 83 87) with: #(1 2 4 5 6 7 8 9 10) do: [:midiKey :i|
+		| filename reader buffer |
+		filename := 'Vibraphone - Vibraphone ', i printString.
+			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Vibraphone' // (filename, 'l.wav').
 			buffer := reader leftSamples.
-			reader := WAVFileReader new readFromFileEntry: Sample samplesDirectory / 'Universe' // (filename, 'R.wav').
+			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Vibraphone' // (filename, 'r.wav').
 			buffer += reader leftSamples.
-			midiKey := (octave - 4) * 12 + centerKey.
-			keymap at: midiKey put: {Sample buffer: buffer sampleRate: 44100.0}]].
-	^ self new label: 'Universe'; keymap: keymap! !
+			keymap at: midiKey put: {Sample buffer: buffer sampleRate: reader sampleRate}].
+	^ self new label: 'Vibraphone'; keymap: keymap! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 16/Feb/2026 23:45:19'!
+multisamplesDirectory
+	^ Sample samplesDirectory / 'multisamples'! !
 
 !Sample methodsFor: 'accessing' stamp: 'len 2/Jan/2026 14:42:45'!
 baseRate
@@ -4563,6 +4672,11 @@ loopLength
 !Sample methodsFor: 'accessing' stamp: 'len 8/Oct/2025 23:34:00'!
 loopLength: aNumber
 	loopLength := aNumber! !
+
+!Sample methodsFor: 'accessing' stamp: 'len 16/Feb/2026 20:21:13'!
+loopStart: anInteger loopEnd: anotherInteger.
+	loopEnd := anotherInteger.
+	loopLength := anotherInteger - anInteger + 1! !
 
 !Sample methodsFor: 'accessing' stamp: 'len 13/Oct/2025 16:25:00'!
 position
@@ -4683,13 +4797,13 @@ asJsonWithBuffers: aList
 		at: #label put: (label ifNil: ['']);
 		yourself! !
 
-!Sample methodsFor: 'serialization' stamp: 'len 13/Feb/2026 00:18:14'!
+!Sample methodsFor: 'serialization' stamp: 'len 16/Feb/2026 19:09:16'!
 readFromJson: json buffers: aList
 	super readFromJson: json buffers: aList.
 	self buffer: (aList at: (json at: #buffer)) baseRate: (json at: #baseRate).
 	loopLength := json at: #loopLength.
 	loopEnd := json at: #loopEnd.
-	label := json at: #label.
+	label := json at: #label ifAbsent: [''].
 	label isEmpty ifTrue: [label := nil]! !
 
 !Sample methodsFor: 'tools' stamp: 'len 22/Jan/2026 04:28:30'!
@@ -4755,14 +4869,14 @@ library
 load: fileName label: aString
 	^ (Library at: aString put: (self fromFileNamed: fileName)) label: aString! !
 
-!Sample class methodsFor: 'library' stamp: 'len 15/Feb/2026 15:29:21'!
+!Sample class methodsFor: 'library' stamp: 'len 17/Feb/2026 01:22:13'!
 loadLibrary
 	"
 	Sample loadLibrary
 	"
 	
 	Library := OrderedDictionary new.
-	self load: self samplesDirectory / 'breaks152' // '000_AMEN.WAV' label: 'Amen 152 BPM'.
+	self load: self samplesDirectory / 'breaks' / 'breaks152' // '000_AMEN.WAV' label: 'Amen 152 BPM'.
 	(self load: self samplesDirectory / 'pads' // 'pad2.wav' label: 'Pad 2') trimSilence.
 	(self load: self samplesDirectory / 'pads' // 'pad3.wav' label: 'Pad 3') trimSilence.
 	(self load: self samplesDirectory / 'pads' // 'pad4.wav' label: 'Pad 4') trimSilence.
@@ -7122,7 +7236,7 @@ toggleLowerPane
 	lowerPane visible: lowerPane visible not.
 	patchEditor layoutSpec proportionalHeight: (lowerPane visible ifTrue: [0.38] ifFalse: [1.0])! !
 
-!TrackerWindow methodsFor: 'events' stamp: 'len 9/Feb/2026 20:41:58'!
+!TrackerWindow methodsFor: 'events' stamp: 'len 16/Feb/2026 21:23:38'!
 keyStroke: anEvent
 	anEvent isSpace ifTrue: [model togglePlay. ^ true].
 	anEvent commandAltKeyPressed ifTrue:
@@ -7130,17 +7244,19 @@ keyStroke: anEvent
 		anEvent keyCharacter = $b ifTrue: [anEvent wasHandled: true. ^ self setLPB].
 		anEvent keyCharacter = $o ifTrue: [anEvent wasHandled: true. ^ self openProject].
 		anEvent keyCharacter = $s ifTrue: [anEvent wasHandled: true. ^ self saveProject].
-		anEvent keyCharacter = $j ifTrue: [anEvent wasHandled: true. ^ self toggleLowerPane]].
+		anEvent keyCharacter = $j ifTrue: [anEvent wasHandled: true. ^ self toggleLowerPane].
+		anEvent keyCharacter = $] ifTrue: [anEvent wasHandled: true. ^ model inputOctaveUp].
+		anEvent keyCharacter = $[ ifTrue: [anEvent wasHandled: true. ^ model inputOctaveDown]].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 22/Jan/2026 17:40:42'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 16/Feb/2026 21:15:01'!
 buildMorphicWindow
 	| lowerLeftPane sequencerScroller patternEditorScroller bar |
 	patchEditor := PatchEditorMorph new setTracker: model.
 	meter := MultitrackMeterMorph new setTracker: model.
 	sequencer := SequencerMorph new setTracker: model.
 	patternEditor := PatternEditorMorph new setTracker: model.
-	bar := TransportBarMorph new setTracker: model.
+	bar := TrackerBarMorph new setTracker: model.
 	lowerPane := LinearLayoutMorph newRow.
 	lowerLeftPane := LinearLayoutMorph newColumn.
 	sequencerScroller := ScrollerMorph new vertical: true; scrollable: sequencer.
@@ -9269,8 +9385,9 @@ renamePatch
 	patch := tracker selectedPatch ifNil: [^ self].
 	self request: 'Patch name' initialAnswer: patch label do: [:newName| patch label: newName. tracker triggerEvent: #patchesChanged]! !
 
-!PatchEditorMorph methodsFor: 'events' stamp: 'len 9/Feb/2026 19:00:17'!
+!PatchEditorMorph methodsFor: 'events' stamp: 'len 16/Feb/2026 21:29:12'!
 keyStroke: anEvent
+	| c i |
 	(anEvent rawMacOptionKeyPressed or: [anEvent controlKeyPressed]) ifTrue:
 		[anEvent isArrowLeft ifTrue:
 			[anEvent wasHandled: true.
@@ -9294,6 +9411,10 @@ keyStroke: anEvent
 		tracker selectedPatch ifNotNil: [:aPatch| aPatch track ifNotNil: [:aTrack|
 			anEvent commandAltKeyPressed ifTrue: [tracker toggleTrackSolo: (tracker tracks indexOf: aTrack)] ifFalse: [tracker toggleTrackMute: (tracker tracks indexOf: aTrack)]]].
 		^ self].
+	c := anEvent keyCharacter.
+	c = $a ifTrue: [anEvent wasHandled: true. tracker selectedPatch ifNotNil: [:aPatch| aPatch noteOff]. ^ self].
+	(i := 'zsxdcvgbhnjmq2w3er5t6y7ui9o0p' indexOf: c) > 0 ifTrue:
+		[anEvent wasHandled: true. tracker selectedPatch ifNotNil: [:aPatch| aPatch noteOn: i + tracker inputCenterKey - 1]. ^ self].
 	^ super keyStroke: anEvent! !
 
 !PatchEditorMorph methodsFor: 'initialization' stamp: 'len 7/Jan/2026 13:54:06'!
@@ -9472,7 +9593,7 @@ drawOn: aCanvas
 	self drawCursorOn: aCanvas.
 	self drawPatternOn: aCanvas! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 7/Feb/2026 19:19:00'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 16/Feb/2026 16:55:35'!
 drawPatternOn: aCanvas
 	| lineSpacing charWidth y unsetColor  noteColor velocityColor fxColor pattern endLine middle startLine darkColor lightColor xLeft xRight beatColor trackWidth |
 	pattern := tracker selectedPattern.
@@ -9507,14 +9628,16 @@ drawPatternOn: aCanvas
 		x := charWidth * 2.5.
 		pattern
 			line: i
-			notesDo: [:note :instrument :velocity|
+			notesDo: [:note|
 				note ifNil: [s := '···'. c := unsetColor] ifNotNil: [:v| s := self noteStringFrom: v. c := noteColor].
 				aCanvas drawString: s at: x @ y font: font color: c.
-				x := charWidth * 3.5 + x.
-				instrument ifNil: [s := '··'. c := unsetColor] ifNotNil: [:v| s := v printStringBase: 16 nDigits: 2. c := noteColor].
-				aCanvas drawString: s at: x @ y font: font color: c.
-				x := charWidth * 2.5 + x.
+				x := charWidth * 3.5 + x]
+			velocityDo: [:velocity|
 				velocity ifNil: [s := '··'. c := unsetColor] ifNotNil: [:v| s := v printStringBase: 16 nDigits: 2. c := velocityColor].
+				aCanvas drawString: s at: x @ y font: font color: c.
+				x := charWidth * 2.5 + x]
+			instrumentDo: [:instrument|
+				instrument ifNil: [s := '··'. c := unsetColor] ifNotNil: [:v| s := v printStringBase: 16 nDigits: 2. c := noteColor].
 				aCanvas drawString: s at: x @ y font: font color: c.
 				x := charWidth * 2.5 + x]
 			effectsDo: [:fx|
@@ -9559,12 +9682,14 @@ drawTracksOn: aCanvas
 tracksWidthInCharacters
 	^ 15! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 20/Jan/2026 16:32:26'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 16/Feb/2026 21:21:41'!
 handleCommandHotkey: anEvent
 	anEvent keyCharacter = $n ifTrue: [tracker insertPattern. ^ true].
 	anEvent keyCharacter = $N ifTrue: [tracker deletePattern. ^ true].
 	anEvent keyCharacter = $t ifTrue: [tracker addTrack. ^ true].
 	anEvent keyCharacter = $T ifTrue: [tracker deleteTrack. ^ true].
+	anEvent keyCharacter = $p ifTrue: [tracker incrementTrackPolyphony. ^ true].
+	anEvent keyCharacter = $P ifTrue: [tracker decrementTrackPolyphony. ^ true].
 	anEvent keyCharacter = $m ifTrue: [tracker toggleTrackMask. ^ true].
 	anEvent keyCharacter = $r ifTrue: [self renameTrack. ^ true].
 	anEvent keyCharacter = $l ifTrue: [self setPatternLength. ^ true].
@@ -9572,12 +9697,9 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
 	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
-	"Octave up/down:"
-	(anEvent keyCharacter = $] and: [centerKey < 108]) ifTrue: [centerKey := centerKey + 12. ^ true].
-	(anEvent keyCharacter = $[ and: [centerKey > 12]) ifTrue: [centerKey := centerKey - 12. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jan/2026 16:08:43'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 16/Feb/2026 21:26:57'!
 handleInputKey: anEvent
 	| c i |
 	anEvent isBackspace ifTrue:
@@ -9591,7 +9713,7 @@ handleInputKey: anEvent
 			tracker moveCursorLineDown: editStep.
 			^ true].
 		(i := 'zsxdcvgbhnjmq2w3er5t6y7ui9o0p' indexOf: c) > 0 ifTrue:
-			[tracker selectedTriggerAt: cursorPosition put: i + centerKey - 1.
+			[tracker selectedTriggerAt: cursorPosition put: i + tracker inputCenterKey - 1.
 			tracker moveCursorLineDown: editStep.
 			^ true].
 		tracker selectedTrigger ifNotNil: [:trigger|
@@ -9867,7 +9989,7 @@ update
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!TransportBarMorph methodsFor: 'drawing' stamp: 'len 10/Jan/2026 16:19:59'!
+!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 16/Feb/2026 21:27:49'!
 drawOn: aCanvas
 	| patchLabel color |
 	aCanvas fillRectangle: (0 @ 0 extent: extent) color: Color darkGray.
@@ -9876,20 +9998,21 @@ drawOn: aCanvas
 	aCanvas
 		drawString: (tracker isPlaying ifTrue: ['▶'] ifFalse: ['◼']) at: 4 @ 0 font: font color: color;
 		drawString: (tracker bpm printStringFractionDigits: 1), ' / ', tracker lpb printString at: 32 @ 2 font: font color: color;
-		drawString: '↧' at: 150 @ 3 font: font color: (tracker followPlayhead ifTrue: [color] ifFalse: [Color lightGray]).
+		drawString: '↧' at: 150 @ 3 font: font color: (tracker followPlayhead ifTrue: [color] ifFalse: [Color lightGray]);
+		drawString: tracker inputCenterKey semitonesToName at: 180 @ 3 font: font color: color.
 	patchLabel := (tracker cursorPatch printStringBase: 16 nDigits: 2), ': ', (tracker selectedPatch ifNil: ['EMPTY'] ifNotNil: [:aPatch| aPatch label]).
 	aCanvas drawString: patchLabel at: (extent x - 4 - (font widthOfString: patchLabel)) @ 2 font: font color: color! !
 
-!TransportBarMorph methodsFor: 'geometry' stamp: 'len 7/Jan/2026 14:33:18'!
+!TrackerBarMorph methodsFor: 'geometry' stamp: 'len 7/Jan/2026 14:33:18'!
 minimumExtent
 	^ 200 @ font lineSpacing! !
 
-!TransportBarMorph methodsFor: 'initialization' stamp: 'len 7/Jan/2026 16:03:45'!
+!TrackerBarMorph methodsFor: 'initialization' stamp: 'len 7/Jan/2026 16:03:45'!
 initialize
 	super initialize.
 	font := FontFamily defaultFamilyPointSize: 16! !
 
-!TransportBarMorph methodsFor: 'initialization' stamp: 'len 7/Jan/2026 16:06:18'!
+!TrackerBarMorph methodsFor: 'initialization' stamp: 'len 16/Feb/2026 21:25:50'!
 setTracker: aTracker
 	tracker := aTracker.
 	tracker
@@ -9897,7 +10020,8 @@ setTracker: aTracker
 		when: #bpmChanged send: #redrawNeeded to: self;
 		when: #lpbChanged send: #redrawNeeded to: self;
 		when: #followPlayheadChanged send: #redrawNeeded to: self;
-		when: #patchesChanged send: #redrawNeeded to: self! !
+		when: #patchesChanged send: #redrawNeeded to: self;
+		when: #inputCenterKeyChanged send: #redrawNeeded to: self! !
 
 !OscilloscopeMorph methodsFor: 'drawing' stamp: 'len 4/Dec/2025 16:18:53'!
 drawOn: aCanvas
@@ -13353,8 +13477,8 @@ swapTrack: anInteger with: anotherInteger
 	anInteger = anotherInteger ifTrue: [^ self].
 	blocks swap: anInteger with: anotherInteger! !
 
-!Pattern methodsFor: 'private' stamp: 'len 27/Dec/2025 01:56:45'!
-line: anInteger notesDo: notesBlock effectsDo: effectsBlock emptyTriggersDo: emptyBlock
+!Pattern methodsFor: 'private' stamp: 'len 16/Feb/2026 16:54:06'!
+line: anInteger notesDo: notesBlock velocityDo: velocityBlock instrumentDo: instrumentBlock effectsDo: effectsBlock emptyTriggersDo: emptyBlock
 	blocks do: [:each|
 		each
 			ifNil: [emptyBlock value]
@@ -13362,7 +13486,9 @@ line: anInteger notesDo: notesBlock effectsDo: effectsBlock emptyTriggersDo: emp
 				[(each at: anInteger)
 					ifNil: [emptyBlock value]
 					ifNotNil: [:trigger|
-						notesBlock value: trigger note value: trigger instrument value: trigger velocity.
+						notesBlock value: trigger note.
+						velocityBlock value: trigger velocity.
+						instrumentBlock value: trigger instrument.
 						effectsBlock value: trigger fx1; value: trigger fx2]]]! !
 
 !Pattern class methodsFor: 'instance creation' stamp: 'len 27/Dec/2025 06:03:15'!
@@ -13482,6 +13608,10 @@ bpm: anInteger
 followPlayhead
 	^ followPlayhead! !
 
+!Tracker methodsFor: 'accessing' stamp: 'len 16/Feb/2026 21:26:45'!
+inputCenterKey
+	^ inputCenterKey! !
+
 !Tracker methodsFor: 'accessing' stamp: 'len 10/Feb/2026 15:05:40'!
 label
 	^ label! !
@@ -13563,6 +13693,18 @@ cursorPattern
 !Tracker methodsFor: 'cursor' stamp: 'len 1/Jan/2026 16:37:16'!
 cursorTrack
 	^ cursorTrack! !
+
+!Tracker methodsFor: 'cursor' stamp: 'len 16/Feb/2026 21:25:21'!
+inputOctaveDown
+	inputCenterKey > 12 ifFalse: [^ self].
+	inputCenterKey := inputCenterKey - 12.
+	self triggerEvent: #inputCenterKeyChanged! !
+
+!Tracker methodsFor: 'cursor' stamp: 'len 16/Feb/2026 21:25:14'!
+inputOctaveUp
+	inputCenterKey < 108 ifFalse: [^ self].
+	inputCenterKey := inputCenterKey + 12.
+	self triggerEvent: #inputCenterKeyChanged! !
 
 !Tracker methodsFor: 'cursor' stamp: 'len 10/Jan/2026 22:27:20'!
 moveCursorBeatDown
@@ -13659,7 +13801,7 @@ setCursorTrack: anInteger
 	self triggerEvent: #cursorChanged.
 	self selectedTrack patch ifNotNil: [:aPatch| self setCursorPatch: (patches indexOf: aPatch)]! !
 
-!Tracker methodsFor: 'initialization' stamp: 'len 10/Feb/2026 01:38:23'!
+!Tracker methodsFor: 'initialization' stamp: 'len 16/Feb/2026 21:24:24'!
 initialize
 	tracks := #().
 	patches := #().
@@ -13669,6 +13811,7 @@ initialize
 	lpb := 4.
 	swing := 0.0.
 	level := 1.0.
+	inputCenterKey := 60.
 	cursorPattern := 1.
 	cursorLine := 1.
 	cursorTrack := 1.
@@ -14050,13 +14193,13 @@ toggleTrackSolo: trackIndex
 open
 	^ TrackerWindow open: self! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 27/Dec/2025 20:28:30'!
+!Trigger methodsFor: 'accessing' stamp: 'len 16/Feb/2026 16:56:52'!
 at: position put: value
 	position = 1 ifTrue: [^ note := value].
-	position = 2 ifTrue: [^ instrument := value ifNotNil: [((instrument ifNil: [0]) bitAnd: 16r0F) bitOr: (value bitShift: 4)]].
-	position = 3 ifTrue: [^ instrument := value ifNotNil: [((instrument ifNil: [0]) bitAnd: 16rF0) bitOr: value]].
-	position = 4 ifTrue: [^ velocity := value ifNotNil: [((velocity ifNil: [0]) bitAnd: 16r0F) bitOr: (value bitShift: 4)]].
-	position = 5 ifTrue: [^ velocity := value ifNotNil: [((velocity ifNil: [0]) bitAnd: 16rF0) bitOr: value]].
+	position = 2 ifTrue: [^ velocity := value ifNotNil: [((velocity ifNil: [0]) bitAnd: 16r0F) bitOr: (value bitShift: 4)]].
+	position = 3 ifTrue: [^ velocity := value ifNotNil: [((velocity ifNil: [0]) bitAnd: 16rF0) bitOr: value]].
+	position = 4 ifTrue: [^ instrument := value ifNotNil: [((instrument ifNil: [0]) bitAnd: 16r0F) bitOr: (value bitShift: 4)]].
+	position = 5 ifTrue: [^ instrument := value ifNotNil: [((instrument ifNil: [0]) bitAnd: 16rF0) bitOr: value]].
 	position = 6 ifTrue: [^ fx1 := value ifNotNil: [((fx1 ifNil: [0]) bitAnd: 16rFF) bitOr: (value bitShift: 8)]].
 	position = 7 ifTrue: [^ fx1 := value ifNotNil: [((fx1 ifNil: [0]) bitAnd: 16rFF0F) bitOr: (value bitShift: 4)]].
 	position = 8 ifTrue: [^ fx1 := value ifNotNil: [((fx1 ifNil: [0]) bitAnd: 16rFFF0) bitOr: value]].
@@ -14131,20 +14274,9 @@ readFromJson: json
 	fx1 := json at: #fx1 ifAbsent: [].
 	fx2 := json at: #fx2 ifAbsent: []! !
 
-!Trigger methodsFor: 'testing' stamp: 'len 31/Dec/2025 19:53:46'!
-hasTrackVolumeChange
-	"Answer true if it has fx commands M or P."
-	(#(77 80) includes: (fx1 bitShift: -8)) ifTrue: [^ true].
-	(#(77 80) includes: (fx2 bitShift: -8)) ifTrue: [^ true].
-	^ false! !
-
 !Trigger methodsFor: 'testing' stamp: 'len 27/Dec/2025 20:32:35'!
 isEmpty
 	^ note isNil and: [instrument isNil and: [velocity isNil and: [fx1 isNil and: [fx2 isNil]]]]! !
-
-!Trigger methodsFor: 'testing' stamp: 'len 18/Dec/2025 15:40:48'!
-isNoteOff
-	^ note = -1! !
 
 !SequenceableCollection methodsFor: '*signals' stamp: 'len 2/Oct/2025 21:40:00'!
 plot
@@ -14199,6 +14331,17 @@ camelSeparatedWords
 		(ch isUppercase not and: [r atEnd not and: [r peek isUppercase]]) ifTrue: [w space]].
 	^ w contents
 ! !
+
+!CharacterSequence methodsFor: '*signals' stamp: 'len 15/Feb/2026 23:05:34'!
+nameToSemitones
+"
+	(0 to: 127) allSatisfy: [:i| i semitonesToName nameToSemitones = i]
+"
+	| answer |
+	answer := #(60 62 64 65 67 69 71) at: ('CDEFGAB' indexOf: self first asUppercase).
+	(self includesAnyOf: '#♯') ifTrue: [answer := answer + 1].
+	answer := (('0123456789' indexOf: self last) - 5) * 12 + answer.
+	^ answer! !
 
 !BlockClosure methodsFor: '*signals' stamp: 'len 3/Feb/2026 15:45:44'!
 plot: aCollection

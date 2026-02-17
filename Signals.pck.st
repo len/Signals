@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 17 February 2026 at 1:28:13 am'!
+'From Cuis7.7 [latest update: #7797] on 17 February 2026 at 8:06:05 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 464!
+!provides: 'Signals' 1 465!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -859,7 +859,7 @@ RoundedLinearLayoutMorph class
 
 !classDefinition: #TrackerWindow category: #'Signals-Morphic-Tracker'!
 SystemWindow subclass: #TrackerWindow
-	instanceVariableNames: 'patchEditor meter sequencer patternEditor lowerPane'
+	instanceVariableNames: 'instrumentEditor meter sequencer patternEditor lowerPane'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Tracker'!
@@ -1187,14 +1187,14 @@ BoxMorph subclass: #ZoomerMorph
 ZoomerMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #PatchEditorMorph category: #'Signals-Morphic-Tracker'!
-ZoomerMorph subclass: #PatchEditorMorph
+!classDefinition: #InstrumentEditorMorph category: #'Signals-Morphic-Tracker'!
+ZoomerMorph subclass: #InstrumentEditorMorph
 	instanceVariableNames: 'tracker clipboard'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Tracker'!
-!classDefinition: 'PatchEditorMorph class' category: #'Signals-Morphic-Tracker'!
-PatchEditorMorph class
+!classDefinition: 'InstrumentEditorMorph class' category: #'Signals-Morphic-Tracker'!
+InstrumentEditorMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #MultitrackMeterMorph category: #'Signals-Morphic-Tracker'!
@@ -1539,7 +1539,7 @@ Upsampler2x class
 
 !classDefinition: #WAVFileReader category: #'Signals-Support'!
 Object subclass: #WAVFileReader
-	instanceVariableNames: 'stream channels bitsPerSample sampleRate leftSamples rightSamples'
+	instanceVariableNames: 'stream channels bitsPerSample sampleRate leftSamples rightSamples loopStart loopEnd'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Support'!
@@ -1547,14 +1547,14 @@ Object subclass: #WAVFileReader
 WAVFileReader class
 	instanceVariableNames: ''!
 
-!classDefinition: #Patch category: #'Signals-Tracker'!
-Object subclass: #Patch
-	instanceVariableNames: 'label patchMorph modules noteReceivers gateReceivers velocityReceivers tempoReceivers samples controlInputs audioOutput buffer track trigger'
+!classDefinition: #Instrument category: #'Signals-Tracker'!
+Object subclass: #Instrument
+	instanceVariableNames: 'label patch modules noteReceivers gateReceivers velocityReceivers tempoReceivers samples controlInputs audioOutput buffer track trigger'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Tracker'!
-!classDefinition: 'Patch class' category: #'Signals-Tracker'!
-Patch class
+!classDefinition: 'Instrument class' category: #'Signals-Tracker'!
+Instrument class
 	instanceVariableNames: ''!
 
 !classDefinition: #Pattern category: #'Signals-Tracker'!
@@ -1569,7 +1569,7 @@ Pattern class
 
 !classDefinition: #Track category: #'Signals-Tracker'!
 Object subclass: #Track
-	instanceVariableNames: 'tracker label color muted soloed delay patch ticksToTrigger trigger'
+	instanceVariableNames: 'tracker label color muted soloed delay instrument ticksToTrigger trigger'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Tracker'!
@@ -1579,7 +1579,7 @@ Track class
 
 !classDefinition: #Tracker category: #'Signals-Tracker'!
 Object subclass: #Tracker
-	instanceVariableNames: 'tracks patches patterns masks label bpm lpb swing level inputCenterKey cursorPattern cursorLine cursorTrack cursorPatch playheadPattern playheadLine followPlayhead anyTrackSoloed ticksToLine leftBuffer rightBuffer peakLeft peakRight'
+	instanceVariableNames: 'tracks instruments patterns masks label bpm lpb swing level inputCenterKey cursorPattern cursorLine cursorTrack cursorInstrument playheadPattern playheadLine followPlayhead anyTrackSoloed ticksToLine leftBuffer rightBuffer peakLeft peakRight'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Tracker'!
@@ -4407,7 +4407,7 @@ reset
 setVelocity: aNumber
 	velocity := aNumber! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 15/Feb/2026 21:45:34'!
+!Multisample methodsFor: 'controlling' stamp: 'len 17/Feb/2026 20:03:13'!
 update
 	| frequency key closestKey speedFactor samplesByVelocity |
 	super update.
@@ -4417,7 +4417,7 @@ update
 	closestKey := keymap keys detectMin: [:x| (x - key) abs].
 	speedFactor := key semitonesToHertz / closestKey semitonesToHertz.
 	samplesByVelocity := keymap at: closestKey.
-	sample := (samplesByVelocity at: ((velocity * (samplesByVelocity size - 1)) truncated + 1 min: samplesByVelocity size)) copy.
+	sample := (samplesByVelocity at: ((velocity sqrt * (samplesByVelocity size - 1)) truncated + 1 min: samplesByVelocity size)) copy.
 	sample baseRate: sample baseRate * speedFactor.
 	sample reset.
 	sample update! !
@@ -4450,11 +4450,11 @@ asJsonWithBuffers: aList
 		at: #label put: (label ifNil: ['']);
 		yourself! !
 
-!Multisample methodsFor: 'serialization' stamp: 'len 16/Feb/2026 16:37:40'!
+!Multisample methodsFor: 'serialization' stamp: 'len 17/Feb/2026 17:49:41'!
 readFromJson: json buffers: aList
 	super readFromJson: json buffers: aList.
 	keymap := Dictionary new.
-	(json at: #keymap) keysAndValuesDo: [:key :value| keymap at: key put: (value collect: [:each| Sample new readFromJson: each buffers: aList])].
+	(json at: #keymap) keysAndValuesDo: [:key :value| keymap at: key asNumber put: (value collect: [:each| Sample new readFromJson: each buffers: aList])].
 	label := json at: #label.
 	label isEmpty ifTrue: [label := nil]! !
 
@@ -4473,31 +4473,60 @@ patchable
 library
 	^ Library! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 16/Feb/2026 23:45:54'!
+!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 15:10:34'!
 loadBookerT
 	| keymap |
 	keymap := Dictionary new.
 	#('B' 'F') with: #(59 65) do: [:noteName :centerKey|
 		1 to: 7 do: [:octave|
-			| filename reader bufferSlow bufferFast midiKey |
+			| filename reader bufferSlow loopStartSlow loopEndSlow bufferFast loopStartFast loopEndFast midiKey |
 			"slow:"
 			filename := 'BookerT (slow) - booker_slow_', noteName, octave printString.
 			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'BookerT' // (filename, 'L.wav').
 			bufferSlow := reader leftSamples.
 			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'BookerT' // (filename, 'R.wav').
 			bufferSlow += reader leftSamples.
-			midiKey := (octave - 4) * 12 + centerKey.
+			loopStartSlow := reader loopStart.
+			loopEndSlow := reader loopEnd.
 			"fast:"
 			filename := 'BookerT (fast) - booker_fast_', noteName, octave printString.
 			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'BookerT' // (filename, 'L.wav').
 			bufferFast := reader leftSamples.
 			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'BookerT' // (filename, 'R.wav').
 			bufferFast += reader leftSamples.
+			loopStartFast := reader loopStart.
+			loopEndFast := reader loopEnd.
 			midiKey := (octave - 4) * 12 + centerKey.
 			keymap at: midiKey put:
-				{Sample buffer: bufferSlow sampleRate: reader sampleRate.
-				Sample buffer: bufferFast sampleRate: reader sampleRate}]].
+				{Sample buffer: bufferSlow sampleRate: reader sampleRate loopStart: loopStartSlow loopEnd: loopEndSlow.
+				Sample buffer: bufferFast sampleRate: reader sampleRate loopStart: loopStartFast loopEnd: loopEndFast}]].
 	^ self new label: 'BookerT'; keymap: keymap! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 16:33:56'!
+loadDancePiano
+	"Salamander Dance Piano."
+	| keymap |
+	keymap := Dictionary new.
+	#('F#2' 'A2' 'D#3' 'G#3' 'C4' 'E4' 'A4') withIndexDo: [:noteName :i|
+		| filename reader buffer |
+		filename := 'Sal House - Sal House ', noteName.
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Sal House' // (filename, 'L.wav').
+		buffer := reader leftSamples.
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Sal House' // (filename, 'R.wav').
+		buffer += reader leftSamples.
+		keymap at: noteName nameToSemitones put:
+			{Sample buffer: buffer sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
+	^ self new label: 'Dance Piano'; keymap: keymap! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 16:17:24'!
+loadDoubleBass
+	| keymap |
+	keymap := Dictionary new.
+	(0 to: 37) do: [:i|
+		| reader |
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Bass' // ('Acoustic Bass - Double Bass ', (i printStringBase: 10 length: 3 padded: true), '.wav').
+		keymap at: i+30 put: {Sample buffer: reader leftSamples sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
+	^ self new label: 'Double Bass'; keymap: keymap! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 16/Feb/2026 23:46:03'!
 loadFarfisa
@@ -4514,112 +4543,147 @@ loadFarfisa
 			keymap at: midiKey put: {Sample buffer: buffer sampleRate: reader sampleRate}]].
 	^ self new label: 'Farfisa Full'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 00:07:42'!
+!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 16:06:42'!
+loadFingerBass
+	"Carvin BB70 finger bass."
+	| keymap |
+	keymap := Dictionary new.
+	#(28 31 33 36 38 41 43 46) with: #('E4' 'G4' 'A3' 'C3' 'D2' 'F2' 'G1' 'Bb1') do: [:midiKey :suffix|
+		| reader |
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Bass' // ('Finger Bass - CVFngBass', suffix, '.wav').
+		keymap at: midiKey put: {Sample buffer: reader leftSamples sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
+	^ self new label: 'Finger Bass'; keymap: keymap! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 16:32:55'!
 loadFlute
 	"Iowa Flute with vibrato."
-	| keymap loopEnds loopStarts |
+	| keymap |
 	keymap := Dictionary new.
-	loopStarts := #(34450 26762 44612 71936 46705 38999 39460 24578).
-	loopEnds := #(43574 46263 53413 79843 56135 48309 56490 44364).
 	#('C3' 'C4' 'C5' 'C6' 'E4' 'G3' 'G4' 'G5') withIndexDo: [:noteName :i|
 		| filename reader buffer |
 		filename := 'Flute - Flute_vib_loud_', noteName, '.wav'.
 		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'MCO' // filename.
 		buffer := reader leftSamples.
 		keymap at: noteName nameToSemitones put:
-			{(Sample buffer: buffer sampleRate: reader sampleRate)
-				loopStart: (loopStarts at: i) loopEnd: (loopEnds at: i)}].
-	^ self new label: 'Iowa Flute'; keymap: keymap! !
+			{Sample buffer: buffer sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
+	^ self new label: 'Flute'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 16/Feb/2026 23:46:15'!
-loadJRhodes
+!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 19:13:44'!
+loadJRhodes3D
+	"From https://github.com/jlearman/jRhodes3d-wav.git"
 	| samples keymap |
 	samples := Dictionary new.
-	(self multisamplesDirectory / 'jrhodes3') files do: [:each|
+	(self multisamplesDirectory / 'jrhodes3d') files do: [:each|
 		| reader tokens midiKey velocityLayer buffer |
 		tokens := each name findTokens: '_'.
-		midiKey := tokens first asNumber.
-		velocityLayer := tokens second asNumber.
+		midiKey := tokens second asNumber.
+		velocityLayer := (tokens last findTokens: '.') first asNumber.
 		reader := WAVFileReader new readFromFileEntry: each.
 		"If stereo, sum channels:"
 		buffer := reader channels = 2 ifTrue: [reader leftSamples + reader rightSamples] ifFalse: [reader leftSamples].
-		"Remove DC offset:"
-		buffer -= (buffer sum / buffer size).
-		(samples at: midiKey ifAbsentPut: [Dictionary new]) at: velocityLayer put: (Sample buffer: buffer sampleRate: reader sampleRate)].
+		(samples at: midiKey ifAbsentPut: [Dictionary new]) at: velocityLayer put: (Sample buffer: buffer sampleRate: reader sampleRate) removeDCOffset].
 	keymap := samples collect: [:each| each associations sorted reversed collect: #value].
-	^ self new label: 'J-Rhodes'; keymap: keymap! !
+	^ self new label: 'Rhodes'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 00:08:11'!
+!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 19:14:20'!
 loadLibrary
 	"
 	Multisample loadLibrary
 	"
 	
-	Library := Dictionary new.
+	Library := OrderedDictionary new.
 	Library
-		at: 'J-Rhodes' put: self loadJRhodes;
-		at: 'BookerT' put: self loadBookerT;
-		at: 'Sal House' put: self loadSalHouse;
-		at: 'Squire Bass' put: self loadSquireBass;
+		at: 'Rhodes' put: self loadJRhodes3D;
+		at: 'LoFi Rhodes' put: self loadLoFiRhodes;
+		at: 'Dance Piano' put: self loadDancePiano;
 		at: 'Vibraphone' put: self loadVibraphone;
+		at: 'BookerT' put: self loadBookerT;
 		at: 'Farfisa' put: self loadFarfisa;
-		at: 'Jazz Trumpet' put: self loadTrumpet;
-		at: 'Iowa Flute' put: self loadFlute! !
+		at: 'Trumpet' put: self loadTrumpet;
+		at: 'Flute' put: self loadFlute;
+		at: 'Squire Bass' put: self loadSquireBass;
+		at: 'Picked Bass' put: self loadPickedBass;
+		at: 'Slap Bass' put: self loadSlapBass;
+		at: 'Pop Bass' put: self loadPopBass;
+		at: 'Finger Bass' put: self loadFingerBass;
+		at: 'Double Bass' put: self loadDoubleBass! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 16/Feb/2026 23:46:30'!
-loadSalHouse
-	"Salamander Dance Piano."
-	| keymap loopEnds loopStarts |
+!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 17:15:48'!
+loadLoFiRhodes
+	| keymap |
 	keymap := Dictionary new.
-	loopStarts := #(107982 92482 89379 115826 101727 106100 68930).
-	loopEnds := #(150000 150000 130000 150000 140000 140000 100000).
-	#('F#2' 'A2' 'D#3' 'G#3' 'C4' 'E4' 'A4') withIndexDo: [:noteName :i|
-		| filename reader buffer |
-		filename := 'Sal House - Sal House ', noteName.
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Sal House' // (filename, 'L.wav').
-		buffer := reader leftSamples.
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Sal House' // (filename, 'R.wav').
-		buffer += reader leftSamples.
-		keymap at: noteName nameToSemitones put:
-			{(Sample buffer: buffer sampleRate: reader sampleRate)
-				loopStart: (loopStarts at: i) loopEnd: (loopEnds at: i)}].
-	^ self new label: 'Sal House'; keymap: keymap! !
+	((self multisamplesDirectory / 'LoFi Rhodes') files select: [:each| each name endsWith: '.wav']) do: [:each|
+		| reader midiKey buffer |
+		midiKey := (each name findTokens: '.') first asNumber.
+		reader := WAVFileReader new readFromFileEntry: each.
+		"If stereo, sum channels:"
+		buffer := reader channels = 2 ifTrue: [reader leftSamples + reader rightSamples] ifFalse: [reader leftSamples].
+		"Remove DC offset:"
+		buffer -= (buffer sum / buffer size).
+		keymap at: midiKey put: {Sample buffer: buffer sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
+	^ self new label: 'LoFi Rhodes'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 16/Feb/2026 23:46:39'!
+!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 16:18:14'!
+loadPickedBass
+	| keymap |
+	keymap := Dictionary new.
+	#(28 31 34 37 40 43 46 49 52 55 58 61) do: [:midiKey|
+		| reader |
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Bass' // ('Picked Bass - Ibpickin_', midiKey printString, '.wav').
+		keymap at: midiKey put: {Sample buffer: reader leftSamples sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
+	^ self new label: 'Picked Bass'; keymap: keymap! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 16:01:48'!
+loadPopBass
+	| keymap |
+	keymap := Dictionary new.
+	"why slap bass uses 35 instead of 34?"
+	#(28 30 32 34 36 39 41 43 48) with: #('E0' 'E2' 'E4' 'A1' 'A3' 'D1' 'D3' 'G0' 'G5') do: [:midiKey :suffix|
+		| reader |
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Bass' // ('Pop Bass - Pop ', suffix, '.wav').
+		keymap at: midiKey put: {Sample buffer: reader leftSamples sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
+	^ self new label: 'Pop Bass'; keymap: keymap! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 16:02:09'!
+loadSlapBass
+	| keymap |
+	keymap := Dictionary new.
+	"why pop bass uses 34 instead of 35?"
+	#(28 30 32 35 36 39 41 43 48) with: #('E0' 'E2' 'E4' 'A1' 'A3' 'D1' 'D3' 'G0' 'G5') do: [:midiKey :suffix|
+		| reader |
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Bass' // ('Slap Bass - Slap Bass ', suffix, '.wav').
+		keymap at: midiKey put: {Sample buffer: reader leftSamples sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
+	^ self new label: 'Slap Bass'; keymap: keymap! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 15:13:00'!
 loadSquireBass
 	"Fender Squire Bass."
-	| keymap loopEnds loopStarts |
+	| keymap |
 	keymap := Dictionary new.
-	loopStarts := #(79113 84099 84199 77199 78199 76199 76199 76199).
-	loopEnds := #(83410 88099 87805 80959 83589 81018 80709 80019).
 	#('e' 'a' 'd' 'e2' 'g' 'a2' 'd2' 'g2') withIndexDo: [:noteName :i|
 		| filename reader buffer |
 		filename := 'squirebass - ', noteName, '.wav'.
 		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Fender Squire Bass' // filename.
 		buffer := reader leftSamples.
 		keymap at: (#('E1' 'A1' 'D2' 'E2' 'G2' 'A2' 'D3' 'G3') at: i) nameToSemitones put:
-			{(Sample buffer: buffer sampleRate: reader sampleRate)
-				loopStart: (loopStarts at: i) loopEnd: (loopEnds at: i)}].
+			{Sample buffer: buffer sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Squire Bass'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 16/Feb/2026 23:58:12'!
+!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 15:41:30'!
 loadTrumpet
-	"Trumpet."
-	| keymap loopEnds loopStarts |
+	"Jazz Trumpet."
+	| keymap |
 	keymap := Dictionary new.
-	loopStarts := #(32756 34185 34354 30936 23450 26253 23301 35003 35161 28474 28531 15862).
-	loopEnds := #(42813 41059 41565 37152 29373 32307 29482 41563 41574 34864 34486 21850).
-	#('F#3' 'A3' 'C4' 'D#4' 'G4' 'A#4' 'C#5' 'D#5' 'G5' 'B5' 'C#6' 'E6') withIndexDo: [:noteName :i|
+	#('F#3' 'A3' 'C4' 'D#4' 'G4' 'A#4' 'C#5' 'D#5' 'G5' 'B5' 'C#6' 'E6') do: [:noteName|
 		| filename reader buffer |
 		filename := 'Trumpet - Trumpet ', noteName, ':0.wav'.
 		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'MCO' // filename.
 		buffer := reader leftSamples.
 		keymap at: noteName nameToSemitones put:
-			{(Sample buffer: buffer sampleRate: reader sampleRate)
-				loopStart: (loopStarts at: i) loopEnd: (loopEnds at: i)}].
+			{Sample buffer: buffer sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Jazz Trumpet'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 16/Feb/2026 23:46:50'!
+!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 15:14:12'!
 loadVibraphone
 	| keymap |
 	keymap := Dictionary new.
@@ -4854,6 +4918,15 @@ buffer: aFloatArray baseRate: aNumber
 	increment := 1.
 	self reset! !
 
+!Sample methodsFor: 'private' stamp: 'len 17/Feb/2026 19:03:05'!
+normalizeAmplitude
+	buffer /= (buffer max abs max: buffer min abs)! !
+
+!Sample methodsFor: 'private' stamp: 'len 17/Feb/2026 19:02:20'!
+removeDCOffset
+	buffer -= (buffer sum / buffer size).
+! !
+
 !Sample methodsFor: 'private' stamp: 'len 10/Feb/2026 17:54:56'!
 trimSilence
 	"Trim anything below -50 dB:"
@@ -4869,18 +4942,18 @@ library
 load: fileName label: aString
 	^ (Library at: aString put: (self fromFileNamed: fileName)) label: aString! !
 
-!Sample class methodsFor: 'library' stamp: 'len 17/Feb/2026 01:22:13'!
+!Sample class methodsFor: 'library' stamp: 'len 17/Feb/2026 19:05:02'!
 loadLibrary
 	"
 	Sample loadLibrary
 	"
 	
 	Library := OrderedDictionary new.
-	self load: self samplesDirectory / 'breaks' / 'breaks152' // '000_AMEN.WAV' label: 'Amen 152 BPM'.
-	(self load: self samplesDirectory / 'pads' // 'pad2.wav' label: 'Pad 2') trimSilence.
-	(self load: self samplesDirectory / 'pads' // 'pad3.wav' label: 'Pad 3') trimSilence.
-	(self load: self samplesDirectory / 'pads' // 'pad4.wav' label: 'Pad 4') trimSilence.
-	(self load: self samplesDirectory / 'pads' // 'pad5.wav' label: 'Pad 5') trimSilence.! !
+	(self load: self samplesDirectory / 'breaks' / 'breaks152' // '000_AMEN.WAV' label: 'Amen 152 BPM') normalizeAmplitude.
+	(self load: self samplesDirectory / 'pad' // 'pad2.wav' label: 'Pad 2') normalizeAmplitude; trimSilence.
+	(self load: self samplesDirectory / 'pad' // 'pad3.wav' label: 'Pad 3') normalizeAmplitude; trimSilence.
+	(self load: self samplesDirectory / 'pad' // 'pad4.wav' label: 'Pad 4') normalizeAmplitude; trimSilence.
+	(self load: self samplesDirectory / 'pad' // 'pad5.wav' label: 'Pad 5') normalizeAmplitude; trimSilence! !
 
 !Sample class methodsFor: 'library' stamp: 'len 15/Feb/2026 15:41:08'!
 samplesDirectory
@@ -4898,21 +4971,22 @@ buffer: aFloatArray baseRate: aNumber
 buffer: aFloatArray sampleRate: aNumber
 	^ self buffer: aFloatArray baseRate: aNumber! !
 
+!Sample class methodsFor: 'instance creation' stamp: 'len 17/Feb/2026 15:02:59'!
+buffer: aFloatArray sampleRate: aNumber loopStart: loopStart loopEnd: loopEnd
+	^ (self buffer: aFloatArray baseRate: aNumber) loopStart: loopStart loopEnd: loopEnd! !
+
 !Sample class methodsFor: 'instance creation' stamp: 'len 2/Jan/2026 15:02:36'!
 buffer: aFloatArray sampleRate: aNumber rootNote: anotherNumber
 	^ self buffer: aFloatArray baseRate: aNumber * (60 - anotherNumber) semitonesToRatio! !
 
-!Sample class methodsFor: 'instance creation' stamp: 'len 13/Feb/2026 00:20:07'!
+!Sample class methodsFor: 'instance creation' stamp: 'len 17/Feb/2026 19:03:59'!
 fromFileNamed: fileName
 	| reader samples |
 	reader := WAVFileReader new readFromFileNamed: fileName.
 	"If stereo, sum channels:"
 	samples := reader channels = 2 ifTrue: [reader leftSamples + reader rightSamples] ifFalse: [reader leftSamples].
-	"Remove DC offset:"
-	samples -= (samples sum / samples size).
-	"Normalize amplitude:"
-	samples /= (samples max abs max: samples min abs).
-	^ self buffer: samples baseRate: reader sampleRate! !
+	^ (self buffer: samples baseRate: reader sampleRate)
+		removeDCOffset! !
 
 !ColoredNoise methodsFor: 'controlling' stamp: 'len 1/Feb/2026 17:53:42'!
 reset
@@ -7231,10 +7305,10 @@ setBPM
 setLPB
 	self request: 'LPB' initialAnswer: model lpb printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| model lpb: s asNumber]! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 22/Jan/2026 17:48:25'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 17/Feb/2026 19:20:00'!
 toggleLowerPane
 	lowerPane visible: lowerPane visible not.
-	patchEditor layoutSpec proportionalHeight: (lowerPane visible ifTrue: [0.38] ifFalse: [1.0])! !
+	instrumentEditor layoutSpec proportionalHeight: (lowerPane visible ifTrue: [0.38] ifFalse: [1.0])! !
 
 !TrackerWindow methodsFor: 'events' stamp: 'len 16/Feb/2026 21:23:38'!
 keyStroke: anEvent
@@ -7249,10 +7323,10 @@ keyStroke: anEvent
 		anEvent keyCharacter = $[ ifTrue: [anEvent wasHandled: true. ^ model inputOctaveDown]].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 16/Feb/2026 21:15:01'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 17/Feb/2026 19:20:00'!
 buildMorphicWindow
 	| lowerLeftPane sequencerScroller patternEditorScroller bar |
-	patchEditor := PatchEditorMorph new setTracker: model.
+	instrumentEditor := InstrumentEditorMorph new setTracker: model.
 	meter := MultitrackMeterMorph new setTracker: model.
 	sequencer := SequencerMorph new setTracker: model.
 	patternEditor := PatternEditorMorph new setTracker: model.
@@ -7269,7 +7343,7 @@ buildMorphicWindow
 		addMorph: patternEditorScroller layoutSpec: LayoutSizeSpec new.
 	self layoutMorph
 		addMorph: bar fixedHeight: 24;
-		addMorph: patchEditor proportionalHeight: 0.38;
+		addMorph: instrumentEditor proportionalHeight: 0.38;
 		addMorph: lowerPane proportionalHeight: 1.0 - 0.38! !
 
 !PluggableChoiceMorph methodsFor: 'accessing' stamp: 'len 19/Jan/2026 18:12:04'!
@@ -9344,89 +9418,90 @@ defaultExtent
 wantsSteps
 	^ true! !
 
-!PatchEditorMorph methodsFor: 'actions' stamp: 'len 20/Jan/2026 16:24:19'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Jan/2026 16:24:19'!
 clipboardCopy
 	(self activeHand keyboardFocus ifNil: [^ self])
 		withAllOwnersDo: [:each| (each isKindOf: PatchableMorph) ifTrue: [clipboard := each model copy. ^ self]]! !
 
-!PatchEditorMorph methodsFor: 'actions' stamp: 'len 20/Jan/2026 16:23:50'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Jan/2026 16:23:50'!
 clipboardCut
 	(self activeHand keyboardFocus ifNil: [^ self])
 		withAllOwnersDo: [:each| (each isKindOf: PatchableMorph) ifTrue: [clipboard := each model copy. each delete. ^ self]]! !
 
-!PatchEditorMorph methodsFor: 'actions' stamp: 'len 20/Jan/2026 16:26:19'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Jan/2026 16:26:19'!
 clipboardPaste
 	| patchMorph |
 	clipboard ifNil: [^ self].
 	patchMorph := submorphs detect: [:any| any isKindOf: PatchMorph] ifNone: [^ self].
 	patchMorph addMorph: clipboard copy patchable position: ((patchMorph internalizeFromWorld: self activeHand morphPosition))! !
 
-!PatchEditorMorph methodsFor: 'actions' stamp: 'len 10/Feb/2026 17:48:01'!
-exportPatch
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 17/Feb/2026 19:34:52'!
+exportInstrument
 	| patch |
-	patch := tracker selectedPatch ifNil: [^ self].
-	self request: 'Patch name' initialAnswer: patch label do: [:newName|
+	patch := tracker selectedInstrument ifNil: [^ self].
+	self request: 'Instrument name' initialAnswer: patch label do: [:newName|
 		patch label: newName.
 		(self class package packageDirectory / 'library' // (newName, '.patch')) writeStreamDo: [:s| patch writeOn: s].
-		tracker triggerEvent: #patchesChanged]! !
+		tracker triggerEvent: #instrumentsChanged]! !
 
-!PatchEditorMorph methodsFor: 'actions' stamp: 'len 10/Feb/2026 17:48:07'!
-importPatch
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 17/Feb/2026 19:35:08'!
+importInstrument
+	| instrument |
+	instrument := tracker selectedInstrument ifNil: [^ self].
+	self request: 'Instrument name' initialAnswer: instrument label do: [:newName|
+		instrument label: newName.
+		(self class package packageDirectory / 'library' // (newName, '.patch')) readStreamDo: [:s| instrument readFrom: s binary].
+		tracker triggerEvent: #instrumentsChanged]! !
+
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 17/Feb/2026 19:35:16'!
+renameInstrument
 	| patch |
-	patch := tracker selectedPatch ifNil: [^ self].
-	self request: 'Patch name' initialAnswer: patch label do: [:newName|
-		patch label: newName.
-		(self class package packageDirectory / 'library' // (newName, '.patch')) readStreamDo: [:s| patch readFrom: s binary].
-		tracker triggerEvent: #patchesChanged]! !
+	patch := tracker selectedInstrument ifNil: [^ self].
+	self request: 'Instrument name' initialAnswer: patch label do: [:newName| patch label: newName. tracker triggerEvent: #instrumentsChanged]! !
 
-!PatchEditorMorph methodsFor: 'actions' stamp: 'len 10/Feb/2026 15:10:36'!
-renamePatch
-	| patch |
-	patch := tracker selectedPatch ifNil: [^ self].
-	self request: 'Patch name' initialAnswer: patch label do: [:newName| patch label: newName. tracker triggerEvent: #patchesChanged]! !
-
-!PatchEditorMorph methodsFor: 'events' stamp: 'len 16/Feb/2026 21:29:12'!
+!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 17/Feb/2026 19:34:42'!
 keyStroke: anEvent
 	| c i |
 	(anEvent rawMacOptionKeyPressed or: [anEvent controlKeyPressed]) ifTrue:
 		[anEvent isArrowLeft ifTrue:
 			[anEvent wasHandled: true.
-			tracker moveCursorPatchLeft.
+			tracker moveCursorInstrumentLeft.
 			^ self].
 		anEvent isArrowRight ifTrue:
 			[anEvent wasHandled: true.
-			tracker moveCursorPatchRight.
+			tracker moveCursorInstrumentRight.
 			^ self]].
 	anEvent commandAltKeyPressed ifTrue:
-		[anEvent keyCharacter = $n ifTrue: [anEvent wasHandled: true. ^ tracker addPatch].
-		anEvent keyCharacter = $N ifTrue: [anEvent wasHandled: true. ^ tracker deletePatch].
-		anEvent keyCharacter = $r ifTrue: [anEvent wasHandled: true. ^ self renamePatch].
-		anEvent keyCharacter = $e ifTrue: [anEvent wasHandled: true. ^ self exportPatch].
-		anEvent keyCharacter = $i ifTrue: [anEvent wasHandled: true. ^ self importPatch].
+		[anEvent keyCharacter = $n ifTrue: [anEvent wasHandled: true. ^ tracker addInstrument].
+		anEvent keyCharacter = $N ifTrue: [anEvent wasHandled: true. ^ tracker deleteInstrument].
+		anEvent keyCharacter = $r ifTrue: [anEvent wasHandled: true. ^ self renameInstrument].
+		anEvent keyCharacter = $e ifTrue: [anEvent wasHandled: true. ^ self exportInstrument].
+		anEvent keyCharacter = $i ifTrue: [anEvent wasHandled: true. ^ self importInstrument].
 		anEvent keyCharacter = $c ifTrue: [anEvent wasHandled: true. ^ self clipboardCopy].
 		anEvent keyCharacter = $x ifTrue: [anEvent wasHandled: true. ^ self clipboardCut].
 		anEvent keyCharacter = $v ifTrue: [anEvent wasHandled: true. ^ self clipboardPaste]].
 	anEvent keyCharacter = $\ ifTrue:
 		[anEvent wasHandled: true.
-		tracker selectedPatch ifNotNil: [:aPatch| aPatch track ifNotNil: [:aTrack|
+		tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument track ifNotNil: [:aTrack|
 			anEvent commandAltKeyPressed ifTrue: [tracker toggleTrackSolo: (tracker tracks indexOf: aTrack)] ifFalse: [tracker toggleTrackMute: (tracker tracks indexOf: aTrack)]]].
 		^ self].
-	c := anEvent keyCharacter.
-	c = $a ifTrue: [anEvent wasHandled: true. tracker selectedPatch ifNotNil: [:aPatch| aPatch noteOff]. ^ self].
-	(i := 'zsxdcvgbhnjmq2w3er5t6y7ui9o0p' indexOf: c) > 0 ifTrue:
-		[anEvent wasHandled: true. tracker selectedPatch ifNotNil: [:aPatch| aPatch noteOn: i + tracker inputCenterKey - 1]. ^ self].
+	anEvent anyModifierKeyPressed ifFalse:
+		[c := anEvent keyCharacter.
+		c = $a ifTrue: [anEvent wasHandled: true. tracker selectedInstrument ifNotNil: [:aPatch| aPatch noteOff]. ^ self].
+		(i := 'zsxdcvgbhnjmq2w3er5t6y7ui9o0p' indexOf: c) > 0 ifTrue:
+			[anEvent wasHandled: true. tracker selectedInstrument ifNotNil: [:aPatch| aPatch noteOn: i + tracker inputCenterKey - 1]. ^ self]].
 	^ super keyStroke: anEvent! !
 
-!PatchEditorMorph methodsFor: 'initialization' stamp: 'len 7/Jan/2026 13:54:06'!
+!InstrumentEditorMorph methodsFor: 'initialization' stamp: 'len 17/Feb/2026 19:25:30'!
 setTracker: aTracker
 	tracker := aTracker.
-	aTracker when: #patchesChanged send: #update to: self.
+	aTracker when: #instrumentsChanged send: #update to: self.
 	self update! !
 
-!PatchEditorMorph methodsFor: 'private' stamp: 'len 7/Jan/2026 13:57:16'!
+!InstrumentEditorMorph methodsFor: 'private' stamp: 'len 17/Feb/2026 19:38:31'!
 update
 	self removeAllMorphs.
-	tracker selectedPatch ifNotNil: [:aPatch| self addMorph: aPatch patchMorph]! !
+	tracker selectedInstrument ifNotNil: [:anInstrument| self addMorph: anInstrument patch]! !
 
 !MultitrackMeterMorph methodsFor: 'drawing' stamp: 'len 12/Feb/2026 16:36:41'!
 colorForMeterValue: aNumber
@@ -9989,7 +10064,7 @@ update
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 16/Feb/2026 21:27:49'!
+!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 17/Feb/2026 19:32:08'!
 drawOn: aCanvas
 	| patchLabel color |
 	aCanvas fillRectangle: (0 @ 0 extent: extent) color: Color darkGray.
@@ -10000,7 +10075,7 @@ drawOn: aCanvas
 		drawString: (tracker bpm printStringFractionDigits: 1), ' / ', tracker lpb printString at: 32 @ 2 font: font color: color;
 		drawString: '↧' at: 150 @ 3 font: font color: (tracker followPlayhead ifTrue: [color] ifFalse: [Color lightGray]);
 		drawString: tracker inputCenterKey semitonesToName at: 180 @ 3 font: font color: color.
-	patchLabel := (tracker cursorPatch printStringBase: 16 nDigits: 2), ': ', (tracker selectedPatch ifNil: ['EMPTY'] ifNotNil: [:aPatch| aPatch label]).
+	patchLabel := (tracker cursorInstrument printStringBase: 16 nDigits: 2), ' ', (tracker selectedInstrument ifNil: ['EMPTY'] ifNotNil: [:anInstrument| anInstrument label ifNil: ['']]).
 	aCanvas drawString: patchLabel at: (extent x - 4 - (font widthOfString: patchLabel)) @ 2 font: font color: color! !
 
 !TrackerBarMorph methodsFor: 'geometry' stamp: 'len 7/Jan/2026 14:33:18'!
@@ -10012,7 +10087,7 @@ initialize
 	super initialize.
 	font := FontFamily defaultFamilyPointSize: 16! !
 
-!TrackerBarMorph methodsFor: 'initialization' stamp: 'len 16/Feb/2026 21:25:50'!
+!TrackerBarMorph methodsFor: 'initialization' stamp: 'len 17/Feb/2026 19:25:41'!
 setTracker: aTracker
 	tracker := aTracker.
 	tracker
@@ -10020,7 +10095,7 @@ setTracker: aTracker
 		when: #bpmChanged send: #redrawNeeded to: self;
 		when: #lpbChanged send: #redrawNeeded to: self;
 		when: #followPlayheadChanged send: #redrawNeeded to: self;
-		when: #patchesChanged send: #redrawNeeded to: self;
+		when: #instrumentsChanged send: #redrawNeeded to: self;
 		when: #inputCenterKeyChanged send: #redrawNeeded to: self! !
 
 !OscilloscopeMorph methodsFor: 'drawing' stamp: 'len 4/Dec/2025 16:18:53'!
@@ -13090,6 +13165,14 @@ convertBytesToFloat: aByteArray
 leftSamples
 	^ leftSamples! !
 
+!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 17/Feb/2026 15:00:34'!
+loopEnd
+	^ loopEnd! !
+
+!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 17/Feb/2026 15:00:30'!
+loopStart
+	^ loopStart! !
+
 !WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 31/Dec/2025 00:55:57'!
 next16BitWord
 	"Read a 16-bit positive integer from the input stream."
@@ -13114,12 +13197,18 @@ readFromFileEntry: fileEntry
 readFromFileNamed: fileName
 	^ self readFromFileEntry: fileName asFileEntry! !
 
-!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 15/Feb/2026 15:36:14'!
+!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 17/Feb/2026 15:05:37'!
 readFromStream: fileStream
-	| header data type blockAlign |
+	| header data smpl type blockAlign numberOfLoops |
 	stream := fileStream.
 	header := self readWaveChunk: 'fmt '.
 	data := self readWaveChunk: 'data'.
+	smpl := self readWaveChunk: 'smpl'.
+	smpl isEmpty ifFalse:
+		[numberOfLoops := smpl uint32At: 16r24 - 8 + 1 bigEndian: false.
+		numberOfLoops > 1 ifTrue: [self error: 'More than one loop'].
+		loopStart := smpl uint32At: 16r2C - 8 + 1 + 16r08 bigEndian: false.
+		loopEnd := smpl uint32At: 16r2C - 8 + 1 + 16r0C bigEndian: false].
 	stream close.
 	stream := ReadStream on: header.
 	type := self next16BitWord.
@@ -13149,7 +13238,7 @@ readFromStream: fileStream
 		ifFalse:
 			[leftSamples := rightSamples := data]! !
 
-!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 31/Dec/2025 00:55:57'!
+!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 17/Feb/2026 14:51:14'!
 readWaveChunk: chunkType
 	"Search the stream for a format chunk of the given type and return its contents."
 
@@ -13161,10 +13250,10 @@ readWaveChunk: chunkType
 
 	"search for a chunk of the given type"
 	[id := (stream next: 4) asString.
-	 count := self next32BitWord.
-	 id = chunkType] whileFalse: [
+	count := self next32BitWord.
+	id = chunkType] whileFalse:
 		"skip this chunk, rounding length up to a word boundary"
-		stream skip: (count + 1 bitAnd: 16rFFFFFFFE).
+		[stream skip: (count + 1 bitAnd: 16rFFFFFFFE).
 		stream atEnd ifTrue: [^ '']].
 
 	^ stream next: count  "return raw chunk data"
@@ -13178,47 +13267,47 @@ rightSamples
 sampleRate
 	^ sampleRate! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 28/Dec/2025 15:47:17'!
+!Instrument methodsFor: 'accessing' stamp: 'len 28/Dec/2025 15:47:17'!
 label
 	^ label! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 28/Dec/2025 15:47:23'!
+!Instrument methodsFor: 'accessing' stamp: 'len 28/Dec/2025 15:47:23'!
 label: aString
 	label := aString! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 18/Jan/2026 15:14:01'!
+!Instrument methodsFor: 'accessing' stamp: 'len 18/Jan/2026 15:14:01'!
 meterLeftValue
 	^ (audioOutput ifNil: [^ 0.0]) meterLeftValue! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 18/Jan/2026 15:14:10'!
+!Instrument methodsFor: 'accessing' stamp: 'len 18/Jan/2026 15:14:10'!
 meterRightValue
 	^ (audioOutput ifNil: [^ 0.0]) meterRightValue! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 18/Jan/2026 02:25:34'!
+!Instrument methodsFor: 'accessing' stamp: 'len 18/Jan/2026 02:25:34'!
 meterValue
 	^ (audioOutput ifNil: [^ 0.0]) meterValue! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 3/Jan/2026 14:43:27'!
-patchMorph
-	^ patchMorph! !
+!Instrument methodsFor: 'accessing' stamp: 'len 17/Feb/2026 19:39:10'!
+patch
+	^ patch! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 7/Jan/2026 13:58:16'!
+!Instrument methodsFor: 'accessing' stamp: 'len 17/Feb/2026 19:28:32'!
 setOwnerTrack: aTrack
-	track ifNotNil: [track forgetPatch].
+	track ifNotNil: [track forgetInstrument].
 	track := aTrack! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 3/Jan/2026 15:40:08'!
+!Instrument methodsFor: 'accessing' stamp: 'len 3/Jan/2026 15:40:08'!
 track
 	^ track! !
 
-!Patch methodsFor: 'initialization' stamp: 'len 6/Jan/2026 15:08:36'!
+!Instrument methodsFor: 'initialization' stamp: 'len 17/Feb/2026 19:39:10'!
 initialize
 	controlInputs := Array new: 10.
-	patchMorph := PatchMorph new.
-	patchMorph when: #recomputeNeeded send: #scheduleRecompute to: self.
+	patch := PatchMorph new.
+	patch when: #recomputeNeeded send: #scheduleRecompute to: self.
 ! !
 
-!Patch methodsFor: 'playing' stamp: 'len 23/Jan/2026 14:29:14'!
+!Instrument methodsFor: 'playing' stamp: 'len 23/Jan/2026 14:29:14'!
 handleFX: anInteger
 	| command |
 	command := anInteger bitShift: -8.
@@ -13233,22 +13322,22 @@ handleFX: anInteger
 	(command between: 48 and: 57) "0 to 9" ifTrue:
 		[(controlInputs at: command - 47) ifNotNil: [:input| input setValue: (anInteger bitAnd: 16rFF) / 255.0]]! !
 
-!Patch methodsFor: 'playing' stamp: 'len 18/Jan/2026 02:28:05'!
+!Instrument methodsFor: 'playing' stamp: 'len 18/Jan/2026 02:28:05'!
 mixIntoLeft: leftBuffer right: rightBuffer
 	(audioOutput ifNil: [^ self]) mixIntoLeft: leftBuffer right: rightBuffer! !
 
-!Patch methodsFor: 'playing' stamp: 'len 21/Jan/2026 04:39:07'!
+!Instrument methodsFor: 'playing' stamp: 'len 21/Jan/2026 04:39:07'!
 noteOff
 	gateReceivers do: [:each| each gateOff]! !
 
-!Patch methodsFor: 'playing' stamp: 'len 23/Jan/2026 14:29:48'!
+!Instrument methodsFor: 'playing' stamp: 'len 23/Jan/2026 14:29:48'!
 noteOn: midiKey
 	self setOffset: 0.0.
 	self setSpeed: 1.0.
 	noteReceivers do: [:each| each setNote: midiKey].
 	gateReceivers do: [:each| each gateOn]! !
 
-!Patch methodsFor: 'playing' stamp: 'len 15/Feb/2026 20:34:37'!
+!Instrument methodsFor: 'playing' stamp: 'len 15/Feb/2026 20:34:37'!
 playTrigger
 	trigger velocity ifNotNil: [:vel| self setVelocity: vel / 255.0].
 	trigger fx1 ifNotNil: [:fx| self handleFX: fx].
@@ -13256,10 +13345,10 @@ playTrigger
 	trigger note ifNotNil: [:note| note >= 0 ifTrue: [self noteOn: note] ifFalse: [self noteOff]].
 	trigger := nil! !
 
-!Patch methodsFor: 'playing' stamp: 'len 22/Jan/2026 16:26:29'!
+!Instrument methodsFor: 'playing' stamp: 'len 17/Feb/2026 19:39:10'!
 recomputeModules
 	| currentModules |
-	currentModules := patchMorph modules.
+	currentModules := patch modules.
 	modules := currentModules.
 	noteReceivers := currentModules select: [:each| each respondsTo: #setNote:].
 	gateReceivers := currentModules select: [:each| each respondsTo: #gateOn].
@@ -13271,39 +13360,39 @@ recomputeModules
 	currentModules reverseDo: [:each| (each isMemberOf: AudioOut) ifTrue: [audioOutput := each. ^ currentModules]].
 	^ currentModules! !
 
-!Patch methodsFor: 'playing' stamp: 'len 6/Jan/2026 16:00:00'!
+!Instrument methodsFor: 'playing' stamp: 'len 6/Jan/2026 16:00:00'!
 scheduleRecompute
 	modules := nil! !
 
-!Patch methodsFor: 'playing' stamp: 'len 5/Jan/2026 19:45:17'!
+!Instrument methodsFor: 'playing' stamp: 'len 5/Jan/2026 19:45:17'!
 scheduleTrigger: aTrigger
 	trigger := aTrigger! !
 
-!Patch methodsFor: 'playing' stamp: 'len 22/Jan/2026 16:26:48'!
+!Instrument methodsFor: 'playing' stamp: 'len 22/Jan/2026 16:26:48'!
 setBPM: aNumber
 	tempoReceivers do: [:each| each setBPM: aNumber]! !
 
-!Patch methodsFor: 'playing' stamp: 'len 18/Jan/2026 02:31:21'!
+!Instrument methodsFor: 'playing' stamp: 'len 18/Jan/2026 02:31:21'!
 setLevel: aNumber
 	audioOutput ifNotNil: [audioOutput setLevel: aNumber]! !
 
-!Patch methodsFor: 'playing' stamp: 'len 20/Jan/2026 14:27:42'!
+!Instrument methodsFor: 'playing' stamp: 'len 20/Jan/2026 14:27:42'!
 setOffset: aNumber
 	samples do: [:each| each setOffset: aNumber]! !
 
-!Patch methodsFor: 'playing' stamp: 'len 18/Jan/2026 02:31:31'!
+!Instrument methodsFor: 'playing' stamp: 'len 18/Jan/2026 02:31:31'!
 setPan: aNumber
 	audioOutput ifNotNil: [audioOutput setPan: aNumber]! !
 
-!Patch methodsFor: 'playing' stamp: 'len 23/Jan/2026 14:30:33'!
+!Instrument methodsFor: 'playing' stamp: 'len 23/Jan/2026 14:30:33'!
 setSpeed: aNumber
 	samples do: [:each| each setSpeed: aNumber]! !
 
-!Patch methodsFor: 'playing' stamp: 'len 15/Jan/2026 17:46:05'!
+!Instrument methodsFor: 'playing' stamp: 'len 15/Jan/2026 17:46:05'!
 setVelocity: aNumber
 	velocityReceivers do: [:each| each setVelocity: aNumber]! !
 
-!Patch methodsFor: 'playing' stamp: 'len 2/Feb/2026 16:12:08'!
+!Instrument methodsFor: 'playing' stamp: 'len 2/Feb/2026 16:12:08'!
 tick
 	| currentModules |
 	currentModules := modules ifNil: [self recomputeModules].
@@ -13311,11 +13400,11 @@ tick
 	trigger ifNotNil: [self playTrigger].
 	currentModules do: [:each| each update; tick]! !
 
-!Patch methodsFor: 'serialization' stamp: 'len 10/Feb/2026 17:50:59'!
+!Instrument methodsFor: 'serialization' stamp: 'len 17/Feb/2026 19:39:10'!
 asJsonWithBuffers: aList
 	| patchables wires patchablesJson wiresJson |
-	patchables := (patchMorph submorphs select: [:m| m isKindOf: PatchableMorph]) sort: [:a :b| a morphPosition x <= b morphPosition x].
-	wires := patchMorph submorphs select: [:m| m isKindOf: WireMorph].
+	patchables := (patch submorphs select: [:m| m isKindOf: PatchableMorph]) sort: [:a :b| a morphPosition x <= b morphPosition x].
+	wires := patch submorphs select: [:m| m isKindOf: WireMorph].
 	patchablesJson := patchables collect: [:each|
 		OrderedDictionary new
 			at: #class put: each model class name;
@@ -13336,7 +13425,7 @@ asJsonWithBuffers: aList
 		at: #label put: (label ifNil: '');
 		yourself! !
 
-!Patch methodsFor: 'serialization' stamp: 'len 9/Feb/2026 20:57:33'!
+!Instrument methodsFor: 'serialization' stamp: 'len 9/Feb/2026 20:57:33'!
 readFrom: aStream
 	| numberOfBuffers bufferList json |
 	aStream useBytes.
@@ -13346,7 +13435,7 @@ readFrom: aStream
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 
-!Patch methodsFor: 'serialization' stamp: 'len 10/Feb/2026 17:51:17'!
+!Instrument methodsFor: 'serialization' stamp: 'len 17/Feb/2026 19:39:10'!
 readFromJson: json buffers: bufferList
 	| patchables |
 	patchables := (json at: #modules) collect: [:each|
@@ -13354,7 +13443,7 @@ readFromJson: json buffers: bufferList
 		module := (Smalltalk at: (each at: #class) asSymbol) new.
 		module readFromJson: (each at: #module) buffers: bufferList.
 		module patchable morphPosition: (each at: #x) @ (each at: #y)].
-	patchables do: [:each| patchMorph addMorph: each].
+	patchables do: [:each| patch addMorph: each].
 	(json at: #wires) do: [:each|
 		| output input |
 		output := (patchables at: (each at: #source)) outputs detect: [:one| one selector = (each at: #output)].
@@ -13362,7 +13451,7 @@ readFromJson: json buffers: bufferList
 		output addConnectionTo: input].
 	label := json at: #label! !
 
-!Patch methodsFor: 'serialization' stamp: 'len 5/Feb/2026 17:57:19'!
+!Instrument methodsFor: 'serialization' stamp: 'len 5/Feb/2026 17:57:19'!
 writeOn: aStream
 	| bufferList json |
 	bufferList := OrderedCollection new.
@@ -13454,8 +13543,8 @@ readFromJson: json
 		eachBlockJson do: [:rowJson|
 			self track: t at: (rowJson at: #line) put: (Trigger new readFromJson: (rowJson at: #trigger))]]! !
 
-!Pattern methodsFor: 'testing' stamp: 'len 29/Dec/2025 16:38:32'!
-hasReferenceToPatch: anInteger
+!Pattern methodsFor: 'testing' stamp: 'len 17/Feb/2026 19:36:54'!
+hasReferenceToInstrument: anInteger
 	^ blocks anySatisfy: [:block| block notNil and: [block anySatisfy: [:trigger| trigger notNil and: [trigger instrument = anInteger]]]]! !
 
 !Pattern methodsFor: 'testing' stamp: 'len 28/Dec/2025 02:24:12'!
@@ -13507,6 +13596,10 @@ color: aColor
 enabled
 	^ soloed or: [muted not and: [tracker anyTrackSoloed not]]! !
 
+!Track methodsFor: 'accessing' stamp: 'len 17/Feb/2026 19:28:45'!
+instrument
+	^ instrument! !
+
 !Track methodsFor: 'accessing' stamp: 'len 17/Dec/2025 16:45:39'!
 label
 	^ label! !
@@ -13515,17 +13608,17 @@ label
 label: aString
 	label := aString! !
 
-!Track methodsFor: 'accessing' stamp: 'len 18/Jan/2026 15:08:10'!
+!Track methodsFor: 'accessing' stamp: 'len 17/Feb/2026 19:28:15'!
 meterLeftValue
-	^ (patch ifNil: [^ 0.0]) meterLeftValue! !
+	^ (instrument ifNil: [^ 0.0]) meterLeftValue! !
 
-!Track methodsFor: 'accessing' stamp: 'len 18/Jan/2026 15:08:33'!
+!Track methodsFor: 'accessing' stamp: 'len 17/Feb/2026 19:28:15'!
 meterRightValue
-	^ (patch ifNil: [^ 0.0]) meterRightValue! !
+	^ (instrument ifNil: [^ 0.0]) meterRightValue! !
 
-!Track methodsFor: 'accessing' stamp: 'len 18/Jan/2026 02:23:10'!
+!Track methodsFor: 'accessing' stamp: 'len 17/Feb/2026 19:28:15'!
 meterValue
-	^ (patch ifNil: [^ 0.0]) meterValue! !
+	^ (instrument ifNil: [^ 0.0]) meterValue! !
 
 !Track methodsFor: 'accessing' stamp: 'len 17/Dec/2025 16:11:15'!
 muted
@@ -13534,10 +13627,6 @@ muted
 !Track methodsFor: 'accessing' stamp: 'len 31/Dec/2025 22:30:46'!
 muted: aBoolean
 	muted := aBoolean! !
-
-!Track methodsFor: 'accessing' stamp: 'len 7/Jan/2026 13:59:03'!
-patch
-	^ patch! !
 
 !Track methodsFor: 'accessing' stamp: 'len 17/Dec/2025 16:44:47'!
 soloed
@@ -13557,9 +13646,9 @@ initialize
 setTracker: aTracker
 	tracker := aTracker! !
 
-!Track methodsFor: 'playing' stamp: 'len 7/Jan/2026 13:59:03'!
-forgetPatch
-	patch := nil! !
+!Track methodsFor: 'playing' stamp: 'len 17/Feb/2026 19:28:32'!
+forgetInstrument
+	instrument := nil! !
 
 !Track methodsFor: 'playing' stamp: 'len 18/Jan/2026 02:30:49'!
 handleFX: anInteger
@@ -13569,18 +13658,18 @@ handleFX: anInteger
 	command = 70 "F" ifTrue: [tracker bpm: ((anInteger bitAnd: 16rFF) max: 1). ^ self].
 	command = 76 "L" ifTrue: [tracker lpb: ((anInteger bitAnd: 16rFF) max: 1). ^ self]! !
 
-!Track methodsFor: 'playing' stamp: 'len 19/Jan/2026 01:42:19'!
+!Track methodsFor: 'playing' stamp: 'len 17/Feb/2026 19:28:15'!
 mixIntoLeft: leftBuffer right: rightBuffer
-	(patch notNil and: [self enabled]) ifFalse: [^ self].
-	patch mixIntoLeft: leftBuffer right: rightBuffer! !
+	(instrument notNil and: [self enabled]) ifFalse: [^ self].
+	instrument mixIntoLeft: leftBuffer right: rightBuffer! !
 
-!Track methodsFor: 'playing' stamp: 'len 7/Jan/2026 13:59:03'!
+!Track methodsFor: 'playing' stamp: 'len 17/Feb/2026 19:33:55'!
 playTrigger
 	trigger instrument ifNotNil: [:anInteger|
-		patch ifNotNil: [patch setOwnerTrack: nil].
-		patch := tracker patches at: anInteger ifAbsent: [].
-		patch ifNotNil: [patch setOwnerTrack: self]].
-	patch ifNotNil: [patch scheduleTrigger: trigger].
+		instrument ifNotNil: [instrument setOwnerTrack: nil].
+		instrument := tracker instruments at: anInteger ifAbsent: [].
+		instrument ifNotNil: [instrument setOwnerTrack: self]].
+	instrument ifNotNil: [instrument scheduleTrigger: trigger].
 	trigger fx1 ifNotNil: [:fx| self handleFX: fx].
 	trigger fx2 ifNotNil: [:fx| self handleFX: fx].
 	trigger := nil! !
@@ -13590,10 +13679,10 @@ scheduleTrigger: aTrigger
 	trigger := aTrigger.
 	ticksToTrigger := 0 "delay * Module sampleRate / Module blockSize ...."! !
 
-!Track methodsFor: 'playing' stamp: 'len 7/Jan/2026 13:59:03'!
+!Track methodsFor: 'playing' stamp: 'len 17/Feb/2026 19:28:15'!
 tick
 	trigger ifNotNil: [ticksToTrigger > 0 ifTrue: [ticksToTrigger := ticksToTrigger - 1] ifFalse: [self playTrigger]].
-	patch ifNotNil: [patch tick]! !
+	instrument ifNotNil: [instrument tick]! !
 
 !Tracker methodsFor: 'accessing' stamp: 'len 16/Dec/2025 17:27:25'!
 bpm
@@ -13611,6 +13700,10 @@ followPlayhead
 !Tracker methodsFor: 'accessing' stamp: 'len 16/Feb/2026 21:26:45'!
 inputCenterKey
 	^ inputCenterKey! !
+
+!Tracker methodsFor: 'accessing' stamp: 'len 17/Feb/2026 19:33:55'!
+instruments
+	^ instruments! !
 
 !Tracker methodsFor: 'accessing' stamp: 'len 10/Feb/2026 15:05:40'!
 label
@@ -13643,10 +13736,6 @@ lpb: anInteger
 masks
 	^ masks! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 7/Jan/2026 13:56:05'!
-patches
-	^ patches! !
-
 !Tracker methodsFor: 'accessing' stamp: 'len 26/Dec/2025 02:14:36'!
 patternNumbers
 	| uniquePatterns |
@@ -13678,13 +13767,13 @@ swing: aNumber
 tracks
 	^ tracks! !
 
+!Tracker methodsFor: 'cursor' stamp: 'len 17/Feb/2026 19:26:54'!
+cursorInstrument
+	^ cursorInstrument! !
+
 !Tracker methodsFor: 'cursor' stamp: 'len 1/Jan/2026 17:06:02'!
 cursorLine
 	^ cursorLine! !
-
-!Tracker methodsFor: 'cursor' stamp: 'len 7/Jan/2026 14:39:31'!
-cursorPatch
-	^ cursorPatch! !
 
 !Tracker methodsFor: 'cursor' stamp: 'len 1/Jan/2026 17:08:09'!
 cursorPattern
@@ -13713,6 +13802,14 @@ moveCursorBeatDown
 !Tracker methodsFor: 'cursor' stamp: 'len 10/Jan/2026 22:27:14'!
 moveCursorBeatUp
 	self moveCursorLineUp: lpb! !
+
+!Tracker methodsFor: 'cursor' stamp: 'len 17/Feb/2026 19:26:54'!
+moveCursorInstrumentLeft
+	self setCursorInstrument: cursorInstrument - 1! !
+
+!Tracker methodsFor: 'cursor' stamp: 'len 17/Feb/2026 19:26:54'!
+moveCursorInstrumentRight
+	self setCursorInstrument: cursorInstrument + 1! !
 
 !Tracker methodsFor: 'cursor' stamp: 'len 1/Jan/2026 16:41:01'!
 moveCursorLineBottom
@@ -13758,14 +13855,6 @@ moveCursorLineUp: anInteger
 			ifFalse: [cursorLine := 1]].
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 14/Feb/2026 19:59:57'!
-moveCursorPatchLeft
-	self setCursorPatch: cursorPatch - 1! !
-
-!Tracker methodsFor: 'cursor' stamp: 'len 14/Feb/2026 20:00:02'!
-moveCursorPatchRight
-	self setCursorPatch: cursorPatch + 1! !
-
 !Tracker methodsFor: 'cursor' stamp: 'len 10/Jan/2026 22:28:13'!
 moveCursorPatternDown
 	cursorPattern < patterns size ifFalse: [^ self].
@@ -13788,23 +13877,23 @@ moveCursorTrackLeft
 moveCursorTrackRight
 	self setCursorTrack: cursorTrack + 1! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 14/Feb/2026 19:59:33'!
-setCursorPatch: anInteger
-	((anInteger between: 1 and: patches size) and: [cursorPatch ~= anInteger]) ifFalse: [^ self].
-	cursorPatch := anInteger.
-	self triggerEvent: #patchesChanged! !
+!Tracker methodsFor: 'cursor' stamp: 'len 17/Feb/2026 19:26:54'!
+setCursorInstrument: anInteger
+	((anInteger between: 1 and: instruments size) and: [cursorInstrument ~= anInteger]) ifFalse: [^ self].
+	cursorInstrument := anInteger.
+	self triggerEvent: #instrumentsChanged! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 14/Feb/2026 19:57:32'!
+!Tracker methodsFor: 'cursor' stamp: 'len 17/Feb/2026 19:32:36'!
 setCursorTrack: anInteger
 	((anInteger between: 1 and: tracks size) and: [cursorTrack ~= anInteger]) ifFalse: [^ self].
 	cursorTrack := anInteger.
 	self triggerEvent: #cursorChanged.
-	self selectedTrack patch ifNotNil: [:aPatch| self setCursorPatch: (patches indexOf: aPatch)]! !
+	self selectedTrack instrument ifNotNil: [:anInstrument| self setCursorInstrument: (instruments indexOf: anInstrument)]! !
 
-!Tracker methodsFor: 'initialization' stamp: 'len 16/Feb/2026 21:24:24'!
+!Tracker methodsFor: 'initialization' stamp: 'len 17/Feb/2026 19:26:54'!
 initialize
 	tracks := #().
-	patches := #().
+	instruments := #().
 	patterns := #().
 	masks := #().
 	bpm := 175.
@@ -13815,7 +13904,7 @@ initialize
 	cursorPattern := 1.
 	cursorLine := 1.
 	cursorTrack := 1.
-	cursorPatch := 1.
+	cursorInstrument := 1.
 	playheadPattern := 1.
 	playheadLine := 0.
 	followPlayhead := false.
@@ -13825,33 +13914,32 @@ initialize
 	peakLeft := 0.0.
 	peakRight := 0.0.
 
-	self addPatch.
+	self addInstrument.
 	1 timesRepeat: [self insertTrack: tracks size + 1].
 	1 timesRepeat: [self insertPattern: patterns size + 1]! !
 
-!Tracker methodsFor: 'patches' stamp: 'len 7/Jan/2026 14:52:19'!
-addPatch
+!Tracker methodsFor: 'instruments' stamp: 'len 17/Feb/2026 19:26:54'!
+addInstrument
 	| answer |
-	answer := Patch new.
-	answer label: 'Patch ', (patches size + 1) printString.
-	patches := patches copyWith: answer.
-	cursorPatch := patches size.
-	self triggerEvent: #patchesChanged.
+	answer := Instrument new.
+	instruments := instruments copyWith: answer.
+	cursorInstrument := instruments size.
+	self triggerEvent: #instrumentsChanged.
 	^ answer! !
 
-!Tracker methodsFor: 'patches' stamp: 'len 7/Jan/2026 13:55:41'!
-deletePatch
-	patches at: cursorPatch put: nil.
-	self triggerEvent: #patchesChanged! !
+!Tracker methodsFor: 'instruments' stamp: 'len 17/Feb/2026 19:26:54'!
+deleteInstrument
+	instruments at: cursorInstrument put: nil.
+	self triggerEvent: #instrumentsChanged! !
 
-!Tracker methodsFor: 'patches' stamp: 'len 7/Jan/2026 13:55:29'!
-deletePatch: anInteger
-	patches at: anInteger put: nil.
-	self triggerEvent: #patchesChanged! !
+!Tracker methodsFor: 'instruments' stamp: 'len 17/Feb/2026 19:26:09'!
+deleteInstrument: anInteger
+	instruments at: anInteger put: nil.
+	self triggerEvent: #instrumentsChanged! !
 
-!Tracker methodsFor: 'patches' stamp: 'len 7/Jan/2026 13:55:41'!
-selectedPatch
-	^ patches at: cursorPatch! !
+!Tracker methodsFor: 'instruments' stamp: 'len 17/Feb/2026 19:26:54'!
+selectedInstrument
+	^ instruments at: cursorInstrument! !
 
 !Tracker methodsFor: 'patterns' stamp: 'len 14/Jan/2026 12:48:44'!
 deletePattern
@@ -14037,7 +14125,7 @@ toggleFollowPlayhead
 togglePlay
 	self isPlaying ifTrue: [self stop] ifFalse: [self play]! !
 
-!Tracker methodsFor: 'serialization' stamp: 'len 9/Feb/2026 16:21:14'!
+!Tracker methodsFor: 'serialization' stamp: 'len 17/Feb/2026 19:33:55'!
 asJsonWithBuffers: bufferList
 	^ OrderedDictionary new
 		at: #bpm put: bpm;
@@ -14051,7 +14139,7 @@ asJsonWithBuffers: bufferList
 				at: #mask put: (masks at: i);
 				yourself]);
 		at: #patterns put: (patterns collect: [:each| each asJson]);
-		at: #patches put: (patches collect: [:each| each asJsonWithBuffers: bufferList]);
+		at: #instruments put: (instruments collect: [:each| each asJsonWithBuffers: bufferList]);
 		yourself! !
 
 !Tracker methodsFor: 'serialization' stamp: 'len 9/Feb/2026 20:57:54'!
@@ -14064,7 +14152,7 @@ readFrom: aStream
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 
-!Tracker methodsFor: 'serialization' stamp: 'len 9/Feb/2026 16:30:48'!
+!Tracker methodsFor: 'serialization' stamp: 'len 17/Feb/2026 19:44:51'!
 readFromJson: json buffers: bufferList
 	| uniquePatterns |
 	bpm := json at: #bpm.
@@ -14076,8 +14164,8 @@ readFromJson: json buffers: bufferList
 	uniquePatterns := (json at: #patterns) collect: [:each| Pattern new readFromJson: each].
 	patterns := (json at: #sequence) collect: [:each| uniquePatterns at: (each at: #pattern)].
 	masks := (json at: #sequence) collect: [:each| each at: #mask].
-	patches := #().
-	(json at: #patches) do: [:each| self addPatch readFromJson: each buffers: bufferList]! !
+	instruments := #().
+	(json at: #instruments ifAbsent: [json at: #patches]) do: [:each| self addInstrument readFromJson: each buffers: bufferList]! !
 
 !Tracker methodsFor: 'serialization' stamp: 'len 9/Feb/2026 16:22:08'!
 writeOn: aStream

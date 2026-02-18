@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 17 February 2026 at 8:06:05 pm'!
+'From Cuis7.7 [latest update: #7797] on 18 February 2026 at 5:40:16 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 465!
+!provides: 'Signals' 1 466!
 !requires: 'FFI' 1 57 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1579,7 +1579,7 @@ Track class
 
 !classDefinition: #Tracker category: #'Signals-Tracker'!
 Object subclass: #Tracker
-	instanceVariableNames: 'tracks instruments patterns masks label bpm lpb swing level inputCenterKey cursorPattern cursorLine cursorTrack cursorInstrument playheadPattern playheadLine followPlayhead anyTrackSoloed ticksToLine leftBuffer rightBuffer peakLeft peakRight'
+	instanceVariableNames: 'instruments tracks patterns masks label bpm lpb swing level inputCenterKey cursorPattern cursorLine cursorTrack playheadPattern playheadLine followPlayhead anyTrackSoloed ticksToLine leftBuffer rightBuffer peakLeft peakRight'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Tracker'!
@@ -7323,7 +7323,7 @@ keyStroke: anEvent
 		anEvent keyCharacter = $[ ifTrue: [anEvent wasHandled: true. ^ model inputOctaveDown]].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 17/Feb/2026 19:20:00'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 18/Feb/2026 17:06:13'!
 buildMorphicWindow
 	| lowerLeftPane sequencerScroller patternEditorScroller bar |
 	instrumentEditor := InstrumentEditorMorph new setTracker: model.
@@ -7331,6 +7331,7 @@ buildMorphicWindow
 	sequencer := SequencerMorph new setTracker: model.
 	patternEditor := PatternEditorMorph new setTracker: model.
 	bar := TrackerBarMorph new setTracker: model.
+	instrumentEditor when: #instrumentChanged send: #redrawNeeded to: bar.
 	lowerPane := LinearLayoutMorph newRow.
 	lowerLeftPane := LinearLayoutMorph newColumn.
 	sequencerScroller := ScrollerMorph new vertical: true; scrollable: sequencer.
@@ -9152,7 +9153,7 @@ level: aNumber
 	connections do: [:each| each level: aNumber].
 "	wires do: [:each| each redrawNeeded]"! !
 
-!OutputPinMorph methodsFor: 'connections' stamp: 'len 26/Nov/2025 18:25:00'!
+!OutputPinMorph methodsFor: 'connections' stamp: 'len 18/Feb/2026 17:30:30'!
 addConnectionTo: anInput
 	| wire |
 	(connections includes: anInput) ifTrue: [^ self].
@@ -9428,41 +9429,41 @@ clipboardCut
 	(self activeHand keyboardFocus ifNil: [^ self])
 		withAllOwnersDo: [:each| (each isKindOf: PatchableMorph) ifTrue: [clipboard := each model copy. each delete. ^ self]]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Jan/2026 16:26:19'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 18/Feb/2026 17:29:51'!
 clipboardPaste
-	| patchMorph |
-	clipboard ifNil: [^ self].
-	patchMorph := submorphs detect: [:any| any isKindOf: PatchMorph] ifNone: [^ self].
-	patchMorph addMorph: clipboard copy patchable position: ((patchMorph internalizeFromWorld: self activeHand morphPosition))! !
-
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 17/Feb/2026 19:34:52'!
-exportInstrument
 	| patch |
-	patch := tracker selectedInstrument ifNil: [^ self].
-	self request: 'Instrument name' initialAnswer: patch label do: [:newName|
-		patch label: newName.
-		(self class package packageDirectory / 'library' // (newName, '.patch')) writeStreamDo: [:s| patch writeOn: s].
-		tracker triggerEvent: #instrumentsChanged]! !
+	clipboard ifNil: [^ self].
+	patch := self patch ifNil: [^ self].
+	patch addMorph: clipboard copy patchable position: ((patch internalizeFromWorld: self activeHand morphPosition))! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 17/Feb/2026 19:35:08'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 18/Feb/2026 17:11:10'!
+exportInstrument
+	| instrument |
+	instrument := tracker selectedInstrument ifNil: [^ self].
+	self request: 'Instrument name' initialAnswer: (instrument label ifNil: ['']) do: [:newName|
+		instrument label: newName.
+		(self class package packageDirectory / 'library' // (newName, '.patch')) writeStreamDo: [:s| instrument writeOn: s].
+		self triggerEvent: #instrumentChanged]! !
+
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 18/Feb/2026 17:10:58'!
 importInstrument
 	| instrument |
 	instrument := tracker selectedInstrument ifNil: [^ self].
-	self request: 'Instrument name' initialAnswer: instrument label do: [:newName|
+	self request: 'Instrument name' initialAnswer: (instrument label ifNil: ['']) do: [:newName|
 		instrument label: newName.
 		(self class package packageDirectory / 'library' // (newName, '.patch')) readStreamDo: [:s| instrument readFrom: s binary].
-		tracker triggerEvent: #instrumentsChanged]! !
+		self triggerEvent: #instrumentChanged]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 17/Feb/2026 19:35:16'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 18/Feb/2026 17:09:48'!
 renameInstrument
-	| patch |
-	patch := tracker selectedInstrument ifNil: [^ self].
-	self request: 'Instrument name' initialAnswer: patch label do: [:newName| patch label: newName. tracker triggerEvent: #instrumentsChanged]! !
+	| instrument |
+	instrument := tracker selectedInstrument ifNil: [^ self].
+	self request: 'Instrument name' initialAnswer: (instrument label ifNil: ['']) do: [:newName| instrument label: newName. self triggerEvent: #instrumentChanged]! !
 
-!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 17/Feb/2026 19:34:42'!
+!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 18/Feb/2026 16:49:30'!
 keyStroke: anEvent
 	| c i |
-	(anEvent rawMacOptionKeyPressed or: [anEvent controlKeyPressed]) ifTrue:
+"	(anEvent rawMacOptionKeyPressed or: [anEvent controlKeyPressed]) ifTrue:
 		[anEvent isArrowLeft ifTrue:
 			[anEvent wasHandled: true.
 			tracker moveCursorInstrumentLeft.
@@ -9470,10 +9471,10 @@ keyStroke: anEvent
 		anEvent isArrowRight ifTrue:
 			[anEvent wasHandled: true.
 			tracker moveCursorInstrumentRight.
-			^ self]].
+			^ self]]."
 	anEvent commandAltKeyPressed ifTrue:
-		[anEvent keyCharacter = $n ifTrue: [anEvent wasHandled: true. ^ tracker addInstrument].
-		anEvent keyCharacter = $N ifTrue: [anEvent wasHandled: true. ^ tracker deleteInstrument].
+		["anEvent keyCharacter = $n ifTrue: [anEvent wasHandled: true. ^ tracker addInstrument].
+		anEvent keyCharacter = $N ifTrue: [anEvent wasHandled: true. ^ tracker deleteInstrument]."
 		anEvent keyCharacter = $r ifTrue: [anEvent wasHandled: true. ^ self renameInstrument].
 		anEvent keyCharacter = $e ifTrue: [anEvent wasHandled: true. ^ self exportInstrument].
 		anEvent keyCharacter = $i ifTrue: [anEvent wasHandled: true. ^ self importInstrument].
@@ -9492,16 +9493,24 @@ keyStroke: anEvent
 			[anEvent wasHandled: true. tracker selectedInstrument ifNotNil: [:aPatch| aPatch noteOn: i + tracker inputCenterKey - 1]. ^ self]].
 	^ super keyStroke: anEvent! !
 
-!InstrumentEditorMorph methodsFor: 'initialization' stamp: 'len 17/Feb/2026 19:25:30'!
+!InstrumentEditorMorph methodsFor: 'initialization' stamp: 'len 18/Feb/2026 17:30:12'!
 setTracker: aTracker
 	tracker := aTracker.
-	aTracker when: #instrumentsChanged send: #update to: self.
+	aTracker when: #cursorChanged send: #update to: self.
 	self update! !
 
-!InstrumentEditorMorph methodsFor: 'private' stamp: 'len 17/Feb/2026 19:38:31'!
+!InstrumentEditorMorph methodsFor: 'private' stamp: 'len 18/Feb/2026 16:16:00'!
+patch
+	^ submorphs detect: [:one| one isKindOf: PatchMorph] ifNone: []! !
+
+!InstrumentEditorMorph methodsFor: 'private' stamp: 'len 18/Feb/2026 17:04:43'!
 update
-	self removeAllMorphs.
-	tracker selectedInstrument ifNotNil: [:anInstrument| self addMorph: anInstrument patch]! !
+	| selectedPatch |
+	selectedPatch := tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument patch].
+	selectedPatch = self patch ifFalse:
+		[self removeAllMorphs.
+		selectedPatch ifNotNil: [self addMorph: selectedPatch].
+		self triggerEvent: #instrumentChanged]! !
 
 !MultitrackMeterMorph methodsFor: 'drawing' stamp: 'len 12/Feb/2026 16:36:41'!
 colorForMeterValue: aNumber
@@ -10064,7 +10073,7 @@ update
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 17/Feb/2026 19:32:08'!
+!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 18/Feb/2026 17:08:27'!
 drawOn: aCanvas
 	| patchLabel color |
 	aCanvas fillRectangle: (0 @ 0 extent: extent) color: Color darkGray.
@@ -10075,8 +10084,9 @@ drawOn: aCanvas
 		drawString: (tracker bpm printStringFractionDigits: 1), ' / ', tracker lpb printString at: 32 @ 2 font: font color: color;
 		drawString: '↧' at: 150 @ 3 font: font color: (tracker followPlayhead ifTrue: [color] ifFalse: [Color lightGray]);
 		drawString: tracker inputCenterKey semitonesToName at: 180 @ 3 font: font color: color.
-	patchLabel := (tracker cursorInstrument printStringBase: 16 nDigits: 2), ' ', (tracker selectedInstrument ifNil: ['EMPTY'] ifNotNil: [:anInstrument| anInstrument label ifNil: ['']]).
-	aCanvas drawString: patchLabel at: (extent x - 4 - (font widthOfString: patchLabel)) @ 2 font: font color: color! !
+	tracker selectedInstrumentNumber ifNotNil: [:instrumentNumber|
+		patchLabel := (instrumentNumber printStringBase: 16 nDigits: 2), ' ', (tracker selectedInstrument ifNil: ['EMPTY'] ifNotNil: [:anInstrument| anInstrument label ifNil: ['']]).
+		aCanvas drawString: patchLabel at: (extent x - 4 - (font widthOfString: patchLabel)) @ 2 font: font color: color]! !
 
 !TrackerBarMorph methodsFor: 'geometry' stamp: 'len 7/Jan/2026 14:33:18'!
 minimumExtent
@@ -10087,7 +10097,7 @@ initialize
 	super initialize.
 	font := FontFamily defaultFamilyPointSize: 16! !
 
-!TrackerBarMorph methodsFor: 'initialization' stamp: 'len 17/Feb/2026 19:25:41'!
+!TrackerBarMorph methodsFor: 'initialization' stamp: 'len 18/Feb/2026 17:06:45'!
 setTracker: aTracker
 	tracker := aTracker.
 	tracker
@@ -10095,7 +10105,6 @@ setTracker: aTracker
 		when: #bpmChanged send: #redrawNeeded to: self;
 		when: #lpbChanged send: #redrawNeeded to: self;
 		when: #followPlayheadChanged send: #redrawNeeded to: self;
-		when: #instrumentsChanged send: #redrawNeeded to: self;
 		when: #inputCenterKeyChanged send: #redrawNeeded to: self! !
 
 !OscilloscopeMorph methodsFor: 'drawing' stamp: 'len 4/Dec/2025 16:18:53'!
@@ -11771,9 +11780,9 @@ drawOn: aCanvas
 		[aCanvas moveTo: s; lineTo: t]"
 "	aCanvas strokeWidth: 1 color: color fillColor: color do: [aCanvas circleCenter: t - (0.5@0.5) radius: 2]"! !
 
-!WireMorph methodsFor: 'drawing' stamp: 'len 22/Nov/2025 01:49:00'!
+!WireMorph methodsFor: 'drawing' stamp: 'len 18/Feb/2026 17:27:12'!
 update
-	(source isInWorld and: [target isInWorld]) ifFalse: [source removeConnectionTo: target. ^ self delete].
+	(source patch notNil and: [target patch notNil]) ifFalse: [source removeConnectionTo: target. ^ self delete].
 	self redrawNeeded! !
 
 !WireMorph methodsFor: 'drawing' stamp: 'len 26/Nov/2025 18:24:00'!
@@ -13435,7 +13444,7 @@ readFrom: aStream
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 
-!Instrument methodsFor: 'serialization' stamp: 'len 17/Feb/2026 19:39:10'!
+!Instrument methodsFor: 'serialization' stamp: 'len 18/Feb/2026 17:28:37'!
 readFromJson: json buffers: bufferList
 	| patchables |
 	patchables := (json at: #modules) collect: [:each|
@@ -13490,6 +13499,14 @@ track: trackIndex at: index put: aTrigger
 	block := (blocks at: trackIndex) ifNil: [aTrigger ifNil: [^ self]. blocks at: trackIndex put: (Array new: length)].
 	block at: index put: aTrigger.
 	(aTrigger isNil and: [block allSatisfy: [:each| each isNil]]) ifTrue: [blocks at: trackIndex put: nil]! !
+
+!Pattern methodsFor: 'accessing' stamp: 'len 18/Feb/2026 17:32:13'!
+track: trackIndex instrumentAbove: line
+	"Answer the instrument set for the given track at or above the given line. This is the instrument that will play that line when the playhead reaches it."
+	| block |
+	block := (blocks at: trackIndex) ifNil: [^ nil].
+	line to: 1 by: -1 do: [:j| (block at: j) ifNotNil: [:aTrigger| aTrigger instrument ifNotNil: [:anInteger| ^ anInteger]]].
+	^ nil! !
 
 !Pattern methodsFor: 'copying' stamp: 'len 27/Dec/2025 02:01:58'!
 postCopy
@@ -13701,7 +13718,7 @@ followPlayhead
 inputCenterKey
 	^ inputCenterKey! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 17/Feb/2026 19:33:55'!
+!Tracker methodsFor: 'accessing' stamp: 'len 18/Feb/2026 16:58:40'!
 instruments
 	^ instruments! !
 
@@ -13767,10 +13784,6 @@ swing: aNumber
 tracks
 	^ tracks! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 17/Feb/2026 19:26:54'!
-cursorInstrument
-	^ cursorInstrument! !
-
 !Tracker methodsFor: 'cursor' stamp: 'len 1/Jan/2026 17:06:02'!
 cursorLine
 	^ cursorLine! !
@@ -13802,14 +13815,6 @@ moveCursorBeatDown
 !Tracker methodsFor: 'cursor' stamp: 'len 10/Jan/2026 22:27:14'!
 moveCursorBeatUp
 	self moveCursorLineUp: lpb! !
-
-!Tracker methodsFor: 'cursor' stamp: 'len 17/Feb/2026 19:26:54'!
-moveCursorInstrumentLeft
-	self setCursorInstrument: cursorInstrument - 1! !
-
-!Tracker methodsFor: 'cursor' stamp: 'len 17/Feb/2026 19:26:54'!
-moveCursorInstrumentRight
-	self setCursorInstrument: cursorInstrument + 1! !
 
 !Tracker methodsFor: 'cursor' stamp: 'len 1/Jan/2026 16:41:01'!
 moveCursorLineBottom
@@ -13877,23 +13882,16 @@ moveCursorTrackLeft
 moveCursorTrackRight
 	self setCursorTrack: cursorTrack + 1! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 17/Feb/2026 19:26:54'!
-setCursorInstrument: anInteger
-	((anInteger between: 1 and: instruments size) and: [cursorInstrument ~= anInteger]) ifFalse: [^ self].
-	cursorInstrument := anInteger.
-	self triggerEvent: #instrumentsChanged! !
-
-!Tracker methodsFor: 'cursor' stamp: 'len 17/Feb/2026 19:32:36'!
+!Tracker methodsFor: 'cursor' stamp: 'len 18/Feb/2026 17:33:34'!
 setCursorTrack: anInteger
 	((anInteger between: 1 and: tracks size) and: [cursorTrack ~= anInteger]) ifFalse: [^ self].
 	cursorTrack := anInteger.
-	self triggerEvent: #cursorChanged.
-	self selectedTrack instrument ifNotNil: [:anInstrument| self setCursorInstrument: (instruments indexOf: anInstrument)]! !
+	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'initialization' stamp: 'len 17/Feb/2026 19:26:54'!
+!Tracker methodsFor: 'initialization' stamp: 'len 18/Feb/2026 17:32:49'!
 initialize
+	instruments := Dictionary new.
 	tracks := #().
-	instruments := #().
 	patterns := #().
 	masks := #().
 	bpm := 175.
@@ -13904,7 +13902,6 @@ initialize
 	cursorPattern := 1.
 	cursorLine := 1.
 	cursorTrack := 1.
-	cursorInstrument := 1.
 	playheadPattern := 1.
 	playheadLine := 0.
 	followPlayhead := false.
@@ -13914,32 +13911,8 @@ initialize
 	peakLeft := 0.0.
 	peakRight := 0.0.
 
-	self addInstrument.
 	1 timesRepeat: [self insertTrack: tracks size + 1].
 	1 timesRepeat: [self insertPattern: patterns size + 1]! !
-
-!Tracker methodsFor: 'instruments' stamp: 'len 17/Feb/2026 19:26:54'!
-addInstrument
-	| answer |
-	answer := Instrument new.
-	instruments := instruments copyWith: answer.
-	cursorInstrument := instruments size.
-	self triggerEvent: #instrumentsChanged.
-	^ answer! !
-
-!Tracker methodsFor: 'instruments' stamp: 'len 17/Feb/2026 19:26:54'!
-deleteInstrument
-	instruments at: cursorInstrument put: nil.
-	self triggerEvent: #instrumentsChanged! !
-
-!Tracker methodsFor: 'instruments' stamp: 'len 17/Feb/2026 19:26:09'!
-deleteInstrument: anInteger
-	instruments at: anInteger put: nil.
-	self triggerEvent: #instrumentsChanged! !
-
-!Tracker methodsFor: 'instruments' stamp: 'len 17/Feb/2026 19:26:54'!
-selectedInstrument
-	^ instruments at: cursorInstrument! !
 
 !Tracker methodsFor: 'patterns' stamp: 'len 14/Jan/2026 12:48:44'!
 deletePattern
@@ -13983,6 +13956,14 @@ moveSelectedPatternUp
 	cursorPattern > 1 ifFalse: [^ self].
 	cursorPattern := cursorPattern - 1.
 	self swapPattern: cursorPattern with: cursorPattern + 1! !
+
+!Tracker methodsFor: 'patterns' stamp: 'len 18/Feb/2026 16:58:40'!
+selectedInstrument
+	^ instruments at: (self selectedInstrumentNumber ifNil: [^ nil]) ifAbsentPut: [Instrument new]! !
+
+!Tracker methodsFor: 'patterns' stamp: 'len 18/Feb/2026 16:41:16'!
+selectedInstrumentNumber
+	^​ self selectedPattern track: cursorTrack instrumentAbove: cursorLine! !
 
 !Tracker methodsFor: 'patterns' stamp: 'len 1/Jan/2026 15:18:40'!
 selectedPattern
@@ -14125,7 +14106,7 @@ toggleFollowPlayhead
 togglePlay
 	self isPlaying ifTrue: [self stop] ifFalse: [self play]! !
 
-!Tracker methodsFor: 'serialization' stamp: 'len 17/Feb/2026 19:33:55'!
+!Tracker methodsFor: 'serialization' stamp: 'len 18/Feb/2026 16:58:40'!
 asJsonWithBuffers: bufferList
 	^ OrderedDictionary new
 		at: #bpm put: bpm;
@@ -14152,7 +14133,7 @@ readFrom: aStream
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 
-!Tracker methodsFor: 'serialization' stamp: 'len 17/Feb/2026 19:44:51'!
+!Tracker methodsFor: 'serialization' stamp: 'len 18/Feb/2026 17:37:30'!
 readFromJson: json buffers: bufferList
 	| uniquePatterns |
 	bpm := json at: #bpm.
@@ -14164,8 +14145,8 @@ readFromJson: json buffers: bufferList
 	uniquePatterns := (json at: #patterns) collect: [:each| Pattern new readFromJson: each].
 	patterns := (json at: #sequence) collect: [:each| uniquePatterns at: (each at: #pattern)].
 	masks := (json at: #sequence) collect: [:each| each at: #mask].
-	instruments := #().
-	(json at: #instruments ifAbsent: [json at: #patches]) do: [:each| self addInstrument readFromJson: each buffers: bufferList]! !
+	instruments := Dictionary new.
+	(json at: #instruments) keysAndValuesDo: [:key :value| instruments at: key asNumber put: (Instrument new readFromJson: value buffers: bufferList)]! !
 
 !Tracker methodsFor: 'serialization' stamp: 'len 9/Feb/2026 16:22:08'!
 writeOn: aStream

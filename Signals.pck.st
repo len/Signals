@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 19 February 2026 at 1:51:45 am'!
+'From Cuis7.7 [latest update: #7797] on 20 February 2026 at 11:23:58 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 468!
+!provides: 'Signals' 1 469!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1519,7 +1519,7 @@ Pattern class
 
 !classDefinition: #Track category: #'Signals-Tracker'!
 Object subclass: #Track
-	instanceVariableNames: 'tracker label color muted soloed delay instrument ticksToTrigger trigger'
+	instanceVariableNames: 'tracker color muted soloed delay instrument ticksToTrigger trigger'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Tracker'!
@@ -4547,30 +4547,48 @@ trimSilence
 	(i := buffer findFirst: [:x| x abs > 0.00316]) > 0 ifTrue: [buffer := buffer copyFrom: i to: buffer size].
 	(i := buffer findLast: [:x| x abs > 0.00316]) > 0 ifTrue: [buffer := buffer copyFrom: 1 to: i]! !
 
+!Sample class methodsFor: 'library' stamp: 'len 19/Feb/2026 17:25:27'!
+fileReaderServicesForFileEntry: filename suffix: suffix
+	suffix = 'wav' ifTrue: [^ {self serviceLoadSample}].
+	^ #()! !
+
 !Sample class methodsFor: 'library' stamp: 'len 3/Dec/2025 02:10:00'!
 library
 	^ Library! !
 
-!Sample class methodsFor: 'library' stamp: 'len 13/Feb/2026 00:25:06'!
-load: fileName label: aString
-	^ (Library at: aString put: (self fromFileNamed: fileName)) label: aString! !
+!Sample class methodsFor: 'library' stamp: 'len 19/Feb/2026 17:23:37'!
+load: fileEntry
+	^ self load: fileEntry label: (fileEntry name allButLast: 4)! !
 
-!Sample class methodsFor: 'library' stamp: 'len 17/Feb/2026 19:05:02'!
+!Sample class methodsFor: 'library' stamp: 'len 19/Feb/2026 17:21:23'!
+load: fileEntry label: aString
+	^ (Library at: aString put: (self fromFileEntry: fileEntry)) label: aString! !
+
+!Sample class methodsFor: 'library' stamp: 'len 19/Feb/2026 21:14:41'!
 loadLibrary
 	"
 	Sample loadLibrary
 	"
 	
 	Library := OrderedDictionary new.
-	(self load: self samplesDirectory / 'breaks' / 'breaks152' // '000_AMEN.WAV' label: 'Amen 152 BPM') normalizeAmplitude.
-	(self load: self samplesDirectory / 'pad' // 'pad2.wav' label: 'Pad 2') normalizeAmplitude; trimSilence.
-	(self load: self samplesDirectory / 'pad' // 'pad3.wav' label: 'Pad 3') normalizeAmplitude; trimSilence.
-	(self load: self samplesDirectory / 'pad' // 'pad4.wav' label: 'Pad 4') normalizeAmplitude; trimSilence.
-	(self load: self samplesDirectory / 'pad' // 'pad5.wav' label: 'Pad 5') normalizeAmplitude; trimSilence! !
+	(self load: self samplesDirectory / 'Breaks' / 'Classic 2' // 'winstons-amenbrother-137.2bpm.wav') normalizeAmplitude.
+	(self load: self samplesDirectory / 'Pad' // 'pad2.wav') normalizeAmplitude; trimSilence.
+	(self load: self samplesDirectory / 'Pad' // 'pad3.wav') normalizeAmplitude; trimSilence.
+	(self load: self samplesDirectory / 'Pad' // 'pad4.wav') normalizeAmplitude; trimSilence.
+	(self load: self samplesDirectory / 'Pad' // 'pad5.wav') normalizeAmplitude; trimSilence! !
 
 !Sample class methodsFor: 'library' stamp: 'len 15/Feb/2026 15:41:08'!
 samplesDirectory
 	^ self package packageDirectory / 'samples'! !
+
+!Sample class methodsFor: 'library' stamp: 'len 19/Feb/2026 17:23:45'!
+serviceLoadSample
+	^ (SimpleServiceEntry
+		provider: self
+		label: 'load sample to library'
+		selector: #load:
+		description:'load the sample to the samples library'
+		buttonLabel: 'load sample') argumentGetter: [:fileList| fileList selectedFileEntry]! !
 
 !Sample class methodsFor: 'instance creation' stamp: 'len 2/Jan/2026 16:58:08'!
 buffer: aFloatArray
@@ -4592,10 +4610,10 @@ buffer: aFloatArray sampleRate: aNumber loopStart: loopStart loopEnd: loopEnd
 buffer: aFloatArray sampleRate: aNumber rootNote: anotherNumber
 	^ self buffer: aFloatArray baseRate: aNumber * (60 - anotherNumber) semitonesToRatio! !
 
-!Sample class methodsFor: 'instance creation' stamp: 'len 17/Feb/2026 19:03:59'!
-fromFileNamed: fileName
+!Sample class methodsFor: 'instance creation' stamp: 'len 19/Feb/2026 17:19:41'!
+fromFileEntry: fileEntry
 	| reader samples |
-	reader := WAVFileReader new readFromFileNamed: fileName.
+	reader := WAVFileReader new readFromFileEntry: fileEntry.
 	"If stereo, sum channels:"
 	samples := reader channels = 2 ifTrue: [reader leftSamples + reader rightSamples] ifFalse: [reader leftSamples].
 	^ (self buffer: samples baseRate: reader sampleRate)
@@ -6471,16 +6489,18 @@ peek
 tick
 	self triggerEvent: #output: with: self next! !
 
-!LFO methodsFor: 'serialization' stamp: 'len 5/Feb/2026 15:51:56'!
+!LFO methodsFor: 'serialization' stamp: 'len 19/Feb/2026 21:17:05'!
 asJsonWithBuffers: aList
 	^ (super asJsonWithBuffers: aList)
+		at: #shape put: shape;
 		at: #mode put: mode;
 		at: #bipolar put: bipolar;
 		yourself! !
 
-!LFO methodsFor: 'serialization' stamp: 'len 5/Feb/2026 15:53:26'!
+!LFO methodsFor: 'serialization' stamp: 'len 19/Feb/2026 21:17:54'!
 readFromJson: json buffers: aList
 	super readFromJson: json buffers: aList.
+	shape := (json at: #shape ifAbsent: [#sine]) asSymbol.
 	mode := (json at: #mode) asSymbol.
 	bipolar := json at: #bipolar! !
 
@@ -6927,7 +6947,7 @@ toggleLowerPane
 	lowerPane visible: lowerPane visible not.
 	instrumentEditor layoutSpec proportionalHeight: (lowerPane visible ifTrue: [0.38] ifFalse: [1.0])! !
 
-!TrackerWindow methodsFor: 'events' stamp: 'len 16/Feb/2026 21:23:38'!
+!TrackerWindow methodsFor: 'events' stamp: 'len 20/Feb/2026 23:03:50'!
 keyStroke: anEvent
 	anEvent isSpace ifTrue: [model togglePlay. ^ true].
 	anEvent commandAltKeyPressed ifTrue:
@@ -6936,19 +6956,20 @@ keyStroke: anEvent
 		anEvent keyCharacter = $o ifTrue: [anEvent wasHandled: true. ^ self openProject].
 		anEvent keyCharacter = $s ifTrue: [anEvent wasHandled: true. ^ self saveProject].
 		anEvent keyCharacter = $j ifTrue: [anEvent wasHandled: true. ^ self toggleLowerPane].
+		anEvent keyCharacter = $r ifTrue: [anEvent wasHandled: true. ^ instrumentEditor renameInstrument].
 		anEvent keyCharacter = $] ifTrue: [anEvent wasHandled: true. ^ model inputOctaveUp].
 		anEvent keyCharacter = $[ ifTrue: [anEvent wasHandled: true. ^ model inputOctaveDown]].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 18/Feb/2026 17:06:13'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 20/Feb/2026 22:52:02'!
 buildMorphicWindow
 	| lowerLeftPane sequencerScroller patternEditorScroller bar |
 	instrumentEditor := InstrumentEditorMorph new setTracker: model.
 	meter := MultitrackMeterMorph new setTracker: model.
 	sequencer := SequencerMorph new setTracker: model.
 	patternEditor := PatternEditorMorph new setTracker: model.
+	instrumentEditor when: #instrumentLabelChanged send: #redrawNeeded to: patternEditor. "to redraw instrument label in the track header"
 	bar := TrackerBarMorph new setTracker: model.
-	instrumentEditor when: #instrumentChanged send: #redrawNeeded to: bar.
 	lowerPane := LinearLayoutMorph newRow.
 	lowerLeftPane := LinearLayoutMorph newColumn.
 	sequencerScroller := ScrollerMorph new vertical: true; scrollable: sequencer.
@@ -9053,29 +9074,33 @@ clipboardPaste
 	patch := self patch ifNil: [^ self].
 	patch addMorph: clipboard copy patchable position: ((patch internalizeFromWorld: self activeHand morphPosition))! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 18/Feb/2026 17:11:10'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Feb/2026 22:49:40'!
 exportInstrument
 	| instrument |
 	instrument := tracker selectedInstrument ifNil: [^ self].
 	self request: 'Instrument name' initialAnswer: (instrument label ifNil: ['']) do: [:newName|
 		instrument label: newName.
 		(self class package packageDirectory / 'library' // (newName, '.patch')) writeStreamDo: [:s| instrument writeOn: s].
-		self triggerEvent: #instrumentChanged]! !
+		self triggerEvent: #instrumentLabelChanged]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 18/Feb/2026 17:10:58'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Feb/2026 22:49:59'!
 importInstrument
 	| instrument |
 	instrument := tracker selectedInstrument ifNil: [^ self].
 	self request: 'Instrument name' initialAnswer: (instrument label ifNil: ['']) do: [:newName|
 		instrument label: newName.
 		(self class package packageDirectory / 'library' // (newName, '.patch')) readStreamDo: [:s| instrument readFrom: s binary].
-		self triggerEvent: #instrumentChanged]! !
+		self triggerEvent: #instrumentLabelChanged]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 18/Feb/2026 17:09:48'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Feb/2026 22:50:13'!
 renameInstrument
 	| instrument |
 	instrument := tracker selectedInstrument ifNil: [^ self].
-	self request: 'Instrument name' initialAnswer: (instrument label ifNil: ['']) do: [:newName| instrument label: newName. self triggerEvent: #instrumentChanged]! !
+	self request: 'Instrument name' initialAnswer: (instrument label ifNil: ['']) do: [:newName| instrument label: newName. self triggerEvent: #instrumentLabelChanged]! !
+
+!InstrumentEditorMorph methodsFor: 'drawing' stamp: 'len 20/Feb/2026 22:55:16'!
+drawOn: aCanvas
+"	aCanvas fillRectangle: self localBounds color: tracker selectedTrack backgroundColor"! !
 
 !InstrumentEditorMorph methodsFor: 'events' stamp: 'len 18/Feb/2026 16:49:30'!
 keyStroke: anEvent
@@ -9120,14 +9145,14 @@ setTracker: aTracker
 patch
 	^ submorphs detect: [:one| one isKindOf: PatchMorph] ifNone: []! !
 
-!InstrumentEditorMorph methodsFor: 'private' stamp: 'len 18/Feb/2026 17:04:43'!
+!InstrumentEditorMorph methodsFor: 'private' stamp: 'len 20/Feb/2026 20:35:37'!
 update
 	| selectedPatch |
 	selectedPatch := tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument patch].
 	selectedPatch = self patch ifFalse:
 		[self removeAllMorphs.
-		selectedPatch ifNotNil: [self addMorph: selectedPatch].
-		self triggerEvent: #instrumentChanged]! !
+		selectedPatch ifNotNil: [self addMorph: selectedPatch]].
+	self redrawNeeded! !
 
 !MultitrackMeterMorph methodsFor: 'drawing' stamp: 'len 12/Feb/2026 16:36:41'!
 colorForMeterValue: aNumber
@@ -9259,12 +9284,6 @@ moveCursorRight
 			[cursorPosition := cursorPosition + 1].
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 6/Feb/2026 15:43:34'!
-renameTrack
-	| track |
-	track := tracker selectedTrack.
-	self request: 'Track label' initialAnswer: (track label ifNil: ['']) do: [:newName| track label: (newName ifEmpty: []). self redrawNeeded]! !
-
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 4/Jan/2026 15:52:47'!
 setPatternLength
 	tracker isPlaying ifTrue: [^ self].
@@ -9294,7 +9313,7 @@ drawOn: aCanvas
 	self drawCursorOn: aCanvas.
 	self drawPatternOn: aCanvas! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 16/Feb/2026 16:55:35'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 20/Feb/2026 17:45:23'!
 drawPatternOn: aCanvas
 	| lineSpacing charWidth y unsetColor  noteColor velocityColor fxColor pattern endLine middle startLine darkColor lightColor xLeft xRight beatColor trackWidth |
 	pattern := tracker selectedPattern.
@@ -9351,7 +9370,7 @@ drawPatternOn: aCanvas
 				x := trackWidth + x].
 		y := y + lineSpacing]! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Feb/2026 15:56:59'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 20/Feb/2026 23:07:15'!
 drawTracksOn: aCanvas
 	| color textColor charWidth trackWidth x mask headerLineWidth |
 	charWidth := font widthOf: $X.
@@ -9361,7 +9380,10 @@ drawTracksOn: aCanvas
 	mask := tracker selectedMask.
 	tracker tracks withIndexDo: [:track :i| | trackColor trackLabel |
 		trackColor := track color.
-		aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: (trackColor alpha: (i = tracker cursorTrack ifTrue: [0.1] ifFalse: [0.01])).
+"		aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: (trackColor lightnessAndChromaBy: (i = tracker cursorTrack ifTrue: [0.25] ifFalse: [0.2]))."
+"		aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: (trackColor darker: (i = tracker cursorTrack ifTrue: [0.54] ifFalse: [0.6]))."
+"		aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: (trackColor alpha: (i = tracker cursorTrack ifTrue: [0.1] ifFalse: [0.02]))."
+		i = tracker cursorTrack ifTrue: [aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: track backgroundColor].
 		((mask at: i) and: [track enabled])
 			ifTrue:
 				[color := trackColor.
@@ -9371,8 +9393,10 @@ drawTracksOn: aCanvas
 				textColor := Color white darker: 0.25].
 		aCanvas fillRectangle: (x @ 0 extent: trackWidth @ headerLineWidth) color: color.
 		trackLabel := i printString.
-		track label ifNotNil: [:aString| trackLabel := trackLabel, ' ', aString].
-		aCanvas drawString: trackLabel at: x+(trackWidth - (labelFont widthOfString: trackLabel) / 2.0) @ 8 font: labelFont color: textColor.
+		(tracker selectedInstrumentNumberAtTrack: i) ifNotNil: [:k|
+			trackLabel := trackLabel, '/', (k printStringBase: 16 nDigits: 2).
+			tracker instruments at: k ifPresent: [:anInstrument| anInstrument label ifNotNil: [:aString| trackLabel := trackLabel, ' ', aString]]].
+		aCanvas drawString: trackLabel at: x @ 8 font: labelFont color: textColor.
 		x := x + trackWidth.
 		track muted ifTrue: [aCanvas drawString: 'M' at: (x - (font widthOf: $M)) @ 9 font: font color: textColor].
 		track soloed ifTrue: [aCanvas drawString: 'S' at: (x - (font widthOfString: 'SM') - 4 @ 9) font: font color: textColor].
@@ -9383,7 +9407,7 @@ drawTracksOn: aCanvas
 tracksWidthInCharacters
 	^ 15! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 16/Feb/2026 21:21:41'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 20/Feb/2026 23:02:32'!
 handleCommandHotkey: anEvent
 	anEvent keyCharacter = $n ifTrue: [tracker insertPattern. ^ true].
 	anEvent keyCharacter = $N ifTrue: [tracker deletePattern. ^ true].
@@ -9392,7 +9416,6 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $p ifTrue: [tracker incrementTrackPolyphony. ^ true].
 	anEvent keyCharacter = $P ifTrue: [tracker decrementTrackPolyphony. ^ true].
 	anEvent keyCharacter = $m ifTrue: [tracker toggleTrackMask. ^ true].
-	anEvent keyCharacter = $r ifTrue: [self renameTrack. ^ true].
 	anEvent keyCharacter = $l ifTrue: [self setPatternLength. ^ true].
 	"Clipboard:"
 	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
@@ -9616,30 +9639,34 @@ clipboardPaste
 clipboardPasteNew
 	^ self! !
 
-!SequencerMorph methodsFor: 'drawing' stamp: 'len 10/Jan/2026 15:32:35'!
+!SequencerMorph methodsFor: 'drawing' stamp: 'len 20/Feb/2026 22:28:14'!
 drawOn: aCanvas
-	| x y s charWidth blockHeight blockWidth space cursorTrack |
+	| x y s charWidth blockHeight blockWidth space cursorTrack patternNumbers oldPatternNumbers |
 	charWidth := font widthOf: $X.
 	blockHeight := charWidth * 3.
 	blockWidth := charWidth / 2.0.
 	space := charWidth/4.0.
-"	aCanvas fillRectangle: (0@0 extent: extent) color: Color black."
 	x := blockHeight + space.
 	cursorTrack := tracker cursorTrack.
 	tracker tracks withIndexDo: [:track :i|
-		aCanvas fillRectangle: (x @ 0 extent: blockWidth @ extent y) color: (track color alpha: (i = cursorTrack ifTrue: [0.4] ifFalse: [0.25])).
+		aCanvas fillRectangle: (x @ 0 extent: blockWidth @ extent y) color: (track color lightnessAndChromaBy: (i = cursorTrack ifTrue: [0.6] ifFalse: [0.4])).
 		x := x + blockWidth + space].
 	y := 0.
-	1 to: tracker patterns size do: [:i|
+	patternNumbers := tracker patternNumbers.
+	oldPatternNumbers := OrderedCollection new.
+	1 to: tracker patterns size do: [:i| | p c |
 		i = tracker cursorPattern ifTrue: [aCanvas fillRectangle: (0@y extent: blockHeight @ blockHeight) color: Color redCathode].
-		s := (tracker patternNumbers at: i) printStringBase: 16 nDigits: 2.
-		aCanvas drawString: s at: blockHeight - (charWidth*2.5) @ (y+(charWidth/2.0)) font: font color: Color white.
+		p := patternNumbers at: i.
+		(oldPatternNumbers includes: p) ifFalse: [aCanvas frameRectangle: (4@(y+4) extent: blockHeight -8 @ (blockHeight - 8)) borderWidth: 1 color: Color white cornerRadius: 8. oldPatternNumbers add: p].
+		s := p printStringBase: 16 nDigits: 2.
+		c := (oldPatternNumbers includes: p) ifTrue: [Color white] ifFalse: [oldPatternNumbers add: p. Color veryLightGray].
+		aCanvas drawString: s at: blockHeight - (charWidth*2.5) @ (y+(charWidth/2.0)) font: font color: c.
 		y := y + blockHeight].
 	y := 0.
 	tracker patterns with: tracker masks do: [:pattern :mask|
 		x := blockHeight + space.
 		tracker tracks withIndexDo: [:track :i|
-			(pattern isEmptyTrack: i) ifFalse: [aCanvas fillRectangle: (x @ y extent: blockWidth @ blockHeight) color: ((mask at: i) ifTrue: [track color] ifFalse: [track color darker: 0.25])].
+			(pattern isEmptyTrack: i) ifFalse: [aCanvas fillRectangle: (x @ y extent: blockWidth @ blockHeight) color: ((mask at: i) ifTrue: [track color] ifFalse: [Color black])].
 			x := x + blockWidth + space].
 		y := y + blockHeight].
 	y := tracker cursorPattern - 1 * blockHeight + (tracker cursorLine * blockHeight / tracker selectedPattern length asFloat).
@@ -9647,6 +9674,10 @@ drawOn: aCanvas
 	tracker isPlaying ifTrue:
 		[y := tracker playheadPattern - 1 * blockHeight + (tracker playheadLine * blockHeight / tracker playingPattern length asFloat).
 		aCanvas line: blockHeight + 1 @ y to: extent x @ y width: 2 color: Color white]! !
+
+!SequencerMorph methodsFor: 'drawing' stamp: 'len 19/Feb/2026 21:44:53'!
+requiresVectorCanvas
+	^ true! !
 
 !SequencerMorph methodsFor: 'events' stamp: 'len 14/Jan/2026 12:44:59'!
 keyStroke: anEvent
@@ -9690,9 +9721,9 @@ update
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 18/Feb/2026 17:50:42'!
+!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 20/Feb/2026 20:28:08'!
 drawOn: aCanvas
-	| patchLabel color |
+	| color |
 	aCanvas fillRectangle: (0 @ 0 extent: extent) color: Color darkGray.
 	aCanvas line: 0@(extent y-1) to: extent-(0@1) width: 1 color: Color gray.
 	color := Color white.
@@ -9701,9 +9732,9 @@ drawOn: aCanvas
 		drawString: (tracker bpm printStringFractionDigits: 1), ' / ', tracker lpb printString at: 32 @ 2 font: font color: color;
 		drawString: '↧' at: 160 @ 3 font: font color: (tracker followPlayhead ifTrue: [color] ifFalse: [Color lightGray]);
 		drawString: tracker inputCenterKey semitonesToName at: 210 @ 3 font: font color: color.
-	tracker selectedInstrumentNumber ifNotNil: [:instrumentNumber|
+"	tracker selectedInstrumentNumber ifNotNil: [:instrumentNumber|
 		patchLabel := (instrumentNumber printStringBase: 16 nDigits: 2), ' ', (tracker selectedInstrument ifNil: ['EMPTY'] ifNotNil: [:anInstrument| anInstrument label ifNil: ['']]).
-		aCanvas drawString: patchLabel at: (extent x - 4 - (font widthOfString: patchLabel)) @ 2 font: font color: color]! !
+		aCanvas drawString: patchLabel at: (extent x - 4 - (font widthOfString: patchLabel)) @ 2 font: font color: color]"! !
 
 !TrackerBarMorph methodsFor: 'geometry' stamp: 'len 7/Jan/2026 14:33:18'!
 minimumExtent
@@ -11762,9 +11793,17 @@ write: inputBuffer read: outputBuffer
 	y1 abs < 1.0e-15 ifTrue: [y1 := 0.0].
 	y2 abs < 1.0e-15 ifTrue: [y2 := 0.0]! !
 
-!DelayLine methodsFor: 'accessing' stamp: 'len 26/Jan/2026 14:57:13'!
+!DelayLine methodsFor: 'accessing' stamp: 'len 20/Feb/2026 15:08:46'!
 at: anInteger
-	^ buffer at: anInteger! !
+	"Answer the value of the delay line at anInteger samples in the past.
+	1 corresponds to the last written sample."
+	| i |
+	(i := position - anInteger) >= 1 ifFalse: [i := i + length].
+	^ buffer at: i! !
+
+!DelayLine methodsFor: 'accessing' stamp: 'len 20/Feb/2026 15:02:19'!
+buffer
+	^ buffer! !
 
 !DelayLine methodsFor: 'accessing' stamp: 'len 26/Jan/2026 14:53:09'!
 length
@@ -11824,7 +11863,7 @@ setDelayLine: aDelayLine
 	x1 := y1 := 0.
 	increment := 0.0! !
 
-!DelayLineTap methodsFor: 'processing' stamp: 'len 26/Jan/2026 17:42:09'!
+!DelayLineTap methodsFor: 'processing' stamp: 'len 20/Feb/2026 15:03:30'!
 read
 	| n i f a x |
 	delay := delay + increment.
@@ -11833,7 +11872,7 @@ read
 	i >= 1.0 ifFalse: [i := i + n].
 	f := i - (i := i truncated). "fractional and integer parts"
 	a := (1.0 - f) / (1.0 + f). "coefficient for the Thiran 1-pole filter"
-	x := delayLine at: i.
+	x := delayLine buffer at: i.
 	y1 := x * a + x1 - (y1 * a).
 	x1 := x.
 	^ y1! !
@@ -12368,10 +12407,6 @@ next32BitWord
 readFromFileEntry: fileEntry
 	^ fileEntry readStreamDo: [:strm| self readFromStream: strm]! !
 
-!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 31/Dec/2025 15:30:29'!
-readFromFileNamed: fileName
-	^ self readFromFileEntry: fileName asFileEntry! !
-
 !WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 17/Feb/2026 15:05:37'!
 readFromStream: fileStream
 	| header data smpl type blockAlign numberOfLoops |
@@ -12766,6 +12801,10 @@ line: anInteger notesDo: notesBlock velocityDo: velocityBlock instrumentDo: inst
 new: anInteger
 	^ self new initialize: anInteger! !
 
+!Track methodsFor: 'accessing' stamp: 'len 20/Feb/2026 19:56:55'!
+backgroundColor
+	^ color lightnessAndChromaBy: 0.25! !
+
 !Track methodsFor: 'accessing' stamp: 'len 27/Dec/2025 23:23:03'!
 color
 	^ color! !
@@ -12781,14 +12820,6 @@ enabled
 !Track methodsFor: 'accessing' stamp: 'len 17/Feb/2026 19:28:45'!
 instrument
 	^ instrument! !
-
-!Track methodsFor: 'accessing' stamp: 'len 17/Dec/2025 16:45:39'!
-label
-	^ label! !
-
-!Track methodsFor: 'accessing' stamp: 'len 17/Dec/2025 16:45:31'!
-label: aString
-	label := aString! !
 
 !Track methodsFor: 'accessing' stamp: 'len 17/Feb/2026 19:28:15'!
 meterLeftValue
@@ -13130,6 +13161,10 @@ selectedInstrument
 selectedInstrumentNumber
 	^​ self selectedPattern track: cursorTrack instrumentAbove: cursorLine! !
 
+!Tracker methodsFor: 'patterns' stamp: 'len 20/Feb/2026 22:39:55'!
+selectedInstrumentNumberAtTrack: trackIndex
+	^​ self selectedPattern track: trackIndex instrumentAbove: cursorLine! !
+
 !Tracker methodsFor: 'patterns' stamp: 'len 1/Jan/2026 15:18:40'!
 selectedPattern
 	^ patterns at: cursorPattern! !
@@ -13271,14 +13306,14 @@ toggleFollowPlayhead
 togglePlay
 	self isPlaying ifTrue: [self stop] ifFalse: [self play]! !
 
-!Tracker methodsFor: 'serialization' stamp: 'len 18/Feb/2026 16:58:40'!
+!Tracker methodsFor: 'serialization' stamp: 'len 20/Feb/2026 23:09:28'!
 asJsonWithBuffers: bufferList
 	^ OrderedDictionary new
 		at: #bpm put: bpm;
 		at: #lpb put: lpb;
 		at: #swing put: swing;
 		at: #level put: level;
-		at: #tracks put: (tracks collect: [:each| each label ifNil: ['']]); "just the labels"
+		at: #tracks put: tracks size;
 		at: #sequence put: (self patternNumbers withIndexCollect: [:p :i|
 			OrderedDictionary new
 				at: #pattern put: p;
@@ -13298,7 +13333,7 @@ readFrom: aStream
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 
-!Tracker methodsFor: 'serialization' stamp: 'len 18/Feb/2026 17:37:30'!
+!Tracker methodsFor: 'serialization' stamp: 'len 20/Feb/2026 23:17:10'!
 readFromJson: json buffers: bufferList
 	| uniquePatterns |
 	bpm := json at: #bpm.
@@ -13306,7 +13341,7 @@ readFromJson: json buffers: bufferList
 	swing := json at: #swing.
 	level := json at: #level.
 	tracks := #().
-	(json at: #tracks) do: [:each| self addTrack label: each].
+	(json at: #tracks) timesRepeat: [self addTrack].
 	uniquePatterns := (json at: #patterns) collect: [:each| Pattern new readFromJson: each].
 	patterns := (json at: #sequence) collect: [:each| uniquePatterns at: (each at: #pattern)].
 	masks := (json at: #sequence) collect: [:each| each at: #mask].
@@ -13824,6 +13859,14 @@ darker: amount
 lighter: amount
 	^ self oklchDo: [:l :c :h| self class okl: (l + amount min: 1.0 max: 0.0) c: c h: h]! !
 
+!Color methodsFor: '*signals' stamp: 'len 20/Feb/2026 19:41:22'!
+lightnessAndChromaBy: aNumber
+	^ self oklchDo: [:l :c :h| self class okl: l * aNumber c: c * aNumber h: h]! !
+
+!Color methodsFor: '*signals' stamp: 'len 20/Feb/2026 19:25:25'!
+oklch
+	self oklchDo: [:l :c :h| ^ {l. c. h}]! !
+
 !Color class methodsFor: '*signals' stamp: 'len 24/Jan/2026 22:48:45'!
 amberAlert
 	^ `Color fromHexString: '#FFAA00'`! !
@@ -13959,9 +14002,21 @@ violetBeamLight
 asJsonWithBuffers: bufferList
 	^ OrderedDictionary new! !
 
+!Morph methodsFor: '*signals' stamp: 'len 20/Feb/2026 17:49:22'!
+bench
+	| canvas |
+	canvas := VectorCanvas onForm: Display.
+	^ [self drawOn: canvas] bench! !
+
 !Morph methodsFor: '*signals' stamp: 'len 9/Feb/2026 20:50:43'!
 readFromJson: json buffers: bufferList
 	^ self! !
+
+!Morph methodsFor: '*signals' stamp: 'len 20/Feb/2026 17:51:41'!
+timeProfile
+	| canvas |
+	canvas := VectorCanvas onForm: Display.
+	^ [100 timesRepeat: [self drawOn: canvas]] timeProfile! !
 Wavetable initialize!
 Supersaw initialize!
 SpectrogramMorph initialize!

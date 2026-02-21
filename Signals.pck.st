@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 20 February 2026 at 11:23:58 pm'!
+'From Cuis7.7 [latest update: #7797] on 21 February 2026 at 7:38:42 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 469!
+!provides: 'Signals' 1 470!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1209,7 +1209,7 @@ PatternEditorMorph class
 
 !classDefinition: #SequencerMorph category: #'Signals-Morphic-Tracker'!
 BoxMorph subclass: #SequencerMorph
-	instanceVariableNames: 'tracker font'
+	instanceVariableNames: 'tracker font selectionStart selectionEnd clipboard'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Tracker'!
@@ -1529,7 +1529,7 @@ Track class
 
 !classDefinition: #Tracker category: #'Signals-Tracker'!
 Object subclass: #Tracker
-	instanceVariableNames: 'instruments tracks patterns masks label bpm lpb swing level inputCenterKey cursorPattern cursorLine cursorTrack playheadPattern playheadLine followPlayhead anyTrackSoloed ticksToLine leftBuffer rightBuffer peakLeft peakRight'
+	instanceVariableNames: 'instruments tracks sequence label bpm lpb swing level inputCenterKey cursorPattern cursorLine cursorTrack playheadPattern playheadLine followPlayhead anyTrackSoloed ticksToLine leftBuffer rightBuffer peakLeft peakRight'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Tracker'!
@@ -9623,54 +9623,77 @@ update
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!SequencerMorph methodsFor: 'actions' stamp: 'len 27/Dec/2025 23:17:39'!
+!SequencerMorph methodsFor: 'actions' stamp: 'len 21/Feb/2026 18:36:34'!
 clipboardCopy
-	^ self! !
+	clipboard := selectionStart isNil
+		ifTrue: [{tracker sequence at: tracker cursorPattern}]
+		ifFalse: [((selectionStart min: selectionEnd) to: (selectionStart max: selectionEnd)) collect: [:i| tracker sequence at: i]]! !
 
-!SequencerMorph methodsFor: 'actions' stamp: 'len 28/Dec/2025 16:43:28'!
+!SequencerMorph methodsFor: 'actions' stamp: 'len 21/Feb/2026 18:59:51'!
 clipboardCut
-	^ self! !
+	selectionStart isNil ifTrue: "cut the pattern at cursor"
+		[clipboard := {tracker sequence at: tracker cursorPattern}.
+		tracker deletePattern.
+		^ self].
+	clipboard := ((selectionStart min: selectionEnd) to: (selectionStart max: selectionEnd)) collect: [:i| tracker sequence at: i].
+	(selectionStart max: selectionEnd) to: (selectionStart min: selectionEnd) by: -1 do: [:i| tracker deletePattern: i].
+	selectionStart := nil! !
 
-!SequencerMorph methodsFor: 'actions' stamp: 'len 26/Dec/2025 04:46:36'!
+!SequencerMorph methodsFor: 'actions' stamp: 'len 21/Feb/2026 18:59:25'!
 clipboardPaste
-	^ self! !
+	selectionStart := nil.
+	clipboard ifNotNil: [tracker insertSequence: (clipboard collect: [:each| each key -> each value])]! !
 
-!SequencerMorph methodsFor: 'actions' stamp: 'len 28/Dec/2025 16:43:19'!
+!SequencerMorph methodsFor: 'actions' stamp: 'len 21/Feb/2026 18:59:27'!
 clipboardPasteNew
-	^ self! !
+	selectionStart := nil.
+	clipboard ifNotNil: [tracker insertSequence: (clipboard collect: [:each| each key copy -> each value])]! !
 
-!SequencerMorph methodsFor: 'drawing' stamp: 'len 20/Feb/2026 22:28:14'!
+!SequencerMorph methodsFor: 'drawing' stamp: 'len 21/Feb/2026 19:10:36'!
+cursorColor
+	^ Color redCathode! !
+
+!SequencerMorph methodsFor: 'drawing' stamp: 'len 21/Feb/2026 19:19:28'!
 drawOn: aCanvas
-	| x y s charWidth blockHeight blockWidth space cursorTrack patternNumbers oldPatternNumbers |
+	| x y s charWidth blockHeight blockWidth space cursorTrack cursorPattern patternNumbers oldPatternNumbers |
 	charWidth := font widthOf: $X.
 	blockHeight := charWidth * 3.
 	blockWidth := charWidth / 2.0.
 	space := charWidth/4.0.
 	x := blockHeight + space.
 	cursorTrack := tracker cursorTrack.
+	"draw tracks background:"
 	tracker tracks withIndexDo: [:track :i|
 		aCanvas fillRectangle: (x @ 0 extent: blockWidth @ extent y) color: (track color lightnessAndChromaBy: (i = cursorTrack ifTrue: [0.6] ifFalse: [0.4])).
 		x := x + blockWidth + space].
 	y := 0.
-	patternNumbers := tracker patternNumbers.
+	"draw selection:"
+	(selectionEnd notNil and: [selectionStart notNil]) ifTrue:
+		[aCanvas fillRectangle: (0 @ (((selectionEnd min: selectionStart) - 1) * blockHeight) corner: blockHeight @ (((selectionEnd max: selectionStart) - 1) * blockHeight)) color: self selectionColor].
+	"draw sequence and cursor:"
+	cursorPattern := tracker cursorPattern.
+	patternNumbers := tracker sequencePatternNumbers.
 	oldPatternNumbers := OrderedCollection new.
-	1 to: tracker patterns size do: [:i| | p c |
-		i = tracker cursorPattern ifTrue: [aCanvas fillRectangle: (0@y extent: blockHeight @ blockHeight) color: Color redCathode].
+	1 to: tracker sequence size do: [:i| | p c |
+		i = cursorPattern ifTrue: [aCanvas fillRectangle: (0@y extent: blockHeight @ blockHeight) color: self cursorColor].
 		p := patternNumbers at: i.
-		(oldPatternNumbers includes: p) ifFalse: [aCanvas frameRectangle: (4@(y+4) extent: blockHeight -8 @ (blockHeight - 8)) borderWidth: 1 color: Color white cornerRadius: 8. oldPatternNumbers add: p].
+		(oldPatternNumbers includes: p) ifFalse: [aCanvas frameRectangle: (4@(y+4) extent: blockHeight -8 @ (blockHeight - 8)) borderWidth: 1 color: Color white cornerRadius: 8].
 		s := p printStringBase: 16 nDigits: 2.
-		c := (oldPatternNumbers includes: p) ifTrue: [Color white] ifFalse: [oldPatternNumbers add: p. Color veryLightGray].
+		c := Color white.
+		(oldPatternNumbers includes: p) ifTrue: [i = cursorPattern ifFalse: [c := Color veryLightGray]] ifFalse: [oldPatternNumbers add: p].
 		aCanvas drawString: s at: blockHeight - (charWidth*2.5) @ (y+(charWidth/2.0)) font: font color: c.
 		y := y + blockHeight].
 	y := 0.
-	tracker patterns with: tracker masks do: [:pattern :mask|
+	"draw pattern blocks:"
+	tracker sequence do: [:each|
 		x := blockHeight + space.
 		tracker tracks withIndexDo: [:track :i|
-			(pattern isEmptyTrack: i) ifFalse: [aCanvas fillRectangle: (x @ y extent: blockWidth @ blockHeight) color: ((mask at: i) ifTrue: [track color] ifFalse: [Color black])].
+			(each key isEmptyTrack: i) ifFalse: [aCanvas fillRectangle: (x @ y extent: blockWidth @ blockHeight) color: ((each value at: i) ifTrue: [track color] ifFalse: [Color black])].
 			x := x + blockWidth + space].
 		y := y + blockHeight].
 	y := tracker cursorPattern - 1 * blockHeight + (tracker cursorLine * blockHeight / tracker selectedPattern length asFloat).
-	aCanvas line: blockHeight + 1 @ y to: extent x @ y width: 2 color: Color redCathode.
+	"draw pattern line cursor and playhead:"
+	aCanvas line: blockHeight + 1 @ y to: extent x @ y width: 2 color: self cursorColor.
 	tracker isPlaying ifTrue:
 		[y := tracker playheadPattern - 1 * blockHeight + (tracker playheadLine * blockHeight / tracker playingPattern length asFloat).
 		aCanvas line: blockHeight + 1 @ y to: extent x @ y width: 2 color: Color white]! !
@@ -9679,10 +9702,28 @@ drawOn: aCanvas
 requiresVectorCanvas
 	^ true! !
 
-!SequencerMorph methodsFor: 'events' stamp: 'len 14/Jan/2026 12:44:59'!
+!SequencerMorph methodsFor: 'drawing' stamp: 'len 21/Feb/2026 19:20:12'!
+selectionColor
+	^ self cursorColor alpha: 0.8! !
+
+!SequencerMorph methodsFor: 'events' stamp: 'len 21/Feb/2026 00:39:05'!
 keyStroke: anEvent
-	anEvent isArrowUp ifTrue: [anEvent wasHandled: true. tracker moveCursorPatternUp. ^ self].
-	anEvent isArrowDown ifTrue: [anEvent wasHandled: true. tracker moveCursorPatternDown. ^ self].
+	anEvent isArrowUp ifTrue:
+		[anEvent wasHandled: true.
+		anEvent shiftPressed ifTrue: [selectionStart isNil ifTrue: [selectionStart := tracker cursorPattern]].
+		tracker moveCursorPatternUp.
+		anEvent shiftPressed
+			ifTrue: [selectionEnd := tracker cursorPattern]
+			ifFalse: [selectionStart := selectionEnd := nil].
+		^ self].
+	anEvent isArrowDown ifTrue:
+		[anEvent wasHandled: true.
+		anEvent shiftPressed ifTrue: [selectionStart isNil ifTrue: [selectionStart := tracker cursorPattern]].
+		tracker moveCursorPatternDown.
+		anEvent shiftPressed
+			ifTrue: [selectionEnd := tracker cursorPattern]
+			ifFalse: [selectionStart := selectionEnd := nil].
+		^ self].
 	anEvent commandAltKeyPressed ifTrue:
 		[anEvent keyCharacter = $n ifTrue: [anEvent wasHandled: true. tracker insertPattern. ^ self].
 		anEvent keyCharacter = $N ifTrue: [anEvent wasHandled: true. tracker deletePattern. ^ self].
@@ -9692,14 +9733,14 @@ keyStroke: anEvent
 		anEvent keyCharacter = $V ifTrue: [anEvent wasHandled: true. ^ self clipboardPasteNew]].
 	^ super keyStroke: anEvent! !
 
-!SequencerMorph methodsFor: 'geometry' stamp: 'len 31/Dec/2025 23:16:20'!
+!SequencerMorph methodsFor: 'geometry' stamp: 'len 21/Feb/2026 16:41:06'!
 minimumExtent
 	| blockHeight blockWidth charWidth space |
 	charWidth := font widthOf: $X.
 	blockHeight := charWidth * 3.
 	blockWidth := charWidth / 2.0.
 	space := charWidth / 4.0.
-	^ (blockWidth + space) * tracker tracks size + blockWidth + blockHeight @ (blockHeight * tracker patterns size)! !
+	^ (blockWidth + space) * tracker tracks size + blockWidth + blockHeight @ (blockHeight * tracker sequence size)! !
 
 !SequencerMorph methodsFor: 'initialization' stamp: 'len 31/Dec/2025 23:17:57'!
 initialize
@@ -12945,20 +12986,6 @@ lpb: anInteger
 	lpb := anInteger.
 	self triggerEvent: #lpbChanged! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 26/Dec/2025 02:16:25'!
-masks
-	^ masks! !
-
-!Tracker methodsFor: 'accessing' stamp: 'len 26/Dec/2025 02:14:36'!
-patternNumbers
-	| uniquePatterns |
-	uniquePatterns := OrderedCollection new.
-	^ patterns collect: [:each| uniquePatterns indexOf: each ifAbsent: [uniquePatterns add: each. uniquePatterns size]]! !
-
-!Tracker methodsFor: 'accessing' stamp: 'len 26/Dec/2025 02:16:21'!
-patterns
-	^ patterns! !
-
 !Tracker methodsFor: 'accessing' stamp: 'len 24/Jan/2026 22:29:37'!
 peakLeft
 	^ peakLeft := peakLeft * 0.95! !
@@ -12966,6 +12993,23 @@ peakLeft
 !Tracker methodsFor: 'accessing' stamp: 'len 24/Jan/2026 22:29:52'!
 peakRight
 	^ peakRight := peakRight * 0.95! !
+
+!Tracker methodsFor: 'accessing' stamp: 'len 21/Feb/2026 16:39:00'!
+sequence
+	^ sequence! !
+
+!Tracker methodsFor: 'accessing' stamp: 'len 21/Feb/2026 16:40:24'!
+sequencePatternNumbers
+	| unique |
+	unique := self sequenceUniquePatterns.
+	^ sequence collect: [:each| unique indexOf: each key]! !
+
+!Tracker methodsFor: 'accessing' stamp: 'len 21/Feb/2026 16:40:36'!
+sequenceUniquePatterns
+	| answer |
+	answer := OrderedCollection new.
+	sequence do: [:each| (answer identityIncludes: each key) ifFalse: [answer add: each key]].
+	^ answer! !
 
 !Tracker methodsFor: 'accessing' stamp: 'len 10/Feb/2026 01:41:17'!
 swing
@@ -13021,13 +13065,13 @@ moveCursorLineBottom
 moveCursorLineDown
 	self moveCursorLineDown: 1! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 1/Jan/2026 16:56:50'!
+!Tracker methodsFor: 'cursor' stamp: 'len 21/Feb/2026 16:25:39'!
 moveCursorLineDown: anInteger
 	| n |
 	cursorLine := cursorLine + anInteger.
 	n := self selectedPattern length.
 	cursorLine > n ifTrue:
-		[cursorPattern < patterns size
+		[cursorPattern < sequence size
 			ifTrue:
 				[cursorPattern := cursorPattern + 1.
 				cursorLine := cursorLine - n min: self selectedPattern length.
@@ -13056,9 +13100,9 @@ moveCursorLineUp: anInteger
 			ifFalse: [cursorLine := 1]].
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 10/Jan/2026 22:28:13'!
+!Tracker methodsFor: 'cursor' stamp: 'len 21/Feb/2026 16:25:44'!
 moveCursorPatternDown
-	cursorPattern < patterns size ifFalse: [^ self].
+	cursorPattern < sequence size ifFalse: [^ self].
 	cursorPattern := cursorPattern + 1.
 	cursorLine := cursorLine min: self selectedPattern length.
 	self triggerEvent: #cursorChanged! !
@@ -13084,12 +13128,11 @@ setCursorTrack: anInteger
 	cursorTrack := anInteger.
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'initialization' stamp: 'len 19/Feb/2026 01:37:18'!
+!Tracker methodsFor: 'initialization' stamp: 'len 21/Feb/2026 16:28:55'!
 initialize
 	instruments := Dictionary new.
 	tracks := #().
-	patterns := #().
-	masks := #().
+	sequence := #().
 	bpm := 120.
 	lpb := 4.
 	swing := 0.0.
@@ -13107,19 +13150,18 @@ initialize
 	peakLeft := 0.0.
 	peakRight := 0.0.
 
-	1 timesRepeat: [self insertTrack: tracks size + 1].
-	1 timesRepeat: [self insertPattern: patterns size + 1]! !
+	self insertTrack: 1.
+	self insertPattern: 1! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 14/Jan/2026 12:48:44'!
+!Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026 16:20:33'!
 deletePattern
-	patterns size > 1 ifFalse: [^ self]. "don't delete last pattern"
+	sequence size > 1 ifFalse: [^ self]. "don't delete last pattern"
 	self deletePattern: cursorPattern! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 10/Jan/2026 22:54:48'!
+!Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026 16:23:15'!
 deletePattern: anInteger
-	patterns := (patterns copyFrom: 1 to: anInteger - 1), (patterns copyFrom: anInteger + 1 to: patterns size).
-	masks := (masks copyFrom: 1 to: anInteger - 1), (masks copyFrom: anInteger + 1 to: masks size).
-	cursorPattern := cursorPattern min: patterns size.
+	sequence := (sequence copyFrom: 1 to: anInteger - 1), (sequence copyFrom: anInteger + 1 to: sequence size).
+	cursorPattern := cursorPattern min: sequence size.
 	cursorLine := cursorLine min: self selectedPattern length.
 	self triggerEvent: #sequenceChanged! !
 
@@ -13132,18 +13174,23 @@ insertPattern
 	self insertPattern: (cursorPattern := cursorPattern + 1).
 	cursorLine := cursorLine min: self selectedPattern length! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 31/Dec/2025 22:17:47'!
+!Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026 16:21:43'!
 insertPattern: anInteger
 	| answer |
 	answer := Pattern new: tracks size.
-	patterns := (patterns copyFrom: 1 to: anInteger - 1), {answer}, (patterns copyFrom: anInteger to: patterns size).
-	masks := (masks copyFrom: 1 to: anInteger - 1), {tracks collect: [:each| true]}, (masks copyFrom: anInteger to: masks size).
+	sequence := (sequence copyFrom: 1 to: anInteger - 1), {answer -> (tracks collect: [:each| true])}, (sequence copyFrom: anInteger to: sequence size).
 	self triggerEvent: #sequenceChanged.
 	^ answer! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 1/Jan/2026 15:21:27'!
+!Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026 19:37:25'!
+insertSequence: anArray
+	"Insert a list of patterns and masks after the current pattern."
+	sequence := (sequence copyFrom: 1 to: cursorPattern), (anArray collect: [:each| each key -> each value copy]), (sequence copyFrom: cursorPattern + 1 to: sequence size).
+	self triggerEvent: #sequenceChanged! !
+
+!Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026 16:25:49'!
 moveSelectedPatternDown
-	cursorPattern < patterns size ifFalse: [^ self].
+	cursorPattern < sequence size ifFalse: [^ self].
 	cursorPattern := cursorPattern + 1.
 	self swapPattern: cursorPattern with: cursorPattern - 1! !
 
@@ -13165,9 +13212,9 @@ selectedInstrumentNumber
 selectedInstrumentNumberAtTrack: trackIndex
 	^​ self selectedPattern track: trackIndex instrumentAbove: cursorLine! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 1/Jan/2026 15:18:40'!
+!Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026 16:22:40'!
 selectedPattern
-	^ patterns at: cursorPattern! !
+	^ (sequence at: cursorPattern) key! !
 
 !Tracker methodsFor: 'patterns' stamp: 'len 1/Jan/2026 16:55:05'!
 selectedTrigger
@@ -13189,11 +13236,10 @@ setSelectedPatternLength: anInteger
 	(playheadPattern = cursorPattern and: [playheadLine <= anInteger])
 		ifFalse: [playheadLine := anInteger - 1. self triggerEvent: #playheadChanged]! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 31/Dec/2025 22:49:00'!
+!Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026 16:23:00'!
 swapPattern: anInteger with: anotherInteger
 	anInteger = anotherInteger ifTrue: [^ self].
-	patterns swap: anInteger with: anotherInteger.
-	masks swap: anInteger with: anotherInteger.
+	sequence swap: anInteger with: anotherInteger.
 	self triggerEvent: #sequenceChanged! !
 
 !Tracker methodsFor: 'playing' stamp: 'len 2/Jan/2026 15:12:17'!
@@ -13228,13 +13274,13 @@ play
 	self triggerEvent: #playheadChanged.
 	self triggerEvent: #playingStatusChanged! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 10/Feb/2026 14:26:09'!
+!Tracker methodsFor: 'playing' stamp: 'len 21/Feb/2026 16:27:18'!
 playLine
 	| pattern mask ticksPerLine ticksSwing |
 	"Advance playhead:"
 	playheadLine := playheadLine + 1.
-	playheadLine > (patterns at: playheadPattern) length ifTrue:
-		[playheadPattern < patterns size
+	playheadLine > (sequence at: playheadPattern) key length ifTrue:
+		[playheadPattern < sequence size
 			ifTrue: [playheadLine := 1. playheadPattern := playheadPattern + 1]
 			ifFalse: [playheadPattern := 1. playheadLine := 1]].
 	"Notify playhead change and update cursor if following playhead:"
@@ -13282,13 +13328,13 @@ playheadLine
 playheadPattern
 	^ playheadPattern! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 2/Jan/2026 15:23:24'!
+!Tracker methodsFor: 'playing' stamp: 'len 21/Feb/2026 16:26:58'!
 playingMask
-	^ masks at: playheadPattern! !
+	^ (sequence at: playheadPattern) value! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 1/Jan/2026 19:22:48'!
+!Tracker methodsFor: 'playing' stamp: 'len 21/Feb/2026 16:27:08'!
 playingPattern
-	^ patterns at: playheadPattern! !
+	^ (sequence at: playheadPattern) key! !
 
 !Tracker methodsFor: 'playing' stamp: 'len 6/Jan/2026 18:45:15'!
 stop
@@ -13306,20 +13352,22 @@ toggleFollowPlayhead
 togglePlay
 	self isPlaying ifTrue: [self stop] ifFalse: [self play]! !
 
-!Tracker methodsFor: 'serialization' stamp: 'len 20/Feb/2026 23:09:28'!
+!Tracker methodsFor: 'serialization' stamp: 'len 21/Feb/2026 16:54:14'!
 asJsonWithBuffers: bufferList
+	| uniquePatterns |
+	uniquePatterns := self sequenceUniquePatterns.
 	^ OrderedDictionary new
 		at: #bpm put: bpm;
 		at: #lpb put: lpb;
 		at: #swing put: swing;
 		at: #level put: level;
 		at: #tracks put: tracks size;
-		at: #sequence put: (self patternNumbers withIndexCollect: [:p :i|
+		at: #sequence put: (self sequence collect: [:each|
 			OrderedDictionary new
-				at: #pattern put: p;
-				at: #mask put: (masks at: i);
+				at: #pattern put: (uniquePatterns indexOf: each key);
+				at: #mask put: each value;
 				yourself]);
-		at: #patterns put: (patterns collect: [:each| each asJson]);
+		at: #patterns put: (uniquePatterns collect: [:each| each asJson]);
 		at: #instruments put: (instruments collect: [:each| each asJsonWithBuffers: bufferList]);
 		yourself! !
 
@@ -13333,7 +13381,7 @@ readFrom: aStream
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 
-!Tracker methodsFor: 'serialization' stamp: 'len 20/Feb/2026 23:17:10'!
+!Tracker methodsFor: 'serialization' stamp: 'len 21/Feb/2026 16:55:14'!
 readFromJson: json buffers: bufferList
 	| uniquePatterns |
 	bpm := json at: #bpm.
@@ -13343,8 +13391,7 @@ readFromJson: json buffers: bufferList
 	tracks := #().
 	(json at: #tracks) timesRepeat: [self addTrack].
 	uniquePatterns := (json at: #patterns) collect: [:each| Pattern new readFromJson: each].
-	patterns := (json at: #sequence) collect: [:each| uniquePatterns at: (each at: #pattern)].
-	masks := (json at: #sequence) collect: [:each| each at: #mask].
+	sequence := (json at: #sequence) collect: [:each| (uniquePatterns at: (each at: #pattern)) -> (each at: #mask)].
 	instruments := Dictionary new.
 	(json at: #instruments) keysAndValuesDo: [:key :value| instruments at: key asNumber put: (Instrument new readFromJson: value buffers: bufferList)]! !
 
@@ -13370,23 +13417,21 @@ deleteTrack
 	tracks size > 1 ifFalse: [^ self]. "don't delete last track"
 	self deleteTrack: cursorTrack! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 14/Feb/2026 19:56:21'!
+!Tracker methodsFor: 'tracks' stamp: 'len 21/Feb/2026 16:24:30'!
 deleteTrack: anInteger
 	tracks := (tracks copyFrom: 1 to: anInteger - 1), (tracks copyFrom: anInteger + 1 to: tracks size).
-	patterns do: [:each| each deleteTrack: anInteger].
-	masks := masks collect: [:each| (each copyFrom: 1 to: anInteger - 1), (each copyFrom: anInteger + 1 to: each size)].
+	sequence := sequence collect: [:each| (each key deleteTrack: anInteger) -> ((each value copyFrom: 1 to: anInteger - 1), (each value copyFrom: anInteger + 1 to: each value size))].
 	self setCursorTrack: (cursorTrack min: tracks size).
 	self triggerEvent: #tracksChanged! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 6/Feb/2026 15:49:39'!
+!Tracker methodsFor: 'tracks' stamp: 'len 21/Feb/2026 16:25:31'!
 insertTrack: anInteger
 	| answer |
 	answer := Track new setTracker: self.
 	"answer label: 'Track ', (tracks size + 1) printString."
 	answer color: (Color okl: 0.7 c: 0.4 h: (137.5 / 5) * (tracks size "+ 4") \\ 360.0).
 	tracks := (tracks copyFrom: 1 to: anInteger - 1), {answer}, (tracks copyFrom: anInteger to: tracks size).
-	patterns do: [:each| each insertTrack: anInteger].
-	masks := masks collect: [:each| (each copyFrom: 1 to: anInteger - 1), {true}, (each copyFrom: anInteger to: each size)].
+	sequence := sequence collect: [:each| (each key insertTrack: anInteger) -> ((each value copyFrom: 1 to: anInteger - 1), {true}, (each value copyFrom: anInteger to: each value size))].
 	self triggerEvent: #tracksChanged.
 	^ answer! !
 
@@ -13402,15 +13447,15 @@ moveSelectedTrackRight
 	cursorTrack := cursorTrack + 1.
 	self swapTrack: cursorTrack - 1 with: cursorTrack! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 1/Jan/2026 15:36:07'!
+!Tracker methodsFor: 'tracks' stamp: 'len 21/Feb/2026 16:29:22'!
 selectedMask
-	^ masks at: cursorPattern! !
+	^ (sequence at: cursorPattern) value! !
 
 !Tracker methodsFor: 'tracks' stamp: 'len 1/Jan/2026 15:35:44'!
 selectedTrack
 	^ tracks at: cursorTrack! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 6/Feb/2026 18:56:04'!
+!Tracker methodsFor: 'tracks' stamp: 'len 21/Feb/2026 16:28:15'!
 swapTrack: anInteger with: anotherInteger
 	| color1 |
 	anInteger = anotherInteger ifTrue: [^ self].
@@ -13420,18 +13465,17 @@ swapTrack: anInteger with: anotherInteger
 	(tracks at: anInteger) color: (tracks at: anotherInteger) color.
 	(tracks at: anotherInteger) color: color1.
 	"swap pattern blocks and masks:"
-	patterns do: [:each| each swapTrack: anInteger with: anotherInteger].
-	masks := masks collect: [:each| each swap: anInteger with: anotherInteger].
+	sequence := sequence collect: [:each| (each key swapTrack: anInteger with: anotherInteger) -> (each value swap: anInteger with: anotherInteger)].
 	self triggerEvent: #tracksChanged! !
 
 !Tracker methodsFor: 'tracks' stamp: 'len 1/Jan/2026 15:33:12'!
 toggleTrackMask
 	self toggleTrackMask: cursorTrack at: cursorPattern! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 31/Dec/2025 22:39:18'!
+!Tracker methodsFor: 'tracks' stamp: 'len 21/Feb/2026 16:30:16'!
 toggleTrackMask: trackIndex at: patternIndex
 	| mask |
-	mask := masks at: patternIndex.
+	mask := (sequence at: patternIndex) value.
 	mask at: trackIndex put: (mask at: trackIndex) not.
 	self triggerEvent: #tracksChanged! !
 

@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 21 February 2026 at 7:38:42 pm'!
+'From Cuis7.7 [latest update: #7797] on 22 February 2026 at 10:27:29 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 470!
+!provides: 'Signals' 1 471!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -329,7 +329,7 @@ Multisample class
 
 !classDefinition: #Sample category: #'Signals-Samples'!
 TunedGenerator subclass: #Sample
-	instanceVariableNames: 'buffer baseRate loopEnd loopLength offset speed smooth warp cycle released position increment label'
+	instanceVariableNames: 'buffer baseRate loopEnd loopLength offset speed smooth warp playing released position increment label'
 	classVariableNames: 'Library'
 	poolDictionaries: ''
 	category: 'Signals-Samples'!
@@ -1199,7 +1199,7 @@ MultitrackMeterMorph class
 
 !classDefinition: #PatternEditorMorph category: #'Signals-Morphic-Tracker'!
 BoxMorph subclass: #PatternEditorMorph
-	instanceVariableNames: 'tracker cursorPosition font labelFont emptyTriggerImage centerKey editStep showCursor pauseBlinking clipboard'
+	instanceVariableNames: 'tracker cursorPosition font labelFont emptyTriggerImage centerKey editStep showCursor pauseBlinking clipboard selectionTrackStart selectionLineStart selectionTrackEnd selectionLineEnd'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Tracker'!
@@ -4020,7 +4020,7 @@ reset
 setVelocity: aNumber
 	velocity := aNumber! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 17/Feb/2026 20:03:13'!
+!Multisample methodsFor: 'controlling' stamp: 'len 21/Feb/2026 20:08:27'!
 update
 	| frequency key closestKey speedFactor samplesByVelocity |
 	super update.
@@ -4032,7 +4032,7 @@ update
 	samplesByVelocity := keymap at: closestKey.
 	sample := (samplesByVelocity at: ((velocity sqrt * (samplesByVelocity size - 1)) truncated + 1 min: samplesByVelocity size)) copy.
 	sample baseRate: sample baseRate * speedFactor.
-	sample reset.
+	sample gateOn.
 	sample update! !
 
 !Multisample methodsFor: 'copying' stamp: 'len 15/Feb/2026 21:02:02'!
@@ -4381,14 +4381,17 @@ warp: aBoolean
 gateOff
 	released := true! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 9/Jan/2026 16:20:26'!
+!Sample methodsFor: 'controlling' stamp: 'len 21/Feb/2026 20:05:48'!
 gateOn
-	self reset! !
+	self reset.
+	released := false.
+	playing := true! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 21/Jan/2026 22:44:13'!
+!Sample methodsFor: 'controlling' stamp: 'len 21/Feb/2026 20:06:03'!
 reset
 	position := (buffer size - 1) * offset.
-	released := false! !
+	released := false.
+	playing := false! !
 
 !Sample methodsFor: 'controlling' stamp: 'len 21/Jan/2026 22:44:13'!
 setOffset: aNumber
@@ -4427,8 +4430,9 @@ initializeControls
 	super initializeControls.
 	(self addControl: #speed min: -4.0 max: 4.0 value: 1.0) printer: [:x| '×', (x printStringFractionDigits: 2)]! !
 
-!Sample methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:13:36'!
+!Sample methodsFor: 'processing' stamp: 'len 21/Feb/2026 20:06:38'!
 read: aBuffer
+	playing ifFalse: [^ aBuffer atAllPut: 0.0].
 	(warp and: [speed abs ~= 1.0]) ifTrue: [^ self readWarp: aBuffer].
 	speed < 0 ifTrue: [^ self readBackwards: aBuffer].
 	self readForward: aBuffer! !
@@ -9102,27 +9106,22 @@ renameInstrument
 drawOn: aCanvas
 "	aCanvas fillRectangle: self localBounds color: tracker selectedTrack backgroundColor"! !
 
-!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 18/Feb/2026 16:49:30'!
+!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:43:08'!
+handleCommandHotkey: anEvent
+	anEvent keyCharacter = $r ifTrue: [self renameInstrument. ^ true].
+	anEvent keyCharacter = $e ifTrue: [self exportInstrument. ^ true].
+	anEvent keyCharacter = $i ifTrue: [self importInstrument. ^ true].
+	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
+	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
+	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
+	^ false! !
+
+!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:43:29'!
 keyStroke: anEvent
 	| c i |
-"	(anEvent rawMacOptionKeyPressed or: [anEvent controlKeyPressed]) ifTrue:
-		[anEvent isArrowLeft ifTrue:
-			[anEvent wasHandled: true.
-			tracker moveCursorInstrumentLeft.
-			^ self].
-		anEvent isArrowRight ifTrue:
-			[anEvent wasHandled: true.
-			tracker moveCursorInstrumentRight.
-			^ self]]."
-	anEvent commandAltKeyPressed ifTrue:
-		["anEvent keyCharacter = $n ifTrue: [anEvent wasHandled: true. ^ tracker addInstrument].
-		anEvent keyCharacter = $N ifTrue: [anEvent wasHandled: true. ^ tracker deleteInstrument]."
-		anEvent keyCharacter = $r ifTrue: [anEvent wasHandled: true. ^ self renameInstrument].
-		anEvent keyCharacter = $e ifTrue: [anEvent wasHandled: true. ^ self exportInstrument].
-		anEvent keyCharacter = $i ifTrue: [anEvent wasHandled: true. ^ self importInstrument].
-		anEvent keyCharacter = $c ifTrue: [anEvent wasHandled: true. ^ self clipboardCopy].
-		anEvent keyCharacter = $x ifTrue: [anEvent wasHandled: true. ^ self clipboardCut].
-		anEvent keyCharacter = $v ifTrue: [anEvent wasHandled: true. ^ self clipboardPaste]].
+	(anEvent commandAltKeyPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
+		[anEvent wasHandled: true.
+		^ self].
 	anEvent keyCharacter = $\ ifTrue:
 		[anEvent wasHandled: true.
 		tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument track ifNotNil: [:aTrack|
@@ -9247,19 +9246,30 @@ update
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 20/Jan/2026 16:38:04'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 22/Feb/2026 22:08:03'!
 clipboardCopy
-	clipboard := (tracker selectedTrigger ifNil: [^ self]) copy! !
+	| pattern |
+	selectionLineStart ifNil: [clipboard := {{(tracker selectedTrigger ifNil: [^ self]) copy}}. ^ self].
+	pattern := tracker selectedPattern.
+	clipboard := ((selectionLineStart min: selectionLineEnd) to: (selectionLineStart max: selectionLineEnd))
+		collect: [:i|
+			((selectionTrackStart min: selectionTrackEnd) to: (selectionTrackStart max: selectionTrackEnd)) 				collect: [:k| pattern track: k at: i]]! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 20/Jan/2026 16:43:23'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 22/Feb/2026 22:24:00'!
 clipboardCut
-	self clipboardCopy.
-	tracker deleteTrigger.
-	self redrawNeeded! !
+	self clipboardCopy; selectionDelete! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 20/Jan/2026 16:43:01'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 22/Feb/2026 22:16:31'!
 clipboardPaste
-	tracker selectedTriggerPut: (clipboard ifNil: [^ self]).
+	| i0 k0 pattern |
+	selectionLineStart := selectionTrackStart := nil.
+	pattern := tracker selectedPattern.
+	k0 := tracker cursorTrack - 1.
+	i0 := tracker cursorLine - 1.
+	(clipboard ifNil: [^ self]) withIndexDo: [:line :i|
+		line withIndexDo: [:trigger :k|
+			(k0 + k <= tracker tracks size and: [i0 + i <= pattern length])
+				ifTrue: [pattern track: k0 + k at: i0 + i put: trigger copy]]].
 	self redrawNeeded! !
 
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 1/Jan/2026 16:37:27'!
@@ -9284,12 +9294,25 @@ moveCursorRight
 			[cursorPosition := cursorPosition + 1].
 	self redrawNeeded! !
 
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 22/Feb/2026 22:24:18'!
+selectionDelete
+	| pattern |
+	pattern := tracker selectedPattern.
+	selectionLineStart ifNil:
+		[pattern track: tracker cursorTrack at: tracker cursorLine put: nil.
+		self redrawNeeded.
+		^ self].
+	(selectionLineStart min: selectionLineEnd) to: (selectionLineStart max: selectionLineEnd) do: [:i|
+		(selectionTrackStart min: selectionTrackEnd) to: (selectionTrackStart max: selectionTrackEnd) do: [:k|
+			pattern track: k at: i put: nil]].
+	self redrawNeeded! !
+
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 4/Jan/2026 15:52:47'!
 setPatternLength
 	tracker isPlaying ifTrue: [^ self].
 	self request: 'Pattern length' initialAnswer: tracker selectedPattern length printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| tracker setSelectedPatternLength: s asNumber. self redrawNeeded]! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 7/Feb/2026 19:18:55'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 22/Feb/2026 20:02:22'!
 drawCursorOn: aCanvas
 	| lineSpacing charWidth cursorWidth x y cursorRect |
 	lineSpacing := font lineSpacing.
@@ -9303,17 +9326,16 @@ drawCursorOn: aCanvas
 	cursorPosition > 5 ifTrue: [x := x + 0.5].
 	cursorPosition > 8 ifTrue: [x := x + 0.5].
 	cursorRect := x * charWidth @ y extent: cursorWidth * charWidth @ lineSpacing.
-	self hasKeyboardFocus ifFalse: [aCanvas frameRectangle: cursorRect borderWidth: 1 color: Color redCathode. ^ self].
-	aCanvas fillRectangle: cursorRect color: (showCursor ifTrue: [Color redCathode] ifFalse: [Color redCathode alpha: 0.7])! !
+	self hasKeyboardFocus ifFalse: [aCanvas frameRectangle: cursorRect borderWidth: 1 color: self class cursorColor. ^ self].
+	aCanvas fillRectangle: cursorRect color: (showCursor ifTrue: [self class cursorColor] ifFalse: [self class cursorColor alpha: 0.7])! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 10/Jan/2026 15:30:43'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 22/Feb/2026 19:01:27'!
 drawOn: aCanvas
-"	aCanvas fillRectangle: (0@0 corner: extent) color: Color black."
 	self drawTracksOn: aCanvas.
 	self drawCursorOn: aCanvas.
 	self drawPatternOn: aCanvas! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 20/Feb/2026 17:45:23'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 22/Feb/2026 20:02:02'!
 drawPatternOn: aCanvas
 	| lineSpacing charWidth y unsetColor  noteColor velocityColor fxColor pattern endLine middle startLine darkColor lightColor xLeft xRight beatColor trackWidth |
 	pattern := tracker selectedPattern.
@@ -9333,8 +9355,21 @@ drawPatternOn: aCanvas
 	lightColor := Color veryLightGray.
 	darkColor := Color lightGray.
 	beatColor := Color white alpha: 0.1.
+	"Draw playhead line:"
 	(tracker isPlaying and: [tracker playheadPattern = tracker cursorPattern and: [tracker playheadLine between: startLine and: endLine]])
 		ifTrue: [aCanvas fillRectangle: (0@(tracker playheadLine - startLine * lineSpacing + y) extent: extent x @ lineSpacing) color: beatColor].
+	"Draw selection:"
+	selectionLineStart ifNotNil:
+		[| sl0 sl1 st0 st1 |
+		sl0 := selectionLineStart min: selectionLineEnd.
+		sl1 := selectionLineStart max: selectionLineEnd.
+		st0 := selectionTrackStart min: selectionTrackEnd.
+		st1 := selectionTrackStart max: selectionTrackEnd.
+		(sl0 <= endLine and: [sl1 >= startLine]) ifTrue:
+			[sl0 := sl0 max: startLine.
+			sl1 := sl1 min: endLine.
+			aCanvas fillRectangle: (st0 - 1 * trackWidth + (charWidth * 2.5) @ ((sl0 - startLine) * lineSpacing + y) extent: (trackWidth * (st1 - st0) + trackWidth - (charWidth * 0.5)) @ (lineSpacing * (sl1 - sl0) + lineSpacing)) color: self class selectionColor]].
+	"Draw lines:"
 	startLine to: endLine do: [:i|
 		| s c x |
 		"Draw line offsets at left and right, and highlight lines at beats:"
@@ -9366,11 +9401,21 @@ drawPatternOn: aCanvas
 					ifNotNil: [:v| aCanvas drawString: (Character codePoint: (v bitShift: -8)) asString, ((v bitAnd: 16rFF) printStringBase: 16 nDigits: 2) at: x @ y font: font color: fxColor].
 				x := charWidth * 3.5 + x]
 			emptyTriggersDo:
-				[aCanvas image: emptyTriggerImage at: x @ y.
-				x := trackWidth + x].
+				["aCanvas image: emptyTriggerImage at: x @ y.
+				x := trackWidth + x"
+				aCanvas drawString: '···' at: x @ y font: font color: unsetColor.
+				x := charWidth * 3.5 + x.
+				aCanvas drawString: '··' at: x @ y font: font color: unsetColor.
+				x := charWidth * 2.5 + x.
+				aCanvas drawString: '··' at: x @ y font: font color: unsetColor.
+				x := charWidth * 2.5 + x.
+				aCanvas drawString: '···' at: x @ y font: font color: unsetColor.
+				x := charWidth * 3.5 + x.
+				aCanvas drawString: '···' at: x @ y font: font color: unsetColor.
+				x := charWidth * 3.5 + x].
 		y := y + lineSpacing]! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 20/Feb/2026 23:07:15'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 22/Feb/2026 15:38:47'!
 drawTracksOn: aCanvas
 	| color textColor charWidth trackWidth x mask headerLineWidth |
 	charWidth := font widthOf: $X.
@@ -9383,7 +9428,7 @@ drawTracksOn: aCanvas
 "		aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: (trackColor lightnessAndChromaBy: (i = tracker cursorTrack ifTrue: [0.25] ifFalse: [0.2]))."
 "		aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: (trackColor darker: (i = tracker cursorTrack ifTrue: [0.54] ifFalse: [0.6]))."
 "		aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: (trackColor alpha: (i = tracker cursorTrack ifTrue: [0.1] ifFalse: [0.02]))."
-		i = tracker cursorTrack ifTrue: [aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: track backgroundColor].
+		i = tracker cursorTrack ifTrue: [aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: track backgroundColor" Color random"].
 		((mask at: i) and: [track enabled])
 			ifTrue:
 				[color := trackColor.
@@ -9467,10 +9512,21 @@ handleInputKey: anEvent
 		^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 8/Feb/2026 15:58:32'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:08:42'!
 handleKeyStroke: anEvent
 	((anEvent rawMacOptionKeyPressed or: [anEvent controlKeyPressed]) and: [self handleOptionHotkey: anEvent]) ifTrue: [^ true].
 	(anEvent commandAltKeyPressed and: [self handleCommandHotkey: anEvent]) ifTrue: [^ true].
+	(anEvent shiftPressed and: [anEvent isArrow]) ifTrue: [self handleSelectionKey: anEvent. ^ true].
+	anEvent isNavigation ifTrue: [self handleNavigationKey: anEvent. ^ true].
+	anEvent keyCharacter = $\ ifTrue:
+		[anEvent wasHandled: true.
+		anEvent commandAltKeyPressed ifTrue: [tracker toggleTrackSolo] ifFalse: [tracker toggleTrackMute]. ^ true].
+	(anEvent anyModifierKeyPressed not and: [self handleInputKey: anEvent]) ifTrue: [^ true].
+	^ false! !
+
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:09:21'!
+handleNavigationKey: anEvent
+	selectionLineStart := selectionTrackStart := nil.
 	anEvent isArrowUp ifTrue: [tracker moveCursorLineUp. ^ true].
 	anEvent isArrowDown ifTrue: [tracker moveCursorLineDown. ^ true].
 	anEvent isArrowLeft ifTrue: [self moveCursorLeft. ^ true].
@@ -9479,13 +9535,9 @@ handleKeyStroke: anEvent
 	anEvent isPageDown ifTrue: [tracker moveCursorBeatDown. ^ true].
 	anEvent isHome ifTrue: [tracker moveCursorLineTop. ^ true].
 	anEvent isEnd ifTrue: [tracker moveCursorLineBottom. ^ true].
-	anEvent keyCharacter = $\ ifTrue:
-		[anEvent wasHandled: true.
-		anEvent commandAltKeyPressed ifTrue: [tracker toggleTrackSolo] ifFalse: [tracker toggleTrackMute]. ^ true].
-	(anEvent anyModifierKeyPressed not and: [self handleInputKey: anEvent]) ifTrue: [^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jan/2026 16:09:19'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 20:04:05'!
 handleOptionHotkey: anEvent
 	anEvent shiftPressed ifTrue:
 		[anEvent isArrowUp ifTrue: [tracker moveSelectedPatternUp. ^ true].
@@ -9499,6 +9551,18 @@ handleOptionHotkey: anEvent
 	anEvent isBackspace ifTrue: [tracker deleteTrigger. self redrawNeeded. ^ true].
 	anEvent isEsc ifTrue: [tracker toggleFollowPlayhead. ^ true].
 	^ false! !
+
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:18:35'!
+handleSelectionKey: anEvent
+	selectionLineStart isNil ifTrue:
+		[selectionLineStart := tracker cursorLine.
+		selectionTrackStart := tracker cursorTrack].
+	(anEvent isArrowUp and: [tracker cursorLine > 1]) ifTrue: [tracker moveCursorLineUp].
+	(anEvent isArrowDown and: [tracker cursorLine < tracker selectedPattern length]) ifTrue: [tracker moveCursorLineDown].
+	anEvent isArrowLeft ifTrue: [tracker moveCursorTrackLeft].
+	anEvent isArrowRight ifTrue: [tracker moveCursorTrackRight].
+	selectionLineEnd := tracker cursorLine.
+	selectionTrackEnd := tracker cursorTrack! !
 
 !PatternEditorMorph methodsFor: 'events' stamp: 'len 21/Jan/2026 15:58:15'!
 handlesMouseDown: anEvent
@@ -9623,6 +9687,14 @@ update
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
+!PatternEditorMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026 19:58:39'!
+cursorColor
+	^ Color redCathode! !
+
+!PatternEditorMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026 20:07:38'!
+selectionColor
+	^ self cursorColor alpha: 0.4! !
+
 !SequencerMorph methodsFor: 'actions' stamp: 'len 21/Feb/2026 18:36:34'!
 clipboardCopy
 	clipboard := selectionStart isNil
@@ -9649,11 +9721,7 @@ clipboardPasteNew
 	selectionStart := nil.
 	clipboard ifNotNil: [tracker insertSequence: (clipboard collect: [:each| each key copy -> each value])]! !
 
-!SequencerMorph methodsFor: 'drawing' stamp: 'len 21/Feb/2026 19:10:36'!
-cursorColor
-	^ Color redCathode! !
-
-!SequencerMorph methodsFor: 'drawing' stamp: 'len 21/Feb/2026 19:19:28'!
+!SequencerMorph methodsFor: 'drawing' stamp: 'len 22/Feb/2026 19:59:55'!
 drawOn: aCanvas
 	| x y s charWidth blockHeight blockWidth space cursorTrack cursorPattern patternNumbers oldPatternNumbers |
 	charWidth := font widthOf: $X.
@@ -9669,13 +9737,13 @@ drawOn: aCanvas
 	y := 0.
 	"draw selection:"
 	(selectionEnd notNil and: [selectionStart notNil]) ifTrue:
-		[aCanvas fillRectangle: (0 @ (((selectionEnd min: selectionStart) - 1) * blockHeight) corner: blockHeight @ (((selectionEnd max: selectionStart) - 1) * blockHeight)) color: self selectionColor].
+		[aCanvas fillRectangle: (0 @ (((selectionEnd min: selectionStart) - 1) * blockHeight) corner: blockHeight @ (((selectionEnd max: selectionStart)) * blockHeight)) color: PatternEditorMorph selectionColor].
 	"draw sequence and cursor:"
 	cursorPattern := tracker cursorPattern.
 	patternNumbers := tracker sequencePatternNumbers.
 	oldPatternNumbers := OrderedCollection new.
 	1 to: tracker sequence size do: [:i| | p c |
-		i = cursorPattern ifTrue: [aCanvas fillRectangle: (0@y extent: blockHeight @ blockHeight) color: self cursorColor].
+		i = cursorPattern ifTrue: [aCanvas fillRectangle: (0@y extent: blockHeight @ blockHeight) color: PatternEditorMorph cursorColor].
 		p := patternNumbers at: i.
 		(oldPatternNumbers includes: p) ifFalse: [aCanvas frameRectangle: (4@(y+4) extent: blockHeight -8 @ (blockHeight - 8)) borderWidth: 1 color: Color white cornerRadius: 8].
 		s := p printStringBase: 16 nDigits: 2.
@@ -9693,7 +9761,7 @@ drawOn: aCanvas
 		y := y + blockHeight].
 	y := tracker cursorPattern - 1 * blockHeight + (tracker cursorLine * blockHeight / tracker selectedPattern length asFloat).
 	"draw pattern line cursor and playhead:"
-	aCanvas line: blockHeight + 1 @ y to: extent x @ y width: 2 color: self cursorColor.
+	aCanvas line: blockHeight + 1 @ y to: extent x @ y width: 2 color: PatternEditorMorph cursorColor.
 	tracker isPlaying ifTrue:
 		[y := tracker playheadPattern - 1 * blockHeight + (tracker playheadLine * blockHeight / tracker playingPattern length asFloat).
 		aCanvas line: blockHeight + 1 @ y to: extent x @ y width: 2 color: Color white]! !
@@ -9702,35 +9770,38 @@ drawOn: aCanvas
 requiresVectorCanvas
 	^ true! !
 
-!SequencerMorph methodsFor: 'drawing' stamp: 'len 21/Feb/2026 19:20:12'!
-selectionColor
-	^ self cursorColor alpha: 0.8! !
+!SequencerMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:41:11'!
+handleCommandHotkey: anEvent
+	anEvent keyCharacter = $n ifTrue: [tracker insertPattern. ^ true].
+	anEvent keyCharacter = $N ifTrue: [tracker deletePattern. ^ true].
+	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
+	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
+	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
+	anEvent keyCharacter = $V ifTrue: [self clipboardPasteNew. ^ true].
+	^ false! !
 
-!SequencerMorph methodsFor: 'events' stamp: 'len 21/Feb/2026 00:39:05'!
+!SequencerMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:31:30'!
+handleNavigationKey: anEvent
+	selectionStart := nil.
+	anEvent isArrowUp ifTrue: [tracker moveCursorPatternUp].
+	anEvent isArrowDown ifTrue: [tracker moveCursorPatternDown]! !
+
+!SequencerMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:31:10'!
+handleSelectionKey: anEvent
+	selectionStart isNil ifTrue: [selectionStart := tracker cursorPattern].
+	anEvent isArrowUp ifTrue: [tracker moveCursorPatternUp].
+	anEvent isArrowDown ifTrue: [tracker moveCursorPatternDown].
+	selectionEnd := tracker cursorPattern! !
+
+!SequencerMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:39:18'!
 keyStroke: anEvent
-	anEvent isArrowUp ifTrue:
+	anEvent isArrow ifTrue:
 		[anEvent wasHandled: true.
-		anEvent shiftPressed ifTrue: [selectionStart isNil ifTrue: [selectionStart := tracker cursorPattern]].
-		tracker moveCursorPatternUp.
-		anEvent shiftPressed
-			ifTrue: [selectionEnd := tracker cursorPattern]
-			ifFalse: [selectionStart := selectionEnd := nil].
-		^ self].
-	anEvent isArrowDown ifTrue:
+		anEvent shiftPressed ifTrue: [^ self handleSelectionKey: anEvent].
+		^ self handleNavigationKey: anEvent].
+	(anEvent commandAltKeyPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
 		[anEvent wasHandled: true.
-		anEvent shiftPressed ifTrue: [selectionStart isNil ifTrue: [selectionStart := tracker cursorPattern]].
-		tracker moveCursorPatternDown.
-		anEvent shiftPressed
-			ifTrue: [selectionEnd := tracker cursorPattern]
-			ifFalse: [selectionStart := selectionEnd := nil].
 		^ self].
-	anEvent commandAltKeyPressed ifTrue:
-		[anEvent keyCharacter = $n ifTrue: [anEvent wasHandled: true. tracker insertPattern. ^ self].
-		anEvent keyCharacter = $N ifTrue: [anEvent wasHandled: true. tracker deletePattern. ^ self].
-		anEvent keyCharacter = $c ifTrue: [anEvent wasHandled: true. ^ self clipboardCopy].
-		anEvent keyCharacter = $x ifTrue: [anEvent wasHandled: true. ^ self clipboardCut].
-		anEvent keyCharacter = $v ifTrue: [anEvent wasHandled: true. ^ self clipboardPaste].
-		anEvent keyCharacter = $V ifTrue: [anEvent wasHandled: true. ^ self clipboardPasteNew]].
 	^ super keyStroke: anEvent! !
 
 !SequencerMorph methodsFor: 'geometry' stamp: 'len 21/Feb/2026 16:41:06'!
@@ -11207,17 +11278,17 @@ scheduleRecompute
 	modules := nil.
 	self triggerEvent: #recomputeNeeded! !
 
-!PatchMorph class methodsFor: 'colors' stamp: 'len 12/Feb/2026 15:11:46'!
+!PatchMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026 20:15:55'!
 highsColor
 	^ `Color okl: 0.65 c: 0.35 h: 250.0`! !
 
-!PatchMorph class methodsFor: 'colors' stamp: 'len 12/Feb/2026 15:11:59'!
+!PatchMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026 20:17:37'!
 lowsColor
-	^ `Color okl: 0.65 c: 0.35 h: 10.0`! !
+	^ `Color okl: 0.65 c: 0.35 h: -5.0`! !
 
-!PatchMorph class methodsFor: 'colors' stamp: 'len 12/Feb/2026 15:13:22'!
+!PatchMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026 20:21:04'!
 midsColor
-	^ `Color okl: 0.65 c: 0.35 h: 130.0`! !
+	^ `Color okl: 0.65 c: 0.35 h: 123.0`! !
 
 !PatchMorph class methodsFor: 'colors' stamp: 'len 12/Feb/2026 22:39:58'!
 panelColor
@@ -12610,6 +12681,12 @@ recomputeModules
 	currentModules reverseDo: [:each| (each isMemberOf: AudioOut) ifTrue: [audioOutput := each. ^ currentModules]].
 	^ currentModules! !
 
+!Instrument methodsFor: 'playing' stamp: 'len 21/Feb/2026 19:49:45'!
+reset
+	| currentModules |
+	currentModules := modules ifNil: [self recomputeModules].
+	currentModules do: [:each| (each is: #Module) ifTrue: [each reset]]! !
+
 !Instrument methodsFor: 'playing' stamp: 'len 6/Jan/2026 16:00:00'!
 scheduleRecompute
 	modules := nil! !
@@ -13300,18 +13377,19 @@ playLine
 	(playheadLine \\ lpb) even ifTrue: [ticksSwing := ticksSwing negated].
 	ticksToLine := ticksToLine + ticksSwing! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 10/Feb/2026 01:22:45'!
+!Tracker methodsFor: 'playing' stamp: 'len 22/Feb/2026 00:31:03'!
 playSampleCount: n into: anAudioBuffer startingAt: startIndex
-	| blockSize i masterGain |
+	| blockSize i masterGain mask |
 	blockSize := Module blockSize.
 	i := startIndex.
 	self assert: n \\ blockSize = 0.
 	masterGain := level * 0.25. "leave -12 dB of headroom"
+	mask := self playingMask.
 	n // blockSize timesRepeat:
-		[ticksToLine > 0 ifTrue: [ticksToLine := ticksToLine - 1] ifFalse: [self playLine].
+		[ticksToLine > 0 ifTrue: [ticksToLine := ticksToLine - 1] ifFalse: [self playLine. mask := self playingMask].
 		leftBuffer atAllPut: 0.0.
 		rightBuffer atAllPut: 0.0.
-		tracks do: [:track| track tick; mixIntoLeft: leftBuffer right: rightBuffer].
+		mask withIndexDo: [:enabled :trackIndex| enabled ifTrue: [(tracks at: trackIndex) tick; mixIntoLeft: leftBuffer right: rightBuffer]].
 		leftBuffer *= masterGain.
 		rightBuffer *= masterGain.
 		peakLeft := peakLeft max: leftBuffer peak.
@@ -13417,21 +13495,23 @@ deleteTrack
 	tracks size > 1 ifFalse: [^ self]. "don't delete last track"
 	self deleteTrack: cursorTrack! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 21/Feb/2026 16:24:30'!
+!Tracker methodsFor: 'tracks' stamp: 'len 22/Feb/2026 19:53:48'!
 deleteTrack: anInteger
 	tracks := (tracks copyFrom: 1 to: anInteger - 1), (tracks copyFrom: anInteger + 1 to: tracks size).
-	sequence := sequence collect: [:each| (each key deleteTrack: anInteger) -> ((each value copyFrom: 1 to: anInteger - 1), (each value copyFrom: anInteger + 1 to: each value size))].
+	self sequenceUniquePatterns do: [:each| each deleteTrack: anInteger].
+	sequence := sequence collect: [:each| each key -> ((each value copyFrom: 1 to: anInteger - 1), (each value copyFrom: anInteger + 1 to: each value size))].
 	self setCursorTrack: (cursorTrack min: tracks size).
 	self triggerEvent: #tracksChanged! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 21/Feb/2026 16:25:31'!
+!Tracker methodsFor: 'tracks' stamp: 'len 22/Feb/2026 19:55:04'!
 insertTrack: anInteger
 	| answer |
 	answer := Track new setTracker: self.
 	"answer label: 'Track ', (tracks size + 1) printString."
 	answer color: (Color okl: 0.7 c: 0.4 h: (137.5 / 5) * (tracks size "+ 4") \\ 360.0).
 	tracks := (tracks copyFrom: 1 to: anInteger - 1), {answer}, (tracks copyFrom: anInteger to: tracks size).
-	sequence := sequence collect: [:each| (each key insertTrack: anInteger) -> ((each value copyFrom: 1 to: anInteger - 1), {true}, (each value copyFrom: anInteger to: each value size))].
+	self sequenceUniquePatterns do: [:each| each insertTrack: anInteger].
+	sequence := sequence collect: [:each| each key -> ((each value copyFrom: 1 to: anInteger - 1), {true}, (each value copyFrom: anInteger to: each value size))].
 	self triggerEvent: #tracksChanged.
 	^ answer! !
 
@@ -13455,7 +13535,7 @@ selectedMask
 selectedTrack
 	^ tracks at: cursorTrack! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 21/Feb/2026 16:28:15'!
+!Tracker methodsFor: 'tracks' stamp: 'len 22/Feb/2026 19:50:00'!
 swapTrack: anInteger with: anotherInteger
 	| color1 |
 	anInteger = anotherInteger ifTrue: [^ self].
@@ -13464,8 +13544,10 @@ swapTrack: anInteger with: anotherInteger
 	color1 := (tracks at: anInteger) color.
 	(tracks at: anInteger) color: (tracks at: anotherInteger) color.
 	(tracks at: anotherInteger) color: color1.
-	"swap pattern blocks and masks:"
-	sequence := sequence collect: [:each| (each key swapTrack: anInteger with: anotherInteger) -> (each value swap: anInteger with: anotherInteger)].
+	"swap pattern blocks:"
+	self sequenceUniquePatterns do: [:each| each swapTrack: anInteger with: anotherInteger].
+	"swap masks:"
+	sequence do: [:each| each value swap: anInteger with: anotherInteger].
 	self triggerEvent: #tracksChanged! !
 
 !Tracker methodsFor: 'tracks' stamp: 'len 1/Jan/2026 15:33:12'!
@@ -14042,24 +14124,36 @@ violetBeam
 violetBeamLight
 	^ `Color fromHexString: '#C4AAFF'`! !
 
+!KeyboardEvent methodsFor: '*signals' stamp: 'len 22/Feb/2026 16:01:46'!
+isArrow
+	"Answer true if the receiver is an arrow key event: arrow left/up/down/right."
+	^ #[28 29 30 31] includes: keyValue! !
+
+!KeyboardEvent methodsFor: '*signals' stamp: 'len 22/Feb/2026 16:00:47'!
+isNavigation
+	"Answer true if the receiver is a navigation key event: arrow left/up/down/right, page up/down, or home/end."
+	^ #[1 4 11 12 28 29 30 31] includes: keyValue! !
+
 !Morph methodsFor: '*signals' stamp: 'len 9/Feb/2026 20:50:05'!
 asJsonWithBuffers: bufferList
 	^ OrderedDictionary new! !
 
-!Morph methodsFor: '*signals' stamp: 'len 20/Feb/2026 17:49:22'!
+!Morph methodsFor: '*signals' stamp: 'len 22/Feb/2026 00:38:49'!
 bench
-	| canvas |
-	canvas := VectorCanvas onForm: Display.
+	| canvas form |
+	form := Form extent: self morphExtent depth: Display depth.
+	canvas := VectorCanvas onForm: form.
 	^ [self drawOn: canvas] bench! !
 
 !Morph methodsFor: '*signals' stamp: 'len 9/Feb/2026 20:50:43'!
 readFromJson: json buffers: bufferList
 	^ self! !
 
-!Morph methodsFor: '*signals' stamp: 'len 20/Feb/2026 17:51:41'!
+!Morph methodsFor: '*signals' stamp: 'len 22/Feb/2026 00:39:42'!
 timeProfile
-	| canvas |
-	canvas := VectorCanvas onForm: Display.
+	| canvas form |
+	form := Form extent: self morphExtent depth: Display depth.
+	canvas := VectorCanvas onForm: form.
 	^ [100 timesRepeat: [self drawOn: canvas]] timeProfile! !
 Wavetable initialize!
 Supersaw initialize!

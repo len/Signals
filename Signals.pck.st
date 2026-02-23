@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 23 February 2026 at 10:37:46 pm'!
+'From Cuis7.7 [latest update: #7797] on 24 February 2026 at 1:37:24 am'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 473!
+!provides: 'Signals' 1 474!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -957,6 +957,36 @@ BoxMorph subclass: #TriangleButtonMorph
 TriangleButtonMorph class
 	instanceVariableNames: ''!
 
+!classDefinition: #VideoMorph category: #'Signals-Etc'!
+BoxMorph subclass: #VideoMorph
+	instanceVariableNames: 'screen bits video position increment'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Etc'!
+!classDefinition: 'VideoMorph class' category: #'Signals-Etc'!
+VideoMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #WaveformMorph category: #'Signals-Etc'!
+BoxMorph subclass: #WaveformMorph
+	instanceVariableNames: 'waveform color image'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Etc'!
+!classDefinition: 'WaveformMorph class' category: #'Signals-Etc'!
+WaveformMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #WaveformScrollingMorph category: #'Signals-Etc'!
+BoxMorph subclass: #WaveformScrollingMorph
+	instanceVariableNames: 'image position color'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Etc'!
+!classDefinition: 'WaveformScrollingMorph class' category: #'Signals-Etc'!
+WaveformScrollingMorph class
+	instanceVariableNames: ''!
+
 !classDefinition: #ControlMorph category: #'Signals-Morphic-Controls'!
 BoxMorph subclass: #ControlMorph
 	instanceVariableNames: 'control color'
@@ -1315,36 +1345,6 @@ BoxMorph subclass: #VectorscopeMorph
 	category: 'Signals-Morphic-Widgets'!
 !classDefinition: 'VectorscopeMorph class' category: #'Signals-Morphic-Widgets'!
 VectorscopeMorph class
-	instanceVariableNames: ''!
-
-!classDefinition: #VideoMorph category: #'Signals-Morphic-Widgets'!
-BoxMorph subclass: #VideoMorph
-	instanceVariableNames: 'screen bits video position increment'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Widgets'!
-!classDefinition: 'VideoMorph class' category: #'Signals-Morphic-Widgets'!
-VideoMorph class
-	instanceVariableNames: ''!
-
-!classDefinition: #WaveformMorph category: #'Signals-Morphic-Widgets'!
-BoxMorph subclass: #WaveformMorph
-	instanceVariableNames: 'waveform color image'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Widgets'!
-!classDefinition: 'WaveformMorph class' category: #'Signals-Morphic-Widgets'!
-WaveformMorph class
-	instanceVariableNames: ''!
-
-!classDefinition: #WaveformScrollingMorph category: #'Signals-Morphic-Widgets'!
-BoxMorph subclass: #WaveformScrollingMorph
-	instanceVariableNames: 'image position color'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Widgets'!
-!classDefinition: 'WaveformScrollingMorph class' category: #'Signals-Morphic-Widgets'!
-WaveformScrollingMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #ConnectorMorph category: #'Signals-Morphic-Patches'!
@@ -7006,18 +7006,29 @@ toggleLowerPane
 	lowerPane visible: lowerPane visible not.
 	instrumentEditor layoutSpec proportionalHeight: (lowerPane visible ifTrue: [0.38] ifFalse: [1.0])! !
 
-!TrackerWindow methodsFor: 'events' stamp: 'len 20/Feb/2026 23:03:50'!
+!TrackerWindow methodsFor: 'events' stamp: 'len 24/Feb/2026 01:14:07'!
+handleCommandHotkey: anEvent
+	anEvent keyCharacter = $f ifTrue: [self setBPM. ^ true].
+	anEvent keyCharacter = $b ifTrue: [self setLPB. ^ true].
+	anEvent keyCharacter = $o ifTrue: [self openProject. ^ true].
+	anEvent keyCharacter = $s ifTrue: [self saveProject. ^ true].
+	anEvent keyCharacter = $j ifTrue: [self toggleLowerPane. ^ true].
+	anEvent keyCharacter = $r ifTrue: [instrumentEditor renameInstrument. ^ true].
+	anEvent keyCharacter = $] ifTrue: [model inputOctaveUp. ^ true].
+	anEvent keyCharacter = $[ ifTrue: [model inputOctaveDown. ^ true].
+	anEvent keyCharacter = $n ifTrue: [model insertPattern. ^ true].
+	anEvent keyCharacter = $N ifTrue: [model deletePattern. ^ true].
+	anEvent keyCharacter = $t ifTrue: [model addTrack. ^ true].
+	anEvent keyCharacter = $T ifTrue: [model deleteTrack. ^ true].
+	anEvent keyCharacter = $m ifTrue: [model toggleTrackMask. ^ true].
+	^ false! !
+
+!TrackerWindow methodsFor: 'events' stamp: 'len 24/Feb/2026 01:15:00'!
 keyStroke: anEvent
 	anEvent isSpace ifTrue: [model togglePlay. ^ true].
-	anEvent commandAltKeyPressed ifTrue:
-		[anEvent keyCharacter = $f ifTrue: [anEvent wasHandled: true. ^ self setBPM].
-		anEvent keyCharacter = $b ifTrue: [anEvent wasHandled: true. ^ self setLPB].
-		anEvent keyCharacter = $o ifTrue: [anEvent wasHandled: true. ^ self openProject].
-		anEvent keyCharacter = $s ifTrue: [anEvent wasHandled: true. ^ self saveProject].
-		anEvent keyCharacter = $j ifTrue: [anEvent wasHandled: true. ^ self toggleLowerPane].
-		anEvent keyCharacter = $r ifTrue: [anEvent wasHandled: true. ^ instrumentEditor renameInstrument].
-		anEvent keyCharacter = $] ifTrue: [anEvent wasHandled: true. ^ model inputOctaveUp].
-		anEvent keyCharacter = $[ ifTrue: [anEvent wasHandled: true. ^ model inputOctaveDown]].
+	(anEvent commandAltKeyPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
+		[anEvent wasHandled: true.
+		^ self].
 	^ super keyStroke: anEvent! !
 
 !TrackerWindow methodsFor: 'initialization' stamp: 'len 20/Feb/2026 22:52:02'!
@@ -7680,6 +7691,113 @@ mouseLeave: anEvent
 !TriangleButtonMorph methodsFor: 'as yet unclassified' stamp: 'len 25/Nov/2025 20:38:00'!
 requiresVectorCanvas
 	^ true! !
+
+!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025 16:45:00'!
+defaultExtent
+	^`256@192`! !
+
+!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025 16:47:00'!
+drawOn: aCanvas
+	aCanvas image: video at: 0@0 sourceRect: (0@position extent: self morphExtent)! !
+
+!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025 16:54:00'!
+initialize
+	super initialize.
+	bits := ByteArray new: 1024*1024*4.
+	Smalltalk imageName asFileEntry readStreamDo: [:r| r binary nextWordsInto: bits].
+	position := 0.
+	self lineSize: self morphWidth.
+	increment := self morphHeight! !
+
+!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025 16:41:00'!
+lineSize: anInteger
+	video := Form extent: anInteger @ (bits size // (anInteger * 4)) depth: 32 bits: bits! !
+
+!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025 16:53:00'!
+step
+	position := position + increment.
+	position + self morphHeight > video height ifTrue: [position := position - video height].
+	self redrawNeeded! !
+
+!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025 16:48:00'!
+stepTime
+	^ 25! !
+
+!WaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Oct/2025 20:14:00'!
+computeImage
+	| h canvas x y |
+	h := 128.
+	image := Form extent: waveform size @ h.
+	canvas := BitBltCanvas onForm: image.
+	1 to: waveform size do: [:i|
+		x := i-1.
+		y := (1.0 - (waveform at: i) / 2.0) * h.
+		canvas line: x @ y to: x @ (h // 2) width: 1 color: Color black]! !
+
+!WaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Oct/2025 17:04:00'!
+defaultExtent
+	^ `512 @ 128`! !
+
+!WaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 22:37:39'!
+drawOn: aCanvas
+	aCanvas stencil: (image magnifyTo: self morphExtent) at: 0@0 color: color! !
+
+!WaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 30/Nov/2025 01:45:00'!
+initialize
+	super initialize.
+	color := PatchMorph waveformColor.
+	self waveform:​ (((1 to: 1000) collect: [:i| (i / 40.0) sin * (i + 200.0 / 10.0) squared cos]) as: Float32Array)! !
+
+!WaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Sep/2025 15:50:00'!
+waveform: aFloatArray
+	waveform := aFloatArray.
+	self computeImage! !
+
+!WaveformScrollingMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Oct/2025 15:07:00'!
+color: aColor
+	color := aColor.
+	self redrawNeeded! !
+
+!WaveformScrollingMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Oct/2025 15:07:00'!
+defaultExtent
+	^ `512 @ 64`! !
+
+!WaveformScrollingMorph methodsFor: 'as yet unclassified' stamp: 'len 28/Nov/2025 00:25:00'!
+drawOn: aCanvas
+	"Draw the form, wrapping, with the current column always at the right. This produces the the impression of infinite scrolling right to left."
+	| w h |
+	w := image width - 1.
+	h := image height - 1.
+	"from left to right, draw from the next column position+1 to the last column:"
+	aCanvas image: image at: 0 @ 0 sourceRect: ((position + 1) @ 0 corner: w @ h).
+	"and then wrap and continue drawing from the first column to the current column position:"
+	aCanvas image: image at: (w - position - 1) @ 0 sourceRect: (0 @ 0 corner: position @ h)! !
+
+!WaveformScrollingMorph methodsFor: 'as yet unclassified' stamp: 'len 30/Nov/2025 01:45:00'!
+initialize
+	super initialize.
+	image := Form extent: self defaultExtent depth: Display depth.
+	image fillColor: Color black.
+	position := 0.
+	color := PatchMorph waveformColor! !
+
+!WaveformScrollingMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Oct/2025 15:13:00'!
+process: aBuffer
+	| h step canvas y |
+	h := image height.
+	step := 1.
+	canvas := BitBltCanvas onForm: image.
+	1 to: aBuffer size by: step do: [:i|
+		y := (1.0 - (aBuffer at: i) / 2.0) * h.
+		canvas
+			line: position @ 0 to: position @ h width: 1 color: Color black;
+			line: position @ y to: position @ (h // 2) width: 1 color: color.
+		position := position + 1 \\ image width].
+	self redrawNeeded! !
+
+!WaveformScrollingMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Oct/2025 15:10:00'!
+reset
+	^ self! !
 
 !ControlMorph methodsFor: 'accessing' stamp: 'len 30/Sep/2025 22:36:00'!
 color: aColor
@@ -9207,9 +9325,8 @@ renameInstrument
 drawOn: aCanvas
 "	aCanvas fillRectangle: self localBounds color: tracker selectedTrack backgroundColor"! !
 
-!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:43:08'!
+!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 01:04:50'!
 handleCommandHotkey: anEvent
-	anEvent keyCharacter = $r ifTrue: [self renameInstrument. ^ true].
 	anEvent keyCharacter = $e ifTrue: [self exportInstrument. ^ true].
 	anEvent keyCharacter = $i ifTrue: [self importInstrument. ^ true].
 	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
@@ -9395,6 +9512,15 @@ moveCursorRight
 			[cursorPosition := cursorPosition + 1].
 	self redrawNeeded! !
 
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 24/Feb/2026 01:30:51'!
+selectedTriggersDo: aBlock
+	| pattern |
+	selectionLineStart ifNil: [tracker selectedTrigger ifNotNil: aBlock. ^ self].
+	pattern := tracker selectedPattern.
+	(selectionLineStart min: tracker cursorLine) to: (selectionLineStart max: tracker cursorLine) do: [:i|
+		(selectionTrackStart min: tracker cursorTrack) to: (selectionTrackStart max: tracker cursorTrack) do: [:k|
+			(pattern track: k at: i) ifNotNil: aBlock]]! !
+
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026 16:14:01'!
 selectionDelete
 	| pattern |
@@ -9553,15 +9679,8 @@ drawTracksOn: aCanvas
 tracksWidthInCharacters
 	^ 15! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 20/Feb/2026 23:02:32'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 01:15:31'!
 handleCommandHotkey: anEvent
-	anEvent keyCharacter = $n ifTrue: [tracker insertPattern. ^ true].
-	anEvent keyCharacter = $N ifTrue: [tracker deletePattern. ^ true].
-	anEvent keyCharacter = $t ifTrue: [tracker addTrack. ^ true].
-	anEvent keyCharacter = $T ifTrue: [tracker deleteTrack. ^ true].
-	anEvent keyCharacter = $p ifTrue: [tracker incrementTrackPolyphony. ^ true].
-	anEvent keyCharacter = $P ifTrue: [tracker decrementTrackPolyphony. ^ true].
-	anEvent keyCharacter = $m ifTrue: [tracker toggleTrackMask. ^ true].
 	anEvent keyCharacter = $l ifTrue: [self setPatternLength. ^ true].
 	"Clipboard:"
 	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
@@ -9569,13 +9688,18 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 16/Feb/2026 21:26:57'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 01:33:27'!
 handleInputKey: anEvent
 	| c i |
 	anEvent isBackspace ifTrue:
-		[tracker selectedTriggerAt: cursorPosition put: nil.
-		self redrawNeeded.
+		[selectionLineStart isNil
+			ifTrue: [tracker selectedTriggerAt: cursorPosition put: nil. self redrawNeeded]
+			ifFalse: [self selectionDelete].
 		^ true].
+	anEvent keyCharacter = $] ifTrue: [self selectedTriggersDo: [:each| each transposeBy: 12]. self redrawNeeded. ^ true].
+	anEvent keyCharacter = $[ ifTrue: [self selectedTriggersDo: [:each| each transposeBy: -12]. self redrawNeeded. ^ true].
+	anEvent keyCharacter = $} ifTrue: [self selectedTriggersDo: [:each| each transposeBy: 1]. self redrawNeeded. ^ true].
+	anEvent keyCharacter = ${ ifTrue: [self selectedTriggersDo: [:each| each transposeBy: -1]. self redrawNeeded. ^ true].
 	cursorPosition = 1 ifTrue:
 		[c := anEvent keyCharacter.
 		c = $a ifTrue:
@@ -9586,12 +9710,12 @@ handleInputKey: anEvent
 			[tracker selectedTriggerAt: cursorPosition put: i + tracker inputCenterKey - 1.
 			tracker moveCursorLineDown: editStep.
 			^ true].
-		tracker selectedTrigger ifNotNil: [:trigger|
+"		tracker selectedTrigger ifNotNil: [:trigger|
 			trigger note ifNotNil: [:note|
 				(c = $] and: [note < 108]) ifTrue: [trigger note: note + 12. self redrawNeeded. ^ true].
 				(c = $[ and: [note > 12]) ifTrue: [trigger note: note - 12. self redrawNeeded. ^ true].
 				(c = $} and: [note < 127]) ifTrue: [trigger note: note + 1. self redrawNeeded. ^ true].
-				(c = ${ and: [note > 0]) ifTrue: [trigger note: note - 1. self redrawNeeded. ^ true]]].
+				(c = ${ and: [note > 0]) ifTrue: [trigger note: note - 1. self redrawNeeded. ^ true]]]."
 		^ false].
 	(cursorPosition = 6 or: [cursorPosition = 9]) ifTrue:
 		[('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>' includes: (c := anEvent keyCharacter asUppercase)) ifTrue:
@@ -9871,10 +9995,8 @@ drawOn: aCanvas
 requiresVectorCanvas
 	^ true! !
 
-!SequencerMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:41:11'!
+!SequencerMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 01:15:39'!
 handleCommandHotkey: anEvent
-	anEvent keyCharacter = $n ifTrue: [tracker insertPattern. ^ true].
-	anEvent keyCharacter = $N ifTrue: [tracker deletePattern. ^ true].
 	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
 	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
@@ -11148,113 +11270,6 @@ stepTime
 !VectorscopeMorph methodsFor: 'stepping' stamp: 'len 3/Feb/2026 00:36:32'!
 wantsSteps
 	^ true! !
-
-!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025 16:45:00'!
-defaultExtent
-	^`256@192`! !
-
-!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025 16:47:00'!
-drawOn: aCanvas
-	aCanvas image: video at: 0@0 sourceRect: (0@position extent: self morphExtent)! !
-
-!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025 16:54:00'!
-initialize
-	super initialize.
-	bits := ByteArray new: 1024*1024*4.
-	Smalltalk imageName asFileEntry readStreamDo: [:r| r binary nextWordsInto: bits].
-	position := 0.
-	self lineSize: self morphWidth.
-	increment := self morphHeight! !
-
-!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025 16:41:00'!
-lineSize: anInteger
-	video := Form extent: anInteger @ (bits size // (anInteger * 4)) depth: 32 bits: bits! !
-
-!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025 16:53:00'!
-step
-	position := position + increment.
-	position + self morphHeight > video height ifTrue: [position := position - video height].
-	self redrawNeeded! !
-
-!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025 16:48:00'!
-stepTime
-	^ 25! !
-
-!WaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Oct/2025 20:14:00'!
-computeImage
-	| h canvas x y |
-	h := 128.
-	image := Form extent: waveform size @ h.
-	canvas := BitBltCanvas onForm: image.
-	1 to: waveform size do: [:i|
-		x := i-1.
-		y := (1.0 - (waveform at: i) / 2.0) * h.
-		canvas line: x @ y to: x @ (h // 2) width: 1 color: Color black]! !
-
-!WaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Oct/2025 17:04:00'!
-defaultExtent
-	^ `512 @ 128`! !
-
-!WaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 22:37:39'!
-drawOn: aCanvas
-	aCanvas stencil: (image magnifyTo: self morphExtent) at: 0@0 color: color! !
-
-!WaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 30/Nov/2025 01:45:00'!
-initialize
-	super initialize.
-	color := PatchMorph waveformColor.
-	self waveform:​ (((1 to: 1000) collect: [:i| (i / 40.0) sin * (i + 200.0 / 10.0) squared cos]) as: Float32Array)! !
-
-!WaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Sep/2025 15:50:00'!
-waveform: aFloatArray
-	waveform := aFloatArray.
-	self computeImage! !
-
-!WaveformScrollingMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Oct/2025 15:07:00'!
-color: aColor
-	color := aColor.
-	self redrawNeeded! !
-
-!WaveformScrollingMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Oct/2025 15:07:00'!
-defaultExtent
-	^ `512 @ 64`! !
-
-!WaveformScrollingMorph methodsFor: 'as yet unclassified' stamp: 'len 28/Nov/2025 00:25:00'!
-drawOn: aCanvas
-	"Draw the form, wrapping, with the current column always at the right. This produces the the impression of infinite scrolling right to left."
-	| w h |
-	w := image width - 1.
-	h := image height - 1.
-	"from left to right, draw from the next column position+1 to the last column:"
-	aCanvas image: image at: 0 @ 0 sourceRect: ((position + 1) @ 0 corner: w @ h).
-	"and then wrap and continue drawing from the first column to the current column position:"
-	aCanvas image: image at: (w - position - 1) @ 0 sourceRect: (0 @ 0 corner: position @ h)! !
-
-!WaveformScrollingMorph methodsFor: 'as yet unclassified' stamp: 'len 30/Nov/2025 01:45:00'!
-initialize
-	super initialize.
-	image := Form extent: self defaultExtent depth: Display depth.
-	image fillColor: Color black.
-	position := 0.
-	color := PatchMorph waveformColor! !
-
-!WaveformScrollingMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Oct/2025 15:13:00'!
-process: aBuffer
-	| h step canvas y |
-	h := image height.
-	step := 1.
-	canvas := BitBltCanvas onForm: image.
-	1 to: aBuffer size by: step do: [:i|
-		y := (1.0 - (aBuffer at: i) / 2.0) * h.
-		canvas
-			line: position @ 0 to: position @ h width: 1 color: Color black;
-			line: position @ y to: position @ (h // 2) width: 1 color: color.
-		position := position + 1 \\ image width].
-	self redrawNeeded! !
-
-!WaveformScrollingMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Oct/2025 15:10:00'!
-reset
-	^ self! !
 
 !ConnectorMorph methodsFor: 'accessing' stamp: 'len 17/Nov/2025 19:26:00'!
 color: aColor
@@ -13828,6 +13843,10 @@ isNoteOff
 !Trigger methodsFor: 'testing' stamp: 'len 18/Feb/2026 23:28:26'!
 isNoteOn
 	^ note notNil and: [note >= 0]! !
+
+!Trigger methodsFor: 'as yet unclassified' stamp: 'len 24/Feb/2026 01:25:15'!
+transposeBy: semitones
+	self isNoteOn ifTrue: [note := note + semitones min: 127 max: 0]! !
 
 !SequenceableCollection methodsFor: '*signals' stamp: 'len 2/Oct/2025 21:40:00'!
 plot

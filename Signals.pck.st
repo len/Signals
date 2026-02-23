@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 23 February 2026 at 8:46:13 pm'!
+'From Cuis7.7 [latest update: #7797] on 23 February 2026 at 10:37:46 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 472!
+!provides: 'Signals' 1 473!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1047,14 +1047,14 @@ BoxMorph subclass: #XYControlMorph
 XYControlMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #LFOControlMorph category: #'Signals-Etc'!
-XYControlMorph subclass: #LFOControlMorph
+!classDefinition: #LFOControlMorphOld category: #'Signals-Etc'!
+XYControlMorph subclass: #LFOControlMorphOld
 	instanceVariableNames: 'color lfo currentPhase'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Etc'!
-!classDefinition: 'LFOControlMorph class' category: #'Signals-Etc'!
-LFOControlMorph class
+!classDefinition: 'LFOControlMorphOld class' category: #'Signals-Etc'!
+LFOControlMorphOld class
 	instanceVariableNames: ''!
 
 !classDefinition: #FilterControlMorph category: #'Signals-Morphic-Controls'!
@@ -1065,6 +1065,16 @@ XYControlMorph subclass: #FilterControlMorph
 	category: 'Signals-Morphic-Controls'!
 !classDefinition: 'FilterControlMorph class' category: #'Signals-Morphic-Controls'!
 FilterControlMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #LFOControlMorph category: #'Signals-Morphic-Controls'!
+XYControlMorph subclass: #LFOControlMorph
+	instanceVariableNames: 'color lfo samples currentPosition'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'LFOControlMorph class' category: #'Signals-Morphic-Controls'!
+LFOControlMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #WaveshaperControlMorph category: #'Signals-Morphic-Controls'!
@@ -6470,11 +6480,14 @@ reset
 setBPM: aNumber
 	bpm := aNumber! !
 
-!LFO methodsFor: 'controlling' stamp: 'len 22/Jan/2026 15:06:19'!
+!LFO methodsFor: 'controlling' stamp: 'len 23/Feb/2026 22:30:08'!
 update
+	| newOffset |
 	super update.
 	speed := (self get: #speed) / self class controlRate.
-	offset := self get: #offset.
+	(newOffset := self get: #offset) = offset ifFalse:
+		[phase := phase + newOffset - offset \\ 1.0.
+		offset := newOffset].
 	mode = #hold ifFalse: [heldValue := nil]! !
 
 !LFO methodsFor: 'initialization' stamp: 'len 22/Jan/2026 16:04:46'!
@@ -6545,21 +6558,19 @@ readFromJson: json buffers: aList
 	mode := (json at: #mode) asSymbol.
 	bipolar := json at: #bipolar! !
 
-!LFO methodsFor: 'tools' stamp: 'len 23/Feb/2026 20:39:32'!
+!LFO methodsFor: 'tools' stamp: 'len 23/Feb/2026 22:20:23'!
 panel
 	^ ControlPanel new
-		addSmallKnob: (controls at: #speed) label: 'Speed';
-		addSmallKnob: (controls at: #offset) label: 'Offset';
 		addMorph: (PluggableChoiceMorph new options: #(free trig hold); model: self; getter: #mode; setter: #mode:);
 		addMorph: (PluggableToggleMorph new model: self; getter: #sync; setter: #sync:; label: '♩');
 		addMorph: (PluggableToggleMorph new model: self; getter: #bipolar; setter: #bipolar:; label: '±');
 		addMorph: (PluggableChoiceMorph new options: #(sine square rise fall random); model: self; getter: #shape; setter: #shape:)! !
 
-!LFO methodsFor: 'tools' stamp: 'len 23/Feb/2026 20:40:50'!
+!LFO methodsFor: 'tools' stamp: 'len 23/Feb/2026 22:23:17'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
-	display := RollingWaveformMorph new.
+	display := LFOControlMorph new lfo: self.
 	self when: #output: send: #addSample: to: display.
 	answer body addMorph: display.
 	answer flap addMorph: self panel.
@@ -8189,7 +8200,7 @@ adjustYBy: aNumber
 	self redrawNeeded.
 	self showBalloon: controlY printedBaseValueWithLabel! !
 
-!LFOControlMorph methodsFor: 'accessing' stamp: 'len 19/Jan/2026 18:57:51'!
+!LFOControlMorphOld methodsFor: 'accessing' stamp: 'len 19/Jan/2026 18:57:51'!
 lfo: anLFO
 	lfo removeDependent: self.
 	lfo := anLFO.
@@ -8197,7 +8208,7 @@ lfo: anLFO
 	self controlY: (lfo controls at: #speed).
 	self controlX: (lfo controls at: #offset)! !
 
-!LFOControlMorph methodsFor: 'drawing' stamp: 'len 22/Jan/2026 16:16:27'!
+!LFOControlMorphOld methodsFor: 'drawing' stamp: 'len 22/Jan/2026 16:16:27'!
 drawOn: aCanvas
 	| step stepX t₀ t x y h steps |
 	steps := 32.
@@ -8226,7 +8237,7 @@ drawOn: aCanvas
 	x := 4.0 + (t - t₀ \\ 1.0 * stepX * steps).
 	aCanvas line: x @ y to: x @ y width: 6.0 color: Color white! !
 
-!LFOControlMorph methodsFor: 'drawing' stamp: 'len 19/Jan/2026 18:56:05'!
+!LFOControlMorphOld methodsFor: 'drawing' stamp: 'len 19/Jan/2026 18:56:05'!
 waveAt: t
 	| v |
 	v := lfo shape.
@@ -8236,31 +8247,31 @@ waveAt: t
 	v == #fall ifTrue: [^ (0.5 - t) * 2.0].
 	self notYetImplemented! !
 
-!LFOControlMorph methodsFor: 'initialization' stamp: 'len 13/Feb/2026 01:03:43'!
+!LFOControlMorphOld methodsFor: 'initialization' stamp: 'len 13/Feb/2026 01:03:43'!
 defaultExtent
 	^ `128@64`! !
 
-!LFOControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 22:59:37'!
+!LFOControlMorphOld methodsFor: 'initialization' stamp: 'len 11/Feb/2026 22:59:37'!
 initialize
 	super initialize.
 	color := PatchMorph waveformColor3.
 	currentPhase := 0.0.
 	self lfo: LFO new! !
 
-!LFOControlMorph methodsFor: 'stepping' stamp: 'len 1/Dec/2025 18:05:00'!
+!LFOControlMorphOld methodsFor: 'stepping' stamp: 'len 1/Dec/2025 18:05:00'!
 step
 	currentPhase := lfo phase.
 	self redrawNeeded! !
 
-!LFOControlMorph methodsFor: 'stepping' stamp: 'len 2/Dec/2025 16:48:00'!
+!LFOControlMorphOld methodsFor: 'stepping' stamp: 'len 2/Dec/2025 16:48:00'!
 stepTime
 	^ 100! !
 
-!LFOControlMorph methodsFor: 'stepping' stamp: 'len 25/Nov/2025 18:58:00'!
+!LFOControlMorphOld methodsFor: 'stepping' stamp: 'len 25/Nov/2025 18:58:00'!
 wantsSteps
 	^ true! !
 
-!LFOControlMorph methodsFor: 'private' stamp: 'len 6/Dec/2025 14:31:24'!
+!LFOControlMorphOld methodsFor: 'private' stamp: 'len 6/Dec/2025 14:31:24'!
 adjustXBy: aNumber
 	super adjustXBy: aNumber * -4.0! !
 
@@ -8447,6 +8458,52 @@ initialize
 !FilterControlMorph methodsFor: 'private' stamp: 'len 4/Feb/2026 00:40:14'!
 adjustYBy: aNumber
 	super adjustYBy: (mode = #BP ifTrue: [aNumber negated] ifFalse: [aNumber])! !
+
+!LFOControlMorph methodsFor: 'accessing' stamp: 'len 23/Feb/2026 22:14:27'!
+lfo: anLFO
+	lfo removeDependent: self.
+	lfo := anLFO.
+	lfo addDependent: self.
+	self controlY: (lfo controls at: #speed).
+	self controlX: (lfo controls at: #offset)! !
+
+!LFOControlMorph methodsFor: 'drawing' stamp: 'len 23/Feb/2026 22:16:18'!
+drawOn: aCanvas
+	| step x y h pos delta |
+	delta := 20.
+	step := self morphWidth / (samples size - delta) * 5.
+	(pos := currentPosition + delta) > samples size ifTrue: [pos := pos - samples size].
+	h := self morphHeight.
+	lfo bipolar ifTrue: [h := h / 2.0].
+	x := 0.
+	y := 1.0 - (samples at: pos) * h.
+	aCanvas strokeWidth: 2 color: color do:
+		[aCanvas moveTo: x @ y.
+		0 to: samples size - delta - 5 by: 5 do: [:i|
+			x := x + step.
+			y := 1.0 - (samples at: pos + i \\ samples size + 1) * h.
+			aCanvas lineTo: x @ y]]! !
+
+!LFOControlMorph methodsFor: 'initialization' stamp: 'len 23/Feb/2026 22:14:28'!
+defaultExtent
+	^ `128@64`! !
+
+!LFOControlMorph methodsFor: 'initialization' stamp: 'len 23/Feb/2026 22:15:37'!
+initialize
+	super initialize.
+	color := PatchMorph waveformColor3.
+	samples := Float32Array new: 64*5.
+	currentPosition := 1! !
+
+!LFOControlMorph methodsFor: 'private' stamp: 'len 23/Feb/2026 22:14:59'!
+addSample: aNumber
+	currentPosition := currentPosition < samples size ifTrue: [currentPosition + 1] ifFalse: [1].
+	samples at: currentPosition put: (aNumber min: 1.0 max: -1.0).
+	self redrawNeeded! !
+
+!LFOControlMorph methodsFor: 'private' stamp: 'len 23/Feb/2026 22:32:14'!
+adjustXBy: aNumber
+	super adjustXBy: aNumber * 2.0! !
 
 !WaveshaperControlMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 14:25:23'!
 bias: aControl

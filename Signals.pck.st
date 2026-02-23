@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 22 February 2026 at 10:27:29 pm'!
+'From Cuis7.7 [latest update: #7797] on 23 February 2026 at 8:46:13 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 471!
+!provides: 'Signals' 1 472!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -877,6 +877,66 @@ PluggableMorph subclass: #PluggableToggleMorph
 PluggableToggleMorph class
 	instanceVariableNames: ''!
 
+!classDefinition: #EGControlMorph category: #'Signals-Etc'!
+BoxMorph subclass: #EGControlMorph
+	instanceVariableNames: 'color attack'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Etc'!
+!classDefinition: 'EGControlMorph class' category: #'Signals-Etc'!
+EGControlMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #ADControlMorph category: #'Signals-Etc'!
+EGControlMorph subclass: #ADControlMorph
+	instanceVariableNames: 'decay'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Etc'!
+!classDefinition: 'ADControlMorph class' category: #'Signals-Etc'!
+ADControlMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #ADSRControlMorph category: #'Signals-Etc'!
+EGControlMorph subclass: #ADSRControlMorph
+	instanceVariableNames: 'decay sustain release'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Etc'!
+!classDefinition: 'ADSRControlMorph class' category: #'Signals-Etc'!
+ADSRControlMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #AHDControlMorph category: #'Signals-Etc'!
+EGControlMorph subclass: #AHDControlMorph
+	instanceVariableNames: 'hold decay'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Etc'!
+!classDefinition: 'AHDControlMorph class' category: #'Signals-Etc'!
+AHDControlMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #ARControlMorph category: #'Signals-Etc'!
+EGControlMorph subclass: #ARControlMorph
+	instanceVariableNames: 'release'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Etc'!
+!classDefinition: 'ARControlMorph class' category: #'Signals-Etc'!
+ARControlMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #ASRControlMorph category: #'Signals-Etc'!
+EGControlMorph subclass: #ASRControlMorph
+	instanceVariableNames: 'sustain release'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Etc'!
+!classDefinition: 'ASRControlMorph class' category: #'Signals-Etc'!
+ASRControlMorph class
+	instanceVariableNames: ''!
+
 !classDefinition: #PianoKeyboardMorph category: #'Signals-Etc'!
 BoxMorph subclass: #PianoKeyboardMorph
 	instanceVariableNames: 'pressedKeys firstMidiKey queue'
@@ -977,66 +1037,6 @@ ControlMorph subclass: #WavetableControlMorph
 WavetableControlMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #EGControlMorph category: #'Signals-Morphic-Controls'!
-BoxMorph subclass: #EGControlMorph
-	instanceVariableNames: 'color attack'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Controls'!
-!classDefinition: 'EGControlMorph class' category: #'Signals-Morphic-Controls'!
-EGControlMorph class
-	instanceVariableNames: ''!
-
-!classDefinition: #ADControlMorph category: #'Signals-Morphic-Controls'!
-EGControlMorph subclass: #ADControlMorph
-	instanceVariableNames: 'decay'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Controls'!
-!classDefinition: 'ADControlMorph class' category: #'Signals-Morphic-Controls'!
-ADControlMorph class
-	instanceVariableNames: ''!
-
-!classDefinition: #ADSRControlMorph category: #'Signals-Morphic-Controls'!
-EGControlMorph subclass: #ADSRControlMorph
-	instanceVariableNames: 'decay sustain release'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Controls'!
-!classDefinition: 'ADSRControlMorph class' category: #'Signals-Morphic-Controls'!
-ADSRControlMorph class
-	instanceVariableNames: ''!
-
-!classDefinition: #AHDControlMorph category: #'Signals-Morphic-Controls'!
-EGControlMorph subclass: #AHDControlMorph
-	instanceVariableNames: 'hold decay'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Controls'!
-!classDefinition: 'AHDControlMorph class' category: #'Signals-Morphic-Controls'!
-AHDControlMorph class
-	instanceVariableNames: ''!
-
-!classDefinition: #ARControlMorph category: #'Signals-Morphic-Controls'!
-EGControlMorph subclass: #ARControlMorph
-	instanceVariableNames: 'release'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Controls'!
-!classDefinition: 'ARControlMorph class' category: #'Signals-Morphic-Controls'!
-ARControlMorph class
-	instanceVariableNames: ''!
-
-!classDefinition: #ASRControlMorph category: #'Signals-Morphic-Controls'!
-EGControlMorph subclass: #ASRControlMorph
-	instanceVariableNames: 'sustain release'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Controls'!
-!classDefinition: 'ASRControlMorph class' category: #'Signals-Morphic-Controls'!
-ASRControlMorph class
-	instanceVariableNames: ''!
-
 !classDefinition: #XYControlMorph category: #'Signals-Morphic-Controls'!
 BoxMorph subclass: #XYControlMorph
 	instanceVariableNames: 'controlX controlY'
@@ -1047,6 +1047,16 @@ BoxMorph subclass: #XYControlMorph
 XYControlMorph class
 	instanceVariableNames: ''!
 
+!classDefinition: #LFOControlMorph category: #'Signals-Etc'!
+XYControlMorph subclass: #LFOControlMorph
+	instanceVariableNames: 'color lfo currentPhase'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Etc'!
+!classDefinition: 'LFOControlMorph class' category: #'Signals-Etc'!
+LFOControlMorph class
+	instanceVariableNames: ''!
+
 !classDefinition: #FilterControlMorph category: #'Signals-Morphic-Controls'!
 XYControlMorph subclass: #FilterControlMorph
 	instanceVariableNames: 'color mode'
@@ -1055,16 +1065,6 @@ XYControlMorph subclass: #FilterControlMorph
 	category: 'Signals-Morphic-Controls'!
 !classDefinition: 'FilterControlMorph class' category: #'Signals-Morphic-Controls'!
 FilterControlMorph class
-	instanceVariableNames: ''!
-
-!classDefinition: #LFOControlMorph category: #'Signals-Morphic-Controls'!
-XYControlMorph subclass: #LFOControlMorph
-	instanceVariableNames: 'color lfo currentPhase'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Controls'!
-!classDefinition: 'LFOControlMorph class' category: #'Signals-Morphic-Controls'!
-LFOControlMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #WaveshaperControlMorph category: #'Signals-Morphic-Controls'!
@@ -1199,7 +1199,7 @@ MultitrackMeterMorph class
 
 !classDefinition: #PatternEditorMorph category: #'Signals-Morphic-Tracker'!
 BoxMorph subclass: #PatternEditorMorph
-	instanceVariableNames: 'tracker cursorPosition font labelFont emptyTriggerImage centerKey editStep showCursor pauseBlinking clipboard selectionTrackStart selectionLineStart selectionTrackEnd selectionLineEnd'
+	instanceVariableNames: 'tracker cursorPosition font labelFont emptyTriggerImage centerKey editStep showCursor pauseBlinking clipboard selectionTrackStart selectionLineStart'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Tracker'!
@@ -1209,7 +1209,7 @@ PatternEditorMorph class
 
 !classDefinition: #SequencerMorph category: #'Signals-Morphic-Tracker'!
 BoxMorph subclass: #SequencerMorph
-	instanceVariableNames: 'tracker font selectionStart selectionEnd clipboard'
+	instanceVariableNames: 'tracker font clipboard selectionStart'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Tracker'!
@@ -1255,6 +1255,16 @@ BoxMorph subclass: #RollingMeterMorph
 	category: 'Signals-Morphic-Widgets'!
 !classDefinition: 'RollingMeterMorph class' category: #'Signals-Morphic-Widgets'!
 RollingMeterMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #RollingWaveformMorph category: #'Signals-Morphic-Widgets'!
+BoxMorph subclass: #RollingWaveformMorph
+	instanceVariableNames: 'samples currentPosition color bipolar'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Widgets'!
+!classDefinition: 'RollingWaveformMorph class' category: #'Signals-Morphic-Widgets'!
+RollingWaveformMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #SampleDisplayMorph category: #'Signals-Morphic-Widgets'!
@@ -1606,7 +1616,7 @@ This is a virtual analog oscillator. It generates a pulse wave applying PolyBLEP
 This is a virtual analog oscillator. It generates a variable-slope saw that morphs between falling saw, triangle and rising saw, applying PolyBLEP and PolyBLAMP to prevent aliasing.!
 
 !Sine commentStamp: '<historical>' prior: 0!
-This is a sine wave oscillator with variable warping produced by self-phase modulation.!
+This is a sine wave oscillator with variable warping produced by self-phase modulation. At zero warp, it's a sine. As the warp parameter moves from 0 to 1, integer harmonics (both odd and even) are added up to about the 6th harmonic.!
 
 !TriSawPulse commentStamp: '<historical>' prior: 0!
 This is a virtual analog oscillator that can morph between triangle, saw and pulse waves. It uses PolyBLEP and PolyBLAMP to prevent aliasing.!
@@ -2364,6 +2374,17 @@ next
 tick
 	stage = #idle ifFalse: [self triggerEvent: #output: with: self next]! !
 
+!EG methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:42:05'!
+patchable
+	| answer display |
+	answer := PatchableMorph new model: self.
+	display := RollingWaveformMorph new bipolar: false.
+	self when: #output: send: #addSample: to: display.
+	answer body addMorph: display.
+	answer flap addMorph: self panel.
+	answer addControlOutput: #output: label: 'Out'.
+	^ answer! !
+
 !AD methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:39:13'!
 update
 	super update.
@@ -2386,17 +2407,18 @@ next
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value * velocity! !
 
-!AD methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:38:09'!
+!AD methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:57:03'!
+panel
+	^ ControlPanel new
+		addSmallKnob: (controls at: #attack) label: 'A';
+		addSmallKnob: (controls at: #decay) label: 'D'! !
+
+!AD methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:42:58'!
 patchable
-	| answer display |
-	answer := PatchableMorph new model: self.
-	display := ADControlMorph new attack: (controls at: #attack); decay: (controls at: #decay).
-	answer body addMorph: display.
-	answer
+	^ super patchable
 		addControlInput: #attack;
 		addControlInput: #decay;
-		addControlOutput: #output: label: 'Out'.
-	^ answer! !
+		yourself! !
 
 !ADSR methodsFor: 'controlling' stamp: 'len 6/Jan/2026 17:06:03'!
 gateOff
@@ -2437,18 +2459,21 @@ next
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value * velocity! !
 
-!ADSR methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:38:20'!
+!ADSR methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:56:25'!
+panel
+	^ ControlPanel new
+		addSmallKnob: (controls at: #attack) label: 'A';
+		addSmallKnob: (controls at: #decay) label: 'D';
+		addSmallKnob: (controls at: #sustain) label: 'S';
+		addSmallKnob: (controls at: #release) label: 'R'! !
+
+!ADSR methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:43:31'!
 patchable
-	| answer display |
-	answer := PatchableMorph new model: self.
-	display := ADSRControlMorph new attack: (controls at: #attack); decay: (controls at: #decay); sustain: (controls at: #sustain); release: (controls at: #release).
-	answer body addMorph: display.
-	answer
+	^ super patchable
 		addControlInput: #attack;
 		addControlInput: #decay;
 		addControlInput: #release;
-		addControlOutput: #output: label: 'Out'.
-	^ answer! !
+		yourself! !
 
 !AHD methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:39:31'!
 update
@@ -2479,18 +2504,20 @@ next
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value * velocity! !
 
-!AHD methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:38:31'!
+!AHD methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:57:11'!
+panel
+	^ ControlPanel new
+		addSmallKnob: (controls at: #attack) label: 'A';
+		addSmallKnob: (controls at: #hold) label: 'H';
+		addSmallKnob: (controls at: #decay) label: 'D'! !
+
+!AHD methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:44:18'!
 patchable
-	| answer display |
-	answer := PatchableMorph new model: self.
-	display := AHDControlMorph new attack: (controls at: #attack); hold: (controls at: #hold); decay: (controls at: #decay).
-	answer body addMorph: display.
-	answer
+	^ super patchable
 		addControlInput: #attack;
 		addControlInput: #hold;
 		addControlInput: #decay;
-		addControlOutput: #output: label: 'Out'.
-	^ answer! !
+		yourself! !
 
 !AR methodsFor: 'controlling' stamp: 'len 6/Jan/2026 18:32:04'!
 gateOff
@@ -2521,17 +2548,18 @@ next
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value * velocity! !
 
-!AR methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:38:39'!
+!AR methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:57:17'!
+panel
+	^ ControlPanel new
+		addSmallKnob: (controls at: #attack) label: 'A';
+		addSmallKnob: (controls at: #release) label: 'R'! !
+
+!AR methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:44:28'!
 patchable
-	| answer display |
-	answer := PatchableMorph new model: self.
-	display := ARControlMorph new attack: (controls at: #attack); release: (controls at: #release).
-	answer body addMorph: display.
-	answer
+	^ super patchable
 		addControlInput: #attack;
 		addControlInput: #release;
-		addControlOutput: #output: label: 'Out'.
-	^ answer! !
+		yourself! !
 
 !ASR methodsFor: 'controlling' stamp: 'len 6/Jan/2026 18:32:10'!
 gateOff
@@ -2564,17 +2592,19 @@ next
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value * velocity! !
 
-!ASR methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:38:48'!
+!ASR methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:57:24'!
+panel
+	^ ControlPanel new
+		addSmallKnob: (controls at: #attack) label: 'A';
+		addSmallKnob: (controls at: #sustain) label: 'S';
+		addSmallKnob: (controls at: #release) label: 'R'! !
+
+!ASR methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:44:35'!
 patchable
-	| answer display |
-	answer := PatchableMorph new model: self.
-	display := ASRControlMorph new attack: (controls at: #attack); sustain: (controls at: #sustain); release: (controls at: #release).
-	answer body addMorph: display.
-	answer
+	^ super patchable
 		addControlInput: #attack;
 		addControlInput: #release;
-		addControlOutput: #output: label: 'Out'.
-	^ answer! !
+		yourself! !
 
 !DiodeLadder methodsFor: 'controlling' stamp: 'len 29/Jan/2026 03:00:39'!
 reset
@@ -6317,9 +6347,10 @@ initializeControls
 	self addTimeControl: #attack min: 0.001 "1 ms" max: 0.05 "50 ms" value: 0.01 "10 ms".
 	self addTimeControl: #release min: 0.01 "10 ms" max: 0.5 "500 ms" value: 0.1 "100 ms"! !
 
-!EnvelopeFollower methodsFor: 'processing' stamp: 'len 10/Feb/2026 15:01:23'!
+!EnvelopeFollower methodsFor: 'processing' stamp: 'len 23/Feb/2026 20:26:27'!
 tick
 	| level |
+	input ifNil: [^ self].
 	level := self level.
 	envelope := (level > envelope
 		ifTrue: [envelope * attack + (level * (1.0 - attack))]
@@ -6327,14 +6358,20 @@ tick
 	envelope < 1.0e-15 ifTrue: [envelope := 0.0].
 	self triggerEvent: #output: with: envelope! !
 
-!EnvelopeFollower methodsFor: 'tools' stamp: 'len 10/Feb/2026 00:30:21'!
+!EnvelopeFollower methodsFor: 'tools' stamp: 'len 23/Feb/2026 20:25:49'!
 patchable
-	^ super patchable
+	| answer display |
+	answer := PatchableMorph new model: self.
+	display := RollingWaveformMorph new bipolar: false.
+	self when: #output: send: #addSample: to: display.
+	answer body addMorph: display.
+	answer flap addMorph: self panel.
+	answer
 		addAudioInput: #setInput: label: 'In';
-"		addControlInput: #attack;
-		addControlInput: #release;"
-		addControlOutput: #output: label: 'Envelope';
-		yourself! !
+		addControlInput: #attack;
+		addControlInput: #release;
+		addControlOutput: #output: label: 'Out'.
+	^ answer! !
 
 !EnvelopeFollower methodsFor: 'wiring' stamp: 'len 10/Feb/2026 00:26:43'!
 setInput: aBuffer
@@ -6508,19 +6545,22 @@ readFromJson: json buffers: aList
 	mode := (json at: #mode) asSymbol.
 	bipolar := json at: #bipolar! !
 
-!LFO methodsFor: 'tools' stamp: 'len 13/Feb/2026 01:01:14'!
+!LFO methodsFor: 'tools' stamp: 'len 23/Feb/2026 20:39:32'!
 panel
 	^ ControlPanel new
+		addSmallKnob: (controls at: #speed) label: 'Speed';
+		addSmallKnob: (controls at: #offset) label: 'Offset';
 		addMorph: (PluggableChoiceMorph new options: #(free trig hold); model: self; getter: #mode; setter: #mode:);
 		addMorph: (PluggableToggleMorph new model: self; getter: #sync; setter: #sync:; label: '♩');
 		addMorph: (PluggableToggleMorph new model: self; getter: #bipolar; setter: #bipolar:; label: '±');
 		addMorph: (PluggableChoiceMorph new options: #(sine square rise fall random); model: self; getter: #shape; setter: #shape:)! !
 
-!LFO methodsFor: 'tools' stamp: 'len 13/Feb/2026 01:00:18'!
+!LFO methodsFor: 'tools' stamp: 'len 23/Feb/2026 20:40:50'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
-	display := LFOControlMorph new lfo: self.
+	display := RollingWaveformMorph new.
+	self when: #output: send: #addSample: to: display.
 	answer body addMorph: display.
 	answer flap addMorph: self panel.
 	answer
@@ -6884,6 +6924,10 @@ addKnob: aControl
 addKnob: aControl label: labelString
 	self addMorph: ((KnobControlMorph control: aControl) withLabel: labelString)! !
 
+!ControlPanel methodsFor: 'building' stamp: 'len 23/Feb/2026 19:56:11'!
+addSmallKnob: aControl label: labelString
+	self addMorph: ((KnobControlMorph control: aControl) morphExtent: 24 @ 24; withLabel: labelString)! !
+
 !ControlPanel methodsFor: 'building' stamp: 'len 27/Jan/2026 14:58:36'!
 addVerticalSlider: aControl
 	self addMorph: (SliderControlMorph control: aControl)! !
@@ -7214,6 +7258,284 @@ initialize
 	super initialize.
 	font := FontFamily defaultFamilyPointSize: self defaultFontSize.
 	extent := self minimumExtent! !
+
+!EGControlMorph methodsFor: 'initialization' stamp: 'len 18/Jan/2026 16:38:50'!
+attack: aControl
+	attack removeDependent: self.
+	attack := aControl.
+	aControl addDependent: self! !
+
+!EGControlMorph methodsFor: 'initialization' stamp: 'len 23/Jan/2026 22:14:59'!
+defaultExtent
+	^ 96 @ 64! !
+
+!EGControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 22:59:45'!
+initialize
+	super initialize.
+	color := PatchMorph waveformColor3! !
+
+!EGControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:08:46'!
+coarseStep
+	^ attack coarseStep! !
+
+!EGControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:09:02'!
+fineStep
+	^ attack fineStep! !
+
+!EGControlMorph methodsFor: 'events' stamp: 'len 18/Jan/2026 18:49:12'!
+handlesMouseScroll: anEvent
+	^ anEvent anyModifierKeyPressed not! !
+
+!EGControlMorph methodsFor: 'events' stamp: 'len 18/Jan/2026 18:49:37'!
+mouseScroll: aMouseEvent localPosition: localEventPosition
+	^ self! !
+
+!EGControlMorph methodsFor: 'geometry testing' stamp: 'len 18/Jan/2026 16:38:50'!
+requiresVectorCanvas
+	^ true! !
+
+!EGControlMorph methodsFor: 'dependency mechanism' stamp: 'len 20/Jan/2026 15:17:59'!
+update: anObject
+	self redrawNeeded! !
+
+!ADControlMorph methodsFor: 'initialization' stamp: 'len 18/Jan/2026 18:30:28'!
+decay: aControl
+	decay removeDependent: self.
+	decay := aControl.
+	aControl addDependent: self! !
+
+!ADControlMorph methodsFor: 'drawing' stamp: 'len 18/Jan/2026 18:57:39'!
+drawOn: aCanvas
+	| w h a d |
+	w := self maximumSegmentWidth.
+	h := self morphHeight.
+	a := attack basePosition * w.
+	d := decay basePosition * w.
+	aCanvas strokeWidth: 2 color: color do:
+		[aCanvas
+			moveTo: 0@h;
+			lineTo: a @ 0;
+			quadraticBezierTo: a+d @ h control: a @ h;
+			lineTo: extent]! !
+
+!ADControlMorph methodsFor: 'drawing' stamp: 'len 23/Jan/2026 22:15:43'!
+maximumSegmentWidth
+	^ self morphWidth / 2.0! !
+
+!ADControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 18:59:05'!
+mouseScroll: anEvent localPosition: localEventPosition
+	| a step control |
+	a := attack basePosition * self maximumSegmentWidth.
+	step := anEvent shiftPressed ifTrue: [attack fineStep] ifFalse: [attack coarseStep].
+	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
+	localEventPosition x < a ifTrue: [control := attack] ifFalse: [control := decay].
+	control basePosition: control basePosition + step.
+	self showBalloon: control printedBaseValueWithLabel! !
+
+!ADSRControlMorph methodsFor: 'initialization' stamp: 'len 24/Oct/2025 16:41:00'!
+decay: aControl
+	decay removeDependent: self.
+	decay := aControl.
+	aControl addDependent: self! !
+
+!ADSRControlMorph methodsFor: 'initialization' stamp: 'len 23/Jan/2026 22:16:46'!
+defaultExtent
+	^ 192 @ 64! !
+
+!ADSRControlMorph methodsFor: 'initialization' stamp: 'len 24/Oct/2025 16:42:00'!
+release: aControl
+	release removeDependent: self.
+	release := aControl.
+	aControl addDependent: self! !
+
+!ADSRControlMorph methodsFor: 'initialization' stamp: 'len 24/Oct/2025 16:42:00'!
+sustain: aControl
+	sustain removeDependent: self.
+	sustain := aControl.
+	aControl addDependent: self! !
+
+!ADSRControlMorph methodsFor: 'drawing' stamp: 'len 18/Jan/2026 18:48:24'!
+drawOn: aCanvas
+	| w h a d s r sustainWidth |
+	w := self maximumSegmentWidth.
+	h := self morphHeight.
+	a := attack basePosition * w.
+	d := decay basePosition * w.
+	s := (1.0 - sustain basePosition) * h.
+	r := release basePosition * w.
+	sustainWidth := self morphWidth - a - d - r.
+	aCanvas strokeWidth: 2 color: color do:
+		[aCanvas
+			moveTo: 0@h;
+			lineTo: a @ 0;
+			quadraticBezierTo: a+d @ s control: a @ s;
+			lineTo: a+d+sustainWidth @ s;
+			quadraticBezierTo: (a+d+sustainWidth+r)@h control: a+d+sustainWidth @ h].
+"	aCanvas strokeWidth: 1 color: color dashedStrokeBits: 2r1000000000000 do:
+		[aCanvas
+			moveTo: a+d @ (s + 2);
+			lineTo: a+d @ h;
+			moveTo: a+d+sustainWidth @ (s + 2);
+			lineTo: a+d+sustainWidth @ h]
+"! !
+
+!ADSRControlMorph methodsFor: 'drawing' stamp: 'len 18/Jan/2026 18:35:29'!
+maximumSegmentWidth
+	^ self morphWidth / 3.0! !
+
+!ADSRControlMorph methodsFor: 'events' stamp: 'len 6/Feb/2026 17:56:15'!
+mouseScroll: anEvent localPosition: localEventPosition
+	| step w a d s r control |
+	step := anEvent shiftPressed ifTrue: [self fineStep] ifFalse: [self coarseStep].
+	(anEvent direction = #up or: [anEvent direction = #down]) ifTrue:
+		[anEvent direction = #up ifTrue: [step := step negated].
+		sustain basePosition: sustain basePosition + step.
+		self showBalloon: sustain printedBaseValueWithLabel.
+		^ self].
+	w := self maximumSegmentWidth.
+	a := attack basePosition * w.
+	d := decay basePosition * w.
+	r := release basePosition * w.
+	s := self morphWidth - a - r.
+	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
+	control := localEventPosition x < a ifTrue: [attack] ifFalse: [localEventPosition x < (s/2.0 + a + d) ifTrue: [decay] ifFalse: [step := step negated. release]].
+	control basePosition: control basePosition + step.
+	self showBalloon: control printedBaseValueWithLabel! !
+
+!AHDControlMorph methodsFor: 'initialization' stamp: 'len 18/Jan/2026 18:30:32'!
+decay: aControl
+	decay removeDependent: self.
+	decay := aControl.
+	aControl addDependent: self! !
+
+!AHDControlMorph methodsFor: 'initialization' stamp: 'len 23/Jan/2026 22:16:16'!
+defaultExtent
+	^ 144 @ 64! !
+
+!AHDControlMorph methodsFor: 'initialization' stamp: 'len 18/Jan/2026 18:30:52'!
+hold: aControl
+	hold removeDependent: self.
+	hold := aControl.
+	aControl addDependent: self! !
+
+!AHDControlMorph methodsFor: 'drawing' stamp: 'len 18/Jan/2026 18:58:17'!
+drawOn: aCanvas
+	| w h a h2 d |
+	w := self maximumSegmentWidth.
+	h := self morphHeight.
+	a := attack basePosition * w.
+	h2 := hold basePosition * w.
+	d := decay basePosition * w.
+	aCanvas strokeWidth: 2 color: color do:
+		[aCanvas
+			moveTo: 0 @ h;
+			lineTo: a @ 0;
+			lineTo: a+h2 @ 0;
+			quadraticBezierTo: a+h2+d @ h control: a+h2 @ h;
+			lineTo: extent]! !
+
+!AHDControlMorph methodsFor: 'drawing' stamp: 'len 18/Jan/2026 18:32:42'!
+maximumSegmentWidth
+	^ self morphWidth / 3.0! !
+
+!AHDControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:08:32'!
+mouseScroll: anEvent localPosition: localEventPosition
+	| a h step control |
+	a := attack basePosition * self maximumSegmentWidth.
+	h := hold basePosition * self maximumSegmentWidth.
+	step := anEvent shiftPressed ifTrue: [self fineStep] ifFalse: [self coarseStep].
+	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
+	control := localEventPosition x < a ifTrue: [attack] ifFalse: [localEventPosition x < (a + h) ifTrue: [hold] ifFalse: [decay]].
+	control basePosition: control basePosition + step.
+	self showBalloon: control printedBaseValueWithLabel! !
+
+!ARControlMorph methodsFor: 'drawing' stamp: 'len 18/Jan/2026 18:58:48'!
+drawOn: aCanvas
+	| w h a r |
+	w := self maximumSegmentWidth.
+	h := self morphHeight.
+	a := attack basePosition * w.
+	r := release basePosition * w.
+	aCanvas strokeWidth: 2 color: color do:
+		[aCanvas
+			moveTo: 0@h;
+			lineTo: a @ 0;
+			quadraticBezierTo: a+r @ h control: a @ h;
+			lineTo: extent]! !
+
+!ARControlMorph methodsFor: 'drawing' stamp: 'len 18/Jan/2026 18:32:35'!
+maximumSegmentWidth
+	^ self morphWidth / 2.0! !
+
+!ARControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:09:22'!
+mouseScroll: anEvent localPosition: localEventPosition
+	| a step control |
+	a := attack basePosition * self maximumSegmentWidth.
+	step := anEvent shiftPressed ifTrue: [self fineStep] ifFalse: [self coarseStep].
+	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
+	localEventPosition x < a ifTrue: [control := attack] ifFalse: [control := release].
+	control basePosition: control basePosition + step.
+	self showBalloon: control printedBaseValueWithLabel! !
+
+!ARControlMorph methodsFor: 'initialization' stamp: 'len 18/Jan/2026 18:31:14'!
+release: aControl
+	release removeDependent: self.
+	release := aControl.
+	aControl addDependent: self! !
+
+!ASRControlMorph methodsFor: 'initialization' stamp: 'len 23/Jan/2026 22:17:08'!
+defaultExtent
+	^ 144 @ 64! !
+
+!ASRControlMorph methodsFor: 'initialization' stamp: 'len 18/Jan/2026 18:31:21'!
+release: aControl
+	release removeDependent: self.
+	release := aControl.
+	aControl addDependent: self! !
+
+!ASRControlMorph methodsFor: 'initialization' stamp: 'len 18/Jan/2026 18:31:36'!
+sustain: aControl
+	sustain removeDependent: self.
+	sustain := aControl.
+	aControl addDependent: self! !
+
+!ASRControlMorph methodsFor: 'drawing' stamp: 'len 18/Jan/2026 18:55:42'!
+drawOn: aCanvas
+	| w h a s r sustainWidth |
+	w := self maximumSegmentWidth.
+	h := self morphHeight.
+	a := attack basePosition * w.
+	s := (1.0 - sustain basePosition) * h.
+	r := release basePosition * w.
+	sustainWidth := self morphWidth - a - r.
+	aCanvas strokeWidth: 2 color: color do:
+		[aCanvas
+			moveTo: 0@h;
+			lineTo: a @ s;
+			lineTo: a+sustainWidth @ s;
+			quadraticBezierTo: (a+sustainWidth+r)@h control: a+sustainWidth @ h]! !
+
+!ASRControlMorph methodsFor: 'drawing' stamp: 'len 18/Jan/2026 18:32:55'!
+maximumSegmentWidth
+	^ self morphWidth / 2.0! !
+
+!ASRControlMorph methodsFor: 'events' stamp: 'len 6/Feb/2026 17:57:39'!
+mouseScroll: anEvent localPosition: localEventPosition
+	| step w a s r control |
+	step := anEvent shiftPressed ifTrue: [self fineStep] ifFalse: [self coarseStep].
+	(anEvent direction = #up or: [anEvent direction = #down]) ifTrue:
+		[anEvent direction = #up ifTrue: [step := step negated].
+		sustain basePosition: sustain basePosition + step.
+		self showBalloon: sustain printedBaseValue.
+		^ self].
+	w := self maximumSegmentWidth.
+	a := attack basePosition * w.
+	r := release basePosition * w.
+	s := self morphWidth - a - r.
+	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
+	localEventPosition x < (s/2.0 + a) ifTrue: [control := attack] ifFalse: [control := release. step := step negated].
+	control basePosition: control basePosition + step.
+	self showBalloon: control printedBaseValueWithLabel! !
 
 !PianoKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Nov/2025 11:33:00'!
 defaultExtent
@@ -7801,284 +8123,6 @@ update: anObject
 	super update: anObject.
 	currentPosition := control value! !
 
-!EGControlMorph methodsFor: 'initialization' stamp: 'len 18/Jan/2026 16:38:50'!
-attack: aControl
-	attack removeDependent: self.
-	attack := aControl.
-	aControl addDependent: self! !
-
-!EGControlMorph methodsFor: 'initialization' stamp: 'len 23/Jan/2026 22:14:59'!
-defaultExtent
-	^ 96 @ 64! !
-
-!EGControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 22:59:45'!
-initialize
-	super initialize.
-	color := PatchMorph waveformColor3! !
-
-!EGControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:08:46'!
-coarseStep
-	^ attack coarseStep! !
-
-!EGControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:09:02'!
-fineStep
-	^ attack fineStep! !
-
-!EGControlMorph methodsFor: 'events' stamp: 'len 18/Jan/2026 18:49:12'!
-handlesMouseScroll: anEvent
-	^ anEvent anyModifierKeyPressed not! !
-
-!EGControlMorph methodsFor: 'events' stamp: 'len 18/Jan/2026 18:49:37'!
-mouseScroll: aMouseEvent localPosition: localEventPosition
-	^ self! !
-
-!EGControlMorph methodsFor: 'geometry testing' stamp: 'len 18/Jan/2026 16:38:50'!
-requiresVectorCanvas
-	^ true! !
-
-!EGControlMorph methodsFor: 'dependency mechanism' stamp: 'len 20/Jan/2026 15:17:59'!
-update: anObject
-	self redrawNeeded! !
-
-!ADControlMorph methodsFor: 'initialization' stamp: 'len 18/Jan/2026 18:30:28'!
-decay: aControl
-	decay removeDependent: self.
-	decay := aControl.
-	aControl addDependent: self! !
-
-!ADControlMorph methodsFor: 'drawing' stamp: 'len 18/Jan/2026 18:57:39'!
-drawOn: aCanvas
-	| w h a d |
-	w := self maximumSegmentWidth.
-	h := self morphHeight.
-	a := attack basePosition * w.
-	d := decay basePosition * w.
-	aCanvas strokeWidth: 2 color: color do:
-		[aCanvas
-			moveTo: 0@h;
-			lineTo: a @ 0;
-			quadraticBezierTo: a+d @ h control: a @ h;
-			lineTo: extent]! !
-
-!ADControlMorph methodsFor: 'drawing' stamp: 'len 23/Jan/2026 22:15:43'!
-maximumSegmentWidth
-	^ self morphWidth / 2.0! !
-
-!ADControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 18:59:05'!
-mouseScroll: anEvent localPosition: localEventPosition
-	| a step control |
-	a := attack basePosition * self maximumSegmentWidth.
-	step := anEvent shiftPressed ifTrue: [attack fineStep] ifFalse: [attack coarseStep].
-	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
-	localEventPosition x < a ifTrue: [control := attack] ifFalse: [control := decay].
-	control basePosition: control basePosition + step.
-	self showBalloon: control printedBaseValueWithLabel! !
-
-!ADSRControlMorph methodsFor: 'initialization' stamp: 'len 24/Oct/2025 16:41:00'!
-decay: aControl
-	decay removeDependent: self.
-	decay := aControl.
-	aControl addDependent: self! !
-
-!ADSRControlMorph methodsFor: 'initialization' stamp: 'len 23/Jan/2026 22:16:46'!
-defaultExtent
-	^ 192 @ 64! !
-
-!ADSRControlMorph methodsFor: 'initialization' stamp: 'len 24/Oct/2025 16:42:00'!
-release: aControl
-	release removeDependent: self.
-	release := aControl.
-	aControl addDependent: self! !
-
-!ADSRControlMorph methodsFor: 'initialization' stamp: 'len 24/Oct/2025 16:42:00'!
-sustain: aControl
-	sustain removeDependent: self.
-	sustain := aControl.
-	aControl addDependent: self! !
-
-!ADSRControlMorph methodsFor: 'drawing' stamp: 'len 18/Jan/2026 18:48:24'!
-drawOn: aCanvas
-	| w h a d s r sustainWidth |
-	w := self maximumSegmentWidth.
-	h := self morphHeight.
-	a := attack basePosition * w.
-	d := decay basePosition * w.
-	s := (1.0 - sustain basePosition) * h.
-	r := release basePosition * w.
-	sustainWidth := self morphWidth - a - d - r.
-	aCanvas strokeWidth: 2 color: color do:
-		[aCanvas
-			moveTo: 0@h;
-			lineTo: a @ 0;
-			quadraticBezierTo: a+d @ s control: a @ s;
-			lineTo: a+d+sustainWidth @ s;
-			quadraticBezierTo: (a+d+sustainWidth+r)@h control: a+d+sustainWidth @ h].
-"	aCanvas strokeWidth: 1 color: color dashedStrokeBits: 2r1000000000000 do:
-		[aCanvas
-			moveTo: a+d @ (s + 2);
-			lineTo: a+d @ h;
-			moveTo: a+d+sustainWidth @ (s + 2);
-			lineTo: a+d+sustainWidth @ h]
-"! !
-
-!ADSRControlMorph methodsFor: 'drawing' stamp: 'len 18/Jan/2026 18:35:29'!
-maximumSegmentWidth
-	^ self morphWidth / 3.0! !
-
-!ADSRControlMorph methodsFor: 'events' stamp: 'len 6/Feb/2026 17:56:15'!
-mouseScroll: anEvent localPosition: localEventPosition
-	| step w a d s r control |
-	step := anEvent shiftPressed ifTrue: [self fineStep] ifFalse: [self coarseStep].
-	(anEvent direction = #up or: [anEvent direction = #down]) ifTrue:
-		[anEvent direction = #up ifTrue: [step := step negated].
-		sustain basePosition: sustain basePosition + step.
-		self showBalloon: sustain printedBaseValueWithLabel.
-		^ self].
-	w := self maximumSegmentWidth.
-	a := attack basePosition * w.
-	d := decay basePosition * w.
-	r := release basePosition * w.
-	s := self morphWidth - a - r.
-	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
-	control := localEventPosition x < a ifTrue: [attack] ifFalse: [localEventPosition x < (s/2.0 + a + d) ifTrue: [decay] ifFalse: [step := step negated. release]].
-	control basePosition: control basePosition + step.
-	self showBalloon: control printedBaseValueWithLabel! !
-
-!AHDControlMorph methodsFor: 'initialization' stamp: 'len 18/Jan/2026 18:30:32'!
-decay: aControl
-	decay removeDependent: self.
-	decay := aControl.
-	aControl addDependent: self! !
-
-!AHDControlMorph methodsFor: 'initialization' stamp: 'len 23/Jan/2026 22:16:16'!
-defaultExtent
-	^ 144 @ 64! !
-
-!AHDControlMorph methodsFor: 'initialization' stamp: 'len 18/Jan/2026 18:30:52'!
-hold: aControl
-	hold removeDependent: self.
-	hold := aControl.
-	aControl addDependent: self! !
-
-!AHDControlMorph methodsFor: 'drawing' stamp: 'len 18/Jan/2026 18:58:17'!
-drawOn: aCanvas
-	| w h a h2 d |
-	w := self maximumSegmentWidth.
-	h := self morphHeight.
-	a := attack basePosition * w.
-	h2 := hold basePosition * w.
-	d := decay basePosition * w.
-	aCanvas strokeWidth: 2 color: color do:
-		[aCanvas
-			moveTo: 0 @ h;
-			lineTo: a @ 0;
-			lineTo: a+h2 @ 0;
-			quadraticBezierTo: a+h2+d @ h control: a+h2 @ h;
-			lineTo: extent]! !
-
-!AHDControlMorph methodsFor: 'drawing' stamp: 'len 18/Jan/2026 18:32:42'!
-maximumSegmentWidth
-	^ self morphWidth / 3.0! !
-
-!AHDControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:08:32'!
-mouseScroll: anEvent localPosition: localEventPosition
-	| a h step control |
-	a := attack basePosition * self maximumSegmentWidth.
-	h := hold basePosition * self maximumSegmentWidth.
-	step := anEvent shiftPressed ifTrue: [self fineStep] ifFalse: [self coarseStep].
-	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
-	control := localEventPosition x < a ifTrue: [attack] ifFalse: [localEventPosition x < (a + h) ifTrue: [hold] ifFalse: [decay]].
-	control basePosition: control basePosition + step.
-	self showBalloon: control printedBaseValueWithLabel! !
-
-!ARControlMorph methodsFor: 'drawing' stamp: 'len 18/Jan/2026 18:58:48'!
-drawOn: aCanvas
-	| w h a r |
-	w := self maximumSegmentWidth.
-	h := self morphHeight.
-	a := attack basePosition * w.
-	r := release basePosition * w.
-	aCanvas strokeWidth: 2 color: color do:
-		[aCanvas
-			moveTo: 0@h;
-			lineTo: a @ 0;
-			quadraticBezierTo: a+r @ h control: a @ h;
-			lineTo: extent]! !
-
-!ARControlMorph methodsFor: 'drawing' stamp: 'len 18/Jan/2026 18:32:35'!
-maximumSegmentWidth
-	^ self morphWidth / 2.0! !
-
-!ARControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:09:22'!
-mouseScroll: anEvent localPosition: localEventPosition
-	| a step control |
-	a := attack basePosition * self maximumSegmentWidth.
-	step := anEvent shiftPressed ifTrue: [self fineStep] ifFalse: [self coarseStep].
-	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
-	localEventPosition x < a ifTrue: [control := attack] ifFalse: [control := release].
-	control basePosition: control basePosition + step.
-	self showBalloon: control printedBaseValueWithLabel! !
-
-!ARControlMorph methodsFor: 'initialization' stamp: 'len 18/Jan/2026 18:31:14'!
-release: aControl
-	release removeDependent: self.
-	release := aControl.
-	aControl addDependent: self! !
-
-!ASRControlMorph methodsFor: 'initialization' stamp: 'len 23/Jan/2026 22:17:08'!
-defaultExtent
-	^ 144 @ 64! !
-
-!ASRControlMorph methodsFor: 'initialization' stamp: 'len 18/Jan/2026 18:31:21'!
-release: aControl
-	release removeDependent: self.
-	release := aControl.
-	aControl addDependent: self! !
-
-!ASRControlMorph methodsFor: 'initialization' stamp: 'len 18/Jan/2026 18:31:36'!
-sustain: aControl
-	sustain removeDependent: self.
-	sustain := aControl.
-	aControl addDependent: self! !
-
-!ASRControlMorph methodsFor: 'drawing' stamp: 'len 18/Jan/2026 18:55:42'!
-drawOn: aCanvas
-	| w h a s r sustainWidth |
-	w := self maximumSegmentWidth.
-	h := self morphHeight.
-	a := attack basePosition * w.
-	s := (1.0 - sustain basePosition) * h.
-	r := release basePosition * w.
-	sustainWidth := self morphWidth - a - r.
-	aCanvas strokeWidth: 2 color: color do:
-		[aCanvas
-			moveTo: 0@h;
-			lineTo: a @ s;
-			lineTo: a+sustainWidth @ s;
-			quadraticBezierTo: (a+sustainWidth+r)@h control: a+sustainWidth @ h]! !
-
-!ASRControlMorph methodsFor: 'drawing' stamp: 'len 18/Jan/2026 18:32:55'!
-maximumSegmentWidth
-	^ self morphWidth / 2.0! !
-
-!ASRControlMorph methodsFor: 'events' stamp: 'len 6/Feb/2026 17:57:39'!
-mouseScroll: anEvent localPosition: localEventPosition
-	| step w a s r control |
-	step := anEvent shiftPressed ifTrue: [self fineStep] ifFalse: [self coarseStep].
-	(anEvent direction = #up or: [anEvent direction = #down]) ifTrue:
-		[anEvent direction = #up ifTrue: [step := step negated].
-		sustain basePosition: sustain basePosition + step.
-		self showBalloon: sustain printedBaseValue.
-		^ self].
-	w := self maximumSegmentWidth.
-	a := attack basePosition * w.
-	r := release basePosition * w.
-	s := self morphWidth - a - r.
-	anEvent direction = #right ifTrue: [step := step negated] ifFalse: [anEvent direction = #left ifFalse: [^ self]].
-	localEventPosition x < (s/2.0 + a) ifTrue: [control := attack] ifFalse: [control := release. step := step negated].
-	control basePosition: control basePosition + step.
-	self showBalloon: control printedBaseValueWithLabel! !
-
 !XYControlMorph methodsFor: 'accessing' stamp: 'len 6/Dec/2025 14:26:58'!
 controlX: aControl
 	controlX removeDependent: self.
@@ -8144,6 +8188,81 @@ adjustYBy: aNumber
 	controlY apply.
 	self redrawNeeded.
 	self showBalloon: controlY printedBaseValueWithLabel! !
+
+!LFOControlMorph methodsFor: 'accessing' stamp: 'len 19/Jan/2026 18:57:51'!
+lfo: anLFO
+	lfo removeDependent: self.
+	lfo := anLFO.
+	lfo addDependent: self.
+	self controlY: (lfo controls at: #speed).
+	self controlX: (lfo controls at: #offset)! !
+
+!LFOControlMorph methodsFor: 'drawing' stamp: 'len 22/Jan/2026 16:16:27'!
+drawOn: aCanvas
+	| step stepX t₀ t x y h steps |
+	steps := 32.
+	step := 1.0 / steps.
+	stepX := self morphWidth - 8.0 * step.
+	h := self morphHeight - 6.0 / 2.0.
+	t₀ := controlX value.
+	lfo shape = #random ifTrue:
+		[t := currentPhase.
+		y := 1.0 - (lfo bipolar ifTrue: [lfo peek] ifFalse: [lfo peek * 2.0 - 1.0]) * h + 3.0.
+		x := 4.0 + (t - t₀ \\ 1.0 * stepX * steps).
+		aCanvas line: x @ y to: x @ y width: 6.0 color: Color white.
+		^ self].
+	t := t₀.
+	y := 1.0 - (self waveAt: t \\ 1.0) * h + 3.0.
+	x := 4.0.
+	aCanvas strokeWidth: 2 color: color do:
+		[aCanvas moveTo: x @ y.
+		steps timesRepeat:
+			[t := t + step.
+			y := 1.0 - (self waveAt: t \\ 1.0) * h + 3.0.
+			x := x + stepX.
+			aCanvas lineTo: x @ y]].
+	t := currentPhase.
+	y := 1.0 - (self waveAt: t) * h + 3.0.
+	x := 4.0 + (t - t₀ \\ 1.0 * stepX * steps).
+	aCanvas line: x @ y to: x @ y width: 6.0 color: Color white! !
+
+!LFOControlMorph methodsFor: 'drawing' stamp: 'len 19/Jan/2026 18:56:05'!
+waveAt: t
+	| v |
+	v := lfo shape.
+	v == #sine ifTrue: [^ (t * Float twoPi) sin].
+	v == #square ifTrue: [^ t < 0.5 ifTrue: [1.0] ifFalse: [-1.0]].
+	v == #rise ifTrue: [^ (t - 0.5) * 2.0].
+	v == #fall ifTrue: [^ (0.5 - t) * 2.0].
+	self notYetImplemented! !
+
+!LFOControlMorph methodsFor: 'initialization' stamp: 'len 13/Feb/2026 01:03:43'!
+defaultExtent
+	^ `128@64`! !
+
+!LFOControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 22:59:37'!
+initialize
+	super initialize.
+	color := PatchMorph waveformColor3.
+	currentPhase := 0.0.
+	self lfo: LFO new! !
+
+!LFOControlMorph methodsFor: 'stepping' stamp: 'len 1/Dec/2025 18:05:00'!
+step
+	currentPhase := lfo phase.
+	self redrawNeeded! !
+
+!LFOControlMorph methodsFor: 'stepping' stamp: 'len 2/Dec/2025 16:48:00'!
+stepTime
+	^ 100! !
+
+!LFOControlMorph methodsFor: 'stepping' stamp: 'len 25/Nov/2025 18:58:00'!
+wantsSteps
+	^ true! !
+
+!LFOControlMorph methodsFor: 'private' stamp: 'len 6/Dec/2025 14:31:24'!
+adjustXBy: aNumber
+	super adjustXBy: aNumber * -4.0! !
 
 !FilterControlMorph methodsFor: 'accessing' stamp: 'len 6/Dec/2025 14:26:58'!
 frequency: aControl
@@ -8328,81 +8447,6 @@ initialize
 !FilterControlMorph methodsFor: 'private' stamp: 'len 4/Feb/2026 00:40:14'!
 adjustYBy: aNumber
 	super adjustYBy: (mode = #BP ifTrue: [aNumber negated] ifFalse: [aNumber])! !
-
-!LFOControlMorph methodsFor: 'accessing' stamp: 'len 19/Jan/2026 18:57:51'!
-lfo: anLFO
-	lfo removeDependent: self.
-	lfo := anLFO.
-	lfo addDependent: self.
-	self controlY: (lfo controls at: #speed).
-	self controlX: (lfo controls at: #offset)! !
-
-!LFOControlMorph methodsFor: 'drawing' stamp: 'len 22/Jan/2026 16:16:27'!
-drawOn: aCanvas
-	| step stepX t₀ t x y h steps |
-	steps := 32.
-	step := 1.0 / steps.
-	stepX := self morphWidth - 8.0 * step.
-	h := self morphHeight - 6.0 / 2.0.
-	t₀ := controlX value.
-	lfo shape = #random ifTrue:
-		[t := currentPhase.
-		y := 1.0 - (lfo bipolar ifTrue: [lfo peek] ifFalse: [lfo peek * 2.0 - 1.0]) * h + 3.0.
-		x := 4.0 + (t - t₀ \\ 1.0 * stepX * steps).
-		aCanvas line: x @ y to: x @ y width: 6.0 color: Color white.
-		^ self].
-	t := t₀.
-	y := 1.0 - (self waveAt: t \\ 1.0) * h + 3.0.
-	x := 4.0.
-	aCanvas strokeWidth: 2 color: color do:
-		[aCanvas moveTo: x @ y.
-		steps timesRepeat:
-			[t := t + step.
-			y := 1.0 - (self waveAt: t \\ 1.0) * h + 3.0.
-			x := x + stepX.
-			aCanvas lineTo: x @ y]].
-	t := currentPhase.
-	y := 1.0 - (self waveAt: t) * h + 3.0.
-	x := 4.0 + (t - t₀ \\ 1.0 * stepX * steps).
-	aCanvas line: x @ y to: x @ y width: 6.0 color: Color white! !
-
-!LFOControlMorph methodsFor: 'drawing' stamp: 'len 19/Jan/2026 18:56:05'!
-waveAt: t
-	| v |
-	v := lfo shape.
-	v == #sine ifTrue: [^ (t * Float twoPi) sin].
-	v == #square ifTrue: [^ t < 0.5 ifTrue: [1.0] ifFalse: [-1.0]].
-	v == #rise ifTrue: [^ (t - 0.5) * 2.0].
-	v == #fall ifTrue: [^ (0.5 - t) * 2.0].
-	self notYetImplemented! !
-
-!LFOControlMorph methodsFor: 'initialization' stamp: 'len 13/Feb/2026 01:03:43'!
-defaultExtent
-	^ `128@64`! !
-
-!LFOControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 22:59:37'!
-initialize
-	super initialize.
-	color := PatchMorph waveformColor3.
-	currentPhase := 0.0.
-	self lfo: LFO new! !
-
-!LFOControlMorph methodsFor: 'stepping' stamp: 'len 1/Dec/2025 18:05:00'!
-step
-	currentPhase := lfo phase.
-	self redrawNeeded! !
-
-!LFOControlMorph methodsFor: 'stepping' stamp: 'len 2/Dec/2025 16:48:00'!
-stepTime
-	^ 100! !
-
-!LFOControlMorph methodsFor: 'stepping' stamp: 'len 25/Nov/2025 18:58:00'!
-wantsSteps
-	^ true! !
-
-!LFOControlMorph methodsFor: 'private' stamp: 'len 6/Dec/2025 14:31:24'!
-adjustXBy: aNumber
-	super adjustXBy: aNumber * -4.0! !
 
 !WaveshaperControlMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 14:25:23'!
 bias: aControl
@@ -9246,14 +9290,14 @@ update
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 22/Feb/2026 22:08:03'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026 16:13:28'!
 clipboardCopy
 	| pattern |
 	selectionLineStart ifNil: [clipboard := {{(tracker selectedTrigger ifNil: [^ self]) copy}}. ^ self].
 	pattern := tracker selectedPattern.
-	clipboard := ((selectionLineStart min: selectionLineEnd) to: (selectionLineStart max: selectionLineEnd))
+	clipboard := ((selectionLineStart min: tracker cursorLine) to: (selectionLineStart max: tracker cursorLine))
 		collect: [:i|
-			((selectionTrackStart min: selectionTrackEnd) to: (selectionTrackStart max: selectionTrackEnd)) 				collect: [:k| pattern track: k at: i]]! !
+			((selectionTrackStart min: tracker cursorTrack) to: (selectionTrackStart max: tracker cursorTrack)) 				collect: [:k| pattern track: k at: i]]! !
 
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 22/Feb/2026 22:24:00'!
 clipboardCut
@@ -9294,7 +9338,7 @@ moveCursorRight
 			[cursorPosition := cursorPosition + 1].
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 22/Feb/2026 22:24:18'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026 16:14:01'!
 selectionDelete
 	| pattern |
 	pattern := tracker selectedPattern.
@@ -9302,8 +9346,8 @@ selectionDelete
 		[pattern track: tracker cursorTrack at: tracker cursorLine put: nil.
 		self redrawNeeded.
 		^ self].
-	(selectionLineStart min: selectionLineEnd) to: (selectionLineStart max: selectionLineEnd) do: [:i|
-		(selectionTrackStart min: selectionTrackEnd) to: (selectionTrackStart max: selectionTrackEnd) do: [:k|
+	(selectionLineStart min: tracker cursorLine) to: (selectionLineStart max: tracker cursorLine) do: [:i|
+		(selectionTrackStart min: tracker cursorTrack) to: (selectionTrackStart max: tracker cursorTrack) do: [:k|
 			pattern track: k at: i put: nil]].
 	self redrawNeeded! !
 
@@ -9335,7 +9379,7 @@ drawOn: aCanvas
 	self drawCursorOn: aCanvas.
 	self drawPatternOn: aCanvas! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 22/Feb/2026 20:02:02'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 23/Feb/2026 16:15:10'!
 drawPatternOn: aCanvas
 	| lineSpacing charWidth y unsetColor  noteColor velocityColor fxColor pattern endLine middle startLine darkColor lightColor xLeft xRight beatColor trackWidth |
 	pattern := tracker selectedPattern.
@@ -9361,10 +9405,10 @@ drawPatternOn: aCanvas
 	"Draw selection:"
 	selectionLineStart ifNotNil:
 		[| sl0 sl1 st0 st1 |
-		sl0 := selectionLineStart min: selectionLineEnd.
-		sl1 := selectionLineStart max: selectionLineEnd.
-		st0 := selectionTrackStart min: selectionTrackEnd.
-		st1 := selectionTrackStart max: selectionTrackEnd.
+		sl0 := selectionLineStart min: tracker cursorLine.
+		sl1 := selectionLineStart max: tracker cursorLine.
+		st0 := selectionTrackStart min: tracker cursorTrack.
+		st1 := selectionTrackStart max: tracker cursorTrack.
 		(sl0 <= endLine and: [sl1 >= startLine]) ifTrue:
 			[sl0 := sl0 max: startLine.
 			sl1 := sl1 min: endLine.
@@ -9552,7 +9596,7 @@ handleOptionHotkey: anEvent
 	anEvent isEsc ifTrue: [tracker toggleFollowPlayhead. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:18:35'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 23/Feb/2026 16:14:11'!
 handleSelectionKey: anEvent
 	selectionLineStart isNil ifTrue:
 		[selectionLineStart := tracker cursorLine.
@@ -9560,9 +9604,7 @@ handleSelectionKey: anEvent
 	(anEvent isArrowUp and: [tracker cursorLine > 1]) ifTrue: [tracker moveCursorLineUp].
 	(anEvent isArrowDown and: [tracker cursorLine < tracker selectedPattern length]) ifTrue: [tracker moveCursorLineDown].
 	anEvent isArrowLeft ifTrue: [tracker moveCursorTrackLeft].
-	anEvent isArrowRight ifTrue: [tracker moveCursorTrackRight].
-	selectionLineEnd := tracker cursorLine.
-	selectionTrackEnd := tracker cursorTrack! !
+	anEvent isArrowRight ifTrue: [tracker moveCursorTrackRight]! !
 
 !PatternEditorMorph methodsFor: 'events' stamp: 'len 21/Jan/2026 15:58:15'!
 handlesMouseDown: anEvent
@@ -9695,20 +9737,22 @@ cursorColor
 selectionColor
 	^ self cursorColor alpha: 0.4! !
 
-!SequencerMorph methodsFor: 'actions' stamp: 'len 21/Feb/2026 18:36:34'!
+!SequencerMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026 16:11:15'!
 clipboardCopy
 	clipboard := selectionStart isNil
 		ifTrue: [{tracker sequence at: tracker cursorPattern}]
-		ifFalse: [((selectionStart min: selectionEnd) to: (selectionStart max: selectionEnd)) collect: [:i| tracker sequence at: i]]! !
+		ifFalse: [((selectionStart min: tracker cursorPattern) to: (selectionStart max: tracker cursorPattern)) collect: [:i| tracker sequence at: i]]! !
 
-!SequencerMorph methodsFor: 'actions' stamp: 'len 21/Feb/2026 18:59:51'!
+!SequencerMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026 16:10:50'!
 clipboardCut
+	| cursor |
 	selectionStart isNil ifTrue: "cut the pattern at cursor"
 		[clipboard := {tracker sequence at: tracker cursorPattern}.
 		tracker deletePattern.
 		^ self].
-	clipboard := ((selectionStart min: selectionEnd) to: (selectionStart max: selectionEnd)) collect: [:i| tracker sequence at: i].
-	(selectionStart max: selectionEnd) to: (selectionStart min: selectionEnd) by: -1 do: [:i| tracker deletePattern: i].
+	cursor := tracker cursorPattern.
+	clipboard := ((selectionStart min: cursor) to: (selectionStart max: cursor)) collect: [:i| tracker sequence at: i].
+	(selectionStart max: cursor) to: (selectionStart min: cursor) by: -1 do: [:i| tracker deletePattern: i].
 	selectionStart := nil! !
 
 !SequencerMorph methodsFor: 'actions' stamp: 'len 21/Feb/2026 18:59:25'!
@@ -9721,7 +9765,7 @@ clipboardPasteNew
 	selectionStart := nil.
 	clipboard ifNotNil: [tracker insertSequence: (clipboard collect: [:each| each key copy -> each value])]! !
 
-!SequencerMorph methodsFor: 'drawing' stamp: 'len 22/Feb/2026 19:59:55'!
+!SequencerMorph methodsFor: 'drawing' stamp: 'len 23/Feb/2026 16:12:20'!
 drawOn: aCanvas
 	| x y s charWidth blockHeight blockWidth space cursorTrack cursorPattern patternNumbers oldPatternNumbers |
 	charWidth := font widthOf: $X.
@@ -9736,8 +9780,8 @@ drawOn: aCanvas
 		x := x + blockWidth + space].
 	y := 0.
 	"draw selection:"
-	(selectionEnd notNil and: [selectionStart notNil]) ifTrue:
-		[aCanvas fillRectangle: (0 @ (((selectionEnd min: selectionStart) - 1) * blockHeight) corner: blockHeight @ (((selectionEnd max: selectionStart)) * blockHeight)) color: PatternEditorMorph selectionColor].
+	selectionStart ifNotNil:
+		[aCanvas fillRectangle: (0 @ (((selectionStart min: tracker cursorPattern) - 1) * blockHeight) corner: blockHeight @ (((selectionStart max: tracker cursorPattern)) * blockHeight)) color: PatternEditorMorph selectionColor].
 	"draw sequence and cursor:"
 	cursorPattern := tracker cursorPattern.
 	patternNumbers := tracker sequencePatternNumbers.
@@ -9786,12 +9830,11 @@ handleNavigationKey: anEvent
 	anEvent isArrowUp ifTrue: [tracker moveCursorPatternUp].
 	anEvent isArrowDown ifTrue: [tracker moveCursorPatternDown]! !
 
-!SequencerMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:31:10'!
+!SequencerMorph methodsFor: 'events' stamp: 'len 23/Feb/2026 16:09:28'!
 handleSelectionKey: anEvent
 	selectionStart isNil ifTrue: [selectionStart := tracker cursorPattern].
 	anEvent isArrowUp ifTrue: [tracker moveCursorPatternUp].
-	anEvent isArrowDown ifTrue: [tracker moveCursorPatternDown].
-	selectionEnd := tracker cursorPattern! !
+	anEvent isArrowDown ifTrue: [tracker moveCursorPatternDown]! !
 
 !SequencerMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:39:18'!
 keyStroke: anEvent
@@ -9882,9 +9925,9 @@ drawOn: aCanvas
 			y := 1.0 - (buf at: i) * h.
 			aCanvas lineTo: x@y]]! !
 
-!OscilloscopeMorph methodsFor: 'drawing' stamp: 'len 4/Dec/2025 16:16:37'!
+!OscilloscopeMorph methodsFor: 'drawing' stamp: 'len 23/Feb/2026 00:34:49'!
 requiresVectorCanvas
-	^ true ! !
+	^ true! !
 
 !OscilloscopeMorph methodsFor: 'initialization' stamp: 'len 21/Sep/2025 15:07:00'!
 color: aColor
@@ -10047,6 +10090,54 @@ stepTime
 
 !RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Jan/2026 23:58:57'!
 wantsSteps
+	^ true! !
+
+!RollingWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Feb/2026 00:51:00'!
+addSample: aNumber
+	currentPosition := currentPosition < samples size ifTrue: [currentPosition + 1] ifFalse: [1].
+	samples at: currentPosition put: (aNumber min: 1.0 max: -1.0).
+	self redrawNeeded! !
+
+!RollingWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Feb/2026 19:34:16'!
+bipolar: aBoolean
+	bipolar := aBoolean! !
+
+!RollingWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Feb/2026 00:35:04'!
+color: aColor
+	color := aColor.
+	self redrawNeeded! !
+
+!RollingWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Feb/2026 00:38:31'!
+defaultExtent
+	^`128@64`! !
+
+!RollingWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Feb/2026 19:31:39'!
+drawOn: aCanvas
+	| step x y h pos delta |
+	delta := 20.
+	step := self morphWidth / (samples size - delta) * 5.
+	(pos := currentPosition + delta) > samples size ifTrue: [pos := pos - samples size].
+	h := self morphHeight.
+	bipolar ifTrue: [h := h / 2.0].
+	x := 0.
+	y := 1.0 - (samples at: pos) * h.
+	aCanvas strokeWidth: 2 color: color do:
+		[aCanvas moveTo: x @ y.
+		0 to: samples size - delta - 5 by: 5 do: [:i|
+			x := x + step.
+			y := 1.0 - (samples at: pos + i \\ samples size + 1) * h.
+			aCanvas lineTo: x @ y]]! !
+
+!RollingWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Feb/2026 19:28:22'!
+initialize
+	super initialize.
+	color := PatchMorph waveformColor3.
+	samples := Float32Array new: 64*5.
+	currentPosition := 1.
+	bipolar := true! !
+
+!RollingWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Feb/2026 00:34:47'!
+requiresVectorCanvas
 	^ true! !
 
 !SampleDisplayMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 22:40:54'!
@@ -11302,9 +11393,9 @@ waveformColor
 waveformColor2
 	^ `Color okl: 0.8 c: 0.13 h: 350.0`! !
 
-!PatchMorph class methodsFor: 'colors' stamp: 'len 13/Feb/2026 01:10:25'!
+!PatchMorph class methodsFor: 'colors' stamp: 'len 23/Feb/2026 18:47:51'!
 waveformColor3
-	^ `Color okl: 0.8 c: 0.13 h: 90.0`! !
+	^ `Color okl: 0.8 c: 0.43 h: 100.0`! !
 
 !PatchMorph class methodsFor: 'colors' stamp: 'len 13/Feb/2026 01:11:35'!
 waveformColor4
@@ -11439,7 +11530,7 @@ mouseLeave: anEvent
 	title visible: false.
 	flap visible: false! !
 
-!PatchableMorph methodsFor: 'initialization' stamp: 'len 13/Feb/2026 16:08:29'!
+!PatchableMorph methodsFor: 'initialization' stamp: 'len 23/Feb/2026 20:30:38'!
 initialize
 	| container |
 	super initialize.
@@ -11451,7 +11542,7 @@ initialize
 	self addMorph: container.
 	self addMorph: (title := LabelMorph contents: '' fontSize: 12 emphasis: 1) position: 0 @ -24.
 	title visible: false.
-	flap := RoundedLinearLayoutMorph newColumn gap: 10; padding: 4 @ 8; "borderWidth: 0; borderColor: Color lightGray; color: PatchMorph panelColor" color: (Color black alpha: 0.6).
+	flap := RoundedLinearLayoutMorph newColumn gap: 10; padding: 4 @ 8; "borderWidth: 0; borderColor: Color lightGray; color: PatchMorph panelColor" color: (Color darkGray alpha: 0.6).
 	self addMorph: flap.
 	flap visible: false! !
 

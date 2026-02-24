@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 24 February 2026 at 1:37:24 am'!
+'From Cuis7.7 [latest update: #7797] on 24 February 2026 at 5:54:25 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 474!
+!provides: 'Signals' 1 475!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1239,7 +1239,7 @@ MultitrackMeterMorph class
 
 !classDefinition: #PatternEditorMorph category: #'Signals-Morphic-Tracker'!
 BoxMorph subclass: #PatternEditorMorph
-	instanceVariableNames: 'tracker cursorPosition font labelFont emptyTriggerImage centerKey editStep showCursor pauseBlinking clipboard selectionTrackStart selectionLineStart'
+	instanceVariableNames: 'tracker cursorPosition font labelFont emptyTriggerImage centerKey editStep showCursor pauseBlinking clipboard selectionLineStart selectionTrackStart'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Tracker'!
@@ -1249,7 +1249,7 @@ PatternEditorMorph class
 
 !classDefinition: #SequencerMorph category: #'Signals-Morphic-Tracker'!
 BoxMorph subclass: #SequencerMorph
-	instanceVariableNames: 'tracker font clipboard selectionStart'
+	instanceVariableNames: 'tracker font clipboard selectionStart showCursor pauseBlinking'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Tracker'!
@@ -9154,6 +9154,10 @@ drawOn: aCanvas
 handlesMouseScroll: aMouseScrollEvent
 	^ true! !
 
+!ScrollerMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 17:34:01'!
+handlesKeyboardFocus
+	^ false! !
+
 !ScrollerMorph methodsFor: 'events' stamp: 'len 6/Jan/2026 20:51:13'!
 keyStroke: anEvent 
 	anEvent isEsc ifTrue:
@@ -9413,6 +9417,10 @@ yForMeterValue: aNumber
 	"Answer the y coordinate for the given linear meter value (RMS or peak).
 	We map it logarithmically to the height of the morph. We ignore values below -60 dB or over 0 dB."
 	^ extent y - (extent y * (aNumber linearToDecibels + 60.0 max: 0.0) / 60.0) max: 0.0! !
+
+!MultitrackMeterMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 17:31:47'!
+handlesKeyboardFocus
+	^ false! !
 
 !MultitrackMeterMorph methodsFor: 'events' stamp: 'len 24/Jan/2026 14:14:37'!
 handlesMouseScroll: anEvent
@@ -9688,7 +9696,7 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 01:33:27'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 15:34:20'!
 handleInputKey: anEvent
 	| c i |
 	anEvent isBackspace ifTrue:
@@ -9710,12 +9718,6 @@ handleInputKey: anEvent
 			[tracker selectedTriggerAt: cursorPosition put: i + tracker inputCenterKey - 1.
 			tracker moveCursorLineDown: editStep.
 			^ true].
-"		tracker selectedTrigger ifNotNil: [:trigger|
-			trigger note ifNotNil: [:note|
-				(c = $] and: [note < 108]) ifTrue: [trigger note: note + 12. self redrawNeeded. ^ true].
-				(c = $[ and: [note > 12]) ifTrue: [trigger note: note - 12. self redrawNeeded. ^ true].
-				(c = $} and: [note < 127]) ifTrue: [trigger note: note + 1. self redrawNeeded. ^ true].
-				(c = ${ and: [note > 0]) ifTrue: [trigger note: note - 1. self redrawNeeded. ^ true]]]."
 		^ false].
 	(cursorPosition = 6 or: [cursorPosition = 9]) ifTrue:
 		[('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>' includes: (c := anEvent keyCharacter asUppercase)) ifTrue:
@@ -9796,14 +9798,15 @@ keyStroke: anEvent
 	(self handleKeyStroke: anEvent) ifTrue: [anEvent wasHandled: true. ^ self].
 	^ super keyStroke: anEvent! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 7/Feb/2026 19:19:21'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 15:33:19'!
 mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
 	| charWidth trackWidth x |
 	charWidth := font widthOf: $X.
 	trackWidth := charWidth * self tracksWidthInCharacters + (charWidth/2.0).
 	x := localEventPosition x - (charWidth * 2.5).
 	x < 0.0 ifTrue: [^ self].
-	tracker setCursorTrack: (x / trackWidth) truncated + 1! !
+	tracker setCursorTrack: (x / trackWidth) truncated + 1.
+	selectionLineStart := nil! !
 
 !PatternEditorMorph methodsFor: 'focus handling' stamp: 'len 9/Jan/2026 15:20:32'!
 keyboardFocusChange: aBoolean
@@ -9816,14 +9819,13 @@ minimumExtent
 	n := tracker tracks size.
 	^ (font widthOf: $X) * (n * (self tracksWidthInCharacters + 0.5) + 4.5) @ (font lineSpacing * 16)! !
 
-!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 9/Jan/2026 15:21:31'!
+!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 24/Feb/2026 15:37:56'!
 initialize
 	super initialize.
 "	font := FontFamily familyName: 'impulseBig' pointSize: 18."
 	font := FontFamily familyName: 'JetBrains Mono NL' pointSize: 16.
 "	font := FontFamily familyName: 'Commodore 64 Angled' pointSize: 14."
-	labelFont := FontFamily defaultFamilyPointSize: 17.
-	self setTracker: Tracker new.
+	labelFont := FontFamily defaultFamilyPointSize: 16.
 	centerKey := 60. "C4"
 	editStep := 1.
 	showCursor := true.
@@ -9946,7 +9948,7 @@ clipboardPasteNew
 	selectionStart := nil.
 	clipboard ifNotNil: [tracker insertSequence: (clipboard collect: [:each| each key copy -> each value])]! !
 
-!SequencerMorph methodsFor: 'drawing' stamp: 'len 23/Feb/2026 16:12:20'!
+!SequencerMorph methodsFor: 'drawing' stamp: 'len 24/Feb/2026 17:51:21'!
 drawOn: aCanvas
 	| x y s charWidth blockHeight blockWidth space cursorTrack cursorPattern patternNumbers oldPatternNumbers |
 	charWidth := font widthOf: $X.
@@ -9962,13 +9964,16 @@ drawOn: aCanvas
 	y := 0.
 	"draw selection:"
 	selectionStart ifNotNil:
-		[aCanvas fillRectangle: (0 @ (((selectionStart min: tracker cursorPattern) - 1) * blockHeight) corner: blockHeight @ (((selectionStart max: tracker cursorPattern)) * blockHeight)) color: PatternEditorMorph selectionColor].
+		[aCanvas fillRectangle: (0 @ (((selectionStart min: tracker cursorPattern) - 1) * blockHeight) corner: self morphWidth @ (((selectionStart max: tracker cursorPattern)) * blockHeight)) color: PatternEditorMorph selectionColor].
 	"draw sequence and cursor:"
 	cursorPattern := tracker cursorPattern.
 	patternNumbers := tracker sequencePatternNumbers.
 	oldPatternNumbers := OrderedCollection new.
 	1 to: tracker sequence size do: [:i| | p c |
-		i = cursorPattern ifTrue: [aCanvas fillRectangle: (0@y extent: blockHeight @ blockHeight) color: PatternEditorMorph cursorColor].
+		i = cursorPattern ifTrue:
+			[self hasKeyboardFocus
+				ifTrue: [aCanvas fillRectangle: (0@y extent: blockHeight @ blockHeight) color: (showCursor ifTrue: [PatternEditorMorph cursorColor] ifFalse: [PatternEditorMorph cursorColor alpha: 0.7])]
+				ifFalse: [aCanvas fillRectangle: (0@y extent: blockHeight @ blockHeight) color: (PatternEditorMorph cursorColor alpha: 0.7)]].
 		p := patternNumbers at: i.
 		(oldPatternNumbers includes: p) ifFalse: [aCanvas frameRectangle: (4@(y+4) extent: blockHeight -8 @ (blockHeight - 8)) borderWidth: 1 color: Color white cornerRadius: 8].
 		s := p printStringBase: 16 nDigits: 2.
@@ -10026,6 +10031,11 @@ keyStroke: anEvent
 		^ self].
 	^ super keyStroke: anEvent! !
 
+!SequencerMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 15:43:39'!
+keyboardFocusChange: aBoolean
+	aBoolean ifTrue: [self startBlinking] ifFalse: [self stopBlinking].
+	self redrawNeeded! !
+
 !SequencerMorph methodsFor: 'geometry' stamp: 'len 21/Feb/2026 16:41:06'!
 minimumExtent
 	| blockHeight blockWidth charWidth space |
@@ -10035,11 +10045,12 @@ minimumExtent
 	space := charWidth / 4.0.
 	^ (blockWidth + space) * tracker tracks size + blockWidth + blockHeight @ (blockHeight * tracker sequence size)! !
 
-!SequencerMorph methodsFor: 'initialization' stamp: 'len 31/Dec/2025 23:17:57'!
+!SequencerMorph methodsFor: 'initialization' stamp: 'len 24/Feb/2026 15:38:00'!
 initialize
 	super initialize.
 	font := FontFamily familyName: 'JetBrains Mono NL' pointSize: 16.
-	self setTracker: Tracker new! !
+	showCursor := true.
+	pauseBlinking := false! !
 
 !SequencerMorph methodsFor: 'initialization' stamp: 'len 2/Jan/2026 19:33:30'!
 setTracker: aTracker
@@ -10049,6 +10060,40 @@ setTracker: aTracker
 	aTracker when: #cursorChanged send: #redrawNeeded to: self.
 	aTracker when: #playheadChanged send: #redrawNeeded to: self.
 	self update! !
+
+!SequencerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026 15:38:55'!
+onBlinkCursor
+	"Blink the cursor"
+	showCursor := showCursor not | pauseBlinking.
+	pauseBlinking := false.
+	"cursorRect ifNotNil: [ :r | self invalidateLocalRect: r]"
+	self redrawNeeded! !
+
+!SequencerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026 15:38:48'!
+pauseBlinking
+	"Show a solid cursor (non blinking) for a short while."
+	pauseBlinking := true.
+	"Show cursor right now if needed:"
+	showCursor ifFalse:
+		[showCursor := true.
+		self redrawNeeded]! !
+
+!SequencerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026 15:38:27'!
+startBlinking
+	"And show the cursor"
+	pauseBlinking := true.
+	"Start blinking in a short while"
+	showCursor := true.
+	self startStepping: #onBlinkCursor stepTime: 500! !
+
+!SequencerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026 15:38:38'!
+stopBlinking
+	"And do not show cursor anymore."
+	self stopStepping: #onBlinkCursor.
+	"Hide cursor right now if needed:"
+	showCursor ifFalse:
+		[showCursor := false.
+		self redrawNeeded]! !
 
 !SequencerMorph methodsFor: 'private' stamp: 'len 31/Dec/2025 22:21:20'!
 update
@@ -10088,6 +10133,10 @@ setTracker: aTracker
 		when: #lpbChanged send: #redrawNeeded to: self;
 		when: #followPlayheadChanged send: #redrawNeeded to: self;
 		when: #inputCenterKeyChanged send: #redrawNeeded to: self! !
+
+!TrackerBarMorph methodsFor: 'as yet unclassified' stamp: 'len 24/Feb/2026 17:31:36'!
+handlesKeyboardFocus
+	^ false! !
 
 !OscilloscopeMorph methodsFor: 'drawing' stamp: 'len 4/Dec/2025 16:18:53'!
 drawOn: aCanvas
@@ -13622,13 +13671,19 @@ readFrom: aStream
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 
-!Tracker methodsFor: 'serialization' stamp: 'len 21/Feb/2026 16:55:14'!
+!Tracker methodsFor: 'serialization' stamp: 'len 24/Feb/2026 17:39:25'!
 readFromJson: json buffers: bufferList
 	| uniquePatterns |
 	bpm := json at: #bpm.
 	lpb := json at: #lpb.
 	swing := json at: #swing.
 	level := json at: #level.
+	cursorPattern := 1.
+	cursorLine := 1.
+	cursorTrack := 1.
+	playheadPattern := 1.
+	playheadLine := 0.
+	sequence := #().
 	tracks := #().
 	(json at: #tracks) timesRepeat: [self addTrack].
 	uniquePatterns := (json at: #patterns) collect: [:each| Pattern new readFromJson: each].

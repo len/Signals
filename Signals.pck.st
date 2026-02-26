@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 24 February 2026 at 5:54:25 pm'!
+'From Cuis7.7 [latest update: #7797] on 27 February 2026 at 12:31:40 am'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 475!
+!provides: 'Signals' 1 476!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -329,7 +329,7 @@ Multisample class
 
 !classDefinition: #Sample category: #'Signals-Samples'!
 TunedGenerator subclass: #Sample
-	instanceVariableNames: 'buffer baseRate loopEnd loopLength offset speed smooth warp playing released position increment label'
+	instanceVariableNames: 'buffer baseRate loopEnd loopLength offset speed smooth warp released position increment label'
 	classVariableNames: 'Library'
 	poolDictionaries: ''
 	category: 'Signals-Samples'!
@@ -475,6 +475,26 @@ Transform subclass: #PitchShifter
 	category: 'Signals-FX'!
 !classDefinition: 'PitchShifter class' category: #'Signals-FX'!
 PitchShifter class
+	instanceVariableNames: ''!
+
+!classDefinition: #Reverb category: #'Signals-FX'!
+Transform subclass: #Reverb
+	instanceVariableNames: 'buffer position delays gains mix'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-FX'!
+!classDefinition: 'Reverb class' category: #'Signals-FX'!
+Reverb class
+	instanceVariableNames: ''!
+
+!classDefinition: #TapeEcho category: #'Signals-FX'!
+Transform subclass: #TapeEcho
+	instanceVariableNames: 'delayLine tap1 tap2 tap3 mode feedback mix lpf hpf'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-FX'!
+!classDefinition: 'TapeEcho class' category: #'Signals-FX'!
+TapeEcho class
 	instanceVariableNames: ''!
 
 !classDefinition: #Vibrato category: #'Signals-FX'!
@@ -629,7 +649,7 @@ Korg35LPF class
 
 !classDefinition: #Decimator category: #'Signals-Shapers'!
 Transform subclass: #Decimator
-	instanceVariableNames: 'quantization downsample holdCount heldValue'
+	instanceVariableNames: 'quantization downsample holdCount heldValue mix'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Shapers'!
@@ -655,16 +675,6 @@ Transform subclass: #TapeSaturator
 	category: 'Signals-Shapers'!
 !classDefinition: 'TapeSaturator class' category: #'Signals-Shapers'!
 TapeSaturator class
-	instanceVariableNames: ''!
-
-!classDefinition: #MultiTapDelayLine category: #'Signals-Support'!
-Transform subclass: #MultiTapDelayLine
-	instanceVariableNames: 'buffer position delays gains'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'MultiTapDelayLine class' category: #'Signals-Support'!
-MultiTapDelayLine class
 	instanceVariableNames: ''!
 
 !classDefinition: #Balance category: #'Signals-Mix'!
@@ -1519,7 +1529,7 @@ WAVFileReader class
 
 !classDefinition: #Instrument category: #'Signals-Tracker'!
 Object subclass: #Instrument
-	instanceVariableNames: 'label patch modules noteReceivers gateReceivers velocityReceivers tempoReceivers samples controlInputs audioOutput buffer track trigger'
+	instanceVariableNames: 'label patch modules noteReceivers gateReceivers velocityReceivers glideReceivers tempoReceivers samples controlInputs audioOutput buffer track trigger'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Tracker'!
@@ -1539,7 +1549,7 @@ Pattern class
 
 !classDefinition: #Track category: #'Signals-Tracker'!
 Object subclass: #Track
-	instanceVariableNames: 'tracker color muted soloed delay instrument ticksToTrigger trigger'
+	instanceVariableNames: 'tracker color muted soloed instrument ticksToTrigger trigger'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Tracker'!
@@ -1708,6 +1718,12 @@ Time-domain pitch shifter based on two modulated delay lines with crossfading wi
 
 Pitch-shifting is achieved by modulating a delay line: the write pointer always advances at normal speed, but the read pointer advances faster (pitch up) or slower (pitch down). This causes discontinuities when the read pointer catches up or falls too far behind, but the discontinuities are hidden by crossfading between two delay lines running the same algorithm in parallel with a phase offset of 180°.!
 
+!Reverb commentStamp: '<historical>' prior: 0!
+This module is based on Squeak's original ReverbSound by John Maloney.!
+
+!TapeEcho commentStamp: '<historical>' prior: 0!
+This is an echo effect inspired in the Roland RE-201 Space Echo.!
+
 !BPF commentStamp: 'len 2/Feb/2026 18:24:24' prior: 0!
 This is a second order (12 dB/oct) band-pass filter based on a biquad.!
 
@@ -1778,9 +1794,6 @@ This saturator models the nonlinearity and frequency-dependent behavior of analo
 Tape saturation comes from driving a physical tape too hard. It's great at smoothing out transients in a pleasant way. Adds glue, making elements feel more cohesive and introduces compression and roundness to a sound.
 
 This module is ideal for adding analog-style warmth, subtle compression, and musical coloration to audio.!
-
-!MultiTapDelayLine commentStamp: '<historical>' prior: 0!
-This is based on Squeak's original ReverbSound by John Maloney.!
 
 !StereoMatrix commentStamp: '<historical>' prior: 0!
 Linear stereo transform based on a Mid/Side representation.
@@ -2127,9 +2140,13 @@ update
 addControl: aSymbol min: min max: max value: defaultValue
 	^ controls at: aSymbol put: ((Control min: min max: max value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
 
-!Module methodsFor: 'controls and modulations' stamp: 'len 8/Feb/2026 18:24:35'!
+!Module methodsFor: 'controls and modulations' stamp: 'len 24/Feb/2026 23:52:11'!
 addDryWetControl: aSymbol
-	^ (self addControl: aSymbol min: 0.0 max: 1.0 value: 1.0) printer: [:x| (x * 100) truncated printString, '%']! !
+	^ self addDryWetControl: aSymbol value: 1.0! !
+
+!Module methodsFor: 'controls and modulations' stamp: 'len 24/Feb/2026 23:51:56'!
+addDryWetControl: aSymbol value: defaultValue
+	^ (self addControl: aSymbol min: 0.0 max: 1.0 value: defaultValue) printer: [:x| (x * 100) truncated printString, '%']! !
 
 !Module methodsFor: 'controls and modulations' stamp: 'len 1/Feb/2026 15:45:37'!
 addFrequencyControl: aSymbol min: min max: max value: defaultValue
@@ -2777,13 +2794,13 @@ initialize
 	tap3 := DelayLineTap on: delayLine.
 	self reset! !
 
-!Chorus methodsFor: 'initialization' stamp: 'len 1/Feb/2026 15:46:37'!
+!Chorus methodsFor: 'initialization' stamp: 'len 24/Feb/2026 23:52:24'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #time min: 0.010 "10 ms" max: 0.025 "25 ms" value: 0.015 "15 ms".
 	self addFrequencyControl: #speed min: 0.1 "Hz" max: 1.5 "Hz" value: 0.5 "Hz".
 	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
-	self addControl: #mix min: 0.0 max: 1.0 value: 0.5! !
+	self addDryWetControl: #mix value: 0.5! !
 
 !Chorus methodsFor: 'processing' stamp: 'len 12/Feb/2026 14:41:03'!
 tick
@@ -4421,22 +4438,19 @@ warp: aBoolean
 gateOff
 	released := true! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 21/Feb/2026 20:05:48'!
+!Sample methodsFor: 'controlling' stamp: 'len 24/Feb/2026 22:17:51'!
 gateOn
-	self reset.
-	released := false.
-	playing := true! !
-
-!Sample methodsFor: 'controlling' stamp: 'len 21/Feb/2026 20:06:03'!
-reset
 	position := (buffer size - 1) * offset.
-	released := false.
-	playing := false! !
+	released := false! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 21/Jan/2026 22:44:13'!
+!Sample methodsFor: 'controlling' stamp: 'len 24/Feb/2026 22:24:07'!
+reset
+	position := buffer size.
+	released := false! !
+
+!Sample methodsFor: 'controlling' stamp: 'len 24/Feb/2026 20:46:57'!
 setOffset: aNumber
-	offset := aNumber.
-	position := (buffer size - 1) * aNumber "change it here, otherwise wouldnt have any effect until a gateOn"! !
+	offset := aNumber! !
 
 !Sample methodsFor: 'controlling' stamp: 'len 23/Jan/2026 14:28:16'!
 setSpeed: aNumber
@@ -4470,9 +4484,8 @@ initializeControls
 	super initializeControls.
 	(self addControl: #speed min: -4.0 max: 4.0 value: 1.0) printer: [:x| '×', (x printStringFractionDigits: 2)]! !
 
-!Sample methodsFor: 'processing' stamp: 'len 21/Feb/2026 20:06:38'!
+!Sample methodsFor: 'processing' stamp: 'len 24/Feb/2026 22:16:24'!
 read: aBuffer
-	playing ifFalse: [^ aBuffer atAllPut: 0.0].
 	(warp and: [speed abs ~= 1.0]) ifTrue: [^ self readWarp: aBuffer].
 	speed < 0 ifTrue: [^ self readBackwards: aBuffer].
 	self readForward: aBuffer! !
@@ -4488,10 +4501,13 @@ readBackwards: aBuffer
 			aBuffer from: i to: aBuffer size put: 0.0.
 			^ self]]! !
 
-!Sample methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:22:14'!
+!Sample methodsFor: 'processing' stamp: 'len 24/Feb/2026 22:14:42'!
 readForward: aBuffer
 	| end |
 	end := buffer size.
+	position < end ifFalse:
+		[aBuffer atAllPut: 0.0.
+		^ self].
 	smooth ifTrue: [end := end - 1]. "to allow for interpolation with next sample without checking bounds every time"
 	1 to: aBuffer size do: [:i|
 		"if smooth = true perform linear interpolation between samples:"
@@ -5091,14 +5107,14 @@ initialize
 	tap := DelayLineTap on: delayLine.
 	self reset! !
 
-!Flanger methodsFor: 'initialization' stamp: 'len 1/Feb/2026 15:46:42'!
+!Flanger methodsFor: 'initialization' stamp: 'len 24/Feb/2026 23:52:59'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #time min: 0.0002 "0.2 ms" max: 0.002 "2 ms" value: 0.001 "1 ms".
 	self addFrequencyControl: #speed min: 0.05 "Hz" max: 1.0 "Hz" value: 0.1 "Hz".
 	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
 	self addControl: #feedback min: -0.8 max: 0.8 value: 0.5.
-	self addControl: #mix min: 0.0 max: 1.0 value: 0.5! !
+	self addDryWetControl: #mix value: 0.5! !
 
 !Flanger methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:31'!
 tick
@@ -5137,15 +5153,15 @@ initialize
 	y1 := Float32Array new: 4.
 	self reset! !
 
-!Phaser methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:12:42'!
+!Phaser methodsFor: 'initialization' stamp: 'len 24/Feb/2026 23:53:15'!
 initializeControls
 	super initializeControls.
 	self addSpeedControl: #speed value: 0.5.
 	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
 	self addControl: #feedback min: -0.7 max: 0.7 value: 0.5.
-	self addControl: #mix min: 0.0 max: 1.0 value: 0.5! !
+	self addDryWetControl: #mix value: 0.5! !
 
-!Phaser methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:49'!
+!Phaser methodsFor: 'processing' stamp: 'len 26/Feb/2026 23:02:57'!
 tick
 	| twoPi a |
 	output ifNil: [^ self]. "actually, we should process the input anyway, if available"
@@ -5153,7 +5169,7 @@ tick
 	twoPi := Float twoPi.
 	1 to: input size do: [:i|
 		| in out |
-		a :=(phase sin + 1.0) * depth * 0.3 + 0.3. "0.3 - 0.9"
+		a := ​(phase sin + 1.0) * depth * 0.3 + 0.3. "0.3 - 0.9"
 		(phase := phase + increment) > twoPi ifTrue: [phase := phase - twoPi].
 		in := input at: i.
 		out := lastOutput * feedback + in.
@@ -5190,6 +5206,124 @@ update
 	delayIncrement := (self get: #shift) semitonesToRatio.
 	delayLine1 setLength: length; setDelay: delayTime; setDelayIncrement: delayIncrement.
 	delayLine1 setLength: length; setDelay: length - delayTime; setDelayIncrement: delayIncrement! !
+
+!Reverb methodsFor: 'as yet unclassified' stamp: 'len 26/Feb/2026 22:57:04'!
+delays: delayList gains: gainList
+	"For best results it's desirable that the delays are primes.
+	
+	MultiTapDelayLine new delays: #(537 691 1191) gains: #(0.07 0.07 0.07)
+	
+	The default in SoundPlayer:
+	MultiTapDelayLine new delays: #(1601 7919) gains: #(0.12 0.07).
+"
+	self assert: delayList size = gainList size.
+	delays := delayList.
+	gains := gainList.
+	buffer := Float32Array new: delayList max.
+	position := 1! !
+
+!Reverb methodsFor: 'as yet unclassified' stamp: 'len 26/Feb/2026 23:06:19'!
+initialize
+	super initialize.
+"	self delays: #(537 691 1191) gains: #(0.07 0.07 0.07)
+"
+	"The default in Squeak SoundPlayer:"
+	self delays: #(1601 7919) gains: #(0.12 0.07)! !
+
+!Reverb methodsFor: 'as yet unclassified' stamp: 'len 26/Feb/2026 22:59:44'!
+initializeControls
+	super initializeControls.
+	self addDryWetControl: #mix value: 0.5! !
+
+!Reverb methodsFor: 'as yet unclassified' stamp: 'len 6/Oct/2025 15:53:00'!
+reset
+	buffer atAllPut: 0.0! !
+
+!Reverb methodsFor: 'as yet unclassified' stamp: 'len 26/Feb/2026 23:00:54'!
+update
+	super update.
+	mix := self get: #mix! !
+
+!Reverb methodsFor: 'as yet unclassified' stamp: 'len 26/Feb/2026 23:04:34'!
+value: in
+	| n i out |
+	n := buffer size. "max delay"
+	position := position + 1.
+	i := position truncated.
+	out := 0.0.
+	delays with: gains do: [:delay :gain|
+		| j |
+		j := position - delay.
+		j < 1 ifTrue: [j := j + n].
+		out := (buffer at: j) * gain + out].
+	buffer at: i put: out + in.
+	position := position \\ buffer size.
+	^ in * (1.0 - mix) + (out * mix)! !
+
+!TapeEcho methodsFor: 'controlling' stamp: 'len 26/Feb/2026 12:12:16'!
+mode: anInteger
+	mode := anInteger! !
+
+!TapeEcho methodsFor: 'controlling' stamp: 'len 25/Feb/2026 00:17:35'!
+reset
+	delayLine reset.
+	tap1 reset.
+	tap2 reset.
+	tap3 reset! !
+
+!TapeEcho methodsFor: 'controlling' stamp: 'len 26/Feb/2026 12:19:13'!
+update
+	| delay1 delay2 delay3 thirtyMsecs |
+	super update.
+	thirtyMsecs := self class sampleRate * 0.03.
+	delay1 := (self get: #time) * self class sampleRate.
+	delay2 := delay1 / 2.0.
+	delay3 := delay1 / 3.0.
+	tap1 setDelayIncrement: delay1 - tap1 delay / thirtyMsecs. "slide over 30 ms"
+	tap2 setDelayIncrement: delay2 - tap2 delay / thirtyMsecs.
+	tap3 setDelayIncrement: delay3 - tap3 delay / thirtyMsecs.
+	feedback := self get: #feedback.
+	mix := self get: #mix! !
+
+!TapeEcho methodsFor: 'initialization' stamp: 'len 26/Feb/2026 12:38:18'!
+initialize
+	super initialize.
+	delayLine := DelayLine new: (self class sampleRate * 2) ceiling.
+	tap1 := DelayLineTap on: delayLine.
+	tap2 := DelayLineTap on: delayLine.
+	tap3 := DelayLineTap on: delayLine.
+	mode := 1.
+	lpf := OnePole new pole: 8000.0 / self class sampleRate. "8 kHz"
+	hpf := OnePole new pole: 40.0 / self class sampleRate "40 Hz"! !
+
+!TapeEcho methodsFor: 'initialization' stamp: 'len 26/Feb/2026 12:55:45'!
+initializeControls
+	super initializeControls.
+	self addTimeControl: #time min: 0.240 "240 ms" max: 2.0 "2 s" value: 0.5 "500 ms".
+	self addControl: #feedback min: 0.0 max: 1.0 value: 0.0.
+	self addVolumeControl: #bass min: 0.4 max: 2.5 value: 1.0. "-8 dB to 8 dB"
+	self addVolumeControl: #treble min: 0.4 max: 2.5 value: 1.0. "-8 dB to 8 dB"
+	self addDryWetControl: #mix value: 0.5! !
+
+!TapeEcho methodsFor: 'processing' stamp: 'len 26/Feb/2026 12:41:58'!
+value: in
+	| echos x |
+	echos := 0.0.
+	(mode bitAnd: 2r001) = 0 ifFalse: [echos := echos + tap1 read].
+	(mode bitAnd: 2r010) = 0 ifFalse: [echos := echos + tap2 read].
+	(mode bitAnd: 2r100) = 0 ifFalse: [echos := echos + tap3 read].
+	x := ((echos * feedback + in) * 1.5) tanh. "saturation"
+	x := x - (hpf value: x).
+	x := lpf value: x.
+	delayLine write: x.
+	^ in * (1.0 - mix) + (echos * mix)! !
+
+!TapeEcho methodsFor: 'tools' stamp: 'len 26/Feb/2026 12:11:05'!
+patchable
+	^ super patchable
+		addControlInput: #time;
+		addControlInput: #feedback;
+		yourself! !
 
 !Vibrato methodsFor: 'controlling' stamp: 'len 26/Jan/2026 18:09:39'!
 reset
@@ -5729,11 +5863,12 @@ patchable
 reset
 	holdCount := 0! !
 
-!Decimator methodsFor: 'controlling' stamp: 'len 12/Feb/2026 14:56:24'!
+!Decimator methodsFor: 'controlling' stamp: 'len 27/Feb/2026 00:15:56'!
 update
 	super update.
 	quantization := 2.0 raisedTo: (self get: #bits).
-	downsample := 1.0 / (self get: #rate)! !
+	downsample := 1.0 / (self get: #rate).
+	mix := self get: #mix! !
 
 !Decimator methodsFor: 'initialization' stamp: 'len 8/Jan/2026 21:27:24'!
 initialize
@@ -5742,17 +5877,18 @@ initialize
 	downsample := 1.0.
 	self reset! !
 
-!Decimator methodsFor: 'initialization' stamp: 'len 12/Feb/2026 14:59:45'!
+!Decimator methodsFor: 'initialization' stamp: 'len 27/Feb/2026 00:15:43'!
 initializeControls
 	super initializeControls.
 	(self addControl: #bits min: 0.1 max: 16.0 value: 16.0) printer: [:x| x printStringFractionDigits: 2].
-	(self addControl: #rate min: (1000.0 / self class sampleRate) max: 1.0 value: 1.0) printer: [:x| (self class sampleRate * x) rounded hertzPrintString]! !
+	(self addControl: #rate min: (1000.0 / self class sampleRate) max: 1.0 value: 1.0) printer: [:x| (self class sampleRate * x) rounded hertzPrintString].
+	self addDryWetControl: #mix! !
 
-!Decimator methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:25'!
+!Decimator methodsFor: 'processing' stamp: 'len 27/Feb/2026 00:25:51'!
 tick
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
-	(downsample = 1.0 and: [quantization >= 65535.0]) ifTrue: [^ self].
+	(downsample = 1.0 and: [quantization >= 65535.0]) ifTrue: [output replaceWith: input. ^ self].
 	1 to: input size do: [:i|
 		"downsampling via sample & hold:"
 		holdCount > 0 ifFalse: "reset holdCount and take and process a new sample value"
@@ -5761,9 +5897,9 @@ tick
 			"apply bitcrusher:"
 			quantization < 65535.0 ifTrue: [heldValue := (heldValue * quantization) rounded / quantization]].
 		holdCount := holdCount - 1.
-		output at: i put: heldValue]! !
+		output at: i put: (mix = 1.0 ifTrue: [heldValue] ifFalse: [(input at: i) * (1.0 - mix) + (heldValue * mix)])]! !
 
-!Decimator methodsFor: 'processing' stamp: 'len 20/Nov/2025 01:21:00'!
+!Decimator methodsFor: 'processing' stamp: 'len 27/Feb/2026 00:17:22'!
 value: in
 	(downsample = 1.0 and: [quantization >= 65535.0]) ifTrue: [^ in].
 	"downsampling via sample & hold:"
@@ -5773,7 +5909,8 @@ value: in
 		"apply bitcrusher:"
 		quantization < 65535.0 ifTrue: [heldValue := (heldValue * quantization) rounded / quantization]].
 	holdCount := holdCount - 1.
-	^ heldValue! !
+	mix = 1.0 ifTrue: [^ heldValue].
+	^ in * (1.0 - mix) + (heldValue * mix)! !
 
 !Decimator methodsFor: 'tools' stamp: 'len 12/Feb/2026 14:57:20'!
 patchable
@@ -5897,42 +6034,6 @@ patchable
 		addControlInput: #drive;
 		addAudioOutput: #setOutput:;
 		yourself! !
-
-!MultiTapDelayLine methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 15:01:05'!
-delays: delayList gains: gainList
-	"For best results it's desirable that the delays are primes.
-	
-	MultiTapDelay new delays: #(537 691 1191) gains: #(0.07 0.07 0.07)
-	
-	The default in SoundPlayer:
-	MultiTapDelay new delays: #(1601 7919) gains: #(0.12 0.07).
-"
-	self assert: delayList size = gainList size.
-	delays := delayList.
-	gains := gainList.
-	buffer := Float32Array new: delayList max.
-	position := 1! !
-
-!MultiTapDelayLine methodsFor: 'as yet unclassified' stamp: 'len 6/Oct/2025 15:53:00'!
-reset
-	buffer atAllPut: 0.0! !
-
-!MultiTapDelayLine methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 15:01:05'!
-value: in
-	| n i out |
-	n := buffer size. "max delay"
-	position := position + 1.
-	i := position truncated.
-	out := 0.0.
-	delays with: gains do: [:delay :gain|
-		| j |
-		j := position - delay.
-		j < 1 ifTrue: [j := j + n].
-		out := (buffer at: j) * gain + out].
-	out := out + in.
-	buffer at: i put: out.
-	position := position \\ buffer size.
-	^ out! !
 
 !Balance methodsFor: 'initialization' stamp: 'len 2/Feb/2026 03:11:52'!
 initializeControls
@@ -7794,10 +7895,6 @@ process: aBuffer
 			line: position @ y to: position @ (h // 2) width: 1 color: color.
 		position := position + 1 \\ image width].
 	self redrawNeeded! !
-
-!WaveformScrollingMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Oct/2025 15:10:00'!
-reset
-	^ self! !
 
 !ControlMorph methodsFor: 'accessing' stamp: 'len 30/Sep/2025 22:36:00'!
 color: aColor
@@ -10208,10 +10305,6 @@ tick
 	remainder := input size - i + 1.
 	self redrawNeeded! !
 
-!OscilloscopeMorph methodsFor: 'module' stamp: 'len 2/Feb/2026 19:10:07'!
-update
-	^ self! !
-
 !PlotMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 15:48:29'!
 computeMinMax
 	(functions isEmpty or: [domain isEmpty]) ifTrue: [min := max := 0.0. ^ self].
@@ -10508,10 +10601,6 @@ tick
 			buffer replaceFrom: 1 to: hop with: buffer startingAt: hop + 1].
 			changed := true].
 	changed ifTrue: [self redrawNeeded]! !
-
-!SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 19:10:16'!
-update
-	^ self! !
 
 !SpectrogramMorph methodsFor: 'initialization' stamp: 'len 27/Nov/2025 22:43:00'!
 defaultExtent
@@ -11217,10 +11306,6 @@ tick
 			changed := true]].
 	changed ifTrue: [self redrawNeeded]! !
 
-!SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 19:10:25'!
-update
-	^ self! !
-
 !SpectrumAnalyzerMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:23:14'!
 windowSize
 	^ fft size! !
@@ -11274,10 +11359,6 @@ patchable
 	answer addAudioInput: #setInputX: label: 'X'; addAudioInput: #setInputY: label: 'Y'.
 	^ answer! !
 
-!VectorscopeMorph methodsFor: 'module' stamp: 'len 3/Feb/2026 00:22:32'!
-reset
-	^ self! !
-
 !VectorscopeMorph methodsFor: 'module' stamp: 'len 3/Feb/2026 00:09:21'!
 setInputX: aBuffer
 	inputX := aBuffer.
@@ -11302,10 +11383,6 @@ tick
 		x := (((x0 * scaleX) tanh + 1.0) * h) truncated.
 		y := (((y0 * scaleY) tanh + 1.0) * h) truncated.
 		image pixelValueAt: x @ y put: ((x0 abs > 1.0 or: [y0 abs > 1.0]) ifTrue: [cH] ifFalse: [c])]! !
-
-!VectorscopeMorph methodsFor: 'module' stamp: 'len 3/Feb/2026 00:06:32'!
-update
-	^ self! !
 
 !VectorscopeMorph methodsFor: 'stepping' stamp: 'len 3/Feb/2026 02:32:24'!
 step
@@ -12161,8 +12238,9 @@ write: in
 new: anInteger
 	^ self new initialize: anInteger! !
 
-!DelayLineTap methodsFor: 'accessing' stamp: 'len 26/Jan/2026 14:55:50'!
+!DelayLineTap methodsFor: 'accessing' stamp: 'len 25/Feb/2026 00:01:01'!
 delay
+	"Answer the number of samples delayed by this tap."
 	^ delay! !
 
 !DelayLineTap methodsFor: 'accessing' stamp: 'len 26/Jan/2026 14:55:50'!
@@ -12841,11 +12919,13 @@ initialize
 	patch when: #recomputeNeeded send: #scheduleRecompute to: self.
 ! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 23/Jan/2026 14:29:14'!
+!Instrument methodsFor: 'playing' stamp: 'len 26/Feb/2026 17:29:57'!
 handleFX: anInteger
 	| command |
 	command := anInteger bitShift: -8.
-	command = 67 "C" ifTrue: [self setVelocity: ((anInteger bitShift: -4) bitAnd: 16rF) / 15.0 after: (anInteger bitAnd: 16rF). ^ self].
+	command = 67 "C" ifTrue: [track scheduleTrigger: (Trigger new velocity: ((anInteger bitShift: -4) bitAnd: 16rF) / 15.0) after: (anInteger bitAnd: 16rF) / 15.0 * track tracker tpl. ^ self].
+	command = 82 "R" ifTrue: [track scheduleTrigger: trigger after: (anInteger bitAnd: 16rFF) / 255.0 * track tracker tpl. ^ self].
+	command = 71 "G" ifTrue: [self setGlide: (anInteger bitAnd: 16rFF) / 255.0. ^ self].
 	command = 77 "M" ifTrue: [self setLevel:​ (anInteger bitAnd: 16rFF) / 255.0. ^ self].
 	command = 80 "P" ifTrue: [self setPan:  (anInteger bitAnd: 16rFF) / 255.0 * 2.0 - 1.0. ^ self].
 	"Sample commands:"
@@ -12878,7 +12958,7 @@ playTrigger
 	trigger isNoteOn ifTrue: [self noteOn: trigger note] ifFalse: [trigger isNoteOff ifTrue: [self noteOff]].
 	trigger := nil! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 17/Feb/2026 19:39:10'!
+!Instrument methodsFor: 'playing' stamp: 'len 24/Feb/2026 18:01:46'!
 recomputeModules
 	| currentModules |
 	currentModules := patch modules.
@@ -12886,6 +12966,7 @@ recomputeModules
 	noteReceivers := currentModules select: [:each| each respondsTo: #setNote:].
 	gateReceivers := currentModules select: [:each| each respondsTo: #gateOn].
 	velocityReceivers := currentModules select: [:any| any respondsTo: #setVelocity:].
+	glideReceivers := currentModules select: [:any| any respondsTo: #setGlide:].
 	tempoReceivers := currentModules select: [:any| any respondsTo: #setBPM:].
 	samples := currentModules select: [:each| each isMemberOf: Sample].
 	controlInputs atAllPut: nil.
@@ -12911,6 +12992,10 @@ scheduleTrigger: aTrigger
 setBPM: aNumber
 	tempoReceivers do: [:each| each setBPM: aNumber]! !
 
+!Instrument methodsFor: 'playing' stamp: 'len 24/Feb/2026 18:02:40'!
+setGlide: aNumber
+	glideReceivers do: [:each| each setGlide: aNumber]! !
+
 !Instrument methodsFor: 'playing' stamp: 'len 18/Jan/2026 02:31:21'!
 setLevel: aNumber
 	audioOutput ifNotNil: [audioOutput setLevel: aNumber]! !
@@ -12931,13 +13016,13 @@ setSpeed: aNumber
 setVelocity: aNumber
 	velocityReceivers do: [:each| each setVelocity: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 2/Feb/2026 16:12:08'!
+!Instrument methodsFor: 'playing' stamp: 'len 26/Feb/2026 16:59:31'!
 tick
 	| currentModules |
 	currentModules := modules ifNil: [self recomputeModules].
 	currentModules do: [:each| (each is: #Module) ifTrue: [each clear]].
 	trigger ifNotNil: [self playTrigger].
-	currentModules do: [:each| each update; tick]! !
+	currentModules do: [:each| (each is: #Module) ifTrue: [each update]. each tick]! !
 
 !Instrument methodsFor: 'serialization' stamp: 'len 17/Feb/2026 19:39:10'!
 asJsonWithBuffers: aList
@@ -13179,11 +13264,14 @@ soloed
 soloed: aBoolean
 	soloed := aBoolean! !
 
-!Track methodsFor: 'initialization' stamp: 'len 19/Jan/2026 01:42:41'!
+!Track methodsFor: 'accessing' stamp: 'len 26/Feb/2026 17:20:51'!
+tracker
+	^ tracker! !
+
+!Track methodsFor: 'initialization' stamp: 'len 26/Feb/2026 17:36:32'!
 initialize
 	muted := false.
-	soloed := false.
-	delay := 0! !
+	soloed := false! !
 
 !Track methodsFor: 'initialization' stamp: 'len 3/Jan/2026 15:47:12'!
 setTracker: aTracker
@@ -13217,10 +13305,20 @@ playTrigger
 	trigger fx2 ifNotNil: [:fx| self handleFX: fx].
 	trigger := nil! !
 
-!Track methodsFor: 'playing' stamp: 'len 3/Jan/2026 18:26:29'!
+!Track methodsFor: 'playing' stamp: 'len 26/Feb/2026 23:34:01'!
 scheduleTrigger: aTrigger
+	"Schedule aTrigger to play either immediatly if delay = 0, or after the number of ticks required by the delay.
+	The delay is specified by a Qxx command, where xx specifies the delay in steps of 1/255th the duration of a line."
+	| delay |
+	(delay := aTrigger delay) = 0
+		ifTrue: [self scheduleTrigger: aTrigger after: 0]
+		ifFalse: [self scheduleTrigger: aTrigger after: delay / 255.0 * tracker tpl]! !
+
+!Track methodsFor: 'playing' stamp: 'len 26/Feb/2026 23:30:14'!
+scheduleTrigger: aTrigger after: ticks
+	"Schedule aTrigger to play after the required number of ticks."
 	trigger := aTrigger.
-	ticksToTrigger := 0 "delay * Module sampleRate / Module blockSize ...."! !
+	ticksToTrigger := ticks! !
 
 !Track methodsFor: 'playing' stamp: 'len 17/Feb/2026 19:28:15'!
 tick
@@ -13308,6 +13406,11 @@ swing
 swing: aNumber
 	swing := aNumber min: 1.0 max: 0.0.
 	self triggerEvent: #swingChanged! !
+
+!Tracker methodsFor: 'accessing' stamp: 'len 26/Feb/2026 17:35:05'!
+tpl
+	"Answer the number of ticks per line."
+	^ Module controlRate * 60.0 / (bpm * lpb)! !
 
 !Tracker methodsFor: 'accessing' stamp: 'len 16/Dec/2025 21:18:23'!
 tracks
@@ -13563,7 +13666,7 @@ play
 	self triggerEvent: #playheadChanged.
 	self triggerEvent: #playingStatusChanged! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 21/Feb/2026 16:27:18'!
+!Tracker methodsFor: 'playing' stamp: 'len 26/Feb/2026 17:19:46'!
 playLine
 	| pattern mask ticksPerLine ticksSwing |
 	"Advance playhead:"
@@ -13583,7 +13686,7 @@ playLine
 	mask := self playingMask.
 	tracks withIndexDo: [:track :i|
 		(mask at: i) ifTrue: [(pattern track: i at: playheadLine) ifNotNil: [:aTrigger| track scheduleTrigger: aTrigger]]].
-	ticksPerLine := Module controlRate * 60.0 / (bpm * lpb).
+	ticksPerLine := self tpl.
 	ticksToLine := ticksToLine + ticksPerLine.
 	ticksSwing := ticksPerLine * 0.333 * swing squared.
 	(playheadLine \\ lpb) even ifTrue: [ticksSwing := ticksSwing negated].
@@ -13821,11 +13924,11 @@ at: position put: value
 	position = 11 ifTrue: [^ fx2 := value ifNotNil: [((fx2 ifNil: [0]) bitAnd: 16rFFF0) bitOr: value]].
 	^ self error: 'out of bounds'! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 31/Dec/2025 19:55:44'!
+!Trigger methodsFor: 'accessing' stamp: 'len 26/Feb/2026 23:26:06'!
 delay
-	"Answer the delay for this trigger (the parameter corresponding to fx command Q)."
-	(fx1 bitShift: -8) = 81 ifTrue: [^ fx1 bitAnd: 16rFF].
-	(fx2 bitShift: -8) = 81 ifTrue: [^ fx2 bitAnd: 16rFF].
+	"Answer the delay for this trigger, i.e. the parameter of the effect command Q."
+	fx1 ifNotNil: [(fx1 bitShift: -8) = 81 "Q" ifTrue: [^ fx1 bitAnd: 16rFF]].
+	fx2 ifNotNil: [(fx2 bitShift: -8) = 81 "Q" ifTrue: [^ fx2 bitAnd: 16rFF]].
 	^ 0! !
 
 !Trigger methodsFor: 'accessing' stamp: 'len 16/Dec/2025 21:03:26'!

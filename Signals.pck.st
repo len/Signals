@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 27 February 2026 at 12:31:40 am'!
+'From Cuis7.7 [latest update: #7797] on 3 March 2026 at 2:53:36 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 476!
+!provides: 'Signals' 1 478!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -149,7 +149,7 @@ SVF class
 
 !classDefinition: #AudioIn category: #'Signals-IO'!
 Module subclass: #AudioIn
-	instanceVariableNames: 'outputL outputR aux meterLeftValue meterRightValue'
+	instanceVariableNames: 'bus outputL outputR aux meterLeftValue meterRightValue'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-IO'!
@@ -159,7 +159,7 @@ AudioIn class
 
 !classDefinition: #AudioOut category: #'Signals-IO'!
 Module subclass: #AudioOut
-	instanceVariableNames: 'level levelLeft levelRight inputL inputR aux meterLeftValue meterRightValue'
+	instanceVariableNames: 'bus level levelLeft levelRight inputL inputR aux meterLeftValue meterRightValue'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-IO'!
@@ -489,7 +489,7 @@ Reverb class
 
 !classDefinition: #TapeEcho category: #'Signals-FX'!
 Transform subclass: #TapeEcho
-	instanceVariableNames: 'delayLine tap1 tap2 tap3 mode feedback mix lpf hpf'
+	instanceVariableNames: 'delayLine tap1 tap2 tap3 tap1Enabled tap2Enabled tap3Enabled feedback mix lpf hpf lsf hsf'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
@@ -1299,7 +1299,7 @@ PlotMorph class
 
 !classDefinition: #RollingMeterMorph category: #'Signals-Morphic-Widgets'!
 BoxMorph subclass: #RollingMeterMorph
-	instanceVariableNames: 'buffer position meterBlock'
+	instanceVariableNames: 'buffer position meterBlock color'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Widgets'!
@@ -1624,7 +1624,7 @@ A signal generator produces a stream of samples from a real-valued function of t
 A tuned generator is a signal generator with pitch, such as an oscillator. See subclasses.!
 
 !Oscillator commentStamp: '<historical>' prior: 0!
-Abstract superclass for simple oscillators that can be defined by a single phase value that is incremented at sampling step.!
+Abstract superclass for simple oscillators that can be defined by a single phase value that is incremented at each sampling step.!
 
 !OPN commentStamp: '<historical>' prior: 0!
 This oscillator emulates the oscillators of the Yamaha sound chips YM2414 (used in the TX81Z and DX11 synthesizers) and YM2612 (used in the Sega Mega Drive game console). It has a choice of 8 waveforms.!
@@ -2935,17 +2935,27 @@ setOutputHP: aBuffer
 setOutputLP: aBuffer
 	outputLP := aBuffer! !
 
+!AudioIn methodsFor: 'accessing' stamp: 'len 27/Feb/2026 22:39:43'!
+bus
+	^ bus! !
+
+!AudioIn methodsFor: 'accessing' stamp: 'len 1/Mar/2026 00:20:34'!
+bus: anInteger
+	bus := anInteger.
+	self changed! !
+
 !AudioIn methodsFor: 'controlling' stamp: 'len 2/Feb/2026 04:10:50'!
 clear
 	super clear.
 	outputL ifNotNil: [outputL atAllPut: 0.0].
 	outputR ifNotNil: [outputR atAllPut: 0.0]! !
 
-!AudioIn methodsFor: 'initialization' stamp: 'len 21/Jan/2026 02:49:31'!
+!AudioIn methodsFor: 'initialization' stamp: 'len 2/Mar/2026 00:20:45'!
 initialize
 	super initialize.
 	aux := Float32Array new: self class blockSize.
-	meterLeftValue := meterRightValue := 0.0! !
+	meterLeftValue := meterRightValue := 0.0.
+	bus := 0! !
 
 !AudioIn methodsFor: 'mixing' stamp: 'len 24/Jan/2026 22:06:51'!
 meterLeftValue
@@ -2977,11 +2987,14 @@ tick
 	meterLeftValue := meterLeftValue * 0.98 "dampen" max: (outputL rms max: outputL last abs).
 	meterRightValue := meterRightValue * 0.98 "dampen" max: (outputR rms max: outputR last abs).! !
 
-!AudioIn methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:09:34'!
+!AudioIn methodsFor: 'wiring' stamp: 'len 2/Mar/2026 00:20:13'!
 patchable
-	| answer |
+	| answer display |
 	answer := PatchableMorph new model: self.
-	answer body addMorph: (RollingMeterMorph new meterBlock: [self meterValue]).
+	display := LinearLayoutMorph newRow color: Color transparent;
+		addMorph: (PluggableChoiceMorph new color: PatchMorph waveformColor; options: #(0 1 2 3 4 5 6 7 8 9); model: self; getter: #bus; setter: #bus:);
+		addMorph: (RollingMeterMorph new meterBlock: [self meterValue]).
+	answer body addMorph: display.
 	answer
 		addAudioOutput: #setOutputL: label: 'Out L/M';
 		addAudioOutput: #setOutputR: label: 'Out R'.
@@ -2994,6 +3007,15 @@ setOutputL: aBuffer
 !AudioIn methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:10:28'!
 setOutputR: aBuffer
 	outputR := aBuffer! !
+
+!AudioOut methodsFor: 'accessing' stamp: 'len 27/Feb/2026 23:04:41'!
+bus
+	^ bus! !
+
+!AudioOut methodsFor: 'accessing' stamp: 'len 1/Mar/2026 00:02:59'!
+bus: anInteger
+	bus := anInteger.
+	self changed! !
 
 !AudioOut methodsFor: 'controlling' stamp: 'len 18/Jan/2026 02:32:16'!
 setLevel: aNumber
@@ -3013,9 +3035,10 @@ update
 	pan < 0.0 ifTrue: [levelRight := levelRight * (pan * Float halfPi) cos].
 	pan > 0.0 ifTrue: [levelLeft := levelLeft * (pan * Float halfPi) cos]! !
 
-!AudioOut methodsFor: 'initialization' stamp: 'len 24/Jan/2026 22:03:54'!
+!AudioOut methodsFor: 'initialization' stamp: 'len 27/Feb/2026 23:05:54'!
 initialize
 	super initialize.
+	bus := 0.
 	aux := Float32Array new: self class blockSize.
 	level := levelLeft := levelRight := 0.5.
 	meterLeftValue := meterRightValue := 0.0! !
@@ -3067,11 +3090,14 @@ panel
 	^ ControlPanel new
 		addMorph: column! !
 
-!AudioOut methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:30:33'!
+!AudioOut methodsFor: 'tools' stamp: 'len 2/Mar/2026 00:10:09'!
 patchable
-	| answer |
+	| answer display |
 	answer := PatchableMorph new model: self.
-	answer body addMorph: (RollingMeterMorph new meterBlock: [self meterValue]); addMorph: self panel.
+	display := LinearLayoutMorph newRow color: Color transparent;
+		addMorph: (RollingMeterMorph new meterBlock: [self meterValue]);
+		addMorph: (PluggableChoiceMorph new color: PatchMorph waveformColor; options: #(0 1 2 3 4 5 6 7 8 9); model: self; getter: #bus; setter: #bus:).
+	answer body addMorph: display; addMorph: self panel.
 	answer
 		addAudioInput: #setInputL: label: 'In L/M';
 		addAudioInput: #setInputR: label: 'In R';
@@ -3086,6 +3112,17 @@ setInputL: aBuffer
 !AudioOut methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:06:33'!
 setInputR: aBuffer
 	inputR := aBuffer! !
+
+!AudioOut methodsFor: 'serialization' stamp: 'len 2/Mar/2026 00:31:31'!
+asJsonWithBuffers: aList
+	^ (super asJsonWithBuffers: aList)
+		at: #bus put: bus;
+		yourself! !
+
+!AudioOut methodsFor: 'serialization' stamp: 'len 2/Mar/2026 00:32:19'!
+readFromJson: json buffers: aList
+	super readFromJson: json buffers: aList.
+	bus := json at: #bus ifAbsent: [0]! !
 
 !ControlIn methodsFor: 'accessing' stamp: 'len 6/Jan/2026 14:30:25'!
 index
@@ -3105,17 +3142,28 @@ initialize
 	super initialize.
 	value := 0.0! !
 
-!ControlIn methodsFor: 'processing' stamp: 'len 8/Jan/2026 21:45:42'!
+!ControlIn methodsFor: 'processing' stamp: 'len 27/Feb/2026 23:11:52'!
 tick
-	value = 0.0 ifFalse: [self triggerEvent: #value: with: value]! !
+	value = 0.0 ifFalse: [self triggerEvent: #output: with: value]! !
 
-!ControlIn methodsFor: 'tools' stamp: 'len 22/Jan/2026 02:42:38'!
+!ControlIn methodsFor: 'tools' stamp: 'len 27/Feb/2026 23:11:35'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: (LabelMorph contents: '#', index printString).
-	answer addControlOutput: #value: label: 'Value'.
+	answer addControlOutput: #output: label: 'Value'.
 	^ answer! !
+
+!ControlIn methodsFor: 'serialization' stamp: 'len 2/Mar/2026 00:32:55'!
+asJsonWithBuffers: aList
+	^ (super asJsonWithBuffers: aList)
+		at: #index put: index;
+		yourself! !
+
+!ControlIn methodsFor: 'serialization' stamp: 'len 1/Mar/2026 00:33:19'!
+readFromJson: json buffers: aList
+	super readFromJson: json buffers: aList.
+	index := json at: #index ifAbsent: [0]! !
 
 !Generator methodsFor: 'processing' stamp: 'len 24/Sep/2025 20:19:00'!
 next
@@ -3345,6 +3393,11 @@ wave: s at: t
 		^ 0.0].
 	t > 0.5 ifTrue: [^ 0.0].
 	^ self wave: s - 4 at: t * 2.0! !
+
+!OPN methodsFor: 'as yet unclassified' stamp: 'len 27/Feb/2026 00:49:34'!
+panel
+	^ super panel
+		addMorph: (PluggableChoiceMorph new options: #(1 2 3 4 5 6 7 8); model: self; getter: #wave; setter: #wave:)! !
 
 !Pulse methodsFor: 'controlling' stamp: 'len 22/Nov/2025 22:49:00'!
 update
@@ -3679,7 +3732,7 @@ reset
 	super reset.
 	phases atAllPut: 0.0! !
 
-!Supersaw methodsFor: 'controlling' stamp: 'len 5/Jan/2026 17:24:02'!
+!Supersaw methodsFor: 'controlling' stamp: 'len 1/Mar/2026 23:53:37'!
 update
 	| detune detune2 detune3 mix normalization |
 	super update.
@@ -4456,11 +4509,11 @@ setOffset: aNumber
 setSpeed: aNumber
 	self set: #speed to: aNumber! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 21/Jan/2026 23:00:53'!
+!Sample methodsFor: 'controlling' stamp: 'len 1/Mar/2026 23:53:22'!
 update
 	super update.
 	speed := self get: #speed.
-	increment := baseRate * ((self get: #tune) + note - 60) semitonesToRatio / self class sampleRate.
+	increment := baseRate * ((self get: #tune) + note - 60.0) semitonesToRatio / self class sampleRate.
 	warp ifFalse: [increment := increment * speed abs]! !
 
 !Sample methodsFor: 'copying' stamp: 'len 13/Feb/2026 00:25:49'!
@@ -5131,6 +5184,15 @@ tick
 		delayLine write: out * feedback + in.
 		output at: i put: in * (1.0 - mix) + (out * mix)]! !
 
+!Flanger methodsFor: 'tools' stamp: 'len 2/Mar/2026 16:14:47'!
+panel
+	^ ControlPanel new
+		addKnob: (controls at: #time) label: 'Time';
+		addKnob: (controls at: #speed) label: 'Speed';
+		addKnob: (controls at: #depth) label: 'Depth';
+		addKnob: (controls at: #feedback) label: 'FB';
+		addKnob: (controls at: #mix) label: 'Mix'! !
+
 !Phaser methodsFor: 'controlling' stamp: 'len 26/Jan/2026 13:42:09'!
 reset
 	lastOutput := 0.0.
@@ -5180,6 +5242,14 @@ tick
 			y1 at: k put: (out := y)].
 		lastOutput := out.
 		output at: i put: in * (1.0 - mix) + (out * mix)]! !
+
+!Phaser methodsFor: 'tools' stamp: 'len 2/Mar/2026 16:15:14'!
+panel
+	^ ControlPanel new
+		addKnob: (controls at: #speed) label: 'Speed';
+		addKnob: (controls at: #depth) label: 'Depth';
+		addKnob: (controls at: #feedback) label: 'FB';
+		addKnob: (controls at: #mix) label: 'Mix'! !
 
 !PitchShifter methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 17:18:20'!
 initialize
@@ -5260,9 +5330,32 @@ value: in
 	position := position \\ buffer size.
 	^ in * (1.0 - mix) + (out * mix)! !
 
-!TapeEcho methodsFor: 'controlling' stamp: 'len 26/Feb/2026 12:12:16'!
-mode: anInteger
-	mode := anInteger! !
+!TapeEcho methodsFor: 'accessing' stamp: 'len 2/Mar/2026 22:24:22'!
+tap1Enabled
+	^ tap1Enabled! !
+
+!TapeEcho methodsFor: 'accessing' stamp: 'len 2/Mar/2026 22:24:54'!
+tap1Enabled: aBoolean
+	tap1Enabled := aBoolean.
+	self changed! !
+
+!TapeEcho methodsFor: 'accessing' stamp: 'len 2/Mar/2026 22:24:26'!
+tap2Enabled
+	^ tap2Enabled! !
+
+!TapeEcho methodsFor: 'accessing' stamp: 'len 2/Mar/2026 22:24:50'!
+tap2Enabled: aBoolean
+	tap2Enabled := aBoolean.
+	self changed! !
+
+!TapeEcho methodsFor: 'accessing' stamp: 'len 2/Mar/2026 22:24:30'!
+tap3Enabled
+	^ tap3Enabled! !
+
+!TapeEcho methodsFor: 'accessing' stamp: 'len 2/Mar/2026 22:24:57'!
+tap3Enabled: aBoolean
+	tap3Enabled := aBoolean.
+	self changed! !
 
 !TapeEcho methodsFor: 'controlling' stamp: 'len 25/Feb/2026 00:17:35'!
 reset
@@ -5271,7 +5364,7 @@ reset
 	tap2 reset.
 	tap3 reset! !
 
-!TapeEcho methodsFor: 'controlling' stamp: 'len 26/Feb/2026 12:19:13'!
+!TapeEcho methodsFor: 'controlling' stamp: 'len 2/Mar/2026 17:33:33'!
 update
 	| delay1 delay2 delay3 thirtyMsecs |
 	super update.
@@ -5283,18 +5376,23 @@ update
 	tap2 setDelayIncrement: delay2 - tap2 delay / thirtyMsecs.
 	tap3 setDelayIncrement: delay3 - tap3 delay / thirtyMsecs.
 	feedback := self get: #feedback.
-	mix := self get: #mix! !
+	mix := self get: #mix.
+	lsf ls: 120.0 / self class sampleRate Q: 0.707 gain: (self get: #bass). "120 Hz"
+	hsf hs: 4000.0 / self class sampleRate Q: 0.707 gain: (self get: #treble) "4 kHz"! !
 
-!TapeEcho methodsFor: 'initialization' stamp: 'len 26/Feb/2026 12:38:18'!
+!TapeEcho methodsFor: 'initialization' stamp: 'len 2/Mar/2026 22:25:53'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (self class sampleRate * 2) ceiling.
 	tap1 := DelayLineTap on: delayLine.
 	tap2 := DelayLineTap on: delayLine.
 	tap3 := DelayLineTap on: delayLine.
-	mode := 1.
+	tap1Enabled := true.
+	tap2Enabled := tap3Enabled := false.
 	lpf := OnePole new pole: 8000.0 / self class sampleRate. "8 kHz"
-	hpf := OnePole new pole: 40.0 / self class sampleRate "40 Hz"! !
+	hpf := OnePole new pole: 40.0 / self class sampleRate. "40 Hz"
+	lsf := Biquad new.
+	hsf := Biquad new! !
 
 !TapeEcho methodsFor: 'initialization' stamp: 'len 26/Feb/2026 12:55:45'!
 initializeControls
@@ -5305,22 +5403,59 @@ initializeControls
 	self addVolumeControl: #treble min: 0.4 max: 2.5 value: 1.0. "-8 dB to 8 dB"
 	self addDryWetControl: #mix value: 0.5! !
 
-!TapeEcho methodsFor: 'processing' stamp: 'len 26/Feb/2026 12:41:58'!
+!TapeEcho methodsFor: 'processing' stamp: 'len 2/Mar/2026 22:26:42'!
 value: in
 	| echos x |
 	echos := 0.0.
-	(mode bitAnd: 2r001) = 0 ifFalse: [echos := echos + tap1 read].
-	(mode bitAnd: 2r010) = 0 ifFalse: [echos := echos + tap2 read].
-	(mode bitAnd: 2r100) = 0 ifFalse: [echos := echos + tap3 read].
+	tap1Enabled ifTrue: [echos := echos + tap1 read].
+	tap2Enabled ifTrue: [echos := echos + tap2 read].
+	tap3Enabled ifTrue: [echos := echos + tap3 read].
+	echos := hsf value: (lsf value: echos). "bass and treble shelves for the echos"
 	x := ((echos * feedback + in) * 1.5) tanh. "saturation"
-	x := x - (hpf value: x).
-	x := lpf value: x.
+	x := lpf value: x - (hpf value: x). "lpf and hpf one-poles for tape bandwidth loss when writing"
 	delayLine write: x.
 	^ in * (1.0 - mix) + (echos * mix)! !
 
-!TapeEcho methodsFor: 'tools' stamp: 'len 26/Feb/2026 12:11:05'!
+!TapeEcho methodsFor: 'serialization' stamp: 'len 2/Mar/2026 22:42:03'!
+asJsonWithBuffers: aList
+	^ (super asJsonWithBuffers: aList)
+		at: #tap1Enabled put: tap1Enabled;
+		at: #tap2Enabled put: tap2Enabled;
+		at: #tap3Enabled put: tap3Enabled;
+		yourself! !
+
+!TapeEcho methodsFor: 'serialization' stamp: 'len 2/Mar/2026 22:42:43'!
+readFromJson: json buffers: aList
+	super readFromJson: json buffers: aList.
+	tap1Enabled := json at: #tap1Enabled.
+	tap2Enabled := json at: #tap2Enabled.
+	tap3Enabled := json at: #tap3Enabled! !
+
+!TapeEcho methodsFor: 'tools' stamp: 'len 2/Mar/2026 22:44:23'!
+panel
+	^ ControlPanel new
+		addSmallKnob: (controls at: #bass) label: 'Bass';
+		addSmallKnob: (controls at: #treble) label: 'Treble';
+		addSmallKnob: (controls at: #mix) label: 'Mix'! !
+
+!TapeEcho methodsFor: 'tools' stamp: 'len 2/Mar/2026 22:37:06'!
 patchable
-	^ super patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body
+		addMorph:
+			(ControlPanel new
+				addMorph: (PluggableToggleMorph new model: self; getter: #tap1Enabled; setter: #tap1Enabled:; label: '1');
+				addMorph: (PluggableToggleMorph new model: self; getter: #tap2Enabled; setter: #tap2Enabled:; label: '2');
+				addMorph: (PluggableToggleMorph new model: self; getter: #tap3Enabled; setter: #tap3Enabled:; label: '3'));
+		addMorph:
+			(ControlPanel new
+				addKnob: (controls at: #time) label: 'Time';
+				addKnob: (controls at: #feedback) label: 'FB').
+	answer flap addMorph: self panel.
+	^ answer
+		addAudioInput: #setInput:;
+		addAudioOutput: #setOutput:;
 		addControlInput: #time;
 		addControlInput: #feedback;
 		yourself! !
@@ -7392,7 +7527,7 @@ attack: aControl
 defaultExtent
 	^ 96 @ 64! !
 
-!EGControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 22:59:45'!
+!EGControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 14:51:27'!
 initialize
 	super initialize.
 	color := PatchMorph waveformColor3! !
@@ -8005,9 +8140,9 @@ drawFocusIndicatorOn: aCanvas
 control: aControl
 	^ self new control: aControl! !
 
-!KnobControlMorph methodsFor: 'initialization' stamp: 'len 18/Nov/2025 20:01:00'!
+!KnobControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:20:51'!
 defaultExtent
-	^ `36@36`! !
+	^ `36 @ 36`! !
 
 !KnobControlMorph methodsFor: 'drawing' stamp: 'len 14/Jan/2026 16:58:20'!
 drawOn: aCanvas
@@ -8075,9 +8210,9 @@ drawVerticalOn: aCanvas
 				fillRectangle: (8 @ modulatedPos corner: w - 8 @ h) color: color].
 		aCanvas line: 8 @ basePos to: w - 8 @ basePos width: 3 color: color! !
 
-!SliderControlMorph methodsFor: 'initialization' stamp: 'len 20/Jan/2026 15:20:31'!
+!SliderControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:21:32'!
 defaultExtent
-	^ `22@36`! !
+	^ `24 @ 48`! !
 
 !SliderControlMorph methodsFor: 'initialization' stamp: 'len 20/Jan/2026 14:47:24'!
 transpose
@@ -8091,9 +8226,9 @@ isHorizontal
 color2: aColor
 	1 to: colors size do: [:i| colors at: i put: (color mixed:  (i - 1.0) / 6.0 with: aColor)]! !
 
-!SupersawControlMorph methodsFor: 'initialization' stamp: 'len 2/Dec/2025 14:26:00'!
+!SupersawControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:21:27'!
 defaultExtent
-	^ `128@64`! !
+	^ `128 @ 64`! !
 
 !SupersawControlMorph methodsFor: 'initialization' stamp: 'len 2/Dec/2025 18:33:00'!
 initialize
@@ -8162,14 +8297,9 @@ drawOn: aCanvas
 minimumExtent
 	^ (font widthOfString: contents) + 6 @ font lineSpacing! !
 
-!TextControlMorph methodsFor: 'halos and balloon help' stamp: 'len 16/Jan/2026 18:59:07'!
-wantsBalloon
-	"This control doesn't need balloon text because we're already showing the value in the control itself."
-	^ false! !
-
-!TextControlMorph methodsFor: 'initialization' stamp: 'len 1/Dec/2025 15:17:00'!
+!TextControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:21:12'!
 defaultExtent
-	^ 24 @ 24! !
+	^ `24 @ 24`! !
 
 !TextControlMorph methodsFor: 'initialization' stamp: 'len 1/Dec/2025 12:10:00'!
 initialize
@@ -8191,7 +8321,7 @@ update: anObject
 	super update: anObject.
 	currentShape := control value! !
 
-!VariableWaveControlMorph methodsFor: 'drawing' stamp: 'len 11/Feb/2026 16:14:36'!
+!VariableWaveControlMorph methodsFor: 'drawing' stamp: 'len 1/Mar/2026 14:58:22'!
 drawOn: aCanvas
 	| step stepX t x y h steps |
 	steps := 64.
@@ -8201,7 +8331,7 @@ drawOn: aCanvas
 	t := 0.0.
 	y := 1.0 - (self waveAt: t) * h + 3.0.
 	x := 4.0.
-	aCanvas strokeWidth: 1.5 color: color do:
+	aCanvas strokeWidth: 2 color: color do:
 		[aCanvas moveTo: x @ y.
 		steps timesRepeat:
 			[t := t + step.
@@ -8213,9 +8343,9 @@ drawOn: aCanvas
 waveAt: aNumber
 	^ wave value: aNumber value: currentShape! !
 
-!VariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 23/Sep/2025 00:20:00'!
+!VariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:21:22'!
 defaultExtent
-	^ `128@64`! !
+	^ `128 @ 64`! !
 
 !VariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 16/Jan/2026 16:53:16'!
 initialize
@@ -8223,9 +8353,9 @@ initialize
 	color := PatchMorph waveformColor.
 	currentShape := 0.0! !
 
-!SymmetricWaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 13/Feb/2026 19:49:29'!
+!SymmetricWaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:21:19'!
 defaultExtent
-	^ `96@64`! !
+	^ `96 @ 64`! !
 
 !SymmetricWaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 13/Feb/2026 19:32:00'!
 initialize
@@ -8393,13 +8523,13 @@ mouseScroll: anEvent localPosition: localEventPosition
 	anEvent direction = #down ifTrue: [self adjustYBy: (anEvent shiftPressed ifTrue: [controlY fineStep] ifFalse: [controlY coarseStep]). ^ self].
 	anEvent direction = #up ifTrue: [self adjustYBy: (anEvent shiftPressed ifTrue: [controlY fineStep] ifFalse: [controlY coarseStep]) negated]! !
 
-!XYControlMorph methodsFor: 'halos and balloon help' stamp: 'len 27/Jan/2026 19:29:29'!
+!XYControlMorph methodsFor: 'halos and balloon help' stamp: 'len 1/Mar/2026 14:45:54'!
 balloonText
-	^ controlX printedBaseValueWithLabel, ', ', controlY printedBaseValueWithLabel! !
+	^ controlY printedBaseValueWithLabel, ', ', controlX printedBaseValueWithLabel! !
 
-!XYControlMorph methodsFor: 'initialization' stamp: 'len 4/Dec/2025 16:42:29'!
+!XYControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:21:44'!
 defaultExtent
-	^ `128@64`! !
+	^ `128 @ 64`! !
 
 !XYControlMorph methodsFor: 'private' stamp: 'len 27/Jan/2026 16:35:47'!
 adjustXBy: aNumber
@@ -8462,9 +8592,9 @@ waveAt: t
 	v == #fall ifTrue: [^ (0.5 - t) * 2.0].
 	self notYetImplemented! !
 
-!LFOControlMorphOld methodsFor: 'initialization' stamp: 'len 13/Feb/2026 01:03:43'!
+!LFOControlMorphOld methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:21:49'!
 defaultExtent
-	^ `128@64`! !
+	^ `128 @ 64`! !
 
 !LFOControlMorphOld methodsFor: 'initialization' stamp: 'len 11/Feb/2026 22:59:37'!
 initialize
@@ -8661,9 +8791,9 @@ drawOn: aCanvas frequency: freq Y: yParameter color: aColor fillColor: fillColor
 notchWidth
 	^ 80.0! !
 
-!FilterControlMorph methodsFor: 'initialization' stamp: 'len 28/Jan/2026 17:09:41'!
+!FilterControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:21:55'!
 defaultExtent
-	^ `144@96`! !
+	^ `144 @ 96`! !
 
 !FilterControlMorph methodsFor: 'initialization' stamp: 'len 12/Feb/2026 05:51:24'!
 initialize
@@ -8699,11 +8829,11 @@ drawOn: aCanvas
 			y := 1.0 - (samples at: pos + i \\ samples size + 1) * h.
 			aCanvas lineTo: x @ y]]! !
 
-!LFOControlMorph methodsFor: 'initialization' stamp: 'len 23/Feb/2026 22:14:28'!
+!LFOControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:21:59'!
 defaultExtent
-	^ `128@64`! !
+	^ `128 @ 64`! !
 
-!LFOControlMorph methodsFor: 'initialization' stamp: 'len 23/Feb/2026 22:15:37'!
+!LFOControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 14:50:22'!
 initialize
 	super initialize.
 	color := PatchMorph waveformColor3.
@@ -8770,13 +8900,13 @@ drawLevel: aNumber
 	h := (v + 1.0) / 2.0 * image height.
 	image fill: (x @ (image height // 2) extent: 3 @ (image height // 2 - h)) fillColor: Color white "! !
 
-!WaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 15/Feb/2026 15:15:34'!
+!WaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 1/Mar/2026 14:47:15'!
 drawOn: aCanvas
 	| step stepX t x y h steps m |
 	aCanvas image: image at: 0 @ 0.
 	m := self morphWidth / 2.0.
 	x := valueX * m + m.
-	aCanvas strokeWidth: 1.0 color: Color white dashedStrokeBits: 2r1111000000 do:
+	aCanvas strokeWidth: 1.0 color: Color white dashedStrokeBits: 2r1110000000 do:
 		[aCanvas moveTo: x @ 0; lineTo: x @ self morphHeight].
 	steps := 64.
 	step := 1.0 / (steps + 1).
@@ -8785,7 +8915,7 @@ drawOn: aCanvas
 	t := 0.0.
 	y := 1.0 - (self waveAt: t) * h + 3.0.
 	x := 4.0.
-	aCanvas strokeWidth: 1.5 color: color do:
+	aCanvas strokeWidth: 2 color: color do:
 		[aCanvas moveTo: x @ y.
 		steps timesRepeat:
 			[t := t + step.
@@ -8793,9 +8923,9 @@ drawOn: aCanvas
 			x := x + stepX.
 			aCanvas lineTo: x @ y]]! !
 
-!WaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 13/Feb/2026 19:48:40'!
+!WaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:22:09'!
 defaultExtent
-	^ `96@64`! !
+	^ `96 @ 64`! !
 
 !WaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 12/Feb/2026 22:42:14'!
 initialize
@@ -8832,11 +8962,11 @@ controlY: aControl
 	super controlY: aControl.
 	valueY := aControl value! !
 
-!XYVariableWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Feb/2026 16:18:15'!
+!XYVariableWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 1/Mar/2026 15:22:14'!
 defaultExtent
-	^ `128@64`! !
+	^ `128 @ 64`! !
 
-!XYVariableWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Feb/2026 16:12:43'!
+!XYVariableWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 1/Mar/2026 15:00:25'!
 drawOn: aCanvas
 	| step stepX t x y h steps |
 	steps := 64.
@@ -8846,7 +8976,7 @@ drawOn: aCanvas
 	t := 0.0.
 	y := 1.0 - (self waveAt: t) * h + 3.0.
 	x := 4.0.
-	aCanvas strokeWidth: 1.5 color: color do:
+	aCanvas strokeWidth: 2 color: color do:
 		[aCanvas moveTo: x @ y.
 		steps timesRepeat:
 			[t := t + step.
@@ -9644,17 +9774,17 @@ setPatternLength
 	tracker isPlaying ifTrue: [^ self].
 	self request: 'Pattern length' initialAnswer: tracker selectedPattern length printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| tracker setSelectedPatternLength: s asNumber. self redrawNeeded]! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 22/Feb/2026 20:02:22'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 1/Mar/2026 14:29:42'!
 drawCursorOn: aCanvas
 	| lineSpacing charWidth cursorWidth x y cursorRect |
 	lineSpacing := font lineSpacing.
 	charWidth := font widthOf: $X.
 	y := self morphHeight / 2.0.
 	aCanvas fillRectangle: (0 @ y extent: self morphWidth @ lineSpacing) color: (Color white alpha: 0.1).
-	cursorWidth := cursorPosition = 1 ifTrue: [3] ifFalse: [1].
+	cursorWidth := cursorPosition = 3 ifTrue: [3] ifFalse: [1].
 	x := (self tracksWidthInCharacters + 0.5) * (tracker cursorTrack - 1) + 2.5 + cursorPosition - 1.
-	cursorPosition > 1 ifTrue: [x := x + 2.5].
-	cursorPosition > 3 ifTrue: [x := x + 0.5].
+	cursorPosition > 2 ifTrue: [x := x + 0.5].
+	cursorPosition > 3 ifTrue: [x := x + 2.5].
 	cursorPosition > 5 ifTrue: [x := x + 0.5].
 	cursorPosition > 8 ifTrue: [x := x + 0.5].
 	cursorRect := x * charWidth @ y extent: cursorWidth * charWidth @ lineSpacing.
@@ -9667,7 +9797,7 @@ drawOn: aCanvas
 	self drawCursorOn: aCanvas.
 	self drawPatternOn: aCanvas! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 23/Feb/2026 16:15:10'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 1/Mar/2026 14:27:16'!
 drawPatternOn: aCanvas
 	| lineSpacing charWidth y unsetColor  noteColor velocityColor fxColor pattern endLine middle startLine darkColor lightColor xLeft xRight beatColor trackWidth |
 	pattern := tracker selectedPattern.
@@ -9715,16 +9845,16 @@ drawPatternOn: aCanvas
 		x := charWidth * 2.5.
 		pattern
 			line: i
-			notesDo: [:note|
+			instrumentDo: [:instrument|
+				instrument ifNil: [s := '··'. c := unsetColor] ifNotNil: [:v| s := v printStringBase: 16 nDigits: 2. c := noteColor].
+				aCanvas drawString: s at: x @ y font: font color: c.
+				x := charWidth * 2.5 + x]
+			noteDo: [:note|
 				note ifNil: [s := '···'. c := unsetColor] ifNotNil: [:v| s := self noteStringFrom: v. c := noteColor].
 				aCanvas drawString: s at: x @ y font: font color: c.
 				x := charWidth * 3.5 + x]
 			velocityDo: [:velocity|
 				velocity ifNil: [s := '··'. c := unsetColor] ifNotNil: [:v| s := v printStringBase: 16 nDigits: 2. c := velocityColor].
-				aCanvas drawString: s at: x @ y font: font color: c.
-				x := charWidth * 2.5 + x]
-			instrumentDo: [:instrument|
-				instrument ifNil: [s := '··'. c := unsetColor] ifNotNil: [:v| s := v printStringBase: 16 nDigits: 2. c := noteColor].
 				aCanvas drawString: s at: x @ y font: font color: c.
 				x := charWidth * 2.5 + x]
 			effectsDo: [:fx|
@@ -9735,10 +9865,10 @@ drawPatternOn: aCanvas
 			emptyTriggersDo:
 				["aCanvas image: emptyTriggerImage at: x @ y.
 				x := trackWidth + x"
-				aCanvas drawString: '···' at: x @ y font: font color: unsetColor.
-				x := charWidth * 3.5 + x.
 				aCanvas drawString: '··' at: x @ y font: font color: unsetColor.
 				x := charWidth * 2.5 + x.
+				aCanvas drawString: '···' at: x @ y font: font color: unsetColor.
+				x := charWidth * 3.5 + x.
 				aCanvas drawString: '··' at: x @ y font: font color: unsetColor.
 				x := charWidth * 2.5 + x.
 				aCanvas drawString: '···' at: x @ y font: font color: unsetColor.
@@ -9793,7 +9923,7 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 15:34:20'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 1/Mar/2026 19:24:18'!
 handleInputKey: anEvent
 	| c i |
 	anEvent isBackspace ifTrue:
@@ -9805,7 +9935,7 @@ handleInputKey: anEvent
 	anEvent keyCharacter = $[ ifTrue: [self selectedTriggersDo: [:each| each transposeBy: -12]. self redrawNeeded. ^ true].
 	anEvent keyCharacter = $} ifTrue: [self selectedTriggersDo: [:each| each transposeBy: 1]. self redrawNeeded. ^ true].
 	anEvent keyCharacter = ${ ifTrue: [self selectedTriggersDo: [:each| each transposeBy: -1]. self redrawNeeded. ^ true].
-	cursorPosition = 1 ifTrue:
+	cursorPosition = 3 ifTrue:
 		[c := anEvent keyCharacter.
 		c = $a ifTrue:
 			[tracker selectedTriggerAt: cursorPosition put: -1.
@@ -9824,7 +9954,7 @@ handleInputKey: anEvent
 		^ false].
 	(i := '0123456789ABCDEF' indexOf: anEvent keyCharacter asUppercase) > 0 ifTrue:
 		[tracker selectedTriggerAt: cursorPosition put: i - 1.
-		(#(3 5) includes: cursorPosition) ifTrue:
+		(#(2 5) includes: cursorPosition) ifTrue:
 			[cursorPosition := cursorPosition - 1.
 			tracker moveCursorLineDown: editStep.
 			^ true].
@@ -10370,30 +10500,29 @@ plot: aBlockOrCollection color: aColor
 requiresVectorCanvas
 	^ true ! !
 
-!RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Jan/2026 15:08:35'!
+!RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 1/Mar/2026 15:22:51'!
 defaultBufferSize
-	^ 64! !
+	^ 32! !
 
 !RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Jan/2026 15:08:43'!
 defaultExtent
 	^ self defaultBufferSize @ 24! !
 
-!RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jan/2026 01:56:38'!
+!RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Mar/2026 00:16:32'!
 drawOn: aCanvas
-	| m color |
-	m := extent y / 2.0.
-	color := PatchMorph waveformColor.
-	0 to: buffer size - 1 do: [:i| | h v |
+	| h |
+	h := extent y.
+	0 to: buffer size - 1 do: [:i| | v |
 		v := buffer at: i + position \\ buffer size + 1.
 		v > 0.01 ifTrue:
-			[h := (v min: 1.0) * m.
-			aCanvas line: i @ (m-h) to: i @ (m+h-1) width: 1 color: color]]! !
+			[aCanvas line: i @ (h - ((v min: 1.0) * h)) to: i @ h width: 1 color: color]]! !
 
-!RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Jan/2026 15:08:59'!
+!RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Mar/2026 00:28:00'!
 initialize
 	super initialize.
 	buffer := Float32Array new: self defaultBufferSize.
-	position := self defaultBufferSize! !
+	position := buffer size.
+	color := PatchMorph waveformColor! !
 
 !RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Jan/2026 23:58:38'!
 meterBlock: aBlock
@@ -10428,28 +10557,28 @@ color: aColor
 	color := aColor.
 	self redrawNeeded! !
 
-!RollingWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Feb/2026 00:38:31'!
+!RollingWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 1/Mar/2026 15:26:03'!
 defaultExtent
-	^`128@64`! !
+	^`128 @ 64`! !
 
-!RollingWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Feb/2026 19:31:39'!
+!RollingWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Mar/2026 17:54:38'!
 drawOn: aCanvas
 	| step x y h pos delta |
 	delta := 20.
 	step := self morphWidth / (samples size - delta) * 5.
 	(pos := currentPosition + delta) > samples size ifTrue: [pos := pos - samples size].
-	h := self morphHeight.
+	h := self morphHeight - 6.0.
 	bipolar ifTrue: [h := h / 2.0].
 	x := 0.
-	y := 1.0 - (samples at: pos) * h.
+	y := 1.0 - (samples at: pos) * h + 3.0.
 	aCanvas strokeWidth: 2 color: color do:
 		[aCanvas moveTo: x @ y.
 		0 to: samples size - delta - 5 by: 5 do: [:i|
 			x := x + step.
-			y := 1.0 - (samples at: pos + i \\ samples size + 1) * h.
+			y := 1.0 - (samples at: pos + i \\ samples size + 1) * h + 3.0.
 			aCanvas lineTo: x @ y]]! !
 
-!RollingWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Feb/2026 19:28:22'!
+!RollingWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 1/Mar/2026 14:51:31'!
 initialize
 	super initialize.
 	color := PatchMorph waveformColor3.
@@ -11505,7 +11634,7 @@ addModuleCopying: aModule
 addModuleInstantiating: aClass
 	self addMorph: aClass new patchable position: (self valueOfProperty: #lastMenuOpeningPosition)! !
 
-!PatchMorph methodsFor: 'menu' stamp: 'len 10/Feb/2026 01:56:49'!
+!PatchMorph methodsFor: 'menu' stamp: 'len 1/Mar/2026 15:04:02'!
 getMenu
 	| menu submenu |
 	self setProperty: #lastMenuOpeningPosition toValue: (self internalizeFromWorld: self activeHand morphPosition).
@@ -11519,7 +11648,7 @@ getMenu
 	submenu := MenuMorph new defaultTarget: self.
 	submenu
 		add: 'Control In' action: #addControlInput;
-"		add: 'Audio In' action: #addModuleInstantiating: argument: AudioIn;"
+		add: 'Audio In' action: #addModuleInstantiating: argument: AudioIn;
 		add: 'Audio Out' action: #addModuleInstantiating: argument: AudioOut.
 	menu add: 'I/O' subMenu: submenu.
 
@@ -11583,21 +11712,21 @@ midsColor
 panelColor
 	^ `Color fromHexString: '#141414'`! !
 
-!PatchMorph class methodsFor: 'colors' stamp: 'len 12/Feb/2026 16:44:25'!
+!PatchMorph class methodsFor: 'colors' stamp: 'len 1/Mar/2026 19:33:00'!
 waveformColor
-	^ `Color okl: 0.8 c: 0.13 h: 220.0`! !
+	^ `Color okl: 0.8 c: 0.2 h: 220.0`! !
 
-!PatchMorph class methodsFor: 'colors' stamp: 'len 12/Feb/2026 16:44:39'!
+!PatchMorph class methodsFor: 'colors' stamp: 'len 1/Mar/2026 19:33:04'!
 waveformColor2
-	^ `Color okl: 0.8 c: 0.13 h: 350.0`! !
+	^ `Color okl: 0.8 c: 0.2 h: 0.0`! !
 
-!PatchMorph class methodsFor: 'colors' stamp: 'len 23/Feb/2026 18:47:51'!
+!PatchMorph class methodsFor: 'colors' stamp: 'len 1/Mar/2026 19:33:07'!
 waveformColor3
-	^ `Color okl: 0.8 c: 0.43 h: 100.0`! !
+	^ `Color okl: 0.8 c: 0.2 h: 80.0`! !
 
-!PatchMorph class methodsFor: 'colors' stamp: 'len 13/Feb/2026 01:11:35'!
+!PatchMorph class methodsFor: 'colors' stamp: 'len 1/Mar/2026 19:33:11'!
 waveformColor4
-	^ `Color okl: 0.8 c: 0.13 h: 135.0`! !
+	^ `Color okl: 0.8 c: 0.2 h: 160.0`! !
 
 !PatchableMorph methodsFor: 'accessing' stamp: 'len 17/Nov/2025 19:49:00'!
 body
@@ -12080,6 +12209,23 @@ hp: frequency Q: Q
 	b1 := -2.0 * g.
 	b2 := 2.0 * b! !
 
+!Biquad methodsFor: 'accessing' stamp: 'len 2/Mar/2026 17:22:16'!
+hs: frequency Q: Q gain: gain
+	"Setup coefficients for a second order high-shelf filter.
+	The gain is linear, and the frequency is normalized (already divided by the sample rate)."
+	| ω α A sqrtA cosω b0 |
+	ω := Float twoPi * frequency.
+	α := ω sin / (Q * 2.0).
+	A := gain sqrt.
+	sqrtA := A sqrt.
+	cosω  := ω cos.
+	b0 := (A + 1.0) - ((A - 1.0) * cosω) + (2.0 * sqrtA * α).
+	a0 :=  A * ((A + 1.0) + ((A - 1.0) * cosω) + (2.0 * sqrtA * α)) / b0.
+	a1 := -2.0 * A * ((A - 1.0) + ((A + 1.0) * cosω)) / b0.
+	a2 :=  A * ((A + 1.0) + ((A - 1.0) * cosω) - (2.0 * sqrtA * α)) / b0.
+	b1 :=  2.0 * ((A - 1.0) - ((A + 1.0) * cosω)) / b0.
+	b2 := ((A + 1.0) - ((A - 1.0) * cosω) - (2.0 * sqrtA * α)) / b0! !
+
 !Biquad methodsFor: 'accessing' stamp: 'len 27/Jan/2026 22:40:13'!
 linkwitz_hp: frequency Q: Q
 	"Setup coefficients for a second order Linkwitz/Riley high-pass filter."
@@ -12117,6 +12263,23 @@ lp: frequency Q: Q
 	a2 := a0.
 	b1 := -2.0 * g.
 	b2 := 2.0 * b! !
+
+!Biquad methodsFor: 'accessing' stamp: 'len 2/Mar/2026 17:22:44'!
+ls: frequency Q: Q gain: gain
+	"Setup coefficients for a second order low-shelf filter.
+	The gain is linear, and the frequency is normalized (already divided by the sample rate)."
+	| ω α A sqrtA cosω b0 |
+	ω := Float twoPi * frequency.
+	α := ω sin / (Q * 2.0).
+	A := gain sqrt.
+ 	sqrtA := A sqrt.
+	cosω  := ω cos.
+	b0  := (A + 1.0) + ((A - 1.0) * cosω) + (2.0 * sqrtA * α).
+	a0 :=  A * ((A + 1.0) - ((A - 1.0) * cosω) + (2.0 * sqrtA * α)) / b0.
+	a1 :=  2.0 * A * ((A - 1.0) - ((A + 1.0) * cosω)) / b0.
+	a2 :=  A * ((A + 1.0) - ((A - 1.0) * cosω) - (2.0 * sqrtA * α)) / b0.
+	b1 := -2.0 * ((A - 1.0) + ((A + 1.0) * cosω)) / b0.
+	b2 := ((A + 1.0) + ((A - 1.0) * cosω) - (2.0 * sqrtA * α)) / b0! !
 
 !Biquad methodsFor: 'accessing' stamp: 'len 27/Jan/2026 22:22:41'!
 peaking: frequency Q: Q gain: gain
@@ -12919,14 +13082,14 @@ initialize
 	patch when: #recomputeNeeded send: #scheduleRecompute to: self.
 ! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 26/Feb/2026 17:29:57'!
+!Instrument methodsFor: 'playing' stamp: 'len 2/Mar/2026 03:25:22'!
 handleFX: anInteger
 	| command |
 	command := anInteger bitShift: -8.
 	command = 67 "C" ifTrue: [track scheduleTrigger: (Trigger new velocity: ((anInteger bitShift: -4) bitAnd: 16rF) / 15.0) after: (anInteger bitAnd: 16rF) / 15.0 * track tracker tpl. ^ self].
 	command = 82 "R" ifTrue: [track scheduleTrigger: trigger after: (anInteger bitAnd: 16rFF) / 255.0 * track tracker tpl. ^ self].
 	command = 71 "G" ifTrue: [self setGlide: (anInteger bitAnd: 16rFF) / 255.0. ^ self].
-	command = 77 "M" ifTrue: [self setLevel:​ (anInteger bitAnd: 16rFF) / 255.0. ^ self].
+	command = 76 "L" ifTrue: [self setLevel:​ (anInteger bitAnd: 16rFF) / 255.0. ^ self].
 	command = 80 "P" ifTrue: [self setPan:  (anInteger bitAnd: 16rFF) / 255.0 * 2.0 - 1.0. ^ self].
 	"Sample commands:"
 	command = 83 "S" ifTrue: [self setOffset: (anInteger bitAnd: 16rFF) / 255.0. ^ self].
@@ -12949,9 +13112,9 @@ noteOn: midiKey
 	noteReceivers do: [:each| each setNote: midiKey].
 	gateReceivers do: [:each| each gateOn]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 18/Feb/2026 23:32:44'!
+!Instrument methodsFor: 'playing' stamp: 'len 2/Mar/2026 03:23:43'!
 playTrigger
-	trigger isNoteOn ifTrue: [self setOffset: 0.0; setSpeed: 1.0].
+	trigger isNoteOn ifTrue: [self setOffset: 0.0; setSpeed: 1.0; setGlide: 0.0].
 	trigger velocity ifNotNil: [:vel| self setVelocity: vel / 255.0].
 	trigger fx1 ifNotNil: [:fx| self handleFX: fx].
 	trigger fx2 ifNotNil: [:fx| self handleFX: fx].
@@ -13198,8 +13361,8 @@ swapTrack: anInteger with: anotherInteger
 	anInteger = anotherInteger ifTrue: [^ self].
 	blocks swap: anInteger with: anotherInteger! !
 
-!Pattern methodsFor: 'private' stamp: 'len 16/Feb/2026 16:54:06'!
-line: anInteger notesDo: notesBlock velocityDo: velocityBlock instrumentDo: instrumentBlock effectsDo: effectsBlock emptyTriggersDo: emptyBlock
+!Pattern methodsFor: 'private' stamp: 'len 1/Mar/2026 14:22:10'!
+line: anInteger instrumentDo: instrumentBlock noteDo: noteBlock velocityDo: velocityBlock effectsDo: effectsBlock emptyTriggersDo: emptyBlock
 	blocks do: [:each|
 		each
 			ifNil: [emptyBlock value]
@@ -13207,9 +13370,9 @@ line: anInteger notesDo: notesBlock velocityDo: velocityBlock instrumentDo: inst
 				[(each at: anInteger)
 					ifNil: [emptyBlock value]
 					ifNotNil: [:trigger|
-						notesBlock value: trigger note.
-						velocityBlock value: trigger velocity.
 						instrumentBlock value: trigger instrument.
+						noteBlock value: trigger note.
+						velocityBlock value: trigger velocity.
 						effectsBlock value: trigger fx1; value: trigger fx2]]]! !
 
 !Pattern class methodsFor: 'instance creation' stamp: 'len 27/Dec/2025 06:03:15'!
@@ -13281,25 +13444,24 @@ setTracker: aTracker
 forgetInstrument
 	instrument := nil! !
 
-!Track methodsFor: 'playing' stamp: 'len 18/Jan/2026 02:30:49'!
+!Track methodsFor: 'playing' stamp: 'len 2/Mar/2026 03:22:08'!
 handleFX: anInteger
 	| command |
 	command := anInteger bitShift: -8.
 	"Global commands:"
-	command = 70 "F" ifTrue: [tracker bpm: ((anInteger bitAnd: 16rFF) max: 1). ^ self].
-	command = 76 "L" ifTrue: [tracker lpb: ((anInteger bitAnd: 16rFF) max: 1). ^ self]! !
+	command = 70 "F" ifTrue: [tracker bpm: ((anInteger bitAnd: 16rFF) max: 1). ^ self]! !
 
 !Track methodsFor: 'playing' stamp: 'len 17/Feb/2026 19:28:15'!
 mixIntoLeft: leftBuffer right: rightBuffer
 	(instrument notNil and: [self enabled]) ifFalse: [^ self].
 	instrument mixIntoLeft: leftBuffer right: rightBuffer! !
 
-!Track methodsFor: 'playing' stamp: 'len 17/Feb/2026 19:33:55'!
+!Track methodsFor: 'playing' stamp: 'len 2/Mar/2026 22:50:10'!
 playTrigger
 	trigger instrument ifNotNil: [:anInteger|
 		instrument ifNotNil: [instrument setOwnerTrack: nil].
 		instrument := tracker instruments at: anInteger ifAbsent: [].
-		instrument ifNotNil: [instrument setOwnerTrack: self]].
+		instrument ifNotNil: [instrument setOwnerTrack: self "; reset"]].
 	instrument ifNotNil: [instrument scheduleTrigger: trigger].
 	trigger fx1 ifNotNil: [:fx| self handleFX: fx].
 	trigger fx2 ifNotNil: [:fx| self handleFX: fx].
@@ -13909,13 +14071,13 @@ toggleTrackSolo: trackIndex
 open
 	^ TrackerWindow open: self! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 16/Feb/2026 16:56:52'!
+!Trigger methodsFor: 'accessing' stamp: 'len 1/Mar/2026 14:23:29'!
 at: position put: value
-	position = 1 ifTrue: [^ note := value].
-	position = 2 ifTrue: [^ velocity := value ifNotNil: [((velocity ifNil: [0]) bitAnd: 16r0F) bitOr: (value bitShift: 4)]].
-	position = 3 ifTrue: [^ velocity := value ifNotNil: [((velocity ifNil: [0]) bitAnd: 16rF0) bitOr: value]].
-	position = 4 ifTrue: [^ instrument := value ifNotNil: [((instrument ifNil: [0]) bitAnd: 16r0F) bitOr: (value bitShift: 4)]].
-	position = 5 ifTrue: [^ instrument := value ifNotNil: [((instrument ifNil: [0]) bitAnd: 16rF0) bitOr: value]].
+	position = 1 ifTrue: [^ instrument := value ifNotNil: [((instrument ifNil: [0]) bitAnd: 16r0F) bitOr: (value bitShift: 4)]].
+	position = 2 ifTrue: [^ instrument := value ifNotNil: [((instrument ifNil: [0]) bitAnd: 16rF0) bitOr: value]].
+	position = 3 ifTrue: [^ note := value].
+	position = 4 ifTrue: [^ velocity := value ifNotNil: [((velocity ifNil: [0]) bitAnd: 16r0F) bitOr: (value bitShift: 4)]].
+	position = 5 ifTrue: [^ velocity := value ifNotNil: [((velocity ifNil: [0]) bitAnd: 16rF0) bitOr: value]].
 	position = 6 ifTrue: [^ fx1 := value ifNotNil: [((fx1 ifNil: [0]) bitAnd: 16rFF) bitOr: (value bitShift: 8)]].
 	position = 7 ifTrue: [^ fx1 := value ifNotNil: [((fx1 ifNil: [0]) bitAnd: 16rFF0F) bitOr: (value bitShift: 4)]].
 	position = 8 ifTrue: [^ fx1 := value ifNotNil: [((fx1 ifNil: [0]) bitAnd: 16rFFF0) bitOr: value]].

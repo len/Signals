@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 3 March 2026 at 2:53:36 pm'!
+'From Cuis7.7 [latest update: #7797] on 4 March 2026 at 2:52:22 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 478!
+!provides: 'Signals' 1 479!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -489,7 +489,7 @@ Reverb class
 
 !classDefinition: #TapeEcho category: #'Signals-FX'!
 Transform subclass: #TapeEcho
-	instanceVariableNames: 'delayLine tap1 tap2 tap3 tap1Enabled tap2Enabled tap3Enabled feedback mix lpf hpf lsf hsf'
+	instanceVariableNames: 'delayLine tap1 tap2 tap3 level1 level2 level3 feedback mix lpf hpf lsf hsf'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
@@ -1956,6 +1956,10 @@ Usage: 'anOversampler oversampling: inputSample do: [:subsample| ... ]'. Two sub
 
 Note: this process introduces a fixed latency (group delay) of approximately 6 samples. If mixing this signal with a 'dry' signal, the dry path must be delayed by the same amount to maintain phase alignment.!
 
+!Control methodsFor: 'accessing' stamp: 'len 3/Mar/2026 19:31:13'!
+adjustBy: aNumber
+	self basePosition: base + aNumber! !
+
 !Control methodsFor: 'accessing' stamp: 'len 28/Nov/2025 11:01:00'!
 basePosition
 	"Answer the base value of the receiver mapped to a number between 0.0 and 1.0."
@@ -2191,6 +2195,10 @@ addVolumeControl: aSymbol min: min max: max value: defaultValue
 !Module methodsFor: 'controls and modulations' stamp: 'len 31/Jan/2026 03:42:58'!
 addVolumeControl: aSymbol value: defaultValue
 	^ self addVolumeControl: aSymbol min: 0.001 max: 1.0 value: defaultValue! !
+
+!Module methodsFor: 'controls and modulations' stamp: 'len 3/Mar/2026 19:31:44'!
+adjust: aSymbol by: aValue
+	controls at: aSymbol ifPresent: [:aControl| aControl adjustBy: aValue]! !
 
 !Module methodsFor: 'controls and modulations' stamp: 'len 25/Jan/2026 22:25:45'!
 at: aSymbol
@@ -3017,6 +3025,14 @@ bus: anInteger
 	bus := anInteger.
 	self changed! !
 
+!AudioOut methodsFor: 'controlling' stamp: 'len 3/Mar/2026 19:23:02'!
+adjustLevelBy: aNumber
+	self adjust: #level by: aNumber! !
+
+!AudioOut methodsFor: 'controlling' stamp: 'len 3/Mar/2026 19:23:17'!
+adjustPanBy: aNumber
+	self adjust: #pan by: aNumber! !
+
 !AudioOut methodsFor: 'controlling' stamp: 'len 18/Jan/2026 02:32:16'!
 setLevel: aNumber
 	self set: #level to: aNumber! !
@@ -3246,6 +3262,10 @@ initialize
 initializeControls
 	super initializeControls.
 	self addTuneControl: #tune! !
+
+!TunedGenerator methodsFor: 'controlling' stamp: 'len 3/Mar/2026 19:25:03'!
+adjustNoteBy: aNumber
+	note := note + aNumber min: 127.0 max: 0! !
 
 !TunedGenerator methodsFor: 'controlling' stamp: 'len 4/Jan/2026 14:54:25'!
 setNote: aNumber
@@ -5330,33 +5350,6 @@ value: in
 	position := position \\ buffer size.
 	^ in * (1.0 - mix) + (out * mix)! !
 
-!TapeEcho methodsFor: 'accessing' stamp: 'len 2/Mar/2026 22:24:22'!
-tap1Enabled
-	^ tap1Enabled! !
-
-!TapeEcho methodsFor: 'accessing' stamp: 'len 2/Mar/2026 22:24:54'!
-tap1Enabled: aBoolean
-	tap1Enabled := aBoolean.
-	self changed! !
-
-!TapeEcho methodsFor: 'accessing' stamp: 'len 2/Mar/2026 22:24:26'!
-tap2Enabled
-	^ tap2Enabled! !
-
-!TapeEcho methodsFor: 'accessing' stamp: 'len 2/Mar/2026 22:24:50'!
-tap2Enabled: aBoolean
-	tap2Enabled := aBoolean.
-	self changed! !
-
-!TapeEcho methodsFor: 'accessing' stamp: 'len 2/Mar/2026 22:24:30'!
-tap3Enabled
-	^ tap3Enabled! !
-
-!TapeEcho methodsFor: 'accessing' stamp: 'len 2/Mar/2026 22:24:57'!
-tap3Enabled: aBoolean
-	tap3Enabled := aBoolean.
-	self changed! !
-
 !TapeEcho methodsFor: 'controlling' stamp: 'len 25/Feb/2026 00:17:35'!
 reset
 	delayLine reset.
@@ -5364,7 +5357,7 @@ reset
 	tap2 reset.
 	tap3 reset! !
 
-!TapeEcho methodsFor: 'controlling' stamp: 'len 2/Mar/2026 17:33:33'!
+!TapeEcho methodsFor: 'controlling' stamp: 'len 3/Mar/2026 16:37:29'!
 update
 	| delay1 delay2 delay3 thirtyMsecs |
 	super update.
@@ -5375,84 +5368,73 @@ update
 	tap1 setDelayIncrement: delay1 - tap1 delay / thirtyMsecs. "slide over 30 ms"
 	tap2 setDelayIncrement: delay2 - tap2 delay / thirtyMsecs.
 	tap3 setDelayIncrement: delay3 - tap3 delay / thirtyMsecs.
+	level1 := self get: #'1'.
+	level2 := self get: #'2'.
+	level3 := self get: #'3'.
 	feedback := self get: #feedback.
 	mix := self get: #mix.
 	lsf ls: 120.0 / self class sampleRate Q: 0.707 gain: (self get: #bass). "120 Hz"
 	hsf hs: 4000.0 / self class sampleRate Q: 0.707 gain: (self get: #treble) "4 kHz"! !
 
-!TapeEcho methodsFor: 'initialization' stamp: 'len 2/Mar/2026 22:25:53'!
+!TapeEcho methodsFor: 'initialization' stamp: 'len 3/Mar/2026 16:36:09'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (self class sampleRate * 2) ceiling.
 	tap1 := DelayLineTap on: delayLine.
 	tap2 := DelayLineTap on: delayLine.
 	tap3 := DelayLineTap on: delayLine.
-	tap1Enabled := true.
-	tap2Enabled := tap3Enabled := false.
 	lpf := OnePole new pole: 8000.0 / self class sampleRate. "8 kHz"
 	hpf := OnePole new pole: 40.0 / self class sampleRate. "40 Hz"
 	lsf := Biquad new.
 	hsf := Biquad new! !
 
-!TapeEcho methodsFor: 'initialization' stamp: 'len 26/Feb/2026 12:55:45'!
+!TapeEcho methodsFor: 'initialization' stamp: 'len 3/Mar/2026 16:36:51'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #time min: 0.240 "240 ms" max: 2.0 "2 s" value: 0.5 "500 ms".
 	self addControl: #feedback min: 0.0 max: 1.0 value: 0.0.
+	self addVolumeControl: #'1' value: 1.0.
+	self addVolumeControl: #'2' value: 0.001.
+	self addVolumeControl: #'3' value: 0.001.
 	self addVolumeControl: #bass min: 0.4 max: 2.5 value: 1.0. "-8 dB to 8 dB"
 	self addVolumeControl: #treble min: 0.4 max: 2.5 value: 1.0. "-8 dB to 8 dB"
 	self addDryWetControl: #mix value: 0.5! !
 
-!TapeEcho methodsFor: 'processing' stamp: 'len 2/Mar/2026 22:26:42'!
+!TapeEcho methodsFor: 'processing' stamp: 'len 3/Mar/2026 17:18:55'!
 value: in
 	| echos x |
 	echos := 0.0.
-	tap1Enabled ifTrue: [echos := echos + tap1 read].
-	tap2Enabled ifTrue: [echos := echos + tap2 read].
-	tap3Enabled ifTrue: [echos := echos + tap3 read].
+	level1 > 0.001 ifTrue: [echos := tap1 read * level1 + echos].
+	level2 > 0.001 ifTrue: [echos := tap2 read * level2 + echos].
+	level3 > 0.001 ifTrue: [echos := tap3 read * level3 + echos].
 	echos := hsf value: (lsf value: echos). "bass and treble shelves for the echos"
 	x := ((echos * feedback + in) * 1.5) tanh. "saturation"
-	x := lpf value: x - (hpf value: x). "lpf and hpf one-poles for tape bandwidth loss when writing"
+	x := lpf value: x - (hpf value: x). "lpf and hpf one-poles for bandwidth loss when writing to the tape"
 	delayLine write: x.
 	^ in * (1.0 - mix) + (echos * mix)! !
 
-!TapeEcho methodsFor: 'serialization' stamp: 'len 2/Mar/2026 22:42:03'!
-asJsonWithBuffers: aList
-	^ (super asJsonWithBuffers: aList)
-		at: #tap1Enabled put: tap1Enabled;
-		at: #tap2Enabled put: tap2Enabled;
-		at: #tap3Enabled put: tap3Enabled;
-		yourself! !
-
-!TapeEcho methodsFor: 'serialization' stamp: 'len 2/Mar/2026 22:42:43'!
-readFromJson: json buffers: aList
-	super readFromJson: json buffers: aList.
-	tap1Enabled := json at: #tap1Enabled.
-	tap2Enabled := json at: #tap2Enabled.
-	tap3Enabled := json at: #tap3Enabled! !
-
-!TapeEcho methodsFor: 'tools' stamp: 'len 2/Mar/2026 22:44:23'!
+!TapeEcho methodsFor: 'tools' stamp: 'len 3/Mar/2026 16:39:40'!
 panel
+	^ ControlPanel new
+		addKnob: (controls at: #time) label: 'Time';
+		addKnob: (controls at: #feedback) label: 'FB';
+		addSmallVerticalSlider: (controls at: #'1') label: '1';
+		addSmallVerticalSlider: (controls at: #'2') label: '2';
+		addSmallVerticalSlider: (controls at: #'3') label: '3'! !
+
+!TapeEcho methodsFor: 'tools' stamp: 'len 3/Mar/2026 16:38:10'!
+panel2
 	^ ControlPanel new
 		addSmallKnob: (controls at: #bass) label: 'Bass';
 		addSmallKnob: (controls at: #treble) label: 'Treble';
 		addSmallKnob: (controls at: #mix) label: 'Mix'! !
 
-!TapeEcho methodsFor: 'tools' stamp: 'len 2/Mar/2026 22:37:06'!
+!TapeEcho methodsFor: 'tools' stamp: 'len 3/Mar/2026 16:38:33'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
-	answer body
-		addMorph:
-			(ControlPanel new
-				addMorph: (PluggableToggleMorph new model: self; getter: #tap1Enabled; setter: #tap1Enabled:; label: '1');
-				addMorph: (PluggableToggleMorph new model: self; getter: #tap2Enabled; setter: #tap2Enabled:; label: '2');
-				addMorph: (PluggableToggleMorph new model: self; getter: #tap3Enabled; setter: #tap3Enabled:; label: '3'));
-		addMorph:
-			(ControlPanel new
-				addKnob: (controls at: #time) label: 'Time';
-				addKnob: (controls at: #feedback) label: 'FB').
-	answer flap addMorph: self panel.
+	answer body addMorph: self panel.
+	answer flap addMorph: self panel2.
 	^ answer
 		addAudioInput: #setInput:;
 		addAudioOutput: #setOutput:;
@@ -6629,6 +6611,10 @@ level
 	mode = #rms ifTrue: [^ input rms].
 	^ self notYetImplemented! !
 
+!KeyTracker methodsFor: 'controlling' stamp: 'len 3/Mar/2026 19:25:25'!
+adjustNoteBy: aNumber
+	note := note + aNumber min: 127.0 max: 0! !
+
 !KeyTracker methodsFor: 'controlling' stamp: 'len 10/Feb/2026 17:00:33'!
 setNote: aNumber
 	note := aNumber! !
@@ -7174,6 +7160,10 @@ addKnob: aControl label: labelString
 !ControlPanel methodsFor: 'building' stamp: 'len 23/Feb/2026 19:56:11'!
 addSmallKnob: aControl label: labelString
 	self addMorph: ((KnobControlMorph control: aControl) morphExtent: 24 @ 24; withLabel: labelString)! !
+
+!ControlPanel methodsFor: 'building' stamp: 'len 3/Mar/2026 16:33:01'!
+addSmallVerticalSlider: aControl label: aString
+	self addMorph: ((SliderControlMorph control: aControl) morphExtent: 24 @ 36; withLabel: aString)! !
 
 !ControlPanel methodsFor: 'building' stamp: 'len 27/Jan/2026 14:58:36'!
 addVerticalSlider: aControl
@@ -8408,8 +8398,9 @@ waves: anArray
 	waves := anArray.
 	self redrawNeeded! !
 
-!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 16/Jan/2026 16:53:46'!
+!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 4/Mar/2026 14:48:32'!
 drawFlatOn: aCanvas
+	"Warning: this is slow, should use vector canvas' moveTo:, lineTo:"
 	| n waveSize w h j stepX stepY y0 alphaColor waveIndex |
 	(n := waves size) > 0 ifFalse: [^ self].
 	waveSize := waves first size.
@@ -8420,7 +8411,7 @@ drawFlatOn: aCanvas
 	stepX := w / waveSize.
 	stepY := h / 2.0 / n.
 	y0 := 0.0.
-	alphaColor := color alpha: 0.06.
+	alphaColor := (color mixed: 0.5 with: Color white) alpha: 0.1.
 	n to: 1 by: -1 do: [:i| | x y waveColor |
 		x := 0.0.
 		y := 1.0 - ((waves at: i) at: 1) / 4.0 * h.
@@ -8435,42 +8426,40 @@ drawFlatOn: aCanvas
 		j := j - waveSize.
 		y0 := y0 + stepY]! !
 
-!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 17/Jan/2026 00:19:25'!
+!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 4/Mar/2026 14:43:59'!
 drawIsometricOn: aCanvas
-	| n waveSize w h stepWaveX stepWaveY j stepX stepY x0 y0 alphaColor strokeWidth waveIndex |
+	| n m projection w h  alphaColor strokeWidth waveIndex Sx Sy Sa cx cy |
 	(n := waves size) > 0 ifFalse: [^ self].
-	waveSize := waves first size.
+	m := waves first size.
 	waveIndex := (currentPosition * (n - 1) + 1) asInteger.
-	w := self morphWidth.
-	h := self morphHeight.
-	stepWaveX := w / 2.0 / waveSize.
-	stepWaveY := h / 2.0 / waveSize.
-	j := n - 1 * waveSize + 1.
-	stepX := w / 2.0 / n.
-	stepY := h / 2.0 / n.
-	x0 := w / 2.0.
-	y0 := 0.0.
-	alphaColor := (color mixed: 0.5 with: Color white) alpha: 0.2.
-	n to: 1 by: -1 do: [:i| | x y y1 waveColor |
-		x := x0.
-		y1 := y0.
-		y := 1.0 - ((waves at: i) at: 1) / 4.0 * h + y1.
+	w := self morphWidth - 4.0.
+	h := self morphHeight - 4.0.
+	alphaColor := (color mixed: 0.5 with: Color white) alpha: 0.1.
+
+	Sx := w * 0.50.  "horizontal spread"
+	Sy := h * 0.25.  "isometric tilt depth"
+	Sa := h * 0.25.  "amplitude height"
+	cx := w  / 2.0 + 2.0.
+	cy := h / 2.0 - Sy + 2.0.
+	projection := [:j :amp :i | | xNorm zNorm screenX screenY |
+		xNorm := (j - 1) / (m - 1.0).
+		zNorm := (n - i) / (n - 1.0).
+		"Classic isometric: x-axis at +30°, z-axis at +150°, y-axis vertical.
+		Scale factors tune the overall spread and amplitude height."
+		screenX := cx + ((xNorm - zNorm) * Sx).
+		screenY := cy + ((xNorm + zNorm) * Sy) - (amp * Sa).
+		screenX @ screenY].
+
+	"Draw back-to-front so later (closer) waves paint over earlier ones."
+	n to: 1 by: -1 do: [:i|
+		| wave waveColor |
+		wave := waves at: i.
 		i = waveIndex ifTrue: [waveColor := color. strokeWidth := 1.5] ifFalse: [waveColor := alphaColor. strokeWidth := 1].
 		aCanvas strokeWidth: strokeWidth color: waveColor do:
-			[aCanvas moveTo: x @ y.
-			2 to: waveSize do: [:k|
-				| x2 y2 |
-				y1 := y1 + (stepWaveY/5.0).
-				y2 := 1.0 - ((waves at: i) at: k) / 5.0 * h + y1.
-				x2 := x + stepWaveX.
-				aCanvas lineTo: x2@y2.
-				x := x2.
-				y := y2]].
-		j := j - waveSize.
-		x0 := x0 - stepX.
-		y0 := y0 + stepY]! !
+			[aCanvas moveTo: (projection value: 1 value: (wave at: 1) value: i).
+			2 to: m do: [:j| aCanvas lineTo: (projection value: j value: (wave at: j) value: i)]]]! !
 
-!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 13/Jan/2026 18:34:06'!
+!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 4/Mar/2026 14:48:47'!
 drawOn: aCanvas
 	self drawIsometricOn: aCanvas! !
 
@@ -10508,14 +10497,15 @@ defaultBufferSize
 defaultExtent
 	^ self defaultBufferSize @ 24! !
 
-!RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Mar/2026 00:16:32'!
+!RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Mar/2026 19:50:07'!
 drawOn: aCanvas
-	| h |
-	h := extent y.
-	0 to: buffer size - 1 do: [:i| | v |
+	| m |
+	m := extent y / 2.0.
+	0 to: buffer size - 1 do: [:i| | h v |
 		v := buffer at: i + position \\ buffer size + 1.
 		v > 0.01 ifTrue:
-			[aCanvas line: i @ (h - ((v min: 1.0) * h)) to: i @ h width: 1 color: color]]! !
+			[h := (v min: 1.0) * m.
+			aCanvas line: i @ (m-h) to: i @ (m+h-1) width: 1 color: color]]! !
 
 !RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Mar/2026 00:28:00'!
 initialize
@@ -13082,22 +13072,42 @@ initialize
 	patch when: #recomputeNeeded send: #scheduleRecompute to: self.
 ! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 2/Mar/2026 03:25:22'!
+!Instrument methodsFor: 'playing' stamp: 'len 3/Mar/2026 19:20:04'!
+adjustLevelBy: aNumber
+	audioOutput ifNotNil: [audioOutput adjustLevelBy: aNumber]! !
+
+!Instrument methodsFor: 'playing' stamp: 'len 3/Mar/2026 19:21:57'!
+adjustNoteBy: aNumber
+	noteReceivers do: [:each| each adjustNoteBy: aNumber]! !
+
+!Instrument methodsFor: 'playing' stamp: 'len 3/Mar/2026 19:20:31'!
+adjustPanBy: aNumber
+	audioOutput ifNotNil: [audioOutput adjustPanBy: aNumber]! !
+
+!Instrument methodsFor: 'playing' stamp: 'len 3/Mar/2026 23:12:03'!
 handleFX: anInteger
 	| command |
 	command := anInteger bitShift: -8.
-	command = 67 "C" ifTrue: [track scheduleTrigger: (Trigger new velocity: ((anInteger bitShift: -4) bitAnd: 16rF) / 15.0) after: (anInteger bitAnd: 16rF) / 15.0 * track tracker tpl. ^ self].
-	command = 82 "R" ifTrue: [track scheduleTrigger: trigger after: (anInteger bitAnd: 16rFF) / 255.0 * track tracker tpl. ^ self].
-	command = 71 "G" ifTrue: [self setGlide: (anInteger bitAnd: 16rFF) / 255.0. ^ self].
-	command = 76 "L" ifTrue: [self setLevel:​ (anInteger bitAnd: 16rFF) / 255.0. ^ self].
-	command = 80 "P" ifTrue: [self setPan:  (anInteger bitAnd: 16rFF) / 255.0 * 2.0 - 1.0. ^ self].
+	command = 67 "C (cut velocity)" ifTrue: [track scheduleTrigger: (Trigger new velocity: ((anInteger bitShift: -4) bitAnd: 16rF) / 15.0) after: (anInteger bitAnd: 16rF) / 15.0 * track tracker tpl. ^ self].
+	command = 82 "R (retrigger)" ifTrue: [track scheduleTrigger: trigger after: (anInteger bitAnd: 16rFF) / 255.0 * track tracker tpl. ^ self].
+	command = 71 "G (glide)" ifTrue: [self setGlide: (anInteger bitAnd: 16rFF) / 255.0. ^ self].
+	command = 76 "L (volume level)" ifTrue: [self setLevel:​ (anInteger bitAnd: 16rFF) / 255.0. ^ self].
+	command = 80 "P (pan)" ifTrue: [self setPan:  (anInteger bitAnd: 16rFF) / 255.0 * 2.0 - 1.0. ^ self].
+	command = 73 "I (volume level up)" ifTrue: [self adjustLevelBy: (anInteger bitAnd: 16rFF) / 255.0].
+	command = 79 "O (volume level down)" ifTrue: [self adjustLevelBy: (anInteger bitAnd: 16rFF) / -255.0].
+	command = 74 "J (pan left)" ifTrue: [self adjustPanBy: (anInteger bitAnd: 16rFF) / -255.0].
+	command = 75 "K (pan right)" ifTrue: [self adjustPanBy: (anInteger bitAnd: 16rFF) / 255.0].
+	command = 85 "U (pitch up)" ifTrue: [self adjustNoteBy: (anInteger bitAnd: 16rFF) / 255.0].
+	command = 68 "D (pitch down)" ifTrue: [self adjustNoteBy: (anInteger bitAnd: 16rFF) / -255.0].
 	"Sample commands:"
-	command = 83 "S" ifTrue: [self setOffset: (anInteger bitAnd: 16rFF) / 255.0. ^ self].
-	command = 60 "<" ifTrue: [self setSpeed: (anInteger bitAnd: 16rFF) / -255.0. ^ self].
-	command = 62 ">" ifTrue: [self setSpeed: (anInteger bitAnd: 16rFF) / 255.0. ^ self].
+	command = 83 "S (sample offset)" ifTrue: [self setOffset: (anInteger bitAnd: 16rFF) / 255.0. ^ self].
+	command = 60 "< (speed backwards)" ifTrue: [self setSpeed: (anInteger bitAnd: 16rFF) / -255.0. ^ self].
+	command = 62 "> (speed forward)" ifTrue: [self setSpeed: (anInteger bitAnd: 16rFF) / 255.0. ^ self].
 	"Control change commands:"
 	(command between: 48 and: 57) "0 to 9" ifTrue:
-		[(controlInputs at: command - 47) ifNotNil: [:input| input setValue: (anInteger bitAnd: 16rFF) / 255.0]]! !
+		[(controlInputs at: command - 47) ifNotNil: [:input| input setValue: (anInteger bitAnd: 16rFF) / 255.0]. ^ self].
+	"Global commands:"
+	command = 70 "F (set bpm)" ifTrue: [track tracker bpm: ((anInteger bitAnd: 16rFF) max: 1). ^ self]! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 18/Jan/2026 02:28:05'!
 mixIntoLeft: leftBuffer right: rightBuffer
@@ -13444,27 +13454,18 @@ setTracker: aTracker
 forgetInstrument
 	instrument := nil! !
 
-!Track methodsFor: 'playing' stamp: 'len 2/Mar/2026 03:22:08'!
-handleFX: anInteger
-	| command |
-	command := anInteger bitShift: -8.
-	"Global commands:"
-	command = 70 "F" ifTrue: [tracker bpm: ((anInteger bitAnd: 16rFF) max: 1). ^ self]! !
-
 !Track methodsFor: 'playing' stamp: 'len 17/Feb/2026 19:28:15'!
 mixIntoLeft: leftBuffer right: rightBuffer
 	(instrument notNil and: [self enabled]) ifFalse: [^ self].
 	instrument mixIntoLeft: leftBuffer right: rightBuffer! !
 
-!Track methodsFor: 'playing' stamp: 'len 2/Mar/2026 22:50:10'!
+!Track methodsFor: 'playing' stamp: 'len 3/Mar/2026 23:13:06'!
 playTrigger
 	trigger instrument ifNotNil: [:anInteger|
 		instrument ifNotNil: [instrument setOwnerTrack: nil].
 		instrument := tracker instruments at: anInteger ifAbsent: [].
 		instrument ifNotNil: [instrument setOwnerTrack: self "; reset"]].
 	instrument ifNotNil: [instrument scheduleTrigger: trigger].
-	trigger fx1 ifNotNil: [:fx| self handleFX: fx].
-	trigger fx2 ifNotNil: [:fx| self handleFX: fx].
 	trigger := nil! !
 
 !Track methodsFor: 'playing' stamp: 'len 26/Feb/2026 23:34:01'!

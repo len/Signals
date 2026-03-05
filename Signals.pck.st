@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 4 March 2026 at 2:52:22 pm'!
+'From Cuis7.7 [latest update: #7797] on 5 March 2026 at 6:51:07 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 479!
+!provides: 'Signals' 1 480!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -149,7 +149,7 @@ SVF class
 
 !classDefinition: #AudioIn category: #'Signals-IO'!
 Module subclass: #AudioIn
-	instanceVariableNames: 'bus outputL outputR aux meterLeftValue meterRightValue'
+	instanceVariableNames: 'port buses outputL outputR meterLeftValue meterRightValue'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-IO'!
@@ -159,7 +159,7 @@ AudioIn class
 
 !classDefinition: #AudioOut category: #'Signals-IO'!
 Module subclass: #AudioOut
-	instanceVariableNames: 'bus level levelLeft levelRight inputL inputR aux meterLeftValue meterRightValue'
+	instanceVariableNames: 'port buses level levelLeft levelRight inputL inputR aux meterLeftValue meterRightValue enabled'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-IO'!
@@ -267,13 +267,13 @@ Oscillator subclass: #Triangle
 Triangle class
 	instanceVariableNames: ''!
 
-!classDefinition: #Wavetable category: #'Signals-Oscillators'!
+!classDefinition: #Wavetable category: #'Signals-Samples'!
 Oscillator subclass: #Wavetable
-	instanceVariableNames: 'waves position name smooth'
-	classVariableNames: 'Banks'
+	instanceVariableNames: 'bank index position smooth label'
+	classVariableNames: 'Library'
 	poolDictionaries: ''
-	category: 'Signals-Oscillators'!
-!classDefinition: 'Wavetable class' category: #'Signals-Oscillators'!
+	category: 'Signals-Samples'!
+!classDefinition: 'Wavetable class' category: #'Signals-Samples'!
 Wavetable class
 	instanceVariableNames: ''!
 
@@ -1067,16 +1067,6 @@ VariableWaveControlMorph subclass: #SymmetricWaveshaperControlMorph
 SymmetricWaveshaperControlMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #WavetableControlMorph category: #'Signals-Morphic-Controls'!
-ControlMorph subclass: #WavetableControlMorph
-	instanceVariableNames: 'waves currentPosition'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Controls'!
-!classDefinition: 'WavetableControlMorph class' category: #'Signals-Morphic-Controls'!
-WavetableControlMorph class
-	instanceVariableNames: ''!
-
 !classDefinition: #XYControlMorph category: #'Signals-Morphic-Controls'!
 BoxMorph subclass: #XYControlMorph
 	instanceVariableNames: 'controlX controlY'
@@ -1125,6 +1115,16 @@ XYControlMorph subclass: #WaveshaperControlMorph
 	category: 'Signals-Morphic-Controls'!
 !classDefinition: 'WaveshaperControlMorph class' category: #'Signals-Morphic-Controls'!
 WaveshaperControlMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #WavetableControlMorph category: #'Signals-Morphic-Controls'!
+XYControlMorph subclass: #WavetableControlMorph
+	instanceVariableNames: 'bank wavetable currentPosition color'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'WavetableControlMorph class' category: #'Signals-Morphic-Controls'!
+WavetableControlMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #XYVariableWaveControlMorph category: #'Signals-Morphic-Controls'!
@@ -1527,6 +1527,16 @@ Object subclass: #WAVFileReader
 WAVFileReader class
 	instanceVariableNames: ''!
 
+!classDefinition: #Bus category: #'Signals-Tracker'!
+Object subclass: #Bus
+	instanceVariableNames: 'leftBuffer rightBuffer'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Tracker'!
+!classDefinition: 'Bus class' category: #'Signals-Tracker'!
+Bus class
+	instanceVariableNames: ''!
+
 !classDefinition: #Instrument category: #'Signals-Tracker'!
 Object subclass: #Instrument
 	instanceVariableNames: 'label patch modules noteReceivers gateReceivers velocityReceivers glideReceivers tempoReceivers samples controlInputs audioOutput buffer track trigger'
@@ -1559,7 +1569,7 @@ Track class
 
 !classDefinition: #Tracker category: #'Signals-Tracker'!
 Object subclass: #Tracker
-	instanceVariableNames: 'instruments tracks sequence label bpm lpb swing level inputCenterKey cursorPattern cursorLine cursorTrack playheadPattern playheadLine followPlayhead anyTrackSoloed ticksToLine leftBuffer rightBuffer peakLeft peakRight'
+	instanceVariableNames: 'instruments tracks sequence label bpm lpb swing level inputCenterKey cursorPattern cursorLine cursorTrack playheadPattern playheadLine followPlayhead anyTrackSoloed ticksToLine peakLeft peakRight buses'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Tracker'!
@@ -1645,7 +1655,7 @@ This is a virtual analog oscillator that can morph between triangle, saw and pul
 This is a virtual analog triangle oscillator that uses PolyBLAMP for antialiasing. It morphs from a pure triangle to a sine wave.!
 
 !Wavetable commentStamp: '<historical>' prior: 0!
-This is a wavetable oscillator inspired by classic wavetable synthesizers such as the PPG Wave and the Waldorf Microwave 1. The waves are typically small and low-resolution (e.g., 128 8-bit PCM samples), and this results in digital artifacts such as aliasing and imaging characteristic of the classic wavetable sound. By default, it uses the wavetables of the Microwave 1, but with linear interpolation between samples (smoothing on).!
+This is a wavetable oscillator inspired by classic wavetable synthesizers such as the PPG Wave and the Waldorf Microwave 1. The waves are typically small and low-resolution (e.g., 128 8-bit PCM samples), and this can result in digital artifacts such as aliasing and imaging characteristic of the classic wavetable sound.!
 
 !Supersaw commentStamp: 'len 5/Jan/2026 15:49:43' prior: 0!
 Emulation of the Roland JP-8000 and JP-8080 supersaw oscillator based on Adam Szabo's thesis [1]. It consists of 7 detuned saws. It is not a perfect emulation, e.g. it uses PolyBLEP saws to achieve antialiasing, instead of oversampling and applying a high pass filter as the original.
@@ -2943,70 +2953,72 @@ setOutputHP: aBuffer
 setOutputLP: aBuffer
 	outputLP := aBuffer! !
 
-!AudioIn methodsFor: 'accessing' stamp: 'len 27/Feb/2026 22:39:43'!
-bus
-	^ bus! !
-
-!AudioIn methodsFor: 'accessing' stamp: 'len 1/Mar/2026 00:20:34'!
-bus: anInteger
-	bus := anInteger.
-	self changed! !
-
-!AudioIn methodsFor: 'controlling' stamp: 'len 2/Feb/2026 04:10:50'!
-clear
-	super clear.
-	outputL ifNotNil: [outputL atAllPut: 0.0].
-	outputR ifNotNil: [outputR atAllPut: 0.0]! !
-
-!AudioIn methodsFor: 'initialization' stamp: 'len 2/Mar/2026 00:20:45'!
-initialize
-	super initialize.
-	aux := Float32Array new: self class blockSize.
-	meterLeftValue := meterRightValue := 0.0.
-	bus := 0! !
-
-!AudioIn methodsFor: 'mixing' stamp: 'len 24/Jan/2026 22:06:51'!
+!AudioIn methodsFor: 'accessing' stamp: 'len 24/Jan/2026 22:06:51'!
 meterLeftValue
 	meterLeftValue := meterLeftValue * 0.95.
 	^ meterLeftValue! !
 
-!AudioIn methodsFor: 'mixing' stamp: 'len 24/Jan/2026 22:06:55'!
+!AudioIn methodsFor: 'accessing' stamp: 'len 24/Jan/2026 22:06:55'!
 meterRightValue
 	meterRightValue := meterRightValue * 0.95.
 	^ meterRightValue! !
 
-!AudioIn methodsFor: 'mixing' stamp: 'len 21/Jan/2026 02:56:39'!
+!AudioIn methodsFor: 'accessing' stamp: 'len 21/Jan/2026 02:56:39'!
 meterValue
 	^ self meterLeftValue max: self meterRightValue! !
 
-!AudioIn methodsFor: 'mixing' stamp: 'len 2/Feb/2026 04:10:50'!
-mixFromLeft: leftBuffer right: rightBuffer gain: gain
-	outputL ifNotNil:
-		[aux replaceWith: leftBuffer.
-		aux *= gain.
-		outputL += aux].
-	outputR ifNotNil:
-		[aux replaceWith: rightBuffer.
-		aux *= gain.
-		outputR += aux]! !
+!AudioIn methodsFor: 'accessing' stamp: 'len 5/Mar/2026 15:25:43'!
+port
+	^ port! !
 
-!AudioIn methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:14:15'!
+!AudioIn methodsFor: 'accessing' stamp: 'len 5/Mar/2026 15:25:48'!
+port: anInteger
+	port := anInteger.
+	self changed! !
+
+!AudioIn methodsFor: 'initialization' stamp: 'len 5/Mar/2026 15:24:21'!
+initialize
+	super initialize.
+	meterLeftValue := meterRightValue := 0.0.
+	port := 0! !
+
+!AudioIn methodsFor: 'processing' stamp: 'len 5/Mar/2026 15:28:08'!
 tick
-	meterLeftValue := meterLeftValue * 0.98 "dampen" max: (outputL rms max: outputL last abs).
-	meterRightValue := meterRightValue * 0.98 "dampen" max: (outputR rms max: outputR last abs).! !
+	| bus |
+	bus := buses at: port ifAbsent:
+		[outputL ifNotNil: [outputL atAllPut: 0.0].
+		outputR ifNotNil: [outputR atAllPut: 0.0].
+		^ self].
+	outputL ifNotNil: [outputL replaceWith: bus leftBuffer].
+	outputR ifNotNil: [outputR replaceWith: bus rightBuffer]! !
 
-!AudioIn methodsFor: 'wiring' stamp: 'len 2/Mar/2026 00:20:13'!
+!AudioIn methodsFor: 'serialization' stamp: 'len 5/Mar/2026 15:47:00'!
+asJsonWithBuffers: aList
+	^ (super asJsonWithBuffers: aList)
+		at: #port put: port;
+		yourself! !
+
+!AudioIn methodsFor: 'serialization' stamp: 'len 5/Mar/2026 15:47:06'!
+readFromJson: json buffers: aList
+	super readFromJson: json buffers: aList.
+	port := json at: #port! !
+
+!AudioIn methodsFor: 'wiring' stamp: 'len 5/Mar/2026 15:25:36'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
 	display := LinearLayoutMorph newRow color: Color transparent;
-		addMorph: (PluggableChoiceMorph new color: PatchMorph waveformColor; options: #(0 1 2 3 4 5 6 7 8 9); model: self; getter: #bus; setter: #bus:);
+		addMorph: (PluggableChoiceMorph new color: PatchMorph waveformColor; options: #(0 1 2 3 4 5 6 7 8 9); model: self; getter: #port; setter: #port:);
 		addMorph: (RollingMeterMorph new meterBlock: [self meterValue]).
 	answer body addMorph: display.
 	answer
 		addAudioOutput: #setOutputL: label: 'Out L/M';
 		addAudioOutput: #setOutputR: label: 'Out R'.
 	^ answer! !
+
+!AudioIn methodsFor: 'wiring' stamp: 'len 5/Mar/2026 15:19:40'!
+setBuses: aDictionary
+	buses := aDictionary! !
 
 !AudioIn methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:10:50'!
 setOutputL: aBuffer
@@ -3016,13 +3028,31 @@ setOutputL: aBuffer
 setOutputR: aBuffer
 	outputR := aBuffer! !
 
-!AudioOut methodsFor: 'accessing' stamp: 'len 27/Feb/2026 23:04:41'!
-bus
-	^ bus! !
+!AudioOut methodsFor: 'accessing' stamp: 'len 5/Mar/2026 18:13:52'!
+enabled: aBoolean
+	enabled := aBoolean! !
 
-!AudioOut methodsFor: 'accessing' stamp: 'len 1/Mar/2026 00:02:59'!
-bus: anInteger
-	bus := anInteger.
+!AudioOut methodsFor: 'accessing' stamp: 'len 24/Jan/2026 22:11:37'!
+meterLeftValue
+	meterLeftValue := meterLeftValue * 0.95.
+	^ meterLeftValue * levelLeft! !
+
+!AudioOut methodsFor: 'accessing' stamp: 'len 24/Jan/2026 22:09:50'!
+meterRightValue
+	meterRightValue := meterRightValue * 0.95.
+	^ meterRightValue * levelRight! !
+
+!AudioOut methodsFor: 'accessing' stamp: 'len 24/Jan/2026 22:09:34'!
+meterValue
+	^ (meterLeftValue max: meterRightValue) * level! !
+
+!AudioOut methodsFor: 'accessing' stamp: 'len 5/Mar/2026 15:24:35'!
+port
+	^ port! !
+
+!AudioOut methodsFor: 'accessing' stamp: 'len 5/Mar/2026 15:24:40'!
+port: anInteger
+	port := anInteger.
 	self changed! !
 
 !AudioOut methodsFor: 'controlling' stamp: 'len 3/Mar/2026 19:23:02'!
@@ -3051,13 +3081,14 @@ update
 	pan < 0.0 ifTrue: [levelRight := levelRight * (pan * Float halfPi) cos].
 	pan > 0.0 ifTrue: [levelLeft := levelLeft * (pan * Float halfPi) cos]! !
 
-!AudioOut methodsFor: 'initialization' stamp: 'len 27/Feb/2026 23:05:54'!
+!AudioOut methodsFor: 'initialization' stamp: 'len 5/Mar/2026 18:11:45'!
 initialize
 	super initialize.
-	bus := 0.
+	port := 0.
 	aux := Float32Array new: self class blockSize.
 	level := levelLeft := levelRight := 0.5.
-	meterLeftValue := meterRightValue := 0.0! !
+	meterLeftValue := meterRightValue := 0.0.
+	enabled := true! !
 
 !AudioOut methodsFor: 'initialization' stamp: 'len 14/Feb/2026 23:51:25'!
 initializeControls
@@ -3065,23 +3096,12 @@ initializeControls
 	self addVolumeControl: #level min: 0.001 "-60 dB" max: 4.0 value: 0.5.
 	(self addControl: #pan min: -1.0 max: 1.0 value: 0.0) printer: [:x| x abs < 0.01 ifTrue: ['Center'] ifFalse: [(x abs * 100.0) rounded printString, '% ', (x < 0.0 ifTrue: ['L'] ifFalse: ['R'])]]! !
 
-!AudioOut methodsFor: 'mixing' stamp: 'len 24/Jan/2026 22:11:37'!
-meterLeftValue
-	meterLeftValue := meterLeftValue * 0.95.
-	^ meterLeftValue * levelLeft! !
-
-!AudioOut methodsFor: 'mixing' stamp: 'len 24/Jan/2026 22:09:50'!
-meterRightValue
-	meterRightValue := meterRightValue * 0.95.
-	^ meterRightValue * levelRight! !
-
-!AudioOut methodsFor: 'mixing' stamp: 'len 24/Jan/2026 22:09:34'!
-meterValue
-	^ (meterLeftValue max: meterRightValue) * level! !
-
-!AudioOut methodsFor: 'mixing' stamp: 'len 2/Feb/2026 04:06:40'!
-mixIntoLeft: leftBuffer right: rightBuffer
+!AudioOut methodsFor: 'processing' stamp: 'len 5/Mar/2026 18:12:13'!
+tick
+	| bus |
 	inputL ifNil: [^ self].
+	enabled ifFalse: [^ self]. "this happens when the track is muted"
+	bus := buses at: port ifAbsentPut: [Bus new].
 	meterLeftValue := meterLeftValue * 0.9 "dampen" max: (inputL rms max: inputL last abs).
 	inputR
 		ifNil:
@@ -3091,10 +3111,21 @@ mixIntoLeft: leftBuffer right: rightBuffer
 			[meterRightValue := meterRightValue * 0.9 max: (inputR rms max: inputR last abs).
 			aux replaceWith: inputR].
 	aux *= levelRight.
-	rightBuffer += aux.
+	bus leftBuffer += aux.
 	aux replaceWith: inputL.
 	aux *= levelLeft.
-	leftBuffer += aux! !
+	bus rightBuffer += aux! !
+
+!AudioOut methodsFor: 'serialization' stamp: 'len 5/Mar/2026 15:47:10'!
+asJsonWithBuffers: aList
+	^ (super asJsonWithBuffers: aList)
+		at: #port put: port;
+		yourself! !
+
+!AudioOut methodsFor: 'serialization' stamp: 'len 5/Mar/2026 15:47:15'!
+readFromJson: json buffers: aList
+	super readFromJson: json buffers: aList.
+	port := json at: #port ifAbsent: [0]! !
 
 !AudioOut methodsFor: 'tools' stamp: 'len 20/Jan/2026 15:05:44'!
 panel
@@ -3106,13 +3137,13 @@ panel
 	^ ControlPanel new
 		addMorph: column! !
 
-!AudioOut methodsFor: 'tools' stamp: 'len 2/Mar/2026 00:10:09'!
+!AudioOut methodsFor: 'tools' stamp: 'len 5/Mar/2026 15:25:26'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
 	display := LinearLayoutMorph newRow color: Color transparent;
 		addMorph: (RollingMeterMorph new meterBlock: [self meterValue]);
-		addMorph: (PluggableChoiceMorph new color: PatchMorph waveformColor; options: #(0 1 2 3 4 5 6 7 8 9); model: self; getter: #bus; setter: #bus:).
+		addMorph: (PluggableChoiceMorph new color: PatchMorph waveformColor; options: #(0 1 2 3 4 5 6 7 8 9); model: self; getter: #port; setter: #port:).
 	answer body addMorph: display; addMorph: self panel.
 	answer
 		addAudioInput: #setInputL: label: 'In L/M';
@@ -3121,6 +3152,10 @@ patchable
 		addControlInput: #pan.
 	^ answer! !
 
+!AudioOut methodsFor: 'wiring' stamp: 'len 5/Mar/2026 15:29:06'!
+setBuses: aDictionary
+	buses := aDictionary! !
+
 !AudioOut methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:06:40'!
 setInputL: aBuffer
 	inputL := aBuffer! !
@@ -3128,17 +3163,6 @@ setInputL: aBuffer
 !AudioOut methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:06:33'!
 setInputR: aBuffer
 	inputR := aBuffer! !
-
-!AudioOut methodsFor: 'serialization' stamp: 'len 2/Mar/2026 00:31:31'!
-asJsonWithBuffers: aList
-	^ (super asJsonWithBuffers: aList)
-		at: #bus put: bus;
-		yourself! !
-
-!AudioOut methodsFor: 'serialization' stamp: 'len 2/Mar/2026 00:32:19'!
-readFromJson: json buffers: aList
-	super readFromJson: json buffers: aList.
-	bus := json at: #bus ifAbsent: [0]! !
 
 !ControlIn methodsFor: 'accessing' stamp: 'len 6/Jan/2026 14:30:25'!
 index
@@ -3635,56 +3659,64 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!Wavetable methodsFor: 'accessing' stamp: 'len 14/Jan/2026 02:10:46'!
-bank: aSymbol wavetable: anInteger
-	| entry |
-	entry := (Banks at: aSymbol) at: anInteger.
-	waves := entry first.
-	name := entry second.
+!Wavetable methodsFor: 'accessing' stamp: 'len 4/Mar/2026 18:20:49'!
+bank: anArray
+	bank := anArray.
+	index := 0.0.
 	position := 0.0.
 	phase := 0.0.
-	frequency := 1.0 / waves first size! !
+	frequency := 1.0 / bank first value size! !
+
+!Wavetable methodsFor: 'accessing' stamp: 'len 4/Mar/2026 18:18:00'!
+label
+	^ label! !
+
+!Wavetable methodsFor: 'accessing' stamp: 'len 4/Mar/2026 18:17:56'!
+label: aString
+	label := aString! !
 
 !Wavetable methodsFor: 'accessing' stamp: 'len 26/Oct/2025 14:32:00'!
 smooth: aBoolean
 	smooth := aBoolean! !
 
-!Wavetable methodsFor: 'accessing' stamp: 'len 3/Oct/2025 16:15:00'!
-waves
-	^ waves! !
-
-!Wavetable methodsFor: 'accessing' stamp: 'len 28/Sep/2025 19:18:00'!
-wavetable: anInteger
-	^ self bank: #MW1 wavetable: anInteger! !
-
-!Wavetable methodsFor: 'controlling' stamp: 'len 14/Jan/2026 02:11:06'!
+!Wavetable methodsFor: 'controlling' stamp: 'len 4/Mar/2026 18:21:47'!
 update
 	super update.
+	index := ((self get: #index) * (bank size - 1)) truncated + 1.
 	position := self get: #position! !
 
-!Wavetable methodsFor: 'initialization' stamp: 'len 5/Dec/2025 17:32:01'!
+!Wavetable methodsFor: 'copying' stamp: 'len 5/Mar/2026 02:09:33'!
+copy
+	^ self class new
+		settings: self settings;
+		bank: bank;
+		label: label! !
+
+!Wavetable methodsFor: 'initialization' stamp: 'len 4/Mar/2026 18:52:43'!
 initialize
 	super initialize.
-	self wavetable: 2.
 	smooth := true! !
 
-!Wavetable methodsFor: 'initialization' stamp: 'len 14/Jan/2026 02:11:21'!
+!Wavetable methodsFor: 'initialization' stamp: 'len 4/Mar/2026 18:22:10'!
 initializeControls
 	super initializeControls.
+	self addControl: #index min: 0.0 max: 1.0 value: 0.0.
 	self addControl: #position min: 0.0 max: 1.0 value: 0.0! !
 
-!Wavetable methodsFor: 'processing' stamp: 'len 14/Jan/2026 02:10:46'!
+!Wavetable methodsFor: 'processing' stamp: 'len 4/Mar/2026 18:22:32'!
 peek
-	| wave |
-	wave := waves at: (position * (waves size - 1)) truncated + 1.
+	| table wave |
+	table := (bank at: index) value.
+	wave := table at: (position * (table size - 1)) truncated + 1.
 	^ smooth
 		ifTrue: [wave atWrapSmooth: phase * (wave size - 1) + 1.0]
 		ifFalse: [wave at: (phase * (wave size - 1)) truncated + 1]! !
 
-!Wavetable methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:12:35'!
+!Wavetable methodsFor: 'processing' stamp: 'len 4/Mar/2026 18:22:43'!
 read: aBuffer
-	| wave n |
-	wave := waves at: (position * (waves size - 1)) truncated + 1.
+	| table wave n |
+	table := (bank at: index) value.
+	wave := table at: (position * (table size - 1)) truncated + 1.
 	n := wave size - 1.0.
 	smooth
 		ifTrue:
@@ -3705,12 +3737,34 @@ read: aBuffer WIM: modulatorBuffer
 		aBuffer at: i put: (aBuffer at: i) + self next]"
 	self notYetImplemented! !
 
-!Wavetable methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:10:17'!
+!Wavetable methodsFor: 'serialization' stamp: 'len 5/Mar/2026 18:36:29'!
+asJsonWithBuffers: aList
+	| jsonBank |
+	jsonBank := bank collect: [:each|
+		OrderedDictionary new
+			at: #label put: each key;
+			at: #waves put: (each value collect: [:aBuffer| aList indexOf: aBuffer ifAbsent: [aList add: aBuffer. aList size]]);
+			yourself].
+	^ (super asJsonWithBuffers: aList)
+		at: #bank put: jsonBank;
+		at: #label put: (label ifNil: ['']);
+		at: #smooth put: smooth;
+		yourself! !
+
+!Wavetable methodsFor: 'serialization' stamp: 'len 5/Mar/2026 18:39:08'!
+readFromJson: json buffers: aList
+	super readFromJson: json buffers: aList.
+	bank := (json at: #bank) collect: [:each| (each at: #label) -> ((each at: #waves) collect: [:anInteger| aList at: anInteger])].
+	label := json at: #label ifAbsent: [''].
+	label isEmpty ifTrue: [label := nil]! !
+
+!Wavetable methodsFor: 'tools' stamp: 'len 5/Mar/2026 02:17:25'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
+	label ifNotNil: [answer setTitle: label].
 	answer body
-		addMorph: (WavetableControlMorph new waves: waves; control: (controls at: #position));
+		addMorph: (WavetableControlMorph new controlX: (controls at: #index); controlY: (controls at: #position); bank: bank);
 		addMorph: self panel.
 	answer
 		addControlInput: #tune label: 'Pitch';
@@ -3719,33 +3773,42 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!Wavetable class methodsFor: 'class initialization' stamp: 'len 31/Dec/2025 15:31:19'!
-initialize
-	super initialize.
-	Banks := Dictionary new.
+!Wavetable class methodsFor: 'library' stamp: 'len 4/Mar/2026 18:49:49'!
+library
+	^ Library! !
+
+!Wavetable class methodsFor: 'library' stamp: 'len 4/Mar/2026 18:50:20'!
+loadLibrary
+	"
+	Wavetable loadLibrary
+	"
+	Library := OrderedDictionary new.
 	self loadMW1Wavetables.
 	self loadPPGWavetables! !
 
-!Wavetable class methodsFor: 'class initialization' stamp: 'len 17/Feb/2026 01:23:17'!
+!Wavetable class methodsFor: 'library' stamp: 'len 4/Mar/2026 18:51:20'!
 loadMW1Wavetables
-	Banks at: #MW1 put: (((Sample samplesDirectory / 'wavetables' / 'mw1_wavetables') files asSortedCollection: [:a :b| a name <= b name]) asArray collect: [:each|
+	| bank |
+	bank := ((Sample samplesDirectory / 'wavetables' / 'mw1_wavetables') files asSortedCollection: [:a :b| a name <= b name]) asArray allButFirst "skip the first one with just 3 waves" collect: [:each|
 		| label allTables table |
 		label := (each name findTokens: '-.') second.
 		allTables := (WAVFileReader new readFromFileEntry: each) leftSamples.
 		table := (1 to: allTables size / 128) collect: [:i| allTables copyFrom: i-1*128+1 to: i*128].
-		{table. label}])! !
+		label -> table].
+	Library at: #MW1 put: (self new label: 'MW1'; bank: bank)! !
 
-!Wavetable class methodsFor: 'class initialization' stamp: 'len 17/Feb/2026 01:23:27'!
+!Wavetable class methodsFor: 'library' stamp: 'len 4/Mar/2026 18:52:11'!
 loadPPGWavetables
-	| bytes |
+	| bytes bank |
 	"32 wavetables, with 64 waves each, and 256 signed bytes per wave:"
 	bytes := (Sample samplesDirectory / 'wavetables' // 'ppg.bin') binaryContents.
-	Banks at: #PPG put: ((0 to: 31) collect: [:i|
+	bank := (0 to: 31) collect: [:i|
 		| table |
 		table := Float32Array new: 256 * 64.
 		1 to: table size do: [:j| table at: j put: (bytes at: i * 256 * 64 + j) - 128 / 128.0].
 		table := (1 to: table size / 256) collect: [:k| table copyFrom: k-1*256+1 to: k*256].
-		{table. (i-1) printString}])! !
+		i printString -> table].
+	Library at: #PPG put: (self new label: 'PPG'; bank: bank)! !
 
 !Supersaw methodsFor: 'controlling' stamp: 'len 1/Dec/2025 15:32:00'!
 reset
@@ -8104,9 +8167,9 @@ initialize
 	self control:​ Control new.
 	color := self defaultColor! !
 
-!ControlMorph methodsFor: 'private' stamp: 'len 27/Jan/2026 16:34:48'!
+!ControlMorph methodsFor: 'private' stamp: 'len 5/Mar/2026 02:13:50'!
 adjustControlBy: aNumber
-	control basePosition: control basePosition + aNumber.
+	control adjustBy: aNumber.
 	control apply.
 	self redrawNeeded.
 	self wantsBalloon ifTrue: [self showBalloon: control printedBaseValueWithLabel]! !
@@ -8382,92 +8445,6 @@ stepTime
 wantsSteps
 	^ true! !
 
-!WavetableControlMorph methodsFor: 'initialization' stamp: 'len 17/Jan/2026 00:19:57'!
-defaultExtent
-	^`192@128`! !
-
-!WavetableControlMorph methodsFor: 'initialization' stamp: 'len 16/Jan/2026 16:53:46'!
-initialize
-	super initialize.
-	waves := #().
-	currentPosition := 0.0.
-	color := PatchMorph waveformColor! !
-
-!WavetableControlMorph methodsFor: 'initialization' stamp: 'len 3/Oct/2025 16:53:00'!
-waves: anArray
-	waves := anArray.
-	self redrawNeeded! !
-
-!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 4/Mar/2026 14:48:32'!
-drawFlatOn: aCanvas
-	"Warning: this is slow, should use vector canvas' moveTo:, lineTo:"
-	| n waveSize w h j stepX stepY y0 alphaColor waveIndex |
-	(n := waves size) > 0 ifFalse: [^ self].
-	waveSize := waves first size.
-	waveIndex := (currentPosition * (n - 1) + 1) asInteger.
-	j := n - 1 * waveSize + 1.
-	w := self morphWidth.
-	h := self morphHeight.
-	stepX := w / waveSize.
-	stepY := h / 2.0 / n.
-	y0 := 0.0.
-	alphaColor := (color mixed: 0.5 with: Color white) alpha: 0.1.
-	n to: 1 by: -1 do: [:i| | x y waveColor |
-		x := 0.0.
-		y := 1.0 - ((waves at: i) at: 1) / 4.0 * h.
-		waveColor := waveIndex = i ifTrue: [color] ifFalse: [alphaColor].
-		2 to: waveSize do: [:k|
-			| x2 y2 |
-			y2 := 1.0 - ((waves at: i) at: k) / 4.0 * h.
-			x2 := x + stepX.
-			aCanvas line: x@(y+y0) to: x2@(y2+y0) width: 1 color: waveColor.
-			x := x2.
-			y := y2].
-		j := j - waveSize.
-		y0 := y0 + stepY]! !
-
-!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 4/Mar/2026 14:43:59'!
-drawIsometricOn: aCanvas
-	| n m projection w h  alphaColor strokeWidth waveIndex Sx Sy Sa cx cy |
-	(n := waves size) > 0 ifFalse: [^ self].
-	m := waves first size.
-	waveIndex := (currentPosition * (n - 1) + 1) asInteger.
-	w := self morphWidth - 4.0.
-	h := self morphHeight - 4.0.
-	alphaColor := (color mixed: 0.5 with: Color white) alpha: 0.1.
-
-	Sx := w * 0.50.  "horizontal spread"
-	Sy := h * 0.25.  "isometric tilt depth"
-	Sa := h * 0.25.  "amplitude height"
-	cx := w  / 2.0 + 2.0.
-	cy := h / 2.0 - Sy + 2.0.
-	projection := [:j :amp :i | | xNorm zNorm screenX screenY |
-		xNorm := (j - 1) / (m - 1.0).
-		zNorm := (n - i) / (n - 1.0).
-		"Classic isometric: x-axis at +30°, z-axis at +150°, y-axis vertical.
-		Scale factors tune the overall spread and amplitude height."
-		screenX := cx + ((xNorm - zNorm) * Sx).
-		screenY := cy + ((xNorm + zNorm) * Sy) - (amp * Sa).
-		screenX @ screenY].
-
-	"Draw back-to-front so later (closer) waves paint over earlier ones."
-	n to: 1 by: -1 do: [:i|
-		| wave waveColor |
-		wave := waves at: i.
-		i = waveIndex ifTrue: [waveColor := color. strokeWidth := 1.5] ifFalse: [waveColor := alphaColor. strokeWidth := 1].
-		aCanvas strokeWidth: strokeWidth color: waveColor do:
-			[aCanvas moveTo: (projection value: 1 value: (wave at: 1) value: i).
-			2 to: m do: [:j| aCanvas lineTo: (projection value: j value: (wave at: j) value: i)]]]! !
-
-!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 4/Mar/2026 14:48:47'!
-drawOn: aCanvas
-	self drawIsometricOn: aCanvas! !
-
-!WavetableControlMorph methodsFor: 'dependency mechanism' stamp: 'len 16/Jan/2026 16:53:46'!
-update: anObject
-	super update: anObject.
-	currentPosition := control value! !
-
 !XYControlMorph methodsFor: 'accessing' stamp: 'len 6/Dec/2025 14:26:58'!
 controlX: aControl
 	controlX removeDependent: self.
@@ -8520,16 +8497,16 @@ balloonText
 defaultExtent
 	^ `128 @ 64`! !
 
-!XYControlMorph methodsFor: 'private' stamp: 'len 27/Jan/2026 16:35:47'!
+!XYControlMorph methodsFor: 'private' stamp: 'len 5/Mar/2026 02:14:25'!
 adjustXBy: aNumber
-	controlX basePosition: controlX basePosition + aNumber.
+	controlX adjustBy: aNumber.
 	controlX apply.
 	self redrawNeeded.
 	self showBalloon: controlX printedBaseValueWithLabel! !
 
-!XYControlMorph methodsFor: 'private' stamp: 'len 27/Jan/2026 16:35:52'!
+!XYControlMorph methodsFor: 'private' stamp: 'len 5/Mar/2026 02:13:05'!
 adjustYBy: aNumber
-	controlY basePosition: controlY basePosition + aNumber.
+	controlY adjustBy: aNumber.
 	controlY apply.
 	self redrawNeeded.
 	self showBalloon: controlY printedBaseValueWithLabel! !
@@ -8936,6 +8913,95 @@ stepTime
 !WaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 12/Feb/2026 19:20:28'!
 wantsSteps
 	^ true! !
+
+!WavetableControlMorph methodsFor: 'initialization' stamp: 'len 5/Mar/2026 02:17:21'!
+bank: anArray
+	bank := anArray.
+	wavetable := (bank at: (controlX value * (bank size - 1)) truncated + 1) value.
+	currentPosition := controlY value.
+	self redrawNeeded! !
+
+!WavetableControlMorph methodsFor: 'initialization' stamp: 'len 5/Mar/2026 02:20:15'!
+defaultExtent
+	^ `160 @ 96`! !
+
+!WavetableControlMorph methodsFor: 'initialization' stamp: 'len 4/Mar/2026 18:34:17'!
+initialize
+	super initialize.
+	wavetable := #().
+	currentPosition := 0.0.
+	color := PatchMorph waveformColor! !
+
+!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 4/Mar/2026 18:34:17'!
+drawFlatOn: aCanvas
+	"Warning: this is slow, should use vector canvas' moveTo:, lineTo:"
+	| n waveSize w h j stepX stepY y0 alphaColor waveIndex |
+	(n := wavetable size) > 0 ifFalse: [^ self].
+	waveSize := wavetable first size.
+	waveIndex := (currentPosition * (n - 1) + 1) asInteger.
+	j := n - 1 * waveSize + 1.
+	w := self morphWidth.
+	h := self morphHeight.
+	stepX := w / waveSize.
+	stepY := h / 2.0 / n.
+	y0 := 0.0.
+	alphaColor := (color mixed: 0.5 with: Color white) alpha: 0.1.
+	n to: 1 by: -1 do: [:i| | x y waveColor |
+		x := 0.0.
+		y := 1.0 - ((wavetable at: i) at: 1) / 4.0 * h.
+		waveColor := waveIndex = i ifTrue: [color] ifFalse: [alphaColor].
+		2 to: waveSize do: [:k|
+			| x2 y2 |
+			y2 := 1.0 - ((wavetable at: i) at: k) / 4.0 * h.
+			x2 := x + stepX.
+			aCanvas line: x@(y+y0) to: x2@(y2+y0) width: 1 color: waveColor.
+			x := x2.
+			y := y2].
+		j := j - waveSize.
+		y0 := y0 + stepY]! !
+
+!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 4/Mar/2026 18:34:17'!
+drawIsometricOn: aCanvas
+	| n m projection w h  alphaColor strokeWidth waveIndex Sx Sy Sa cx cy |
+	(n := wavetable size) > 0 ifFalse: [^ self].
+	m := wavetable first size.
+	waveIndex := (currentPosition * (n - 1) + 1) asInteger.
+	w := self morphWidth - 4.0.
+	h := self morphHeight - 4.0.
+	alphaColor := (color mixed: 0.5 with: Color white) alpha: 0.1.
+
+	Sx := w * 0.50.  "horizontal spread"
+	Sy := h * 0.25.  "isometric tilt depth"
+	Sa := h * 0.25.  "amplitude height"
+	cx := w  / 2.0 + 2.0.
+	cy := h / 2.0 - Sy + 2.0.
+	projection := [:j :amp :i | | xNorm zNorm screenX screenY |
+		xNorm := (j - 1) / (m - 1.0).
+		zNorm := (n - i) / (n - 1.0).
+		"Classic isometric: x-axis at +30°, z-axis at +150°, y-axis vertical.
+		Scale factors tune the overall spread and amplitude height."
+		screenX := cx + ((xNorm - zNorm) * Sx).
+		screenY := cy + ((xNorm + zNorm) * Sy) - (amp * Sa).
+		screenX @ screenY].
+
+	"Draw back-to-front so later (closer) waves paint over earlier ones."
+	n to: 1 by: -1 do: [:i|
+		| wave waveColor |
+		wave := wavetable at: i.
+		i = waveIndex ifTrue: [waveColor := color. strokeWidth := 1.5] ifFalse: [waveColor := alphaColor. strokeWidth := 1].
+		aCanvas strokeWidth: strokeWidth color: waveColor do:
+			[aCanvas moveTo: (projection value: 1 value: (wave at: 1) value: i).
+			2 to: m do: [:j| aCanvas lineTo: (projection value: j value: (wave at: j) value: i)]]]! !
+
+!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 4/Mar/2026 14:48:47'!
+drawOn: aCanvas
+	self drawIsometricOn: aCanvas! !
+
+!WavetableControlMorph methodsFor: 'dependency mechanism' stamp: 'len 4/Mar/2026 18:34:17'!
+update: anObject
+	super update: anObject.
+	wavetable := (bank at: (controlX value * (bank size - 1)) truncated + 1) value.
+	currentPosition := controlY value! !
 
 !XYVariableWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Feb/2026 19:16:48'!
 color: aColor
@@ -11624,7 +11690,7 @@ addModuleCopying: aModule
 addModuleInstantiating: aClass
 	self addMorph: aClass new patchable position: (self valueOfProperty: #lastMenuOpeningPosition)! !
 
-!PatchMorph methodsFor: 'menu' stamp: 'len 1/Mar/2026 15:04:02'!
+!PatchMorph methodsFor: 'menu' stamp: 'len 4/Mar/2026 18:49:08'!
 getMenu
 	| menu submenu |
 	self setProperty: #lastMenuOpeningPosition toValue: (self internalizeFromWorld: self activeHand morphPosition).
@@ -11660,6 +11726,11 @@ getMenu
 		submenu := MenuMorph new defaultTarget: self.
 		aDict associationsDo: [:each| submenu add: each key action: #addModuleCopying: argument: each value].
 		menu add: 'Multisamples' subMenu: submenu].
+
+	Wavetable library ifNotNil: [:aDict|
+		submenu := MenuMorph new defaultTarget: self.
+		aDict associationsDo: [:each| submenu add: each key action: #addModuleCopying: argument: each value].
+		menu add: 'Wavetables' subMenu: submenu].
 
 	^ menu! !
 
@@ -13032,6 +13103,43 @@ rightSamples
 sampleRate
 	^ sampleRate! !
 
+!Bus methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 14:46:42'!
+clear
+	leftBuffer atAllPut: 0.0.
+	rightBuffer atAllPut: 0.0! !
+
+!Bus methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 14:43:59'!
+initialize
+	super initialize.
+	leftBuffer := Float32Array new: Module blockSize.
+	rightBuffer := Float32Array new: Module blockSize! !
+
+!Bus methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 14:43:08'!
+leftBuffer
+	^ leftBuffer! !
+
+!Bus methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 14:42:44'!
+mixInto: anAudioBuffer startingAt: startIndex
+	| j x s |
+	j := 2 * startIndex - 1.
+	1 to: leftBuffer size do: [:i|
+		(x := leftBuffer at: i) = 0.0 ifFalse:
+			[s := (anAudioBuffer at: j) + (x * 32767.0) asInteger.
+			s > 32767 ifTrue: [s := 32767].  "clipping!!"
+			s < -32767 ifTrue: [s := -32767].  "clipping!!"
+			anAudioBuffer at: j put: s].	
+		j := j + 1.
+		(x := rightBuffer at: i) = 0.0 ifFalse:
+			[s := (anAudioBuffer at: j) + (x * 32767.0) asInteger.
+			s > 32767 ifTrue: [s := 32767].  "clipping!!"
+			s < -32767 ifTrue: [s := -32767].  "clipping!!"
+			anAudioBuffer at: j put: s].	
+		j := j + 1]! !
+
+!Bus methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 14:43:14'!
+rightBuffer
+	^ rightBuffer! !
+
 !Instrument methodsFor: 'accessing' stamp: 'len 28/Dec/2025 15:47:17'!
 label
 	^ label! !
@@ -13109,10 +13217,6 @@ handleFX: anInteger
 	"Global commands:"
 	command = 70 "F (set bpm)" ifTrue: [track tracker bpm: ((anInteger bitAnd: 16rFF) max: 1). ^ self]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 18/Jan/2026 02:28:05'!
-mixIntoLeft: leftBuffer right: rightBuffer
-	(audioOutput ifNil: [^ self]) mixIntoLeft: leftBuffer right: rightBuffer! !
-
 !Instrument methodsFor: 'playing' stamp: 'len 21/Jan/2026 04:39:07'!
 noteOff
 	gateReceivers do: [:each| each gateOff]! !
@@ -13131,9 +13235,9 @@ playTrigger
 	trigger isNoteOn ifTrue: [self noteOn: trigger note] ifFalse: [trigger isNoteOff ifTrue: [self noteOff]].
 	trigger := nil! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 24/Feb/2026 18:01:46'!
+!Instrument methodsFor: 'playing' stamp: 'len 5/Mar/2026 18:09:44'!
 recomputeModules
-	| currentModules |
+	| currentModules buses |
 	currentModules := patch modules.
 	modules := currentModules.
 	noteReceivers := currentModules select: [:each| each respondsTo: #setNote:].
@@ -13143,8 +13247,18 @@ recomputeModules
 	tempoReceivers := currentModules select: [:any| any respondsTo: #setBPM:].
 	samples := currentModules select: [:each| each isMemberOf: Sample].
 	controlInputs atAllPut: nil.
-	currentModules do: [:each| (each isMemberOf: ControlIn) ifTrue: [controlInputs at: each index + 1 put: each]].
-	currentModules reverseDo: [:each| (each isMemberOf: AudioOut) ifTrue: [audioOutput := each. ^ currentModules]].
+	buses := track tracker buses.
+	audioOutput := nil.
+	currentModules do: [:each|
+		(each isMemberOf: ControlIn)
+			ifTrue: [controlInputs at: each index + 1 put: each]
+			ifFalse:
+				[(each isMemberOf: AudioIn)
+					ifTrue: [each setBuses: buses]
+					ifFalse:
+						[(each isMemberOf: AudioOut) ifTrue:
+							[each setBuses: buses.
+							each port = 0 ifTrue: [audioOutput := each]]]]].
 	^ currentModules! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 21/Feb/2026 19:49:45'!
@@ -13189,11 +13303,14 @@ setSpeed: aNumber
 setVelocity: aNumber
 	velocityReceivers do: [:each| each setVelocity: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 26/Feb/2026 16:59:31'!
+!Instrument methodsFor: 'playing' stamp: 'len 5/Mar/2026 18:13:15'!
 tick
-	| currentModules |
+	| currentModules enabled |
 	currentModules := modules ifNil: [self recomputeModules].
-	currentModules do: [:each| (each is: #Module) ifTrue: [each clear]].
+	enabled := track enabled.
+	currentModules do: [:each|
+		(each isMemberOf: AudioOut) ifTrue: [each enabled: enabled].
+		(each is: #Module) ifTrue: [each clear]].
 	trigger ifNotNil: [self playTrigger].
 	currentModules do: [:each| (each is: #Module) ifTrue: [each update]. each tick]! !
 
@@ -13454,11 +13571,6 @@ setTracker: aTracker
 forgetInstrument
 	instrument := nil! !
 
-!Track methodsFor: 'playing' stamp: 'len 17/Feb/2026 19:28:15'!
-mixIntoLeft: leftBuffer right: rightBuffer
-	(instrument notNil and: [self enabled]) ifFalse: [^ self].
-	instrument mixIntoLeft: leftBuffer right: rightBuffer! !
-
 !Track methodsFor: 'playing' stamp: 'len 3/Mar/2026 23:13:06'!
 playTrigger
 	trigger instrument ifNotNil: [:anInteger|
@@ -13496,6 +13608,10 @@ bpm
 bpm: anInteger
 	bpm := anInteger.
 	self triggerEvent: #bpmChanged! !
+
+!Tracker methodsFor: 'accessing' stamp: 'len 5/Mar/2026 15:36:52'!
+buses
+	^ buses! !
 
 !Tracker methodsFor: 'accessing' stamp: 'len 7/Jan/2026 16:00:57'!
 followPlayhead
@@ -13683,7 +13799,7 @@ setCursorTrack: anInteger
 	cursorTrack := anInteger.
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'initialization' stamp: 'len 21/Feb/2026 16:28:55'!
+!Tracker methodsFor: 'initialization' stamp: 'len 5/Mar/2026 15:33:42'!
 initialize
 	instruments := Dictionary new.
 	tracks := #().
@@ -13700,8 +13816,7 @@ initialize
 	playheadLine := 0.
 	followPlayhead := false.
 	anyTrackSoloed := false.
-	leftBuffer := Float32Array new: Module blockSize.
-	rightBuffer := Float32Array new: Module blockSize.
+	buses := Dictionary new at: 0 put: Bus new; yourself. "the master bus at 0"
 	peakLeft := 0.0.
 	peakRight := 0.0.
 
@@ -13801,24 +13916,6 @@ swapPattern: anInteger with: anotherInteger
 isPlaying
 	^ AudioPlayer isPlaying: self! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 3/Jan/2026 18:34:51'!
-mixInto: anAudioBuffer startingAt: startIndex
-	| j x s |
-	j := 2 * startIndex - 1.
-	1 to: leftBuffer size do: [:i|
-		(x := leftBuffer at: i) = 0.0 ifFalse:
-			[s := (anAudioBuffer at: j) + (x * 32767.0) asInteger.
-			s > 32767 ifTrue: [s := 32767].  "clipping!!"
-			s < -32767 ifTrue: [s := -32767].  "clipping!!"
-			anAudioBuffer at: j put: s].	
-		j := j + 1.
-		(x := rightBuffer at: i) = 0.0 ifFalse:
-			[s := (anAudioBuffer at: j) + (x * 32767.0) asInteger.
-			s > 32767 ifTrue: [s := 32767].  "clipping!!"
-			s < -32767 ifTrue: [s := -32767].  "clipping!!"
-			anAudioBuffer at: j put: s].	
-		j := j + 1]! !
-
 !Tracker methodsFor: 'playing' stamp: 'len 22/Jan/2026 14:16:36'!
 play
 	self isPlaying ifTrue: [^ self].
@@ -13855,24 +13952,24 @@ playLine
 	(playheadLine \\ lpb) even ifTrue: [ticksSwing := ticksSwing negated].
 	ticksToLine := ticksToLine + ticksSwing! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 22/Feb/2026 00:31:03'!
+!Tracker methodsFor: 'playing' stamp: 'len 5/Mar/2026 15:35:24'!
 playSampleCount: n into: anAudioBuffer startingAt: startIndex
-	| blockSize i masterGain mask |
+	| blockSize i masterGain mask masterBus |
 	blockSize := Module blockSize.
 	i := startIndex.
 	self assert: n \\ blockSize = 0.
 	masterGain := level * 0.25. "leave -12 dB of headroom"
 	mask := self playingMask.
+	masterBus := buses at: 0.
 	n // blockSize timesRepeat:
 		[ticksToLine > 0 ifTrue: [ticksToLine := ticksToLine - 1] ifFalse: [self playLine. mask := self playingMask].
-		leftBuffer atAllPut: 0.0.
-		rightBuffer atAllPut: 0.0.
-		mask withIndexDo: [:enabled :trackIndex| enabled ifTrue: [(tracks at: trackIndex) tick; mixIntoLeft: leftBuffer right: rightBuffer]].
-		leftBuffer *= masterGain.
-		rightBuffer *= masterGain.
-		peakLeft := peakLeft max: leftBuffer peak.
-		peakRight := peakRight max: rightBuffer peak.
-		self mixInto: anAudioBuffer startingAt: i.
+		buses do: [:each| each clear].
+		mask withIndexDo: [:enabled :trackIndex| enabled ifTrue: [(tracks at: trackIndex) tick]].
+		masterBus leftBuffer *= masterGain.
+		masterBus rightBuffer *= masterGain.
+		peakLeft := peakLeft max: masterBus leftBuffer peak.
+		peakRight := peakRight max: masterBus rightBuffer peak.
+		masterBus mixInto: anAudioBuffer startingAt: i.
 		i := i + blockSize].
 	^ n! !
 
@@ -14626,10 +14723,10 @@ isNavigation
 asJsonWithBuffers: bufferList
 	^ OrderedDictionary new! !
 
-!Morph methodsFor: '*signals' stamp: 'len 22/Feb/2026 00:38:49'!
+!Morph methodsFor: '*signals' stamp: 'len 4/Mar/2026 14:54:49'!
 bench
 	| canvas form |
-	form := Form extent: self morphExtent depth: Display depth.
+	form := self morphExtent ifNil: [Display] ifNotNil: [:aPoint| Form extent: aPoint depth: Display depth].
 	canvas := VectorCanvas onForm: form.
 	^ [self drawOn: canvas] bench! !
 
@@ -14637,12 +14734,11 @@ bench
 readFromJson: json buffers: bufferList
 	^ self! !
 
-!Morph methodsFor: '*signals' stamp: 'len 22/Feb/2026 00:39:42'!
+!Morph methodsFor: '*signals' stamp: 'len 4/Mar/2026 14:54:58'!
 timeProfile
 	| canvas form |
-	form := Form extent: self morphExtent depth: Display depth.
+	form := self morphExtent ifNil: [Display] ifNotNil: [:aPoint| Form extent: aPoint depth: Display depth].
 	canvas := VectorCanvas onForm: form.
 	^ [100 timesRepeat: [self drawOn: canvas]] timeProfile! !
-Wavetable initialize!
 Supersaw initialize!
 SpectrogramMorph initialize!

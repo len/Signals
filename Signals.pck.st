@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 5 March 2026 at 6:51:07 pm'!
+'From Cuis7.7 [latest update: #7797] on 6 March 2026 at 7:22:39 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 480!
+!provides: 'Signals' 1 481!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -417,6 +417,16 @@ Transform subclass: #DiodeLadder2
 DiodeLadder2 class
 	instanceVariableNames: ''!
 
+!classDefinition: #SqueakReverb category: #'Signals-Etc'!
+Transform subclass: #SqueakReverb
+	instanceVariableNames: 'buffer position delays gains mix'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Etc'!
+!classDefinition: 'SqueakReverb class' category: #'Signals-Etc'!
+SqueakReverb class
+	instanceVariableNames: ''!
+
 !classDefinition: #Allpass category: #'Signals-FX'!
 Transform subclass: #Allpass
 	instanceVariableNames: 'delayLine tap gain'
@@ -479,7 +489,7 @@ PitchShifter class
 
 !classDefinition: #Reverb category: #'Signals-FX'!
 Transform subclass: #Reverb
-	instanceVariableNames: 'buffer position delays gains mix'
+	instanceVariableNames: 'predelayLine predelayTap combs allpasses mix'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
@@ -1427,6 +1437,16 @@ Object subclass: #STFT
 STFT class
 	instanceVariableNames: ''!
 
+!classDefinition: #AllpassComb category: #'Signals-Support'!
+Object subclass: #AllpassComb
+	instanceVariableNames: 'buffer position feedback'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Support'!
+!classDefinition: 'AllpassComb class' category: #'Signals-Support'!
+AllpassComb class
+	instanceVariableNames: ''!
+
 !classDefinition: #Biquad category: #'Signals-Support'!
 Object subclass: #Biquad
 	instanceVariableNames: 'a0 a1 a2 b1 b2 c0 d0 x1 x2 y1 y2'
@@ -1485,6 +1505,26 @@ Object subclass: #LagrangeOversampler2x
 	category: 'Signals-Support'!
 !classDefinition: 'LagrangeOversampler2x class' category: #'Signals-Support'!
 LagrangeOversampler2x class
+	instanceVariableNames: ''!
+
+!classDefinition: #LowpassComb category: #'Signals-Support'!
+Object subclass: #LowpassComb
+	instanceVariableNames: 'buffer position state feedback damp'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Support'!
+!classDefinition: 'LowpassComb class' category: #'Signals-Support'!
+LowpassComb class
+	instanceVariableNames: ''!
+
+!classDefinition: #MultiTapDelayLine category: #'Signals-Support'!
+Object subclass: #MultiTapDelayLine
+	instanceVariableNames: 'buffer position delays gains mix'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Support'!
+!classDefinition: 'MultiTapDelayLine class' category: #'Signals-Support'!
+MultiTapDelayLine class
 	instanceVariableNames: ''!
 
 !classDefinition: #OnePole category: #'Signals-Support'!
@@ -1723,13 +1763,16 @@ Prevents signal peaks from exceeding a fixed ceiling without altering level belo
 !DiodeLadder2 commentStamp: 'len 2/Feb/2026 18:24:19' prior: 0!
 This is a virtual analog model of the Korg 35 low-pass 12 dB/oct filter found in the MS-10 and MS-20 synthesizers. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section 12.7.1.!
 
+!SqueakReverb commentStamp: '<historical>' prior: 0!
+This module is based on Squeak's original ReverbSound by John Maloney.!
+
 !PitchShifter commentStamp: '<historical>' prior: 0!
 Time-domain pitch shifter based on two modulated delay lines with crossfading windows. This is the algorithm of the Eventide H3000 Ultra-Harmonizer.
 
 Pitch-shifting is achieved by modulating a delay line: the write pointer always advances at normal speed, but the read pointer advances faster (pitch up) or slower (pitch down). This causes discontinuities when the read pointer catches up or falls too far behind, but the discontinuities are hidden by crossfading between two delay lines running the same algorithm in parallel with a phase offset of 180°.!
 
 !Reverb commentStamp: '<historical>' prior: 0!
-This module is based on Squeak's original ReverbSound by John Maloney.!
+This is a reverb effect based on Freeverb. It consists of 8 damped combs (lowpass feedback comb filters) in parallel followed by 4 Schroeder allpasses in series.!
 
 !TapeEcho commentStamp: '<historical>' prior: 0!
 This is an echo effect inspired in the Roland RE-201 Space Echo.!
@@ -1877,6 +1920,9 @@ Instruments handle events such as notes and control changes and distribute them 
 
 Instruments can mix the output of the voices to stereo buffers, and can apply effects (for example, spreading the voices in stereo).!
 
+!AllpassComb commentStamp: '<historical>' prior: 0!
+Schroeder allpass filter.!
+
 !Biquad commentStamp: 'len 27/Jan/2026 23:55:10' prior: 0!
 This is a biquad filter in direct form 1, modified with extra parameters c0 (amount of the filtered signal) and d1 (amount of the dry signal).
 
@@ -1935,6 +1981,12 @@ Downsampling is performed by averaging the processed even and odd phases. This r
 Latency: This oversampler introduces approximately 1 sample of delay.
 
 Important: This oversampler is not suitable for hard clipping, wavefolding, or feedback filters where strong alias rejection is required. Use a half-band FIR oversampler instead.!
+
+!LowpassComb commentStamp: '<historical>' prior: 0!
+Lowpass feedback comb filter (LBCF), or Schroeder-Moorer filtered-feedback comb filter. See https://ccrma.stanford.edu/~jos/pasp/Lowpass_Feedback_Comb_Filter.html!
+
+!MultiTapDelayLine commentStamp: '<historical>' prior: 0!
+This is based on Squeak's original ReverbSound by John Maloney.!
 
 !Polyphase13TapOversampler2x commentStamp: '<historical>' prior: 0!
 This class implements a 2x polyphase half-band oversampler intended to reduce aliasing in non-linear DSP modules (e.g. distortion, saturation, wavefolders, or virtual-analog filters).
@@ -2982,15 +3034,20 @@ initialize
 	meterLeftValue := meterRightValue := 0.0.
 	port := 0! !
 
-!AudioIn methodsFor: 'processing' stamp: 'len 5/Mar/2026 15:28:08'!
+!AudioIn methodsFor: 'processing' stamp: 'len 5/Mar/2026 23:51:19'!
 tick
 	| bus |
 	bus := buses at: port ifAbsent:
-		[outputL ifNotNil: [outputL atAllPut: 0.0].
+		[meterLeftValue := meterRightValue := 0.0.
+		outputL ifNotNil: [outputL atAllPut: 0.0].
 		outputR ifNotNil: [outputR atAllPut: 0.0].
 		^ self].
-	outputL ifNotNil: [outputL replaceWith: bus leftBuffer].
-	outputR ifNotNil: [outputR replaceWith: bus rightBuffer]! !
+	outputL ifNotNil:
+		[meterLeftValue := meterLeftValue * 0.9 "dampen" max: (bus leftBuffer rms max: bus leftBuffer last abs).
+		outputL replaceWith: bus leftBuffer].
+	outputR ifNotNil:
+		[meterRightValue := meterRightValue * 0.9 "dampen" max: (bus rightBuffer rms max: bus rightBuffer last abs).
+		outputR replaceWith: bus rightBuffer]! !
 
 !AudioIn methodsFor: 'serialization' stamp: 'len 5/Mar/2026 15:47:00'!
 asJsonWithBuffers: aList
@@ -3032,12 +3089,12 @@ setOutputR: aBuffer
 enabled: aBoolean
 	enabled := aBoolean! !
 
-!AudioOut methodsFor: 'accessing' stamp: 'len 24/Jan/2026 22:11:37'!
+!AudioOut methodsFor: 'accessing' stamp: 'len 5/Mar/2026 23:53:47'!
 meterLeftValue
 	meterLeftValue := meterLeftValue * 0.95.
 	^ meterLeftValue * levelLeft! !
 
-!AudioOut methodsFor: 'accessing' stamp: 'len 24/Jan/2026 22:09:50'!
+!AudioOut methodsFor: 'accessing' stamp: 'len 5/Mar/2026 23:53:55'!
 meterRightValue
 	meterRightValue := meterRightValue * 0.95.
 	^ meterRightValue * levelRight! !
@@ -3096,7 +3153,7 @@ initializeControls
 	self addVolumeControl: #level min: 0.001 "-60 dB" max: 4.0 value: 0.5.
 	(self addControl: #pan min: -1.0 max: 1.0 value: 0.0) printer: [:x| x abs < 0.01 ifTrue: ['Center'] ifFalse: [(x abs * 100.0) rounded printString, '% ', (x < 0.0 ifTrue: ['L'] ifFalse: ['R'])]]! !
 
-!AudioOut methodsFor: 'processing' stamp: 'len 5/Mar/2026 18:12:13'!
+!AudioOut methodsFor: 'processing' stamp: 'len 5/Mar/2026 23:51:54'!
 tick
 	| bus |
 	inputL ifNil: [^ self].
@@ -5108,6 +5165,59 @@ patchable
 setOutput: aBuffer
 	output := aBuffer! !
 
+!SqueakReverb methodsFor: 'as yet unclassified' stamp: 'len 26/Feb/2026 22:57:04'!
+delays: delayList gains: gainList
+	"For best results it's desirable that the delays are primes.
+	
+	MultiTapDelayLine new delays: #(537 691 1191) gains: #(0.07 0.07 0.07)
+	
+	The default in SoundPlayer:
+	MultiTapDelayLine new delays: #(1601 7919) gains: #(0.12 0.07).
+"
+	self assert: delayList size = gainList size.
+	delays := delayList.
+	gains := gainList.
+	buffer := Float32Array new: delayList max.
+	position := 1! !
+
+!SqueakReverb methodsFor: 'as yet unclassified' stamp: 'len 26/Feb/2026 23:06:19'!
+initialize
+	super initialize.
+"	self delays: #(537 691 1191) gains: #(0.07 0.07 0.07)
+"
+	"The default in Squeak SoundPlayer:"
+	self delays: #(1601 7919) gains: #(0.12 0.07)! !
+
+!SqueakReverb methodsFor: 'as yet unclassified' stamp: 'len 26/Feb/2026 22:59:44'!
+initializeControls
+	super initializeControls.
+	self addDryWetControl: #mix value: 0.5! !
+
+!SqueakReverb methodsFor: 'as yet unclassified' stamp: 'len 6/Oct/2025 15:53:00'!
+reset
+	buffer atAllPut: 0.0! !
+
+!SqueakReverb methodsFor: 'as yet unclassified' stamp: 'len 26/Feb/2026 23:00:54'!
+update
+	super update.
+	mix := self get: #mix! !
+
+!SqueakReverb methodsFor: 'as yet unclassified' stamp: 'len 26/Feb/2026 23:04:34'!
+value: in
+	| n i out |
+	n := buffer size. "max delay"
+	position := position + 1.
+	i := position truncated.
+	out := 0.0.
+	delays with: gains do: [:delay :gain|
+		| j |
+		j := position - delay.
+		j < 1 ifTrue: [j := j + n].
+		out := (buffer at: j) * gain + out].
+	buffer at: i put: out + in.
+	position := position \\ buffer size.
+	^ in * (1.0 - mix) + (out * mix)! !
+
 !Allpass methodsFor: 'controlling' stamp: 'len 26/Jan/2026 17:14:27'!
 reset
 	delayLine reset.
@@ -5360,58 +5470,47 @@ update
 	delayLine1 setLength: length; setDelay: delayTime; setDelayIncrement: delayIncrement.
 	delayLine1 setLength: length; setDelay: length - delayTime; setDelayIncrement: delayIncrement! !
 
-!Reverb methodsFor: 'as yet unclassified' stamp: 'len 26/Feb/2026 22:57:04'!
-delays: delayList gains: gainList
-	"For best results it's desirable that the delays are primes.
-	
-	MultiTapDelayLine new delays: #(537 691 1191) gains: #(0.07 0.07 0.07)
-	
-	The default in SoundPlayer:
-	MultiTapDelayLine new delays: #(1601 7919) gains: #(0.12 0.07).
-"
-	self assert: delayList size = gainList size.
-	delays := delayList.
-	gains := gainList.
-	buffer := Float32Array new: delayList max.
-	position := 1! !
-
-!Reverb methodsFor: 'as yet unclassified' stamp: 'len 26/Feb/2026 23:06:19'!
+!Reverb methodsFor: 'as yet unclassified' stamp: 'len 6/Mar/2026 19:14:50'!
 initialize
 	super initialize.
-"	self delays: #(537 691 1191) gains: #(0.07 0.07 0.07)
-"
-	"The default in Squeak SoundPlayer:"
-	self delays: #(1601 7919) gains: #(0.12 0.07)! !
+	predelayLine := DelayLine new: (self class sampleRate * 0.15) ceiling. "150 ms"
+	predelayTap := DelayLineTap on: predelayLine.
+	combs := #(1116 1188 1277 1356 1422 1491 1557 1617) collect: [:each| LowpassComb new: (each * self class sampleRate / 44100.0) truncated].
+	allpasses := #(556 441 341 225) collect: [:each| AllpassComb new: (each * self class sampleRate / 44100.0) truncated]! !
 
-!Reverb methodsFor: 'as yet unclassified' stamp: 'len 26/Feb/2026 22:59:44'!
+!Reverb methodsFor: 'as yet unclassified' stamp: 'len 6/Mar/2026 19:20:37'!
 initializeControls
 	super initializeControls.
+	self addTimeControl: #predelay min: 0.0001 "0.1 ms" max: 0.15 "150 ms" value: 0.005 "5 ms".
+	self addLogControl: #decay min: 0.01 max: 1.0 value: 0.5.
+	self addControl: #damp min: 0.0 max: 1.0 value: 0.5.
 	self addDryWetControl: #mix value: 0.5! !
 
-!Reverb methodsFor: 'as yet unclassified' stamp: 'len 6/Oct/2025 15:53:00'!
+!Reverb methodsFor: 'as yet unclassified' stamp: 'len 6/Mar/2026 18:57:31'!
 reset
-	buffer atAllPut: 0.0! !
+	predelayLine reset.
+	combs do: [:each| each reset].
+	allpasses do: [:each| each reset]! !
 
-!Reverb methodsFor: 'as yet unclassified' stamp: 'len 26/Feb/2026 23:00:54'!
+!Reverb methodsFor: 'as yet unclassified' stamp: 'len 6/Mar/2026 17:20:07'!
 update
+	| damp decay |
 	super update.
+	predelayTap setDelayIncrement: ((self get: #predelay) * self class sampleRate - predelayTap delay) / self class blockSize.
+	decay := self get: #decay.
+	damp := self get: #damp.
+	combs do: [:each| each feedback: decay; damp: damp].
 	mix := self get: #mix! !
 
-!Reverb methodsFor: 'as yet unclassified' stamp: 'len 26/Feb/2026 23:04:34'!
+!Reverb methodsFor: 'as yet unclassified' stamp: 'len 6/Mar/2026 19:08:33'!
 value: in
-	| n i out |
-	n := buffer size. "max delay"
-	position := position + 1.
-	i := position truncated.
+	| delayed out |
+	predelayLine write: in.
+	delayed := predelayTap read.
 	out := 0.0.
-	delays with: gains do: [:delay :gain|
-		| j |
-		j := position - delay.
-		j < 1 ifTrue: [j := j + n].
-		out := (buffer at: j) * gain + out].
-	buffer at: i put: out + in.
-	position := position \\ buffer size.
-	^ in * (1.0 - mix) + (out * mix)! !
+	combs do: [:each| out := (each value: delayed) + out].
+	allpasses do: [:each| out := each value: out].
+	^ out * mix + (in * (1.0 - mix))! !
 
 !TapeEcho methodsFor: 'controlling' stamp: 'len 25/Feb/2026 00:17:35'!
 reset
@@ -12162,6 +12261,32 @@ triangular: n
 window: anArray
 	^ self new window: anArray! !
 
+!AllpassComb methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 22:17:13'!
+feedback: aNumber
+	feedback := aNumber! !
+
+!AllpassComb methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 22:26:19'!
+initialize: anInteger
+	buffer := Float32Array new: anInteger.
+	position := 1.
+	feedback := 0.5! !
+
+!AllpassComb methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 22:17:59'!
+reset
+	buffer atAllPut: 0.0! !
+
+!AllpassComb methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 22:13:54'!
+value: in
+	| y |
+	y := buffer at: position.
+	buffer at: position put: in + (y * feedback).
+	(position := position + 1) > buffer size ifTrue: [position := 1].
+	^ y - in! !
+
+!AllpassComb class methodsFor: 'instance creation' stamp: 'len 5/Mar/2026 22:23:37'!
+new: anInteger
+	^ self new initialize: anInteger! !
+
 !Biquad methodsFor: 'accessing' stamp: 'len 27/Jan/2026 22:19:43'!
 Q: Q
 	"Setup coefficients for a second order allpass filter with resonance Q."
@@ -12900,6 +13025,83 @@ oversampling: aNumber do: aBlock
 !LagrangeOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:26:13'!
 reset
 	u0 := u1 := u2 := u3 := d0 := d1 := d2 := d3 := 0.0! !
+
+!LowpassComb methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 22:19:21'!
+damp: aNumber
+	damp := aNumber! !
+
+!LowpassComb methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 22:19:03'!
+feedback: aNumber
+	feedback := aNumber! !
+
+!LowpassComb methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 22:22:44'!
+initialize: anInteger
+	buffer := Float32Array new: anInteger.
+	position := 1.
+	state := 0.0.
+	feedback := 0.0.
+	damp := 0.0! !
+
+!LowpassComb methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 22:22:31'!
+reset
+	buffer atAllPut: 0.0.
+	state := 0.0! !
+
+!LowpassComb methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 22:23:03'!
+value: in
+	| y |
+	y := buffer at: position.
+	state := y * (1.0 - damp) + (state * damp).
+	buffer at: position put: in + (state * feedback).
+	(position := position + 1) > buffer size ifTrue: [position := 1].
+	^ y! !
+
+!LowpassComb class methodsFor: 'instance creation' stamp: 'len 5/Mar/2026 22:23:29'!
+new: anInteger
+	^ self new initialize: anInteger! !
+
+!MultiTapDelayLine methodsFor: 'as yet unclassified' stamp: 'len 6/Mar/2026 16:56:35'!
+delays: delayList gains: gainList
+	"For best results it's desirable that the delays are primes.
+	
+	MultiTapDelayLine new delays: #(537 691 1191) gains: #(0.07 0.07 0.07)
+	
+	The default in SoundPlayer:
+	MultiTapDelayLine new delays: #(1601 7919) gains: #(0.12 0.07).
+"
+	self assert: delayList size = gainList size.
+	delays := delayList.
+	gains := gainList.
+	buffer := Float32Array new: delayList max.
+	position := 1! !
+
+!MultiTapDelayLine methodsFor: 'as yet unclassified' stamp: 'len 6/Mar/2026 16:56:35'!
+initialize
+	super initialize.
+"	self delays: #(537 691 1191) gains: #(0.07 0.07 0.07)
+"
+	"The default in Squeak SoundPlayer:"
+	self delays: #(1601 7919) gains: #(0.12 0.07)! !
+
+!MultiTapDelayLine methodsFor: 'as yet unclassified' stamp: 'len 6/Mar/2026 16:56:35'!
+reset
+	buffer atAllPut: 0.0! !
+
+!MultiTapDelayLine methodsFor: 'as yet unclassified' stamp: 'len 6/Mar/2026 16:57:18'!
+value: in
+	| n i out |
+	n := buffer size. "max delay"
+	position := position + 1.
+	i := position truncated.
+	out := 0.0.
+	delays with: gains do: [:delay :gain|
+		| j |
+		j := position - delay.
+		j < 1 ifTrue: [j := j + n].
+		out := (buffer at: j) * gain + out].
+	buffer at: i put: out + in.
+	position := position \\ buffer size.
+	^ out! !
 
 !OnePole methodsFor: 'as yet unclassified' stamp: 'len 8/Feb/2026 14:34:39'!
 initialize
@@ -13916,12 +14118,13 @@ swapPattern: anInteger with: anotherInteger
 isPlaying
 	^ AudioPlayer isPlaying: self! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 22/Jan/2026 14:16:36'!
+!Tracker methodsFor: 'playing' stamp: 'len 6/Mar/2026 17:22:44'!
 play
 	self isPlaying ifTrue: [^ self].
 	playheadPattern := cursorPattern.
 	playheadLine := cursorLine - 1.
 	ticksToLine := 0.
+	buses keys do: [:each| each = 0 ifFalse: [buses removeKey: each]]. "remove all buses except the master"
 	AudioPlayer startPlaying: self.
 	self triggerEvent: #playheadChanged.
 	self triggerEvent: #playingStatusChanged! !

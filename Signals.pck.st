@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 6 March 2026 at 7:22:39 pm'!
+'From Cuis7.7 [latest update: #7797] on 7 March 2026 at 8:51:08 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 481!
+!provides: 'Signals' 1 483!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -135,6 +135,26 @@ Module subclass: #Chorus
 	category: 'Signals-FX'!
 !classDefinition: 'Chorus class' category: #'Signals-FX'!
 Chorus class
+	instanceVariableNames: ''!
+
+!classDefinition: #StereoEcho category: #'Signals-FX'!
+Module subclass: #StereoEcho
+	instanceVariableNames: 'delayLineL tapL delayLineR tapR lpfL hpfL lsfL hsfL lpfR hpfR lsfR hsfR inputL inputR outputL outputR'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-FX'!
+!classDefinition: 'StereoEcho class' category: #'Signals-FX'!
+StereoEcho class
+	instanceVariableNames: ''!
+
+!classDefinition: #StereoReverb category: #'Signals-FX'!
+Module subclass: #StereoReverb
+	instanceVariableNames: 'predelayLine predelayTap combsL combsR allpassesL allpassesR inputL inputR outputL outputR'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-FX'!
+!classDefinition: 'StereoReverb class' category: #'Signals-FX'!
+StereoReverb class
 	instanceVariableNames: ''!
 
 !classDefinition: #SVF category: #'Signals-Filters'!
@@ -1497,6 +1517,26 @@ Object subclass: #FFT
 FFT class
 	instanceVariableNames: ''!
 
+!classDefinition: #FIR category: #'Signals-Support'!
+Object subclass: #FIR
+	instanceVariableNames: 'coefficients state'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Support'!
+!classDefinition: 'FIR class' category: #'Signals-Support'!
+FIR class
+	instanceVariableNames: ''!
+
+!classDefinition: #IIR category: #'Signals-Support'!
+Object subclass: #IIR
+	instanceVariableNames: 'numerators denominators stateIn stateOut'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Support'!
+!classDefinition: 'IIR class' category: #'Signals-Support'!
+IIR class
+	instanceVariableNames: ''!
+
 !classDefinition: #LagrangeOversampler2x category: #'Signals-Support'!
 Object subclass: #LagrangeOversampler2x
 	instanceVariableNames: 'u0 u1 u2 u3 d0 d1 d2 d3'
@@ -1664,6 +1704,12 @@ See https://www.native-instruments.com/fileadmin/ni_media/downloads/pdf/VAFilter
 
 See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 
+!StereoEcho commentStamp: '<historical>' prior: 0!
+This is a stereo echo effect with feedback and ping pong mode.!
+
+!StereoReverb commentStamp: '<historical>' prior: 0!
+This is a reverb effect based on Freeverb. It consists of 8 damped combs (lowpass feedback comb filters) in parallel followed by 4 Schroeder allpasses in series.!
+
 !SVF commentStamp: 'len 2/Feb/2026 18:24:09' prior: 0!
 This is a state variable filter with a 12 dB/oct slope (2 poles). It has outputs for low-pass, high-pass, band-pass and normalized band-pass modes. Based on stmlib/dsp/filter.h by Emilie Gillet.!
 
@@ -1775,7 +1821,7 @@ Pitch-shifting is achieved by modulating a delay line: the write pointer always 
 This is a reverb effect based on Freeverb. It consists of 8 damped combs (lowpass feedback comb filters) in parallel followed by 4 Schroeder allpasses in series.!
 
 !TapeEcho commentStamp: '<historical>' prior: 0!
-This is an echo effect inspired in the Roland RE-201 Space Echo.!
+This is an echo effect inspired by the Roland RE-201 Space Echo and other tape delays.!
 
 !BPF commentStamp: 'len 2/Feb/2026 18:24:24' prior: 0!
 This is a second order (12 dB/oct) band-pass filter based on a biquad.!
@@ -2431,6 +2477,10 @@ stage
 value
 	^ value! !
 
+!EG methodsFor: 'controlling' stamp: 'len 7/Mar/2026 18:51:07'!
+adjustVelocityBy: aNumber
+	velocity := velocity + aNumber min: 1.0 max: 0.0! !
+
 !EG methodsFor: 'controlling' stamp: 'len 29/Nov/2025 15:46:00'!
 gateOff
 	^ self! !
@@ -2923,6 +2973,237 @@ setOutputL: aBuffer
 	outputL := aBuffer! !
 
 !Chorus methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:10:06'!
+setOutputR: aBuffer
+	outputR := aBuffer! !
+
+!StereoEcho methodsFor: 'controlling' stamp: 'len 6/Mar/2026 22:26:43'!
+reset
+	delayLineL reset.
+	tapL reset.
+	delayLineR reset.
+	tapR reset.
+	lpfL reset.
+	hpfL reset.
+	lsfL reset.
+	hsfL reset.
+	lpfR reset.
+	hpfR reset.
+	lsfR reset.
+	hsfR reset! !
+
+!StereoEcho methodsFor: 'controlling' stamp: 'len 7/Mar/2026 19:06:04'!
+update
+	| delay thirtyMsecs bass treble spread lpfSpread trebleSpread |
+	super update.
+	thirtyMsecs := self class sampleRate * 0.03.
+	delay := (self get: #time) * self class sampleRate.
+	tapL setDelayIncrement: delay - tapL delay / thirtyMsecs. "slide over 30 ms"
+	tapR setDelayIncrement: delay - tapR delay / thirtyMsecs. "slide over 30 ms"
+	spread := self get: #spread.
+	lpfSpread := 1500.0 * spread. "± 1.5 kHz"
+	lpfL pole: 8000.0 - lpfSpread / self class sampleRate. "8 kHz - spreading"
+	lpfR pole: 8000.0 + lpfSpread / self class sampleRate. "8 kHz + spreading"
+	bass := self get: #bass.
+	treble := self get: #treble.
+	trebleSpread := (3.0 * spread) decibelsToLinear. "± 3 dB"
+	lsfL ls: 120.0 / self class sampleRate Q: 0.707 gain: bass. "120 Hz"
+	lsfR ls: 120.0 / self class sampleRate Q: 0.707 gain: bass. "120 Hz"
+	hsfL hs: 4000.0 / self class sampleRate Q: 0.707 gain: treble / trebleSpread. "4 kHz"
+	hsfR hs: 4000.0 / self class sampleRate Q: 0.707 gain: treble * trebleSpread "4 kHz"! !
+
+!StereoEcho methodsFor: 'initialization' stamp: 'len 6/Mar/2026 22:07:27'!
+initialize
+	super initialize.
+	delayLineL := DelayLine new: (self class sampleRate * 2) ceiling.
+	tapL := DelayLineTap on: delayLineL.
+	delayLineR := DelayLine new: (self class sampleRate * 2) ceiling.
+	tapR := DelayLineTap on: delayLineR.
+	lpfL := OnePole new pole: 8000.0 / self class sampleRate. "8 kHz"
+	hpfL := OnePole new pole: 40.0 / self class sampleRate. "40 Hz"
+	lsfL := Biquad new.
+	hsfL := Biquad new.
+	lpfR := OnePole new pole: 8000.0 / self class sampleRate. "8 kHz"
+	hpfR := OnePole new pole: 40.0 / self class sampleRate. "40 Hz"
+	lsfR := Biquad new.
+	hsfR := Biquad new! !
+
+!StereoEcho methodsFor: 'initialization' stamp: 'len 7/Mar/2026 16:08:59'!
+initializeControls
+	super initializeControls.
+	self addTimeControl: #time min: 0.240 "240 ms" max: 2.0 "2 s" value: 0.5 "500 ms".
+	self addControl: #feedback min: 0.0 max: 1.0 value: 0.0.
+	self addControl: #width min: -1.0 max: 1.0 value: 0.0.
+	self addControl: #spread min: 0.0 max: 1.0 value: 0.5.
+	self addVolumeControl: #bass min: 0.4 max: 2.5 value: 1.0. "-8 dB to 8 dB"
+	self addVolumeControl: #treble min: 0.4 max: 2.5 value: 1.0. "-8 dB to 8 dB"
+	self addDryWetControl: #mix value: 0.5! !
+
+!StereoEcho methodsFor: 'processing' stamp: 'len 7/Mar/2026 20:44:12'!
+tick
+	| feedback wet dry width gain1 gain2 |
+	inputL ifNil: [^ self].
+	outputL ifNil: [^ self].
+	feedback := self get: #feedback.
+	wet := self get: #mix.
+	dry := 1.0 - wet.
+	width := self get: #width.
+	gain2 := width <= 0 ifTrue: [width * -0.5] ifFalse: [width].
+	gain1 := 1.0 - gain2.
+	1 to: inputL size do: [:i|
+		| echoL echoR inL inR writeL writeR outL outR |
+		echoL := hsfL value: (lsfL value: tapL read). "bass and treble shelves for the echo"
+		echoR := hsfR value: (lsfR value: tapR read).
+		inL := inputL at: i.
+		inR := inputR ifNil: [0.0] ifNotNil: [inputR at: i].
+		outL := echoL * gain1 + (echoR * gain2).
+		writeL := outL * feedback + inL.
+		writeL := (writeL * 1.5) tanh. "saturation"
+		writeL := lpfL value: writeL - (hpfL value: writeL). "lpf and hpf one-poles for bandwidth loss when writing to the tape"
+		outR := echoR * gain1 + (echoL * gain2).
+		writeR := outR * feedback + inR.
+		writeR := (writeR * 1.5) tanh.
+		writeR := lpfR value: writeR - (hpfR value: writeR).
+		delayLineL write: writeL.
+		delayLineR write: writeR.
+		outputL at: i put: inL * dry + (outL * wet).
+		outputR ifNotNil: [outputR at: i put: inR * dry + (outR * wet)]]! !
+
+!StereoEcho methodsFor: 'tools' stamp: 'len 6/Mar/2026 22:21:32'!
+panel
+	^ ControlPanel new
+		addKnob: (controls at: #time) label: 'Time';
+		addKnob: (controls at: #feedback) label: 'FB';
+		addKnob: (controls at: #width) label: 'Width'! !
+
+!StereoEcho methodsFor: 'tools' stamp: 'len 7/Mar/2026 16:09:58'!
+panel2
+	^ ControlPanel new
+		addSmallKnob: (controls at: #bass) label: 'Bass';
+		addSmallKnob: (controls at: #treble) label: 'Treble';
+		addSmallKnob: (controls at: #spread) label: 'Spread';
+		addSmallKnob: (controls at: #mix) label: 'Mix'! !
+
+!StereoEcho methodsFor: 'tools' stamp: 'len 6/Mar/2026 22:22:19'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self panel.
+	answer flap addMorph: self panel2.
+	^ answer
+		addAudioInput: #setInputL:;
+		addAudioInput: #setInputR:;
+		addAudioOutput: #setOutputL:;
+		addAudioOutput: #setOutputR:;
+		addControlInput: #time;
+		addControlInput: #feedback;
+		yourself! !
+
+!StereoEcho methodsFor: 'wiring' stamp: 'len 6/Mar/2026 22:20:24'!
+setInputL: aBuffer
+	inputL := aBuffer! !
+
+!StereoEcho methodsFor: 'wiring' stamp: 'len 6/Mar/2026 22:20:28'!
+setInputR: aBuffer
+	inputR := aBuffer! !
+
+!StereoEcho methodsFor: 'wiring' stamp: 'len 6/Mar/2026 22:20:42'!
+setOutputL: aBuffer
+	outputL := aBuffer! !
+
+!StereoEcho methodsFor: 'wiring' stamp: 'len 6/Mar/2026 22:20:36'!
+setOutputR: aBuffer
+	outputR := aBuffer! !
+
+!StereoReverb methodsFor: 'controlling' stamp: 'len 7/Mar/2026 16:25:04'!
+reset
+	predelayLine reset.
+	combsL do: [:each| each reset].
+	allpassesL do: [:each| each reset].
+	combsR do: [:each| each reset].
+	allpassesR do: [:each| each reset]! !
+
+!StereoReverb methodsFor: 'controlling' stamp: 'len 7/Mar/2026 16:25:15'!
+update
+	| damp decay |
+	super update.
+	predelayTap setDelayIncrement: ((self get: #predelay) * self class sampleRate - predelayTap delay) / self class blockSize.
+	decay := self get: #decay.
+	damp := self get: #damp.
+	combsL do: [:each| each feedback: decay; damp: damp].
+	combsR do: [:each| each feedback: decay; damp: damp]! !
+
+!StereoReverb methodsFor: 'initialization' stamp: 'len 7/Mar/2026 16:24:34'!
+initialize
+	super initialize.
+	predelayLine := DelayLine new: (self class sampleRate * 0.15) ceiling. "150 ms"
+	predelayTap := DelayLineTap on: predelayLine.
+	combsL := #(1116 1188 1277 1356 1422 1491 1557 1617) collect: [:each| LowpassComb new: (each * self class sampleRate / 44100.0) truncated].
+	allpassesL := #(556 441 341 225) collect: [:each| AllpassComb new: (each * self class sampleRate / 44100.0) truncated].
+	"for stereo effect, right side uses longer delays by 23 samples:"
+	combsR := #(1116 1188 1277 1356 1422 1491 1557 1617) collect: [:each| LowpassComb new: ((each + 23) * self class sampleRate / 44100.0) truncated].
+	allpassesR := #(556 441 341 225) collect: [:each| AllpassComb new: ((each + 23) * self class sampleRate / 44100.0) truncated]! !
+
+!StereoReverb methodsFor: 'initialization' stamp: 'len 7/Mar/2026 18:32:22'!
+initializeControls
+	super initializeControls.
+	self addTimeControl: #predelay min: 0.0001 "0.1 ms" max: 0.15 "150 ms" value: 0.005 "5 ms".
+	self addControl: #decay min: 0.01 max: 1.0 value: 0.5.
+	self addControl: #damp min: 0.0 max: 1.0 value: 0.5.
+	self addControl: #width min: 0.0 max: 1.0 value: 1.0.
+	self addDryWetControl: #mix value: 0.5! !
+
+!StereoReverb methodsFor: 'processing' stamp: 'len 7/Mar/2026 18:30:01'!
+tick
+	| width width2 wet dry |
+	inputL ifNil: [^ self].
+	outputL ifNil: [^ self].
+	width := (self get: #width) / 2.0 + 0.5. "0 -> 0.5, 1 -> 1.0"
+	width2 := 1.0 - width. "0 -> 0.5, 1 -> 0.0"
+	wet := self get: #mix.
+	dry := 1.0 - wet.
+	1 to: inputL size do: [:i|
+		| inL inR delayed outL outR |
+		inL := inputL at: i.
+		inputR
+			ifNil: [inR := inL. predelayLine write: inL]
+			ifNotNil: [inR := inputR at: i. predelayLine write: (inL + inR) * 0.5].
+		delayed := predelayTap read.
+		outL := 0.0.
+		combsL do: [:each| outL := (each value: delayed) + outL].
+		allpassesL do: [:each| outL := each value: outL].
+		outL := outL * wet.
+		outputR
+			ifNil: [outputL at: i put: inL * dry + outL]
+			ifNotNil:
+				[outR:= 0.0.
+				combsR do: [:each| outR := (each value: delayed) + outR].
+				allpassesR do: [:each| outR := each value: outR].
+				outR := outR * wet.
+				outputL at: i put: inL * dry + (outR * width) + (outL * width2).
+				outputR at: i put: inR * dry + (outR * width2) + (outL * width)]]! !
+
+!StereoReverb methodsFor: 'tools' stamp: 'len 7/Mar/2026 16:27:38'!
+patchable
+	^ super patchable
+		addAudioInput: #setInputL: label: 'In L/M';
+		addAudioInput: #setInputR: label: 'In R';
+		addAudioOutput: #setOutputL: label: 'Out L/M';
+		addAudioOutput: #setOutputR: label: 'Out R';
+		yourself! !
+
+!StereoReverb methodsFor: 'wiring' stamp: 'len 7/Mar/2026 16:14:28'!
+setInputL: aBuffer
+	inputL := aBuffer! !
+
+!StereoReverb methodsFor: 'wiring' stamp: 'len 7/Mar/2026 16:14:57'!
+setInputR: aBuffer
+	inputR := aBuffer! !
+
+!StereoReverb methodsFor: 'wiring' stamp: 'len 7/Mar/2026 16:15:10'!
+setOutputL: aBuffer
+	outputL := aBuffer! !
+
+!StereoReverb methodsFor: 'wiring' stamp: 'len 7/Mar/2026 16:15:05'!
 setOutputR: aBuffer
 	outputR := aBuffer! !
 
@@ -4254,6 +4535,10 @@ label
 label: aString
 	label := aString! !
 
+!Multisample methodsFor: 'controlling' stamp: 'len 7/Mar/2026 18:51:22'!
+adjustVelocityBy: aNumber
+	velocity := velocity + aNumber min: 1.0 max: 0.0! !
+
 !Multisample methodsFor: 'controlling' stamp: 'len 21/Jan/2026 04:38:16'!
 gateOff
 	sample ifNotNil: [sample gateOff]! !
@@ -5512,12 +5797,16 @@ value: in
 	allpasses do: [:each| out := each value: out].
 	^ out * mix + (in * (1.0 - mix))! !
 
-!TapeEcho methodsFor: 'controlling' stamp: 'len 25/Feb/2026 00:17:35'!
+!TapeEcho methodsFor: 'controlling' stamp: 'len 6/Mar/2026 22:26:12'!
 reset
 	delayLine reset.
 	tap1 reset.
 	tap2 reset.
-	tap3 reset! !
+	tap3 reset.
+	lpf reset.
+	hpf reset.
+	lsf reset.
+	hsf reset! !
 
 !TapeEcho methodsFor: 'controlling' stamp: 'len 3/Mar/2026 16:37:29'!
 update
@@ -6995,6 +7284,10 @@ patchable
 		addControlInput: #amount;
 		addControlOutput: #output: label: 'Out'.
 	^ answer! !
+
+!VelocityTracker methodsFor: 'controlling' stamp: 'len 7/Mar/2026 18:51:28'!
+adjustVelocityBy: aNumber
+	velocity := velocity + aNumber min: 1.0 max: 0.0! !
 
 !VelocityTracker methodsFor: 'controlling' stamp: 'len 10/Feb/2026 17:04:27'!
 setVelocity: aNumber
@@ -10077,7 +10370,7 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 1/Mar/2026 19:24:18'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 7/Mar/2026 18:54:07'!
 handleInputKey: anEvent
 	| c i |
 	anEvent isBackspace ifTrue:
@@ -10101,7 +10394,7 @@ handleInputKey: anEvent
 			^ true].
 		^ false].
 	(cursorPosition = 6 or: [cursorPosition = 9]) ifTrue:
-		[('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>' includes: (c := anEvent keyCharacter asUppercase)) ifTrue:
+		[('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>+-' includes: (c := anEvent keyCharacter asUppercase)) ifTrue:
 			[tracker selectedTriggerAt: cursorPosition put: c codePoint.
 			self moveCursorRight.
 			^ true].
@@ -12991,6 +13284,24 @@ new: anIntegerPowerOfTwo
 	^ self new setSize: anIntegerPowerOfTwo
 ! !
 
+!FIR methodsFor: 'as yet unclassified' stamp: 'len 7/Mar/2026 14:48:27'!
+coefficients: anArray
+	coefficients := anArray.
+	state := Float64Array new: anArray size! !
+
+!FIR methodsFor: 'as yet unclassified' stamp: 'len 7/Mar/2026 14:58:31'!
+value: in
+	state replaceFrom: 1 to: state size - 1 with: state startingAt: 2; at: state size put: in.
+	^ state dot: coefficients! !
+
+!IIR methodsFor: 'as yet unclassified' stamp: 'len 7/Mar/2026 14:58:21'!
+value: in
+	| n out |
+	n := stateIn size.
+	stateIn replaceFrom: 1 to: n - 1 with: stateIn startingAt: 2; at: n put: in.
+	out := (stateIn dot: numerators) - (stateOut dot: denominators).
+	^ stateOut replaceFrom: 1 to: n - 1 with: stateOut startingAt: 2; at: n put: out! !
+
 !LagrangeOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:26:13'!
 initialize
 	self reset! !
@@ -13394,12 +13705,16 @@ adjustNoteBy: aNumber
 adjustPanBy: aNumber
 	audioOutput ifNotNil: [audioOutput adjustPanBy: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 3/Mar/2026 23:12:03'!
+!Instrument methodsFor: 'playing' stamp: 'len 7/Mar/2026 18:50:20'!
+adjustVelocityBy: aNumber
+	velocityReceivers do: [:each| each adjustVelocityBy: aNumber]! !
+
+!Instrument methodsFor: 'playing' stamp: 'len 7/Mar/2026 18:56:44'!
 handleFX: anInteger
 	| command |
 	command := anInteger bitShift: -8.
 	command = 67 "C (cut velocity)" ifTrue: [track scheduleTrigger: (Trigger new velocity: ((anInteger bitShift: -4) bitAnd: 16rF) / 15.0) after: (anInteger bitAnd: 16rF) / 15.0 * track tracker tpl. ^ self].
-	command = 82 "R (retrigger)" ifTrue: [track scheduleTrigger: trigger after: (anInteger bitAnd: 16rFF) / 255.0 * track tracker tpl. ^ self].
+	command = 82 "R (retrigger)" ifTrue: [track scheduleTrigger: (trigger copy velocity: nil) after: (anInteger bitAnd: 16rFF) / 255.0 * track tracker tpl. ^ self].
 	command = 71 "G (glide)" ifTrue: [self setGlide: (anInteger bitAnd: 16rFF) / 255.0. ^ self].
 	command = 76 "L (volume level)" ifTrue: [self setLevel:​ (anInteger bitAnd: 16rFF) / 255.0. ^ self].
 	command = 80 "P (pan)" ifTrue: [self setPan:  (anInteger bitAnd: 16rFF) / 255.0 * 2.0 - 1.0. ^ self].
@@ -13409,6 +13724,8 @@ handleFX: anInteger
 	command = 75 "K (pan right)" ifTrue: [self adjustPanBy: (anInteger bitAnd: 16rFF) / 255.0].
 	command = 85 "U (pitch up)" ifTrue: [self adjustNoteBy: (anInteger bitAnd: 16rFF) / 255.0].
 	command = 68 "D (pitch down)" ifTrue: [self adjustNoteBy: (anInteger bitAnd: 16rFF) / -255.0].
+	command = 43 "+ (velocity up)" ifTrue: [self adjustVelocityBy: (anInteger bitAnd: 16rFF) / 255.0].
+	command = 45 "- (velocity down)" ifTrue: [self adjustVelocityBy: (anInteger bitAnd: 16rFF) / -255.0].
 	"Sample commands:"
 	command = 83 "S (sample offset)" ifTrue: [self setOffset: (anInteger bitAnd: 16rFF) / 255.0. ^ self].
 	command = 60 "< (speed backwards)" ifTrue: [self setSpeed: (anInteger bitAnd: 16rFF) / -255.0. ^ self].

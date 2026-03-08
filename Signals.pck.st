@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 7 March 2026 at 8:51:08 pm'!
+'From Cuis7.7 [latest update: #7797] on 8 March 2026 at 3:10:31 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 483!
+!provides: 'Signals' 1 484!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1649,7 +1649,7 @@ Track class
 
 !classDefinition: #Tracker category: #'Signals-Tracker'!
 Object subclass: #Tracker
-	instanceVariableNames: 'instruments tracks sequence label bpm lpb swing level inputCenterKey cursorPattern cursorLine cursorTrack playheadPattern playheadLine followPlayhead anyTrackSoloed ticksToLine peakLeft peakRight buses'
+	instanceVariableNames: 'instruments tracks sequence label bpm lpb swing level inputCenterKey cursorPattern cursorLine cursorTrack playheadPattern playheadLine followPlayhead playStartPattern playStartLine playEndPattern playEndLine loop anyTrackSoloed ticksToLine peakLeft peakRight buses'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Tracker'!
@@ -2991,7 +2991,7 @@ reset
 	lsfR reset.
 	hsfR reset! !
 
-!StereoEcho methodsFor: 'controlling' stamp: 'len 7/Mar/2026 19:06:04'!
+!StereoEcho methodsFor: 'controlling' stamp: 'len 7/Mar/2026 22:34:19'!
 update
 	| delay thirtyMsecs bass treble spread lpfSpread trebleSpread |
 	super update.
@@ -3001,8 +3001,8 @@ update
 	tapR setDelayIncrement: delay - tapR delay / thirtyMsecs. "slide over 30 ms"
 	spread := self get: #spread.
 	lpfSpread := 1500.0 * spread. "± 1.5 kHz"
-	lpfL pole: 8000.0 - lpfSpread / self class sampleRate. "8 kHz - spreading"
-	lpfR pole: 8000.0 + lpfSpread / self class sampleRate. "8 kHz + spreading"
+	lpfL pole: 6000.0 - lpfSpread / self class sampleRate. "6 kHz - spreading"
+	lpfR pole: 6000.0 + lpfSpread / self class sampleRate. "6 kHz + spreading"
 	bass := self get: #bass.
 	treble := self get: #treble.
 	trebleSpread := (3.0 * spread) decibelsToLinear. "± 3 dB"
@@ -7704,9 +7704,9 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $m ifTrue: [model toggleTrackMask. ^ true].
 	^ false! !
 
-!TrackerWindow methodsFor: 'events' stamp: 'len 24/Feb/2026 01:15:00'!
+!TrackerWindow methodsFor: 'events' stamp: 'len 8/Mar/2026 04:15:04'!
 keyStroke: anEvent
-	anEvent isSpace ifTrue: [model togglePlay. ^ true].
+	anEvent isSpace ifTrue: [model isPlaying ifTrue: [model stop] ifFalse: [model play]. ^ true].
 	(anEvent commandAltKeyPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
 		[anEvent wasHandled: true.
 		^ self].
@@ -10194,6 +10194,14 @@ moveCursorRight
 			[cursorPosition := cursorPosition + 1].
 	self redrawNeeded! !
 
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 7/Mar/2026 23:22:43'!
+playSelection
+	| cursorPattern cursorLine |
+	cursorPattern := tracker cursorPattern.
+	cursorLine := tracker cursorLine.
+	selectionLineStart ifNil: [tracker playFrom: cursorPattern line: cursorLine to: cursorPattern line: cursorLine. ^ self].
+	tracker playFrom: cursorPattern line: (selectionLineStart min: cursorLine) to: cursorPattern line: (selectionLineStart max: cursorLine)! !
+
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 24/Feb/2026 01:30:51'!
 selectedTriggersDo: aBlock
 	| pattern |
@@ -10413,11 +10421,13 @@ handleInputKey: anEvent
 		^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:08:42'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 8/Mar/2026 04:16:19'!
 handleKeyStroke: anEvent
 	((anEvent rawMacOptionKeyPressed or: [anEvent controlKeyPressed]) and: [self handleOptionHotkey: anEvent]) ifTrue: [^ true].
 	(anEvent commandAltKeyPressed and: [self handleCommandHotkey: anEvent]) ifTrue: [^ true].
-	(anEvent shiftPressed and: [anEvent isArrow]) ifTrue: [self handleSelectionKey: anEvent. ^ true].
+	anEvent shiftPressed ifTrue:
+		[anEvent isArrow ifTrue: [self handleSelectionKey: anEvent. ^ true].
+		anEvent isSpace ifTrue: [tracker isPlaying ifTrue: [tracker stop] ifFalse: [self playSelection]. ^ true]].
 	anEvent isNavigation ifTrue: [self handleNavigationKey: anEvent. ^ true].
 	anEvent keyCharacter = $\ ifTrue:
 		[anEvent wasHandled: true.
@@ -14318,7 +14328,7 @@ setCursorTrack: anInteger
 	cursorTrack := anInteger.
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'initialization' stamp: 'len 5/Mar/2026 15:33:42'!
+!Tracker methodsFor: 'initialization' stamp: 'len 7/Mar/2026 23:07:42'!
 initialize
 	instruments := Dictionary new.
 	tracks := #().
@@ -14334,6 +14344,9 @@ initialize
 	playheadPattern := 1.
 	playheadLine := 0.
 	followPlayhead := false.
+	loop := false.
+	playStartPattern := 1.
+	playStartLine := 1.
 	anyTrackSoloed := false.
 	buses := Dictionary new at: 0 put: Bus new; yourself. "the master bus at 0"
 	peakLeft := 0.0.
@@ -14435,26 +14448,36 @@ swapPattern: anInteger with: anotherInteger
 isPlaying
 	^ AudioPlayer isPlaying: self! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 6/Mar/2026 17:22:44'!
+!Tracker methodsFor: 'playing' stamp: 'len 7/Mar/2026 23:12:40'!
 play
+	self playFrom: cursorPattern line: cursorLine to: sequence size line: sequence last key length! !
+
+!Tracker methodsFor: 'playing' stamp: 'len 7/Mar/2026 23:11:04'!
+playFrom: startPattern line: startLine to: endPattern line: endLine
 	self isPlaying ifTrue: [^ self].
-	playheadPattern := cursorPattern.
-	playheadLine := cursorLine - 1.
+	playStartPattern := startPattern.
+	playStartLine := startLine.
+	playEndPattern := endPattern.
+	playEndLine := endLine.
+	playheadPattern := playStartPattern.
+	playheadLine := playStartLine - 1.
 	ticksToLine := 0.
 	buses keys do: [:each| each = 0 ifFalse: [buses removeKey: each]]. "remove all buses except the master"
 	AudioPlayer startPlaying: self.
 	self triggerEvent: #playheadChanged.
 	self triggerEvent: #playingStatusChanged! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 26/Feb/2026 17:19:46'!
-playLine
+!Tracker methodsFor: 'playing' stamp: 'len 7/Mar/2026 23:30:03'!
+playLineIfFinished: aBlock
 	| pattern mask ticksPerLine ticksSwing |
 	"Advance playhead:"
 	playheadLine := playheadLine + 1.
+	(playheadPattern = playEndPattern and: [playheadLine > playEndLine]) ifTrue:
+		[loop ifTrue: [playheadPattern := playStartPattern. playheadLine := playStartLine] ifFalse: [^ aBlock value]].
 	playheadLine > (sequence at: playheadPattern) key length ifTrue:
-		[playheadPattern < sequence size
+		[playheadPattern < playEndPattern
 			ifTrue: [playheadLine := 1. playheadPattern := playheadPattern + 1]
-			ifFalse: [playheadPattern := 1. playheadLine := 1]].
+			ifFalse: [loop ifTrue: [playheadPattern := playStartPattern. playheadLine := playStartLine] ifFalse: [^ aBlock value]]].
 	"Notify playhead change and update cursor if following playhead:"
 	self triggerEvent: #playheadChanged.
 	followPlayhead ifTrue:
@@ -14472,7 +14495,7 @@ playLine
 	(playheadLine \\ lpb) even ifTrue: [ticksSwing := ticksSwing negated].
 	ticksToLine := ticksToLine + ticksSwing! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 5/Mar/2026 15:35:24'!
+!Tracker methodsFor: 'playing' stamp: 'len 7/Mar/2026 23:00:01'!
 playSampleCount: n into: anAudioBuffer startingAt: startIndex
 	| blockSize i masterGain mask masterBus |
 	blockSize := Module blockSize.
@@ -14482,7 +14505,7 @@ playSampleCount: n into: anAudioBuffer startingAt: startIndex
 	mask := self playingMask.
 	masterBus := buses at: 0.
 	n // blockSize timesRepeat:
-		[ticksToLine > 0 ifTrue: [ticksToLine := ticksToLine - 1] ifFalse: [self playLine. mask := self playingMask].
+		[ticksToLine > 0 ifTrue: [ticksToLine := ticksToLine - 1] ifFalse: [self playLineIfFinished: [^ i - startIndex]. mask := self playingMask].
 		buses do: [:each| each clear].
 		mask withIndexDo: [:enabled :trackIndex| enabled ifTrue: [(tracks at: trackIndex) tick]].
 		masterBus leftBuffer *= masterGain.
@@ -14520,10 +14543,6 @@ stop
 toggleFollowPlayhead
 	followPlayhead := followPlayhead not.
 	self triggerEvent: #followPlayheadChanged! !
-
-!Tracker methodsFor: 'playing' stamp: 'len 3/Jan/2026 03:27:32'!
-togglePlay
-	self isPlaying ifTrue: [self stop] ifFalse: [self play]! !
 
 !Tracker methodsFor: 'serialization' stamp: 'len 21/Feb/2026 16:54:14'!
 asJsonWithBuffers: bufferList

@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 9 March 2026 at 4:33:31 pm'!
+'From Cuis7.7 [latest update: #7797] on 9 March 2026 at 5:35:50 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 486!
+!provides: 'Signals' 1 487!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1689,7 +1689,7 @@ Track class
 
 !classDefinition: #Tracker category: #'Signals-Tracker'!
 Object subclass: #Tracker
-	instanceVariableNames: 'instruments tracks sequence label bpm lpb swing level inputCenterKey cursorPattern cursorLine cursorTrack playheadPattern playheadLine followPlayhead playStartPattern playStartLine playEndPattern playEndLine playingMask loop anyTrackSoloed ticksToLine peakLeft peakRight buses'
+	instanceVariableNames: 'instruments tracks sequence label bpm lpb swing level inputCenterKey cursorPattern cursorLine cursorTrack playheadPattern playheadLine followPlayhead playStartPattern playStartLine playEndPattern playEndLine playingMask loop anyTrackSoloed ticksToLine peakLeft peakRight buses random'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Tracker'!
@@ -2719,6 +2719,12 @@ setOutput: aBuffer
 reset
 	envelope := 0.0! !
 
+!Compressor methodsFor: 'controlling' stamp: 'len 9/Mar/2026 16:39:43'!
+update
+	super update.
+	hpf undenormalize.
+	rmslpf undenormalize! !
+
 !Compressor methodsFor: 'initialization' stamp: 'len 9/Mar/2026 00:26:02'!
 initialize
 	super initialize.
@@ -3317,7 +3323,7 @@ reset
 	lsfR reset.
 	hsfR reset! !
 
-!StereoEcho methodsFor: 'controlling' stamp: 'len 7/Mar/2026 22:34:19'!
+!StereoEcho methodsFor: 'controlling' stamp: 'len 9/Mar/2026 16:43:26'!
 update
 	| delay thirtyMsecs bass treble spread lpfSpread trebleSpread |
 	super update.
@@ -3327,15 +3333,17 @@ update
 	tapR setDelayIncrement: delay - tapR delay / thirtyMsecs. "slide over 30 ms"
 	spread := self get: #spread.
 	lpfSpread := 1500.0 * spread. "± 1.5 kHz"
-	lpfL pole: 6000.0 - lpfSpread / self class sampleRate. "6 kHz - spreading"
-	lpfR pole: 6000.0 + lpfSpread / self class sampleRate. "6 kHz + spreading"
+	lpfL undenormalize; pole: 6000.0 - lpfSpread / self class sampleRate. "6 kHz - spreading"
+	lpfR undenormalize; pole: 6000.0 + lpfSpread / self class sampleRate. "6 kHz + spreading"
+	hpfL undenormalize.
+	hpfR undenormalize.
 	bass := self get: #bass.
 	treble := self get: #treble.
 	trebleSpread := (3.0 * spread) decibelsToLinear. "± 3 dB"
-	lsfL ls: 120.0 / self class sampleRate Q: 0.707 gain: bass. "120 Hz"
-	lsfR ls: 120.0 / self class sampleRate Q: 0.707 gain: bass. "120 Hz"
-	hsfL hs: 4000.0 / self class sampleRate Q: 0.707 gain: treble / trebleSpread. "4 kHz"
-	hsfR hs: 4000.0 / self class sampleRate Q: 0.707 gain: treble * trebleSpread "4 kHz"! !
+	lsfL undenormalize; ls: 120.0 / self class sampleRate Q: 0.707 gain: bass. "120 Hz"
+	lsfR undenormalize; ls: 120.0 / self class sampleRate Q: 0.707 gain: bass. "120 Hz"
+	hsfL undenormalize; hs: 4000.0 / self class sampleRate Q: 0.707 gain: treble / trebleSpread. "4 kHz"
+	hsfR undenormalize; hs: 4000.0 / self class sampleRate Q: 0.707 gain: treble * trebleSpread. "4 kHz"! !
 
 !StereoEcho methodsFor: 'initialization' stamp: 'len 6/Mar/2026 22:07:27'!
 initialize
@@ -3448,15 +3456,15 @@ reset
 	combsR do: [:each| each reset].
 	allpassesR do: [:each| each reset]! !
 
-!StereoReverb methodsFor: 'controlling' stamp: 'len 9/Mar/2026 15:56:20'!
+!StereoReverb methodsFor: 'controlling' stamp: 'len 9/Mar/2026 16:46:06'!
 update
 	| feedback damp |
 	super update.
 	predelayTap setDelayIncrement: ((self get: #predelay) * self class sampleRate - predelayTap delay) / self class blockSize.
 	feedback := self get: #feedback.
 	damp := self get: #damp.
-	combsL do: [:each| each feedback: feedback; damp: damp].
-	combsR do: [:each| each feedback: feedback; damp: damp]! !
+	combsL do: [:each| each undenormalize; feedback: feedback; damp: damp].
+	combsR do: [:each| each undenormalize; feedback: feedback; damp: damp]! !
 
 !StereoReverb methodsFor: 'initialization' stamp: 'len 7/Mar/2026 16:24:34'!
 initialize
@@ -4741,7 +4749,7 @@ reset
 	phases atAllPut: 0.0.
 	filter reset! !
 
-!TransistorOrgan methodsFor: 'controlling' stamp: 'len 14/Feb/2026 22:32:43'!
+!TransistorOrgan methodsFor: 'controlling' stamp: 'len 9/Mar/2026 16:40:16'!
 update
 	| f0 r4 |
 	super update.
@@ -4755,7 +4763,8 @@ update
 		at: 4 put: r4;
 		at: 5 put: r4;
 		at: 6 put: r4;
-		at: 7 put: r4! !
+		at: 7 put: r4.
+	filter undenormalize! !
 
 !TransistorOrgan methodsFor: 'initialization' stamp: 'len 14/Feb/2026 17:44:42'!
 initialize
@@ -6086,13 +6095,21 @@ initialize
 	combs := #(1116 1188 1277 1356 1422 1491 1557 1617) collect: [:each| LowpassComb new: (each * self class sampleRate / 44100.0) truncated].
 	allpasses := #(556 441 341 225) collect: [:each| AllpassComb new: (each * self class sampleRate / 44100.0) truncated]! !
 
-!Reverb methodsFor: 'as yet unclassified' stamp: 'len 6/Mar/2026 19:20:37'!
+!Reverb methodsFor: 'as yet unclassified' stamp: 'len 9/Mar/2026 16:47:21'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #predelay min: 0.0001 "0.1 ms" max: 0.15 "150 ms" value: 0.005 "5 ms".
-	self addLogControl: #decay min: 0.01 max: 1.0 value: 0.5.
+	self addLogControl: #feedback min: 0.01 max: 1.0 value: 0.5.
 	self addControl: #damp min: 0.0 max: 1.0 value: 0.5.
 	self addDryWetControl: #mix value: 0.5! !
+
+!Reverb methodsFor: 'as yet unclassified' stamp: 'len 9/Mar/2026 16:47:32'!
+panel
+	^ ControlPanel new
+		addKnob: (controls at: #predelay) label: 'Delay';
+		addKnob: (controls at: #feedback) label: 'FB';
+		addKnob: (controls at: #damp) label: 'Damp';
+		addKnob: (controls at: #mix) label: 'Mix'! !
 
 !Reverb methodsFor: 'as yet unclassified' stamp: 'len 6/Mar/2026 18:57:31'!
 reset
@@ -6100,14 +6117,14 @@ reset
 	combs do: [:each| each reset].
 	allpasses do: [:each| each reset]! !
 
-!Reverb methodsFor: 'as yet unclassified' stamp: 'len 6/Mar/2026 17:20:07'!
+!Reverb methodsFor: 'as yet unclassified' stamp: 'len 9/Mar/2026 16:48:24'!
 update
-	| damp decay |
+	| feedback damp |
 	super update.
 	predelayTap setDelayIncrement: ((self get: #predelay) * self class sampleRate - predelayTap delay) / self class blockSize.
-	decay := self get: #decay.
+	feedback := self get: #feedback.
 	damp := self get: #damp.
-	combs do: [:each| each feedback: decay; damp: damp].
+	combs do: [:each| each undenormalize; feedback: feedback; damp: damp].
 	mix := self get: #mix! !
 
 !Reverb methodsFor: 'as yet unclassified' stamp: 'len 6/Mar/2026 19:08:33'!
@@ -6131,7 +6148,7 @@ reset
 	lsf reset.
 	hsf reset! !
 
-!TapeEcho methodsFor: 'controlling' stamp: 'len 3/Mar/2026 16:37:29'!
+!TapeEcho methodsFor: 'controlling' stamp: 'len 9/Mar/2026 16:44:19'!
 update
 	| delay1 delay2 delay3 thirtyMsecs |
 	super update.
@@ -6147,8 +6164,10 @@ update
 	level3 := self get: #'3'.
 	feedback := self get: #feedback.
 	mix := self get: #mix.
-	lsf ls: 120.0 / self class sampleRate Q: 0.707 gain: (self get: #bass). "120 Hz"
-	hsf hs: 4000.0 / self class sampleRate Q: 0.707 gain: (self get: #treble) "4 kHz"! !
+	lpf undenormalize.
+	hpf undenormalize.
+	lsf undenormalize; ls: 120.0 / self class sampleRate Q: 0.707 gain: (self get: #bass). "120 Hz"
+	hsf undenormalize; hs: 4000.0 / self class sampleRate Q: 0.707 gain: (self get: #treble) "4 kHz"! !
 
 !TapeEcho methodsFor: 'initialization' stamp: 'len 3/Mar/2026 16:36:09'!
 initialize
@@ -10576,16 +10595,16 @@ drawOn: aCanvas
 	self drawCursorOn: aCanvas.
 	self drawPatternOn: aCanvas! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Mar/2026 23:02:46'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 9/Mar/2026 17:13:53'!
 drawPatternOn: aCanvas
 	| lineSpacing charWidth y unsetColor noteColor velocityColor pattern endLine middle startLine darkColor lightColor xLeft xRight beatColor trackWidth |
 	pattern := tracker selectedPattern.
 	lineSpacing := font lineSpacing.
 	charWidth := font widthOf: $X.
 	trackWidth := charWidth * (self tracksWidthInCharacters + 0.5).
-	unsetColor := Color lightGray.
+	unsetColor := self class unsetColor.
 	noteColor := Color white.
-	velocityColor := Color lemonPhosphor.
+	velocityColor := self class velocityColor.
 	middle := self morphHeight / 2.0.
 	startLine := tracker cursorLine - ((middle - self headerHeight) / lineSpacing) truncated max: 1.
 	y := middle - (lineSpacing * (tracker cursorLine - startLine)).
@@ -10907,22 +10926,25 @@ update
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 8/Mar/2026 23:01:21'!
+!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 9/Mar/2026 17:33:34'!
 initialize
+	"
+	self initialize
+	"
 	super initialize.
-	FXColors := Array new: 256 withAll: Color lightGray.
+	FXColors := Array new: 256 withAll: self unsetColor.
 	"Controls:"
-	'0123456789' do: [:c| FXColors at: c codePoint put: Color amberAlert].
+	'0123456789' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 80)].
 	"Velocity:"
-	'C+-' do: [:c| FXColors at: c codePoint put: Color lemonPhosphor].
+	'C+-' do: [:c| FXColors at: c codePoint put: self velocityColor].
 	"Samples:"
-	'S<>' do: [:c| FXColors at: c codePoint put: Color cyanPhosphor].
+	'S<>' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 220)].
 	"Pitch:"
-	'UDG' do: [:c| FXColors at: c codePoint put: Color magentaGlow].
+	'UDG' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: -20)].
 	"Volume and Pan:"
-	'LIOJK' do: [:c| FXColors at: c codePoint put: Color emeraldScreen].
+	'LIOJK' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 160)].
 	"Other:"
-	'FQR' do: [:c| FXColors at: c codePoint put: Color white]! !
+	'FQRY' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0 h: 0)]! !
 
 !PatternEditorMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026 19:58:39'!
 cursorColor
@@ -10931,6 +10953,14 @@ cursorColor
 !PatternEditorMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026 20:07:38'!
 selectionColor
 	^ self cursorColor alpha: 0.4! !
+
+!PatternEditorMorph class methodsFor: 'colors' stamp: 'len 9/Mar/2026 17:13:37'!
+unsetColor
+	^ Color lightGray! !
+
+!PatternEditorMorph class methodsFor: 'colors' stamp: 'len 9/Mar/2026 17:12:29'!
+velocityColor
+	^ `Color okl: 0.95 c: 0.2 h: 120`! !
 
 !SequencerMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026 16:11:15'!
 clipboardCopy
@@ -13701,6 +13731,11 @@ reset
 	buffer atAllPut: 0.0.
 	state := 0.0! !
 
+!LowpassComb methodsFor: 'as yet unclassified' stamp: 'len 9/Mar/2026 16:45:40'!
+undenormalize
+	"Clear any denormal state."
+	state abs < 1.0e-15 ifTrue: [state := 0.0]! !
+
 !LowpassComb methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 22:23:03'!
 value: in
 	| y |
@@ -14666,7 +14701,7 @@ setCursorTrack: anInteger
 	cursorTrack := anInteger.
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'initialization' stamp: 'len 7/Mar/2026 23:07:42'!
+!Tracker methodsFor: 'initialization' stamp: 'len 9/Mar/2026 17:34:08'!
 initialize
 	instruments := Dictionary new.
 	tracks := #().
@@ -14689,6 +14724,7 @@ initialize
 	buses := Dictionary new at: 0 put: Bus new; yourself. "the master bus at 0"
 	peakLeft := 0.0.
 	peakRight := 0.0.
+	random := Random new.
 
 	self insertTrack: 1.
 	self insertPattern: 1! !
@@ -14814,7 +14850,7 @@ playFrom: startPattern line: startLine to: endPattern line: endLine tracks: trac
 	self triggerEvent: #playheadChanged.
 	self triggerEvent: #playingStatusChanged! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 7/Mar/2026 23:30:03'!
+!Tracker methodsFor: 'playing' stamp: 'len 9/Mar/2026 17:32:07'!
 playLineIfFinished: aBlock
 	| pattern mask ticksPerLine ticksSwing |
 	"Advance playhead:"
@@ -14835,14 +14871,16 @@ playLineIfFinished: aBlock
 	pattern := self playingPattern.
 	mask := self playingMask.
 	tracks withIndexDo: [:track :i|
-		(mask at: i) ifTrue: [(pattern track: i at: playheadLine) ifNotNil: [:aTrigger| track scheduleTrigger: aTrigger]]].
+		| p |
+		(mask at: i) ifTrue: [(pattern track: i at: playheadLine) ifNotNil: [:aTrigger|
+			((p := aTrigger probability) = 1.0 or: [random next <= p]) ifTrue: [track scheduleTrigger: aTrigger]]]].
 	ticksPerLine := self tpl.
 	ticksToLine := ticksToLine + ticksPerLine.
 	ticksSwing := ticksPerLine * 0.333 * swing squared.
 	(playheadLine \\ lpb) even ifTrue: [ticksSwing := ticksSwing negated].
 	ticksToLine := ticksToLine + ticksSwing! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 7/Mar/2026 23:00:01'!
+!Tracker methodsFor: 'playing' stamp: 'len 9/Mar/2026 17:23:40'!
 playSampleCount: n into: anAudioBuffer startingAt: startIndex
 	| blockSize i masterGain mask masterBus |
 	blockSize := Module blockSize.
@@ -14852,7 +14890,7 @@ playSampleCount: n into: anAudioBuffer startingAt: startIndex
 	mask := self playingMask.
 	masterBus := buses at: 0.
 	n // blockSize timesRepeat:
-		[ticksToLine > 0 ifTrue: [ticksToLine := ticksToLine - 1] ifFalse: [self playLineIfFinished: [^ i - startIndex]. mask := self playingMask].
+		[ticksToLine > 0 ifTrue: [ticksToLine := ticksToLine - 1] ifFalse: [self playLineIfFinished: [self triggerEvent: #playingStatusChanged. ^ i - startIndex]. mask := self playingMask].
 		buses do: [:each| each clear].
 		mask withIndexDo: [:enabled :trackIndex| enabled ifTrue: [(tracks at: trackIndex) tick]].
 		masterBus leftBuffer *= masterGain.
@@ -14879,7 +14917,7 @@ playingMask
 playingPattern
 	^ (sequence at: playheadPattern) key! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 6/Jan/2026 18:45:15'!
+!Tracker methodsFor: 'playing' stamp: 'len 9/Mar/2026 17:22:44'!
 stop
 	self isPlaying ifFalse: [^ self].
 	AudioPlayer stopPlaying: self.
@@ -15109,6 +15147,13 @@ note
 note: anInteger
 	note := anInteger! !
 
+!Trigger methodsFor: 'accessing' stamp: 'len 9/Mar/2026 17:28:01'!
+probability
+	"Answer the probability for this trigger, i.e. the parameter of the effect command Yxx."
+	fx1 ifNotNil: [(fx1 bitShift: -8) = 89 "Y" ifTrue: [^ (fx1 bitAnd: 16rFF) / 255.0]].
+	fx2 ifNotNil: [(fx2 bitShift: -8) = 89 "Y" ifTrue: [^ (fx2 bitAnd: 16rFF) / 255.0]].
+	^ 1.0! !
+
 !Trigger methodsFor: 'accessing' stamp: 'len 19/Dec/2025 19:13:34'!
 velocity
 	^ velocity! !
@@ -15148,7 +15193,7 @@ isNoteOff
 isNoteOn
 	^ note notNil and: [note >= 0]! !
 
-!Trigger methodsFor: 'as yet unclassified' stamp: 'len 24/Feb/2026 01:25:15'!
+!Trigger methodsFor: 'transformations' stamp: 'len 24/Feb/2026 01:25:15'!
 transposeBy: semitones
 	self isNoteOn ifTrue: [note := note + semitones min: 127 max: 0]! !
 

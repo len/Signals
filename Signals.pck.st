@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 9 March 2026 at 4:16:50 pm'!
+'From Cuis7.7 [latest update: #7797] on 9 March 2026 at 4:33:31 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 485!
+!provides: 'Signals' 1 486!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -8027,9 +8027,9 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $m ifTrue: [model toggleTrackMask. ^ true].
 	^ false! !
 
-!TrackerWindow methodsFor: 'events' stamp: 'len 8/Mar/2026 04:15:04'!
+!TrackerWindow methodsFor: 'events' stamp: 'len 9/Mar/2026 16:30:40'!
 keyStroke: anEvent
-	anEvent isSpace ifTrue: [model isPlaying ifTrue: [model stop] ifFalse: [model play]. ^ true].
+	anEvent isSpace ifTrue: [model isPlaying ifTrue: [model stop] ifFalse: [model loop: anEvent rawMacOptionKeyPressed; play]. ^ true].
 	(anEvent commandAltKeyPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
 		[anEvent wasHandled: true.
 		^ self].
@@ -10746,14 +10746,14 @@ handleInputKey: anEvent
 		^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 9/Mar/2026 00:31:35'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 9/Mar/2026 16:29:59'!
 handleKeyStroke: anEvent
 	((anEvent rawMacOptionKeyPressed or: [anEvent controlKeyPressed]) and: [self handleOptionHotkey: anEvent]) ifTrue: [^ true].
 	(anEvent commandAltKeyPressed and: [self handleCommandHotkey: anEvent]) ifTrue: [^ true].
 	anEvent shiftPressed ifTrue:
 		[anEvent isArrow ifTrue: [self handleSelectionKey: anEvent. ^ true].
-		anEvent isSpace ifTrue: [tracker isPlaying ifTrue: [tracker stop] ifFalse: [self playSelection]. ^ true]].
-	anEvent isReturnKey ifTrue: [self playSelection. ^ true].
+		anEvent isSpace ifTrue: [tracker isPlaying ifTrue: [tracker stop] ifFalse: [tracker loop: anEvent rawMacOptionKeyPressed. self playSelection]. ^ true]].
+	anEvent isReturnKey ifTrue: [tracker stop; loop: anEvent rawMacOptionKeyPressed. self playSelection. ^ true].
 	anEvent isNavigation ifTrue: [self handleNavigationKey: anEvent. ^ true].
 	anEvent keyCharacter = $\ ifTrue:
 		[anEvent wasHandled: true.
@@ -14785,6 +14785,10 @@ swapPattern: anInteger with: anotherInteger
 !Tracker methodsFor: 'playing' stamp: 'len 2/Jan/2026 15:12:17'!
 isPlaying
 	^ AudioPlayer isPlaying: self! !
+
+!Tracker methodsFor: 'playing' stamp: 'len 9/Mar/2026 16:29:54'!
+loop: aBoolean
+	loop := aBoolean! !
 
 !Tracker methodsFor: 'playing' stamp: 'len 7/Mar/2026 23:12:40'!
 play

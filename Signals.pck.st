@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 9 March 2026 at 5:35:50 pm'!
+'From Cuis7.7 [latest update: #7797] on 10 March 2026 at 2:38:41 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 487!
+!provides: 'Signals' 1 488!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1497,6 +1497,16 @@ Object subclass: #STFT
 STFT class
 	instanceVariableNames: ''!
 
+!classDefinition: #Bus category: #'Signals-Kernel'!
+Object subclass: #Bus
+	instanceVariableNames: 'leftBuffer rightBuffer'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Kernel'!
+!classDefinition: 'Bus class' category: #'Signals-Kernel'!
+Bus class
+	instanceVariableNames: ''!
+
 !classDefinition: #AllpassComb category: #'Signals-Support'!
 Object subclass: #AllpassComb
 	instanceVariableNames: 'buffer position feedback'
@@ -1647,16 +1657,6 @@ Object subclass: #WAVFileReader
 WAVFileReader class
 	instanceVariableNames: ''!
 
-!classDefinition: #Bus category: #'Signals-Tracker'!
-Object subclass: #Bus
-	instanceVariableNames: 'leftBuffer rightBuffer'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Tracker'!
-!classDefinition: 'Bus class' category: #'Signals-Tracker'!
-Bus class
-	instanceVariableNames: ''!
-
 !classDefinition: #Instrument category: #'Signals-Tracker'!
 Object subclass: #Instrument
 	instanceVariableNames: 'label patch modules noteReceivers gateReceivers velocityReceivers glideReceivers tempoReceivers samples controlInputs audioOutput buffer track trigger'
@@ -1699,7 +1699,7 @@ Tracker class
 
 !classDefinition: #Trigger category: #'Signals-Tracker'!
 Object subclass: #Trigger
-	instanceVariableNames: 'note instrument velocity fx1 fx2'
+	instanceVariableNames: 'instrument note velocity fx1 fx2'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Tracker'!
@@ -2120,6 +2120,27 @@ The polyphase implementation is highly efficient:
 Usage: 'anOversampler oversampling: inputSample do: [:subsample| ... ]'. Two subsamples are derived from the input sample, then the block is evaluated twice (once per subsample), and the result is downsampled and returned.
 
 Note: this process introduces a fixed latency (group delay) of approximately 6 samples. If mixing this signal with a 'dry' signal, the dry path must be delayed by the same amount to maintain phase alignment.!
+
+!Trigger commentStamp: '<historical>' prior: 0!
+A trigger is a cell in a pattern. It can contain any of the following (optional) parameters: an instrument number, a note to play, a velocity value, and two effect commands.
+
+Commands:
+∙ Cxy cut to velocity x (0.0 to 1.0) after y/15 of a line
+∙ Rxx retrigger every xx/255 of a line
+∙ Gxx glide to note at speed xx
+∙ Lxx set instrument volume level to xx (0.0 to 1.0)
+∙ Pxx set instrument pan (00 = left, 80 = center, FF = right)
+∙ Ixx / Oxx adjust volume level up/down
+∙ Jxx / Kxx adjust pan left/right
+∙ Uxx / Dxx adjust note up/down
+∙ +xx / -xx adjust velocity up/down
+∙ Sxx set sample offset
+∙ <xx / >xx set speed to xx and play backwards / foreward
+∙ 0xx to 9xx set control input (0 = 0, 7F = 1.0, 80 = -1)
+∙ Fxx set BPM to xx
+∙ Qxx delay trigger by xx/255 of a line
+∙ Yxx set the probability of playing the trigger (0 = never, FF = always)
+!
 
 !Control methodsFor: 'accessing' stamp: 'len 3/Mar/2026 19:31:13'!
 adjustBy: aNumber
@@ -2691,7 +2712,7 @@ tick
 panel
 	^ ControlPanel new addVerticalSlider: (controls at: #gain)! !
 
-!Amp methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:43:59'!
+!Amp methodsFor: 'tools' stamp: 'len 10/Mar/2026 14:28:10'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -2699,7 +2720,7 @@ patchable
 	answer
 		addAudioInput: #setInput:;
 		addControlInput: #gain;
-		addAudioInput: #setInputRM: label: 'RM';
+		addAudioInput: #setInputRM: label: 'AM/RM';
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
@@ -8046,10 +8067,10 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $m ifTrue: [model toggleTrackMask. ^ true].
 	^ false! !
 
-!TrackerWindow methodsFor: 'events' stamp: 'len 9/Mar/2026 16:30:40'!
+!TrackerWindow methodsFor: 'events' stamp: 'len 9/Mar/2026 22:25:11'!
 keyStroke: anEvent
-	anEvent isSpace ifTrue: [model isPlaying ifTrue: [model stop] ifFalse: [model loop: anEvent rawMacOptionKeyPressed; play]. ^ true].
-	(anEvent commandAltKeyPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
+	anEvent isSpace ifTrue: [model isPlaying ifTrue: [model stop] ifFalse: [model loop: anEvent secondaryModifierPressed; play]. ^ true].
+	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
 		[anEvent wasHandled: true.
 		^ self].
 	^ super keyStroke: anEvent! !
@@ -9324,13 +9345,13 @@ adjustXBy: aNumber
 frequency: aControl
 	self controlX: aControl! !
 
-!FilterControlMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 15:15:02'!
+!FilterControlMorph methodsFor: 'accessing' stamp: 'len 10/Mar/2026 14:36:39'!
 mode: aSymbol
 	mode := aSymbol.
-	aSymbol = #LP ifTrue: [color := PatchMorph lowsColor. ^ self].
+"	aSymbol = #LP ifTrue: [color := PatchMorph lowsColor. ^ self].
 	aSymbol = #HP ifTrue: [color := PatchMorph highsColor. ^ self].
 	(aSymbol = #BP or: [aSymbol = #BS]) ifTrue: [color := PatchMorph midsColor. ^ self].
-	color := Color white! !
+	color := Color white"! !
 
 !FilterControlMorph methodsFor: 'drawing' stamp: 'len 12/Feb/2026 05:45:25'!
 drawBPOn: aCanvas frequency: freq bandwidth: bandwidth color: curveColor fillColor: fillColor
@@ -9394,7 +9415,7 @@ drawBSOn: aCanvas frequency: freq bandwidth: bandwidth color: aColor fillColor: 
 			cubicBezierTo: p3 control1: p2 + δ control2: p3 - δ;
 			lineTo: w @ y]! !
 
-!FilterControlMorph methodsFor: 'drawing' stamp: 'len 30/Jan/2026 15:56:08'!
+!FilterControlMorph methodsFor: 'drawing' stamp: 'len 10/Mar/2026 14:33:28'!
 drawDecadesOn: aCanvas
 	| h lineColor w x |
 	w := self morphWidth.
@@ -9404,7 +9425,7 @@ drawDecadesOn: aCanvas
 		x := w * (controlX positionFromValue: f).
 		aCanvas line: x @ 0 to: x @ h width: 1.0 color: lineColor].
 	lineColor := Color darkGray.
-	#(50 200 500 2000 5000) do: [:f|
+	#(10 20 30 40 50 60 70 80 90 200 300 400 500 600 700 800 900 2000 3000 4000 5000 6000 7000 8000 9000) do: [:f|
 		x := w * (controlX positionFromValue: f).
 		aCanvas line: x @ 0 to: x @ h width: 1.0 color: lineColor]! !
 
@@ -10271,9 +10292,9 @@ keyStroke: aKeyboardEvent
 		^ self].
 	^ super keyStroke: aKeyboardEvent! !
 
-!ZoomerMorph methodsFor: 'events' stamp: 'len 11/Feb/2026 22:24:56'!
+!ZoomerMorph methodsFor: 'events' stamp: 'len 9/Mar/2026 22:26:26'!
 mouseScroll: aMouseScrollEvent localPosition: localEventPosition
-	aMouseScrollEvent commandAltKeyPressed ifTrue:
+	aMouseScrollEvent primaryModifierPressed ifTrue:
 		[| factor |
 		aMouseScrollEvent direction = #down ifTrue: [factor := 1.1] ifFalse: [aMouseScrollEvent direction = #up ifTrue: [factor := 0.9] ifFalse: [^ self]].
 		self submorphsDo: [:each| each scaleBy: factor around: localEventPosition].
@@ -10354,16 +10375,16 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
 	^ false! !
 
-!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:43:29'!
+!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 9/Mar/2026 22:27:39'!
 keyStroke: anEvent
 	| c i |
-	(anEvent commandAltKeyPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
+	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
 		[anEvent wasHandled: true.
 		^ self].
 	anEvent keyCharacter = $\ ifTrue:
 		[anEvent wasHandled: true.
 		tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument track ifNotNil: [:aTrack|
-			anEvent commandAltKeyPressed ifTrue: [tracker toggleTrackSolo: (tracker tracks indexOf: aTrack)] ifFalse: [tracker toggleTrackMute: (tracker tracks indexOf: aTrack)]]].
+			anEvent primaryModifierPressed ifTrue: [tracker toggleTrackSolo: (tracker tracks indexOf: aTrack)] ifFalse: [tracker toggleTrackMute: (tracker tracks indexOf: aTrack)]]].
 		^ self].
 	anEvent anyModifierKeyPressed ifFalse:
 		[c := anEvent keyCharacter.
@@ -10536,7 +10557,7 @@ moveCursorRight
 			[cursorPosition := cursorPosition + 1].
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Mar/2026 19:21:57'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 9/Mar/2026 19:44:57'!
 playSelection
 	| cursorPattern cursorLine cursorTrack |
 	cursorPattern := tracker cursorPattern.
@@ -10765,18 +10786,16 @@ handleInputKey: anEvent
 		^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 9/Mar/2026 16:29:59'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 9/Mar/2026 22:28:05'!
 handleKeyStroke: anEvent
-	((anEvent rawMacOptionKeyPressed or: [anEvent controlKeyPressed]) and: [self handleOptionHotkey: anEvent]) ifTrue: [^ true].
-	(anEvent commandAltKeyPressed and: [self handleCommandHotkey: anEvent]) ifTrue: [^ true].
-	anEvent shiftPressed ifTrue:
-		[anEvent isArrow ifTrue: [self handleSelectionKey: anEvent. ^ true].
-		anEvent isSpace ifTrue: [tracker isPlaying ifTrue: [tracker stop] ifFalse: [tracker loop: anEvent rawMacOptionKeyPressed. self playSelection]. ^ true]].
-	anEvent isReturnKey ifTrue: [tracker stop; loop: anEvent rawMacOptionKeyPressed. self playSelection. ^ true].
+	(anEvent secondaryModifierPressed and: [self handleOptionHotkey: anEvent]) ifTrue: [^ true].
+	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue: [^ true].
+	(anEvent shiftPressed and: [anEvent isArrow]) ifTrue: [self handleSelectionKey: anEvent. ^ true].
+	anEvent isReturnKey ifTrue: [tracker stop; loop: anEvent secondaryModifierPressed. self playSelection. ^ true].
 	anEvent isNavigation ifTrue: [self handleNavigationKey: anEvent. ^ true].
 	anEvent keyCharacter = $\ ifTrue:
 		[anEvent wasHandled: true.
-		anEvent commandAltKeyPressed ifTrue: [tracker toggleTrackSolo] ifFalse: [tracker toggleTrackMute]. ^ true].
+		anEvent primaryModifierPressed ifTrue: [tracker toggleTrackSolo] ifFalse: [tracker toggleTrackMute]. ^ true].
 	(anEvent anyModifierKeyPressed not and: [self handleInputKey: anEvent]) ifTrue: [^ true].
 	^ false! !
 
@@ -10860,16 +10879,16 @@ initialize
 	showCursor := true.
 	pauseBlinking := false! !
 
-!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 3/Jan/2026 02:49:38'!
+!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 9/Mar/2026 19:08:08'!
 setTracker: aTracker
 	tracker := aTracker.
 	cursorPosition := 1.
 	aTracker when: #sequenceChanged send: #redrawNeeded to: self.
-	aTracker when: #tracksChanged send: #update to: self.
-	aTracker when: #cursorChanged send: #redrawNeeded to: self.
+	aTracker when: #tracksChanged send: #updateTracks to: self.
+	aTracker when: #cursorChanged send: #updateCursor to: self.
 	aTracker when: #playheadChanged send: #redrawNeeded to: self.
 	aTracker when: #lpbChanged send: #redrawNeeded to: self.
-	self update! !
+	self updateTracks! !
 
 !PatternEditorMorph methodsFor: 'private' stamp: 'len 31/Dec/2025 01:25:06'!
 headerHeight
@@ -10921,8 +10940,13 @@ stopBlinking
 tracksMaxPosition
 	^ 11! !
 
-!PatternEditorMorph methodsFor: 'private' stamp: 'len 1/Jan/2026 17:03:37'!
-update
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 9/Mar/2026 19:07:27'!
+updateCursor
+	(tracker followPlayhead and: [tracker isPlaying]) ifTrue: [	selectionLineStart := selectionTrackStart := nil].
+	self redrawNeeded! !
+
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 9/Mar/2026 19:05:48'!
+updateTracks
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
@@ -11062,13 +11086,13 @@ handleSelectionKey: anEvent
 	anEvent isArrowUp ifTrue: [tracker moveCursorPatternUp].
 	anEvent isArrowDown ifTrue: [tracker moveCursorPatternDown]! !
 
-!SequencerMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:39:18'!
+!SequencerMorph methodsFor: 'events' stamp: 'len 9/Mar/2026 22:27:01'!
 keyStroke: anEvent
 	anEvent isArrow ifTrue:
 		[anEvent wasHandled: true.
 		anEvent shiftPressed ifTrue: [^ self handleSelectionKey: anEvent].
 		^ self handleNavigationKey: anEvent].
-	(anEvent commandAltKeyPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
+	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
 		[anEvent wasHandled: true.
 		^ self].
 	^ super keyStroke: anEvent! !
@@ -12656,11 +12680,11 @@ handlesKeyboardFocus
 handlesMouseOver: anEvent
 	^ true! !
 
-!PatchableMorph methodsFor: 'events' stamp: 'len 24/Nov/2025 14:17:00'!
+!PatchableMorph methodsFor: 'events' stamp: 'len 9/Mar/2026 22:27:09'!
 keyStroke: aKeyboardEvent
 	aKeyboardEvent isBackspace
 		ifTrue: [self delete. aKeyboardEvent wasHandled: true. ^ self].
-	aKeyboardEvent commandAltKeyPressed ifTrue:
+	aKeyboardEvent primaryModifierPressed ifTrue:
 		[aKeyboardEvent keyCharacter = $b
 			ifTrue: [Smalltalk browseFull: self model class. aKeyboardEvent wasHandled: true. ^ self].
 		aKeyboardEvent keyCharacter = $i
@@ -12926,6 +12950,43 @@ triangular: n
 !STFT class methodsFor: 'instance creation' stamp: 'len 19/Oct/2025 20:53:00'!
 window: anArray
 	^ self new window: anArray! !
+
+!Bus methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 14:46:42'!
+clear
+	leftBuffer atAllPut: 0.0.
+	rightBuffer atAllPut: 0.0! !
+
+!Bus methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 14:43:59'!
+initialize
+	super initialize.
+	leftBuffer := Float32Array new: Module blockSize.
+	rightBuffer := Float32Array new: Module blockSize! !
+
+!Bus methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 14:43:08'!
+leftBuffer
+	^ leftBuffer! !
+
+!Bus methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 14:42:44'!
+mixInto: anAudioBuffer startingAt: startIndex
+	| j x s |
+	j := 2 * startIndex - 1.
+	1 to: leftBuffer size do: [:i|
+		(x := leftBuffer at: i) = 0.0 ifFalse:
+			[s := (anAudioBuffer at: j) + (x * 32767.0) asInteger.
+			s > 32767 ifTrue: [s := 32767].  "clipping!!"
+			s < -32767 ifTrue: [s := -32767].  "clipping!!"
+			anAudioBuffer at: j put: s].	
+		j := j + 1.
+		(x := rightBuffer at: i) = 0.0 ifFalse:
+			[s := (anAudioBuffer at: j) + (x * 32767.0) asInteger.
+			s > 32767 ifTrue: [s := 32767].  "clipping!!"
+			s < -32767 ifTrue: [s := -32767].  "clipping!!"
+			anAudioBuffer at: j put: s].	
+		j := j + 1]! !
+
+!Bus methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 14:43:14'!
+rightBuffer
+	^ rightBuffer! !
 
 !AllpassComb methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 22:17:13'!
 feedback: aNumber
@@ -13998,43 +14059,6 @@ rightSamples
 sampleRate
 	^ sampleRate! !
 
-!Bus methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 14:46:42'!
-clear
-	leftBuffer atAllPut: 0.0.
-	rightBuffer atAllPut: 0.0! !
-
-!Bus methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 14:43:59'!
-initialize
-	super initialize.
-	leftBuffer := Float32Array new: Module blockSize.
-	rightBuffer := Float32Array new: Module blockSize! !
-
-!Bus methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 14:43:08'!
-leftBuffer
-	^ leftBuffer! !
-
-!Bus methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 14:42:44'!
-mixInto: anAudioBuffer startingAt: startIndex
-	| j x s |
-	j := 2 * startIndex - 1.
-	1 to: leftBuffer size do: [:i|
-		(x := leftBuffer at: i) = 0.0 ifFalse:
-			[s := (anAudioBuffer at: j) + (x * 32767.0) asInteger.
-			s > 32767 ifTrue: [s := 32767].  "clipping!!"
-			s < -32767 ifTrue: [s := -32767].  "clipping!!"
-			anAudioBuffer at: j put: s].	
-		j := j + 1.
-		(x := rightBuffer at: i) = 0.0 ifFalse:
-			[s := (anAudioBuffer at: j) + (x * 32767.0) asInteger.
-			s > 32767 ifTrue: [s := 32767].  "clipping!!"
-			s < -32767 ifTrue: [s := -32767].  "clipping!!"
-			anAudioBuffer at: j put: s].	
-		j := j + 1]! !
-
-!Bus methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 14:43:14'!
-rightBuffer
-	^ rightBuffer! !
-
 !Instrument methodsFor: 'accessing' stamp: 'len 28/Dec/2025 15:47:17'!
 label
 	^ label! !
@@ -14091,7 +14115,7 @@ adjustPanBy: aNumber
 adjustVelocityBy: aNumber
 	velocityReceivers do: [:each| each adjustVelocityBy: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 7/Mar/2026 18:56:44'!
+!Instrument methodsFor: 'playing' stamp: 'len 9/Mar/2026 19:26:24'!
 handleFX: anInteger
 	| command |
 	command := anInteger bitShift: -8.
@@ -14114,7 +14138,11 @@ handleFX: anInteger
 	command = 62 "> (speed forward)" ifTrue: [self setSpeed: (anInteger bitAnd: 16rFF) / 255.0. ^ self].
 	"Control change commands:"
 	(command between: 48 and: 57) "0 to 9" ifTrue:
-		[(controlInputs at: command - 47) ifNotNil: [:input| input setValue: (anInteger bitAnd: 16rFF) / 255.0]. ^ self].
+		[(controlInputs at: command - 47) ifNotNil:
+			[:input| | v |
+				"map 0 to 0.0, 7F to 1.0 and 80 to -1.0:"
+				input setValue: ((v := anInteger bitAnd: 16rFF) < 128 ifTrue: [v / 127.0] ifFalse: [v - 128 / 128.0])].
+		^ self].
 	"Global commands:"
 	command = 70 "F (set bpm)" ifTrue: [track tracker bpm: ((anInteger bitAnd: 16rFF) max: 1). ^ self]! !
 
@@ -14826,13 +14854,21 @@ isPlaying
 loop: aBoolean
 	loop := aBoolean! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 7/Mar/2026 23:12:40'!
+!Tracker methodsFor: 'playing' stamp: 'len 9/Mar/2026 19:48:47'!
 play
-	self playFrom: cursorPattern line: cursorLine to: sequence size line: sequence last key length! !
-
-!Tracker methodsFor: 'playing' stamp: 'len 8/Mar/2026 19:18:20'!
-playFrom: startPattern line: startLine to: endPattern line: endLine
-	self playFrom: startPattern line: startLine to: endPattern line: endLine tracks: nil! !
+	self isPlaying ifTrue: [^ self].
+	playStartPattern := 1.
+	playStartLine := 1.
+	playEndPattern := sequence size.
+	playEndLine := sequence last key length.
+	playingMask := nil.
+	playheadPattern := cursorPattern.
+	playheadLine := cursorLine - 1.
+	ticksToLine := 0.
+	buses keys do: [:each| each = 0 ifFalse: [buses removeKey: each]]. "remove all buses except the master"
+	AudioPlayer startPlaying: self.
+	self triggerEvent: #playheadChanged.
+	self triggerEvent: #playingStatusChanged! !
 
 !Tracker methodsFor: 'playing' stamp: 'len 8/Mar/2026 19:22:44'!
 playFrom: startPattern line: startLine to: endPattern line: endLine tracks: tracksToPlay
@@ -15609,6 +15645,19 @@ vermillionRay
 violetBeam
 	^ `Color okl: 0.75 "0.5793982863755205" c: 0.4 h: 293.26079576193126`
 "	^ `Color fromHexString: '#8844FF'`"! !
+
+!UserInputEvent methodsFor: '*signals' stamp: 'len 9/Mar/2026 22:38:55'!
+primaryModifierPressed
+	"The primary modifier key is intended to be used in hotkeys for the main commands of an application. For example, with c/x/v for copy/cut/paste.
+	In PC it is Control, and in Mac it is Command."
+	^ Smalltalk platformName = 'Mac OS' ifTrue: [self commandAltKeyPressed] ifFalse: [self controlKeyPressed]! !
+
+!UserInputEvent methodsFor: '*signals' stamp: 'len 9/Mar/2026 22:39:18'!
+secondaryModifierPressed
+	"The secondary modifier key is used for alternative or 'second option' commands.
+	It is often a variation of the command of the primary modifier key.
+	In PC it is Alt, and in Mac it is Option."
+	^ Smalltalk platformName = 'Mac OS' ifTrue:  [self rawMacOptionKeyPressed] ifFalse: [self commandAltKeyPressed]! !
 
 !KeyboardEvent methodsFor: '*signals' stamp: 'len 22/Feb/2026 16:01:46'!
 isArrow

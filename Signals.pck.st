@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 10 March 2026 at 2:38:41 pm'!
+'From Cuis7.7 [latest update: #7797] on 10 March 2026 at 2:50:24 pm'!
 'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 488!
+!provides: 'Signals' 1 489!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -10509,6 +10509,13 @@ update
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 10/Mar/2026 14:46:02'!
+adjustFontSizeBy: anInteger
+	| pointSizes |
+	pointSizes := font family pointSizes.
+	font := font family atPointSize: (pointSizes atPin: (pointSizes indexOf: font pointSize) + anInteger).
+	self redrawNeeded! !
+
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026 16:13:28'!
 clipboardCopy
 	| pattern |
@@ -10734,8 +10741,10 @@ drawTracksOn: aCanvas
 tracksWidthInCharacters
 	^ 15! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 01:15:31'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 10/Mar/2026 14:46:59'!
 handleCommandHotkey: anEvent
+	anEvent keyCharacter = $- ifTrue: [self adjustFontSizeBy: -1. ^ true].
+	anEvent keyCharacter = $= ifTrue: [self adjustFontSizeBy: 1. ^ true].
 	anEvent keyCharacter = $l ifTrue: [self setPatternLength. ^ true].
 	"Clipboard:"
 	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].

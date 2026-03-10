@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 18 February 2026 at 7:48:42 pm'!
+'From Cuis7.7 [latest update: #7797] on 10 March 2026 at 3:30:37 pm'!
 'Description Minimal audio I/O support.'!
-!provides: 'Audio' 1 1!
+!provides: 'Audio' 1 2!
 !requires: 'FFI' 1 59 nil!
 SystemOrganization addCategory: #Audio!
 
@@ -88,6 +88,10 @@ startUpWithSound: aSound
 		stereo: Stereo
 		sound: aSound! !
 
+!AudioPlayer class methodsFor: 'accessing' stamp: 'len 10/Mar/2026 15:06:08'!
+blockSize
+	^ 128! !
+
 !AudioPlayer class methodsFor: 'accessing' stamp: 'len 26/Nov/2025 21:18:00'!
 bufferSize
 	^ BufferSize! !
@@ -153,12 +157,12 @@ waitUntilDonePlaying: aSound
 		whileTrue: [(Delay forMilliseconds: 100) wait]
 ! !
 
-!AudioPlayer class methodsFor: 'initialization' stamp: 'len 3/Jan/2026 20:53:15'!
+!AudioPlayer class methodsFor: 'initialization' stamp: 'len 10/Mar/2026 15:06:34'!
 initialize
 	"AudioPlayer shutDown; initialize; startUp"
 	SampleRate := 44100.
 	BufferSize := 2048. "512." "10 msecs"
-	self assert: BufferSize \\ Module blockSize = 0. "make sure it's a multiple of the block size"
+	self assert: BufferSize \\ self blockSize = 0. "make sure it's a multiple of the block size"
 	Stereo := true! !
 
 !AudioPlayer class methodsFor: 'initialization' stamp: 'len 6/Dec/2025 15:34:42'!
@@ -231,12 +235,12 @@ primSoundStop
 
 	<primitive: 'primitiveSoundStop' module: 'SoundPlugin'>! !
 
-!AudioPlayer class methodsFor: 'player process' stamp: 'len 7/Dec/2025 00:23:19'!
+!AudioPlayer class methodsFor: 'player process' stamp: 'len 10/Mar/2026 15:06:29'!
 oldStylePlayLoop
 	"This version of the play loop is used if the VM does not yet support sound primitives that signal a semaphore when a sound buffer becomes available."
 	| bytesPerSlice blockSize count finishedSounds |
 	bytesPerSlice := Stereo ifTrue: [4] ifFalse: [2].
-	blockSize := Module blockSize.
+	blockSize := self blockSize.
 	finishedSounds := #().
 	[[(count := self primSoundAvailableBytes // bytesPerSlice) >= blockSize]
 		whileFalse: [(Delay forMilliseconds: 1) wait].
@@ -252,13 +256,13 @@ oldStylePlayLoop
 			[ActiveSounds := ActiveSounds reject: [:snd | finishedSounds includes: snd].
 			finishedSounds := #()]] repeat! !
 
-!AudioPlayer class methodsFor: 'player process' stamp: 'len 3/Jan/2026 20:37:42'!
+!AudioPlayer class methodsFor: 'player process' stamp: 'len 10/Mar/2026 15:06:24'!
 playLoop
 	"The audio player process loop."
 
 	| bytesPerSlice blockSize count finishedSounds |
 	bytesPerSlice := Stereo ifTrue: [4] ifFalse: [2].
-	blockSize := Module blockSize.
+	blockSize := self blockSize.
 	finishedSounds := #().
 	[[(count := self primSoundAvailableBytes // bytesPerSlice) >= blockSize]
 		whileFalse: [ReadyForBuffer wait].
@@ -274,13 +278,13 @@ playLoop
 			[ActiveSounds := ActiveSounds reject: [:snd| finishedSounds includes: snd].
 			finishedSounds := #()]] repeat! !
 
-!AudioPlayer class methodsFor: 'player process' stamp: 'len 3/Jan/2026 20:41:15'!
+!AudioPlayer class methodsFor: 'player process' stamp: 'len 10/Mar/2026 15:05:46'!
 playLoop2
 	"The audio player process loop."
 
 	| bytesPerSlice blockSize count finishedSounds random |
 	bytesPerSlice := Stereo ifTrue: [4] ifFalse: [2].
-	blockSize := Module blockSize.
+	blockSize := self blockSize.
 	finishedSounds := #().
 	random := Random new.
 	[[(count := self primSoundAvailableBytes // bytesPerSlice) >= blockSize]

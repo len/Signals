@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 10 March 2026 at 3:11:33 pm'!
-'Description '!
-!provides: 'Tracker' 1 1!
+'From Cuis7.7 [latest update: #7797] on 10 March 2026 at 3:32:21 pm'!
+'Description A tracker implemented with Signals.'!
+!provides: 'Tracker' 1 3!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -117,12 +117,12 @@ Trigger class
 	instanceVariableNames: ''!
 
 
-!Trigger commentStamp: '<historical>' prior: 0!
+!Trigger commentStamp: 'len 10/Mar/2026 15:29:17' prior: 0!
 A trigger is a cell in a pattern. It can contain any of the following (optional) parameters: an instrument number, a note to play, a velocity value, and two effect commands.
 
 Commands:
-∙ Cxy cut to velocity x (0.0 to 1.0) after y/15 of a line
-∙ Rxx retrigger every xx/255 of a line
+∙ Cxy cut to velocity x (0.0 to 1.0) after y/16 of a line
+∙ Rxx retrigger every xx/256 of a line
 ∙ Gxx glide to note at speed xx
 ∙ Lxx set instrument volume level to xx (0.0 to 1.0)
 ∙ Pxx set instrument pan (00 = left, 80 = center, FF = right)
@@ -131,10 +131,10 @@ Commands:
 ∙ Uxx / Dxx adjust note up/down
 ∙ +xx / -xx adjust velocity up/down
 ∙ Sxx set sample offset
-∙ <xx / >xx set speed to xx and play backwards / foreward
+∙ <xx / >xx set speed to xx and play backwards / forward
 ∙ 0xx to 9xx set control input (0 = 0, 7F = 1.0, 80 = -1)
 ∙ Fxx set BPM to xx
-∙ Qxx delay trigger by xx/255 of a line
+∙ Qxx delay trigger by xx/256 of a line
 ∙ Yxx set the probability of playing the trigger (0 = never, FF = always)
 !
 
@@ -1163,12 +1163,12 @@ adjustPanBy: aNumber
 adjustVelocityBy: aNumber
 	velocityReceivers do: [:each| each adjustVelocityBy: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 9/Mar/2026 19:26:24'!
+!Instrument methodsFor: 'playing' stamp: 'len 10/Mar/2026 15:22:51'!
 handleFX: anInteger
 	| command |
 	command := anInteger bitShift: -8.
-	command = 67 "C (cut velocity)" ifTrue: [track scheduleTrigger: (Trigger new velocity: ((anInteger bitShift: -4) bitAnd: 16rF) / 15.0) after: (anInteger bitAnd: 16rF) / 15.0 * track tracker tpl. ^ self].
-	command = 82 "R (retrigger)" ifTrue: [track scheduleTrigger: (trigger copy velocity: nil) after: (anInteger bitAnd: 16rFF) / 255.0 * track tracker tpl. ^ self].
+	command = 67 "C (cut velocity)" ifTrue: [track scheduleTrigger: (Trigger new velocity: ((anInteger bitShift: -4) bitAnd: 16rF) / 15.0) after: (anInteger bitAnd: 16rF) / 16.0 * track tracker tpl. ^ self].
+	command = 82 "R (retrigger)" ifTrue: [track scheduleTrigger: (trigger copy velocity: nil) after: (anInteger bitAnd: 16rFF) / 256.0 * track tracker tpl. ^ self].
 	command = 71 "G (glide)" ifTrue: [self setGlide: (anInteger bitAnd: 16rFF) / 255.0. ^ self].
 	command = 76 "L (volume level)" ifTrue: [self setLevel:​ (anInteger bitAnd: 16rFF) / 255.0. ^ self].
 	command = 80 "P (pan)" ifTrue: [self setPan:  (anInteger bitAnd: 16rFF) / 255.0 * 2.0 - 1.0. ^ self].
@@ -1558,14 +1558,14 @@ playTrigger
 	instrument ifNotNil: [instrument scheduleTrigger: trigger].
 	trigger := nil! !
 
-!Track methodsFor: 'playing' stamp: 'len 26/Feb/2026 23:34:01'!
+!Track methodsFor: 'playing' stamp: 'len 10/Mar/2026 15:27:52'!
 scheduleTrigger: aTrigger
 	"Schedule aTrigger to play either immediatly if delay = 0, or after the number of ticks required by the delay.
 	The delay is specified by a Qxx command, where xx specifies the delay in steps of 1/255th the duration of a line."
 	| delay |
 	(delay := aTrigger delay) = 0
 		ifTrue: [self scheduleTrigger: aTrigger after: 0]
-		ifFalse: [self scheduleTrigger: aTrigger after: delay / 255.0 * tracker tpl]! !
+		ifFalse: [self scheduleTrigger: aTrigger after: delay / 256.0 * tracker tpl]! !
 
 !Track methodsFor: 'playing' stamp: 'len 26/Feb/2026 23:30:14'!
 scheduleTrigger: aTrigger after: ticks

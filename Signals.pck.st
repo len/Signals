@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 10 March 2026 at 3:12:50 pm'!
-'Description Tracker and lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 490!
+'From Cuis7.7 [latest update: #7797] on 10 March 2026 at 3:32:15 pm'!
+'Description Lively dataflow programming environment for real-time musical synthesis.'!
+!provides: 'Signals' 1 491!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!

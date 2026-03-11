@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 10 March 2026 at 3:32:21 pm'!
+'From Cuis7.7 [latest update: #7797] on 11 March 2026 at 3:16:34 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 3!
+!provides: 'Tracker' 1 4!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -38,7 +38,7 @@ MultitrackMeterMorph class
 
 !classDefinition: #PatternEditorMorph category: #'Tracker-Morphic'!
 BoxMorph subclass: #PatternEditorMorph
-	instanceVariableNames: 'tracker cursorPosition font labelFont centerKey editStep showCursor pauseBlinking clipboard selectionLineStart selectionTrackStart'
+	instanceVariableNames: 'tracker cursorPosition font labelFont labelMonoFont centerKey editStep showCursor pauseBlinking clipboard selectionLineStart selectionTrackStart'
 	classVariableNames: 'FXColors'
 	poolDictionaries: ''
 	category: 'Tracker-Morphic'!
@@ -117,12 +117,12 @@ Trigger class
 	instanceVariableNames: ''!
 
 
-!Trigger commentStamp: 'len 10/Mar/2026 15:29:17' prior: 0!
+!Trigger commentStamp: '<historical>' prior: 0!
 A trigger is a cell in a pattern. It can contain any of the following (optional) parameters: an instrument number, a note to play, a velocity value, and two effect commands.
 
 Commands:
-∙ Cxy cut to velocity x (0.0 to 1.0) after y/16 of a line
-∙ Rxx retrigger every xx/256 of a line
+∙ Cxy set velocity to x (0.0 to 1.0) after (y+1)/16 of a line
+∙ Rxx retrigger every (xx+1)/256 of a line
 ∙ Gxx glide to note at speed xx
 ∙ Lxx set instrument volume level to xx (0.0 to 1.0)
 ∙ Pxx set instrument pan (00 = left, 80 = center, FF = right)
@@ -311,7 +311,7 @@ colorForMeterValue: aNumber
 	"White up to -12 dB, yellow from -12 dB to -3 dB, red over -3 dB."
 	^ aNumber > 0.7 ifTrue: [Color redCathode] ifFalse: [aNumber > 0.25 ifTrue: [Color lemonPhosphor] ifFalse: [Color white]]! !
 
-!MultitrackMeterMorph methodsFor: 'drawing' stamp: 'len 24/Jan/2026 22:25:33'!
+!MultitrackMeterMorph methodsFor: 'drawing' stamp: 'len 10/Mar/2026 18:58:12'!
 drawOn: aCanvas
 	| v x y leftMaster rightMaster peak |
 	leftMaster := rightMaster := 0.0.
@@ -336,8 +336,8 @@ drawOn: aCanvas
 	peak := tracker peakLeft.
 	y := self yForMeterValue: peak.
 	aCanvas line: x @ y to: x + meterWidth @ y width: 2 color: (self colorForMeterValue: peak).
-	y := extent y - (extent y * tracker level) max: 0.0.
-	aCanvas strokeWidth: 1.0 color: Color white do: [aCanvas moveTo: x - 8 @ (y - 4); lineTo: x - 8 @ (y + 4); lineTo: x - 2 @ y; lineTo: x - 8 @ (y - 4)]! !
+	y := extent y - 4 - (extent y - 8 * tracker level) max: 0.
+	aCanvas strokeWidth: 1.0 color: Color white do: [aCanvas moveTo: x - 8 @ (y - 4); lineTo: x - 8 @ (y + 4); lineTo: x - 2 @ y; closePath]! !
 
 !MultitrackMeterMorph methodsFor: 'drawing' stamp: 'len 24/Jan/2026 14:11:16'!
 requiresVectorCanvas
@@ -370,11 +370,11 @@ mouseScroll: anEvent localPosition: localEventPosition
 minimumExtent
 	^ meterSpacing * (tracker tracks size + 1) @ 64! !
 
-!MultitrackMeterMorph methodsFor: 'initialization' stamp: 'len 24/Jan/2026 14:10:55'!
+!MultitrackMeterMorph methodsFor: 'initialization' stamp: 'len 10/Mar/2026 19:03:03'!
 initialize
 	| font charWidth |
 	super initialize.
-	font := FontFamily familyName: 'JetBrains Mono NL' pointSize: 16.
+	font := FontFamily familyName: 'JetBrains Mono NL' pointSize: 15.
 	charWidth := font widthOf: $X.
 	leftMargin := charWidth * 3 + (charWidth/4.0).
 	meterWidth := charWidth / 2.0.
@@ -403,10 +403,10 @@ update
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 10/Mar/2026 14:46:02'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 11/Mar/2026 14:45:09'!
 adjustFontSizeBy: anInteger
 	| pointSizes |
-	pointSizes := font family pointSizes.
+	pointSizes := font family pointSizes select: [:each| each between: 6 and: 36]. "not too small, not too big"
 	font := font family atPointSize: (pointSizes atPin: (pointSizes indexOf: font pointSize) + anInteger).
 	self redrawNeeded! !
 
@@ -598,12 +598,13 @@ drawPatternOn: aCanvas
 				x := charWidth * 3.5 + x].
 		y := y + lineSpacing]! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 22/Feb/2026 15:38:47'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 11/Mar/2026 15:11:42'!
 drawTracksOn: aCanvas
-	| color textColor charWidth trackWidth x mask headerLineWidth |
+	| color textColor charWidth trackWidth x mask headerLineWidth maxTrackLabelWidth fittingTrackLabel |
 	charWidth := font widthOf: $X.
 	trackWidth := charWidth * self tracksWidthInCharacters.
-	headerLineWidth := charWidth / 2.0.
+	maxTrackLabelWidth := trackWidth - (labelMonoFont widthOfString: 'SM') - 2.
+	headerLineWidth := 7.5. "originally was charWidth/2.0, but we don't want to change with the font size"
 	x := charWidth * 2.5.
 	mask := tracker selectedMask.
 	tracker tracks withIndexDo: [:track :i| | trackColor trackLabel |
@@ -624,10 +625,12 @@ drawTracksOn: aCanvas
 		(tracker selectedInstrumentNumberAtTrack: i) ifNotNil: [:k|
 			trackLabel := trackLabel, '/', (k printStringBase: 16 nDigits: 2).
 			tracker instruments at: k ifPresent: [:anInstrument| anInstrument label ifNotNil: [:aString| trackLabel := trackLabel, ' ', aString]]].
-		aCanvas drawString: trackLabel at: x @ 8 font: labelFont color: textColor.
+		fittingTrackLabel := trackLabel.
+		[(labelFont widthOfString: fittingTrackLabel) > maxTrackLabelWidth] whileTrue: [trackLabel := trackLabel allButLast. fittingTrackLabel := trackLabel, '…'].
+		aCanvas drawString: fittingTrackLabel at: x @ 8 font: labelFont color: textColor.
 		x := x + trackWidth.
-		track muted ifTrue: [aCanvas drawString: 'M' at: (x - (font widthOf: $M)) @ 9 font: font color: textColor].
-		track soloed ifTrue: [aCanvas drawString: 'S' at: (x - (font widthOfString: 'SM') - 4 @ 9) font: font color: textColor].
+		track muted ifTrue: [aCanvas drawString: 'M' at: x - (labelMonoFont widthOf: $M) @ 8 font: labelMonoFont color: textColor].
+		track soloed ifTrue: [aCanvas drawString: 'S' at: x - (labelMonoFont widthOfString: 'SM') - 1 @ 8 font: labelMonoFont color: textColor].
 		x := x + (charWidth/2.0)].
 	aCanvas fillRectangle: (x @ 0 corner: extent x @ headerLineWidth) color: Color darkGray! !
 
@@ -635,7 +638,7 @@ drawTracksOn: aCanvas
 tracksWidthInCharacters
 	^ 15! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 10/Mar/2026 14:46:59'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 10/Mar/2026 20:53:37'!
 handleCommandHotkey: anEvent
 	anEvent keyCharacter = $- ifTrue: [self adjustFontSizeBy: -1. ^ true].
 	anEvent keyCharacter = $= ifTrue: [self adjustFontSizeBy: 1. ^ true].
@@ -646,7 +649,7 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 7/Mar/2026 18:54:07'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 10/Mar/2026 15:58:22'!
 handleInputKey: anEvent
 	| c i |
 	anEvent isBackspace ifTrue:
@@ -661,7 +664,7 @@ handleInputKey: anEvent
 	cursorPosition = 3 ifTrue:
 		[c := anEvent keyCharacter.
 		c = $a ifTrue:
-			[tracker selectedTriggerAt: cursorPosition put: -1.
+			[tracker selectedTriggerAt: cursorPosition put: -1. "note off"
 			tracker moveCursorLineDown: editStep.
 			^ true].
 		(i := 'zsxdcvgbhnjmq2w3er5t6y7ui9o0p' indexOf: c) > 0 ifTrue:
@@ -770,13 +773,14 @@ minimumExtent
 	n := tracker tracks size.
 	^ (font widthOf: $X) * (n * (self tracksWidthInCharacters + 0.5) + 4.5) @ (font lineSpacing * 16)! !
 
-!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 8/Mar/2026 19:36:45'!
+!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 11/Mar/2026 15:05:33'!
 initialize
 	super initialize.
 "	font := FontFamily familyName: 'impulseBig' pointSize: 18."
-	font := FontFamily familyName: 'JetBrains Mono NL' pointSize: 16.
+	font := FontFamily familyName: 'JetBrains Mono NL' pointSize: 15.
 "	font := FontFamily familyName: 'Commodore 64 Angled' pointSize: 14."
-	labelFont := FontFamily defaultFamilyPointSize: 16.
+	labelFont := FontFamily defaultFamilyPointSize: 15.
+	labelMonoFont := font.
 	centerKey := 60. "C4"
 	editStep := 1.
 	showCursor := true.
@@ -1014,10 +1018,10 @@ minimumExtent
 	space := charWidth / 4.0.
 	^ (blockWidth + space) * tracker tracks size + blockWidth + blockHeight @ (blockHeight * tracker sequence size)! !
 
-!SequencerMorph methodsFor: 'initialization' stamp: 'len 24/Feb/2026 15:38:00'!
+!SequencerMorph methodsFor: 'initialization' stamp: 'len 10/Mar/2026 19:03:12'!
 initialize
 	super initialize.
-	font := FontFamily familyName: 'JetBrains Mono NL' pointSize: 16.
+	font := FontFamily familyName: 'JetBrains Mono NL' pointSize: 15.
 	showCursor := true.
 	pauseBlinking := false! !
 
@@ -1088,10 +1092,10 @@ drawOn: aCanvas
 minimumExtent
 	^ 200 @ font lineSpacing! !
 
-!TrackerBarMorph methodsFor: 'initialization' stamp: 'len 7/Jan/2026 16:03:45'!
+!TrackerBarMorph methodsFor: 'initialization' stamp: 'len 10/Mar/2026 19:04:30'!
 initialize
 	super initialize.
-	font := FontFamily defaultFamilyPointSize: 16! !
+	font := FontFamily defaultFamilyPointSize: 15! !
 
 !TrackerBarMorph methodsFor: 'initialization' stamp: 'len 18/Feb/2026 17:06:45'!
 setTracker: aTracker
@@ -1163,12 +1167,12 @@ adjustPanBy: aNumber
 adjustVelocityBy: aNumber
 	velocityReceivers do: [:each| each adjustVelocityBy: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 10/Mar/2026 15:22:51'!
+!Instrument methodsFor: 'playing' stamp: 'len 10/Mar/2026 22:21:59'!
 handleFX: anInteger
 	| command |
 	command := anInteger bitShift: -8.
-	command = 67 "C (cut velocity)" ifTrue: [track scheduleTrigger: (Trigger new velocity: ((anInteger bitShift: -4) bitAnd: 16rF) / 15.0) after: (anInteger bitAnd: 16rF) / 16.0 * track tracker tpl. ^ self].
-	command = 82 "R (retrigger)" ifTrue: [track scheduleTrigger: (trigger copy velocity: nil) after: (anInteger bitAnd: 16rFF) / 256.0 * track tracker tpl. ^ self].
+	command = 67 "C (cut velocity)" ifTrue: [track scheduleTrigger: (Trigger new velocity: ((anInteger bitShift: -4) bitAnd: 16rF) / 15.0) after: (anInteger bitAnd: 16rF) + 1 / 16.0 * track tracker tpl. ^ self].
+	command = 82 "R (retrigger)" ifTrue: [track scheduleTrigger: (trigger copy velocity: nil) after: (anInteger bitAnd: 16rFF) + 1 / 256.0 * track tracker tpl. ^ self].
 	command = 71 "G (glide)" ifTrue: [self setGlide: (anInteger bitAnd: 16rFF) / 255.0. ^ self].
 	command = 76 "L (volume level)" ifTrue: [self setLevel:​ (anInteger bitAnd: 16rFF) / 255.0. ^ self].
 	command = 80 "P (pan)" ifTrue: [self setPan:  (anInteger bitAnd: 16rFF) / 255.0 * 2.0 - 1.0. ^ self].

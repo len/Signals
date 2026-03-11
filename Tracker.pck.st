@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 11 March 2026 at 3:16:34 pm'!
+'From Cuis7.7 [latest update: #7797] on 11 March 2026 at 7:58:18 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 4!
+!provides: 'Tracker' 1 5!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -1387,12 +1387,12 @@ track: trackIndex at: index put: aTrigger
 	block at: index put: aTrigger.
 	(aTrigger isNil and: [block allSatisfy: [:each| each isNil]]) ifTrue: [blocks at: trackIndex put: nil]! !
 
-!Pattern methodsFor: 'accessing' stamp: 'len 18/Feb/2026 17:32:13'!
+!Pattern methodsFor: 'accessing' stamp: 'len 11/Mar/2026 19:54:58'!
 track: trackIndex instrumentAbove: line
 	"Answer the instrument set for the given track at or above the given line. This is the instrument that will play that line when the playhead reaches it."
 	| block |
 	block := (blocks at: trackIndex) ifNil: [^ nil].
-	line to: 1 by: -1 do: [:j| (block at: j) ifNotNil: [:aTrigger| aTrigger instrument ifNotNil: [:anInteger| ^ anInteger]]].
+	line to: 1 by: -1 do: [:j| (block at: j) ifNotNil: [:aTrigger| aTrigger instrument ifNotNil: [:anInteger| ^ anInteger = 0 ifFalse: [anInteger]]]].
 	^ nil! !
 
 !Pattern methodsFor: 'copying' stamp: 'len 27/Dec/2025 02:01:58'!

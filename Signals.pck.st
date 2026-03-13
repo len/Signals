@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 10 March 2026 at 3:32:15 pm'!
+'From Cuis7.7 [latest update: #7797] on 13 March 2026 at 3:44:33 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 491!
+!provides: 'Signals' 1 492!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -97,12 +97,22 @@ Amp class
 
 !classDefinition: #Compressor category: #'Signals-Dynamics'!
 Module subclass: #Compressor
-	instanceVariableNames: 'hpf mode rmslpf envelope inputL inputR inputSC outputL outputR aux'
+	instanceVariableNames: 'schpf mode rmslpf envelope inputL inputR inputSC outputL outputR aux'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Dynamics'!
 !classDefinition: 'Compressor class' category: #'Signals-Dynamics'!
 Compressor class
+	instanceVariableNames: ''!
+
+!classDefinition: #Gate category: #'Signals-Dynamics'!
+Module subclass: #Gate
+	instanceVariableNames: 'schpf mode rmslpf envelope inputL inputR inputSC outputL outputR aux'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Dynamics'!
+!classDefinition: 'Gate class' category: #'Signals-Dynamics'!
+Gate class
 	instanceVariableNames: ''!
 
 !classDefinition: #EG category: #'Signals-Envelopes'!
@@ -1435,13 +1445,13 @@ Object subclass: #STFT
 STFT class
 	instanceVariableNames: ''!
 
-!classDefinition: #Bus category: #'Signals-Kernel'!
+!classDefinition: #Bus category: #'Signals-IO'!
 Object subclass: #Bus
 	instanceVariableNames: 'leftBuffer rightBuffer'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Kernel'!
-!classDefinition: 'Bus class' category: #'Signals-Kernel'!
+	category: 'Signals-IO'!
+!classDefinition: 'Bus class' category: #'Signals-IO'!
 Bus class
 	instanceVariableNames: ''!
 
@@ -1616,7 +1626,10 @@ This is an abstract superclass for signal processing modules.!
 An amplifier just multiplies the input signal by a gain parameter, typically modulated by an envolope. When the gain parameter changes, the actual gain is varied smoothly by sample to avoid clicks or zipper noise.!
 
 !Compressor commentStamp: '<historical>' prior: 0!
-A simple compressor module with optional side-chain input.!
+A general compressor module with sidechain input.!
+
+!Gate commentStamp: '<historical>' prior: 0!
+A gate module with sidechain input. Analogous to Compressor but, instead of applying gain reduction to signals *above* a threshold, it silences signals *below* a threshold.!
 
 !EG commentStamp: '<historical>' prior: 0!
 Abstract superclass for envelope generators.!
@@ -1656,7 +1669,10 @@ This is a state variable filter with a 12 dB/oct slope (2 poles). It has outputs
 This module receives a stereo signal from a bus.!
 
 !AudioOut commentStamp: '<historical>' prior: 0!
-This module takes a mono or stereo signal, applies volume level and pan, and sends it to a bus. The default bus 0 is the master output.!
+This module takes a mono or stereo signal, applies volume level and pan, and sends it to a bus. The default bus 0 is the master bus.!
+
+!ControlIn commentStamp: '<historical>' prior: 0!
+This module produces a control signal from values received from an external source, for example MIDI CC messages.!
 
 !Generator commentStamp: '<historical>' prior: 0!
 A signal generator produces a stream of samples from a real-valued function of time (typically a mono audio signal). It is similar to a Stream, but its values are 32-bit floats. See subclasses.!
@@ -1911,6 +1927,9 @@ Instruments handle events such as notes and control changes and distribute them 
 
 Instruments can mix the output of the voices to stereo buffers, and can apply effects (for example, spreading the voices in stereo).!
 
+!Bus commentStamp: '<historical>' prior: 0!
+A bus is just the sum of a number of audio signals (mono or stereo). It is used to mix a number of audio signals in order to process them together or send them to the audio output driver.!
+
 !AllpassComb commentStamp: '<historical>' prior: 0!
 Schroeder allpass filter.!
 
@@ -2093,6 +2112,10 @@ initialize
 	curve := #linear.
 	coarseStep := 1.0 / 128.0.
 	fineStep := coarseStep * 0.1! !
+
+!Control methodsFor: 'printing' stamp: 'len 10/Mar/2026 16:23:07'!
+label
+	^ label! !
 
 !Control methodsFor: 'printing' stamp: 'len 27/Jan/2026 16:28:29'!
 label: aString
@@ -2513,12 +2536,12 @@ readFromJson: json buffers: aList
 is: aSymbol
 	^ aSymbol == #Module or: [super is: aSymbol]! !
 
-!Module methodsFor: 'tools' stamp: 'len 30/Jan/2026 15:03:59'!
+!Module methodsFor: 'tools' stamp: 'len 10/Mar/2026 16:23:47'!
 panel
 	"Answer a panel to use in the patchable views."
 	| panel |
 	panel := ControlPanel new.
-	controls keysAndValuesDo: [:name :control| panel addKnob: control label: name capitalized].
+	controls keysAndValuesDo: [:name :control| panel addKnob: control label: (control label ifNil: [name capitalized])].
 	^ panel! !
 
 !Module methodsFor: 'tools' stamp: 'len 10/Jan/2026 16:16:26'!
@@ -2603,68 +2626,107 @@ setInputRM: aBuffer
 setOutput: aBuffer
 	output := aBuffer! !
 
-!Compressor methodsFor: 'controlling' stamp: 'len 8/Mar/2026 16:43:49'!
-reset
-	envelope := 0.0! !
+!Compressor methodsFor: 'controlling' stamp: 'len 12/Mar/2026 18:57:07'!
+mode
+	^ mode! !
 
-!Compressor methodsFor: 'controlling' stamp: 'len 9/Mar/2026 16:39:43'!
+!Compressor methodsFor: 'controlling' stamp: 'len 12/Mar/2026 18:57:20'!
+mode: aSymbol
+	mode := aSymbol.
+	self changed! !
+
+!Compressor methodsFor: 'controlling' stamp: 'len 12/Mar/2026 18:25:02'!
+reset
+	envelope := 0.0.
+	schpf reset.
+	rmslpf reset! !
+
+!Compressor methodsFor: 'controlling' stamp: 'len 12/Mar/2026 16:56:53'!
 update
 	super update.
-	hpf undenormalize.
+	schpf undenormalize; pole: (self get: #schpf) / self class sampleRate.
 	rmslpf undenormalize! !
 
-!Compressor methodsFor: 'initialization' stamp: 'len 9/Mar/2026 00:26:02'!
+!Compressor methodsFor: 'initialization' stamp: 'len 12/Mar/2026 16:57:03'!
 initialize
 	super initialize.
-	hpf := OnePole new pole: 100.0 / self class sampleRate "100 hz".
-	rmslpf := OnePole new time: 0.01 * self class sampleRate.
+	schpf := OnePole new pole: 100.0 / self class sampleRate "100 hz".
+	rmslpf := OnePole new time: 0.01 * self class sampleRate. "10 ms"
 	mode := #peak. "peak / rms"
 	aux := Float32Array new: self class blockSize! !
 
-!Compressor methodsFor: 'initialization' stamp: 'len 9/Mar/2026 00:27:46'!
+!Compressor methodsFor: 'initialization' stamp: 'len 12/Mar/2026 17:53:41'!
 initializeControls
 	super initializeControls.
 	self addVolumeControl: #threshold value: 0.126.
 	(self addLogControl: #ratio min: 1.0 max: 20.0 value: 4.0) printer: [:x| (x printStringFractionDigits: 1), ':1'].
 	self addTimeControl: #attack min: 0.0001 "0.1 ms" max: 0.1 "100 ms" value: 0.01 "10 ms".
 	self addTimeControl: #release min: 0.01 "10 ms" max: 1.5 "s" value: 0.1 "100 ms".
-"	self addFrequencyControl: #hpf min: 20.0 max: 200.0 value: 100.0."
-"	self addVolumeControl: #knee min: 1.0 max: 4.0" "+12 dB" "value: 2.0" "+6 dB".
+	(self addFrequencyControl: #schpf min: 20.0 max: 200.0 value: 100.0) label: 'SC HPF'.
+	self addVolumeControl: #knee min: 1.0 "0 dB" max: 4.0 "+12 dB" value: 2.0 "+6 dB".
 	self addVolumeControl: #makeup min: 0.25 "-12 dB" max: 16.0 "+24 dB" value: 1.0! !
 
-!Compressor methodsFor: 'processing' stamp: 'len 9/Mar/2026 05:08:16'!
+!Compressor methodsFor: 'processing' stamp: 'len 13/Mar/2026 15:25:15'!
 tick
-	| makeup ratio sc threshold α β |
-	sc := inputSC ifNil:
-		[inputL ifNil:
-			[outputL ifNotNil: [outputL atAllPut: 0.0].
-			outputR ifNotNil: [outputR atAllPut: 0.0].
-			^ self]].
+	| sc isPeak threshold ratio knee halfKnee α β |
+	sc := inputSC ifNil: [inputL ifNil:
+		[outputL ifNotNil: [outputL atAllPut: 0.0].
+		outputR ifNotNil: [outputR atAllPut: 0.0].
+		^ self]].
+	isPeak := mode = #peak. "if not peak, it's RMS"
 	threshold := self get: #threshold.
-	makeup := self get: #makeup.
 	ratio := self get: #ratio.
+	knee := self get: #knee.
+	halfKnee := knee / 2.0.
 	α := 1.0 - (-1.0 / ((self get: #attack) * self class sampleRate)) exp.
 	β := 1.0 - (-1.0 / ((self get: #release) * self class sampleRate)) exp.
+	aux atAllPut: 1.0.
 	1 to: sc size do: [:i|
-		| det gain x |
+		| x level slope gr t |
 		x := sc at: i.
-		x := x - (hpf value: x).
-		det := mode == #peak ifTrue: [x abs] ifFalse: [(rmslpf value: x squared) sqrt].
-		envelope := (det - envelope) * (det > envelope ifTrue: [α] ifFalse: [β]) + envelope.
-		gain := envelope < threshold ifTrue: [makeup] ifFalse: [((envelope - threshold) / ratio + threshold) * makeup / envelope].
-		aux at: i put: gain].
+		x := x - (schpf value: x). "apply highpass filter to the sidechain to avoid bass pumping"
+		level := isPeak ifTrue: [x abs] ifFalse: [(rmslpf value: x squared) sqrt].
+		"program-dependent release, the release time depends on envelope and threshold:"
+		slope := level > envelope ifTrue: [α] ifFalse: [β / ((envelope - threshold) * 4.0 + 1.0)].
+		envelope := (level - envelope) * slope + envelope.
+		(gr := envelope - threshold) > halfKnee negated ifTrue:
+			[t := (gr + halfKnee) / knee min: 1.0. "0 at lower knee edge, 1 at upper"
+			t := t squared * (3.0 - (2.0 * t)). "smoothstep"
+			aux at: i put: (((gr max: 0.0) / ratio + threshold) / envelope - 1.0) * t + 1.0]].
+	aux *= (self get: #makeup).
 	(inputL notNil and: [outputL notNil]) ifTrue: [outputL replaceWith: inputL; *= aux].
 	(inputR notNil and: [outputR notNil]) ifTrue: [outputR replaceWith: inputR; *= aux]! !
 
-!Compressor methodsFor: 'tools' stamp: 'len 9/Mar/2026 00:10:28'!
+!Compressor methodsFor: 'tools' stamp: 'len 12/Mar/2026 18:11:56'!
+panel
+	| answer |
+	answer := ControlPanel newColumn.
+	answer addRow
+		addKnob: (controls at: #threshold) label: 'Thresh';
+		addKnob: (controls at: #ratio) label: 'Ratio'.
+	answer addRow
+		addKnob: (controls at: #attack) label: 'Attack';
+		addKnob: (controls at: #release) label: 'Release'.
+	^ answer! !
+
+!Compressor methodsFor: 'tools' stamp: 'len 12/Mar/2026 18:58:45'!
+panel2
+	^​ ControlPanel new
+		addMorph: (PluggableChoiceMorph new options: #(peak rms); model: self; getter: #mode; setter: #mode:);
+		addSmallKnob: (controls at: #schpf) label: 'SC HPF';
+		addSmallKnob: (controls at: #knee) label: 'Knee';
+		addSmallKnob: (controls at: #makeup) label: 'Makeup'! !
+
+!Compressor methodsFor: 'tools' stamp: 'len 12/Mar/2026 18:08:37'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
+	answer flap addMorph: self panel2.
 	answer
 		addAudioInput: #setInputL: label: 'In L/M';
 		addAudioInput: #setInputR: label: 'In R';
-		addAudioInput: #setInputSC: label: 'In SC';
+		addAudioInput: #setInputSC: label: 'SC';
 		addAudioOutput: #setOutputL: label: 'Out L/M';
 		addAudioOutput: #setOutputR: label: 'Out R'.
 	^ answer! !
@@ -2686,6 +2748,124 @@ setOutputL: aBuffer
 	outputL := aBuffer! !
 
 !Compressor methodsFor: 'wiring' stamp: 'len 9/Mar/2026 00:08:03'!
+setOutputR: aBuffer
+	outputR := aBuffer! !
+
+!Gate methodsFor: 'controlling' stamp: 'len 12/Mar/2026 18:59:34'!
+mode
+	^ mode! !
+
+!Gate methodsFor: 'controlling' stamp: 'len 12/Mar/2026 18:59:27'!
+mode: aSymbol
+	mode := aSymbol.
+	self changed! !
+
+!Gate methodsFor: 'controlling' stamp: 'len 12/Mar/2026 18:24:52'!
+reset
+	envelope := 0.0.
+	schpf reset.
+	rmslpf reset! !
+
+!Gate methodsFor: 'controlling' stamp: 'len 12/Mar/2026 18:23:07'!
+update
+	super update.
+	schpf undenormalize; pole: (self get: #schpf) / self class sampleRate.
+	rmslpf undenormalize! !
+
+!Gate methodsFor: 'initialization' stamp: 'len 12/Mar/2026 18:23:07'!
+initialize
+	super initialize.
+	schpf := OnePole new pole: 100.0 / self class sampleRate "100 hz".
+	rmslpf := OnePole new time: 0.01 * self class sampleRate. "10 ms"
+	mode := #peak. "peak / rms"
+	aux := Float32Array new: self class blockSize! !
+
+!Gate methodsFor: 'initialization' stamp: 'len 12/Mar/2026 18:40:08'!
+initializeControls
+	super initializeControls.
+	self addVolumeControl: #threshold value: 0.126.
+	self addTimeControl: #attack min: 0.0001 "0.1 ms" max: 0.1 "100 ms" value: 0.01 "10 ms".
+	self addTimeControl: #hold min: 0.0001 "0.1 ms" max: 0.1 "100 ms" value: 0.01 "10 ms".
+	self addTimeControl: #release min: 0.01 "10 ms" max: 1.5 "s" value: 0.1 "100 ms".
+	self addControl: #return min: 0.0 max: 1.0 value: 0.1.
+	(self addFrequencyControl: #schpf min: 20.0 max: 200.0 value: 100.0) label: 'SC HPF'.
+	self addVolumeControl: #knee min: 1.0 "0 dB" max: 4.0 "+12 dB" value: 2.0 "+6 dB"! !
+
+!Gate methodsFor: 'processing' stamp: 'len 12/Mar/2026 18:43:26'!
+tick
+	| sc isPeak threshold α β |
+	sc := inputSC ifNil: [inputL ifNil:
+		[outputL ifNotNil: [outputL atAllPut: 0.0].
+		outputR ifNotNil: [outputR atAllPut: 0.0].
+		^ self]].
+	isPeak := mode = #peak.
+	threshold := self get: #threshold.
+	α := 1.0 - (-1.0 / ((self get: #attack) * self class sampleRate)) exp.
+	β := 1.0 - (-1.0 / ((self get: #release) * self class sampleRate)) exp.
+	aux atAllPut: 1.0.
+	1 to: sc size do: [:i|
+		| x level slope gr |
+		x := sc at: i.
+		x := x - (schpf value: x). "apply highpass filter to the sidechain to avoid bass pumping"
+		level := isPeak ifTrue: [x abs] ifFalse: [(rmslpf value: x squared) sqrt].
+		"program-dependent release, the release time depends on envelope and threshold:"
+		slope := level > envelope ifTrue: [α] ifFalse: [β / ((envelope - threshold) * 4.0 + 1.0)].
+		envelope := (level - envelope) * slope + envelope.
+		(gr := envelope - threshold) > 0.0 ifTrue: [aux at: i put: 0.0]].
+	(inputL notNil and: [outputL notNil]) ifTrue: [outputL replaceWith: inputL; *= aux].
+	(inputR notNil and: [outputR notNil]) ifTrue: [outputR replaceWith: inputR; *= aux]! !
+
+!Gate methodsFor: 'tools' stamp: 'len 12/Mar/2026 18:44:53'!
+panel
+	| answer |
+	answer := ControlPanel newColumn.
+	answer addRow
+		addKnob: (controls at: #threshold) label: 'Thresh';
+		addKnob: (controls at: #return) label: 'Return'.
+	answer addRow
+		addSmallKnob: (controls at: #attack) label: 'Attack';
+		addSmallKnob: (controls at: #hold) label: 'Hold';
+		addSmallKnob: (controls at: #release) label: 'Release'.
+	^ answer! !
+
+!Gate methodsFor: 'tools' stamp: 'len 12/Mar/2026 18:59:15'!
+panel2
+	^​ ControlPanel new
+		addMorph: (PluggableChoiceMorph new options: #(peak rms); model: self; getter: #mode; setter: #mode:);
+		addSmallKnob: (controls at: #schpf) label: 'SC HPF';
+		addSmallKnob: (controls at: #knee) label: 'Knee'! !
+
+!Gate methodsFor: 'tools' stamp: 'len 12/Mar/2026 18:23:07'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self panel.
+	answer flap addMorph: self panel2.
+	answer
+		addAudioInput: #setInputL: label: 'In L/M';
+		addAudioInput: #setInputR: label: 'In R';
+		addAudioInput: #setInputSC: label: 'SC';
+		addAudioOutput: #setOutputL: label: 'Out L/M';
+		addAudioOutput: #setOutputR: label: 'Out R'.
+	^ answer! !
+
+!Gate methodsFor: 'wiring' stamp: 'len 12/Mar/2026 18:23:07'!
+setInputL: aBuffer
+	inputL := aBuffer! !
+
+!Gate methodsFor: 'wiring' stamp: 'len 12/Mar/2026 18:23:07'!
+setInputR: aBuffer
+	inputR := aBuffer! !
+
+!Gate methodsFor: 'wiring' stamp: 'len 12/Mar/2026 18:23:07'!
+setInputSC: aBuffer
+	inputSC := aBuffer! !
+
+!Gate methodsFor: 'wiring' stamp: 'len 12/Mar/2026 18:23:07'!
+setOutputL: aBuffer
+	outputL := aBuffer! !
+
+!Gate methodsFor: 'wiring' stamp: 'len 12/Mar/2026 18:23:07'!
 setOutputR: aBuffer
 	outputR := aBuffer! !
 
@@ -3290,27 +3470,26 @@ tick
 		outputL at: i put: inL * dry + (outL * wet).
 		outputR ifNotNil: [outputR at: i put: inR * dry + (outR * wet)]]! !
 
-!StereoEcho methodsFor: 'tools' stamp: 'len 6/Mar/2026 22:21:32'!
+!StereoEcho methodsFor: 'tools' stamp: 'len 12/Mar/2026 18:03:54'!
 panel
-	^ ControlPanel new
+	| answer |
+	answer := ControlPanel newColumn.
+	answer addRow
 		addKnob: (controls at: #time) label: 'Time';
 		addKnob: (controls at: #feedback) label: 'FB';
-		addKnob: (controls at: #width) label: 'Width'! !
-
-!StereoEcho methodsFor: 'tools' stamp: 'len 7/Mar/2026 16:09:58'!
-panel2
-	^ ControlPanel new
+		addKnob: (controls at: #width) label: 'Width'.
+	answer addRow
 		addSmallKnob: (controls at: #bass) label: 'Bass';
 		addSmallKnob: (controls at: #treble) label: 'Treble';
 		addSmallKnob: (controls at: #spread) label: 'Spread';
-		addSmallKnob: (controls at: #mix) label: 'Mix'! !
+		addSmallKnob: (controls at: #mix) label: 'Mix'.
+	^ answer! !
 
-!StereoEcho methodsFor: 'tools' stamp: 'len 9/Mar/2026 15:53:23'!
+!StereoEcho methodsFor: 'tools' stamp: 'len 12/Mar/2026 18:04:40'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
-	answer flap addMorph: self panel2.
 	^ answer
 		addAudioInput: #setInputL: label: 'In L/M';
 		addAudioInput: #setInputR: label: 'In R';
@@ -3665,7 +3844,7 @@ initializeControls
 	self addVolumeControl: #level min: 0.001 "-60 dB" max: 4.0 value: 0.5.
 	(self addControl: #pan min: -1.0 max: 1.0 value: 0.0) printer: [:x| x abs < 0.01 ifTrue: ['Center'] ifFalse: [(x abs * 100.0) rounded printString, '% ', (x < 0.0 ifTrue: ['L'] ifFalse: ['R'])]]! !
 
-!AudioOut methodsFor: 'processing' stamp: 'len 5/Mar/2026 23:51:54'!
+!AudioOut methodsFor: 'processing' stamp: 'len 12/Mar/2026 16:41:10'!
 tick
 	| bus |
 	inputL ifNil: [^ self].
@@ -3680,10 +3859,9 @@ tick
 			[meterRightValue := meterRightValue * 0.9 max: (inputR rms max: inputR last abs).
 			aux replaceWith: inputR].
 	aux *= levelRight.
-	bus leftBuffer += aux.
-	aux replaceWith: inputL.
-	aux *= levelLeft.
-	bus rightBuffer += aux! !
+	bus rightBuffer += aux.
+	aux replaceWith: inputL; *= levelLeft.
+	bus leftBuffer += aux! !
 
 !AudioOut methodsFor: 'serialization' stamp: 'len 5/Mar/2026 15:47:10'!
 asJsonWithBuffers: aList
@@ -3696,15 +3874,15 @@ readFromJson: json buffers: aList
 	super readFromJson: json buffers: aList.
 	port := json at: #port ifAbsent: [0]! !
 
-!AudioOut methodsFor: 'tools' stamp: 'len 20/Jan/2026 15:05:44'!
+!AudioOut methodsFor: 'tools' stamp: 'len 12/Mar/2026 18:00:03'!
 panel
-	| column |
-	column := LinearLayoutMorph newColumn
-		color: Color transparent;
-		addMorph: (KnobControlMorph control:(controls at: #level));
-		addMorph: (SliderControlMorph new transpose; control: (controls at: #pan)).
-	^ ControlPanel new
-		addMorph: column! !
+	| answer |
+	answer := ControlPanel new.
+	answer addColumn
+		gap: 0;
+		addKnob: (controls at: #level);
+		addHorizontalSlider: (controls at: #pan).
+	^ answer! !
 
 !AudioOut methodsFor: 'tools' stamp: 'len 9/Mar/2026 00:55:19'!
 patchable
@@ -3788,9 +3966,8 @@ next: anInteger
 	self read: buffer.
 	^ buffer! !
 
-!Generator methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:11:23'!
+!Generator methodsFor: 'processing' stamp: 'len 13/Mar/2026 14:23:37'!
 read: aBuffer
-	"Subclasses should reimplement this for speed, possibly with primitives."
 	1 to: aBuffer size do: [:i| aBuffer at: i put: self next]! !
 
 !Generator methodsFor: 'processing' stamp: 'len 6/Oct/2025 19:42:00'!
@@ -4778,23 +4955,9 @@ adjustVelocityBy: aNumber
 gateOff
 	sample ifNotNil: [sample gateOff]! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 15/Feb/2026 20:51:24'!
+!Multisample methodsFor: 'controlling' stamp: 'len 13/Mar/2026 15:40:01'!
 gateOn
-	self reset! !
-
-!Multisample methodsFor: 'controlling' stamp: 'len 15/Feb/2026 20:41:02'!
-reset
-	sample := nil! !
-
-!Multisample methodsFor: 'controlling' stamp: 'len 2/Dec/2025 14:33:00'!
-setVelocity: aNumber
-	velocity := aNumber! !
-
-!Multisample methodsFor: 'controlling' stamp: 'len 21/Feb/2026 20:08:27'!
-update
 	| frequency key closestKey speedFactor samplesByVelocity |
-	super update.
-	sample ifNotNil: [^ self].
 	frequency := ((self get: #tune) + note) semitonesToHertz.
 	key := frequency hertzToSemitones.
 	closestKey := keymap keys detectMin: [:x| (x - key) abs].
@@ -4804,6 +4967,14 @@ update
 	sample baseRate: sample baseRate * speedFactor.
 	sample gateOn.
 	sample update! !
+
+!Multisample methodsFor: 'controlling' stamp: 'len 15/Feb/2026 20:41:02'!
+reset
+	sample := nil! !
+
+!Multisample methodsFor: 'controlling' stamp: 'len 2/Dec/2025 14:33:00'!
+setVelocity: aNumber
+	velocity := aNumber! !
 
 !Multisample methodsFor: 'copying' stamp: 'len 15/Feb/2026 21:02:02'!
 copy
@@ -4884,6 +5055,19 @@ loadBookerT
 				{Sample buffer: bufferSlow sampleRate: reader sampleRate loopStart: loopStartSlow loopEnd: loopEndSlow.
 				Sample buffer: bufferFast sampleRate: reader sampleRate loopStart: loopStartFast loopEnd: loopEndFast}]].
 	^ self new label: 'BookerT'; keymap: keymap! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 12/Mar/2026 00:13:41'!
+loadChoirAah
+	| keymap |
+	keymap := Dictionary new.
+	#('A2' 'A3' 'A5' 'C3' 'C4' 'C5' 'D#2' 'D#3' 'D#4' 'D#5' 'F#3' 'F#4') do: [:noteName|
+		| filename reader buffer |
+		filename := 'Choir Aah - Choir-', noteName, '1.wav'.
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'MCO' // filename.
+		buffer := reader leftSamples.
+		keymap at: noteName nameToSemitones put:
+			{Sample buffer: buffer sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
+	^ self new label: 'Choir Aah'; keymap: keymap! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 16:33:56'!
 loadDancePiano
@@ -4968,7 +5152,7 @@ loadJRhodes3D
 	keymap := samples collect: [:each| each associations sorted reversed collect: #value].
 	^ self new label: 'Rhodes'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 19:14:20'!
+!Multisample class methodsFor: 'library' stamp: 'len 12/Mar/2026 00:21:40'!
 loadLibrary
 	"
 	Multisample loadLibrary
@@ -4989,7 +5173,11 @@ loadLibrary
 		at: 'Slap Bass' put: self loadSlapBass;
 		at: 'Pop Bass' put: self loadPopBass;
 		at: 'Finger Bass' put: self loadFingerBass;
-		at: 'Double Bass' put: self loadDoubleBass! !
+		at: 'Double Bass' put: self loadDoubleBass;
+		at: '6-String Steel Guitar' put: self loadSixStringSteelGuitar;
+		at: 'Two Tone House Organ' put: self loadTwoToneHouseOrgan;
+		at: 'String Ensemble' put: self loadStringEnsemble;
+		at: 'Choir Aah' put: self loadChoirAah "bad loop points"! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 17:15:48'!
 loadLoFiRhodes
@@ -5027,6 +5215,19 @@ loadPopBass
 		keymap at: midiKey put: {Sample buffer: reader leftSamples sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Pop Bass'; keymap: keymap! !
 
+!Multisample class methodsFor: 'library' stamp: 'len 11/Mar/2026 18:57:14'!
+loadSixStringSteelGuitar
+	| keymap |
+	keymap := Dictionary new.
+	#('E1' 'A1' 'D2' 'G2' 'B2' 'E3' 'A3' 'D4' 'G4') withIndexDo: [:noteName :i|
+		| filename reader buffer |
+		filename := '6-Stg-Steel-Gtr-', noteName, '.wav'.
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / '6-String Steel Guitar' // filename.
+		buffer := reader leftSamples.
+		keymap at: noteName nameToSemitones put:
+			{Sample buffer: buffer sampleRate: reader sampleRate}].
+	^ self new label: '6-String Steel Guitar'; keymap: keymap! !
+
 !Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 16:02:09'!
 loadSlapBass
 	| keymap |
@@ -5052,19 +5253,46 @@ loadSquireBass
 			{Sample buffer: buffer sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Squire Bass'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 15:41:30'!
+!Multisample class methodsFor: 'library' stamp: 'len 12/Mar/2026 00:05:15'!
+loadStringEnsemble
+	| keymap |
+	keymap := Dictionary new.
+	#('G2' 'C#3' 'E3' 'B3' 'C#4' 'G4' 'C#5' 'A#5' 'F#5' 'D6' 'E6' 'B6' 'E7' 'A7') withIndexDo: [:noteName :i|
+		| filename reader buffer |
+		filename := 'String Ensemble - String ', noteName, '.wav'.
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'String Ensemble' // filename.
+		buffer := reader leftSamples.
+		keymap at: noteName nameToSemitones put:
+			{Sample buffer: buffer sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
+	^ self new label: 'String Ensemble'; keymap: keymap! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 13/Mar/2026 02:13:40'!
 loadTrumpet
 	"Jazz Trumpet."
 	| keymap |
 	keymap := Dictionary new.
-	#('F#3' 'A3' 'C4' 'D#4' 'G4' 'A#4' 'C#5' 'D#5' 'G5' 'B5' 'C#6' 'E6') do: [:noteName|
+	#('C4' 'D#4' 'F#4' 'A4' 'C#5' 'E5' 'G5' 'A5' 'C#6' 'F6' 'G6' 'A#6') do: [:noteName|
 		| filename reader buffer |
-		filename := 'Trumpet - Trumpet ', noteName, ':0.wav'.
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'MCO' // filename.
+		filename := 'Jazz Trumpet ', noteName, '.wav'.
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Jazz Trumpet' // filename.
 		buffer := reader leftSamples.
+		(noteName, ' ', buffer size printString, ' ', reader loopStart printString, ' ', reader loopEnd printString) print.
 		keymap at: noteName nameToSemitones put:
 			{Sample buffer: buffer sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Jazz Trumpet'; keymap: keymap! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 11/Mar/2026 18:57:46'!
+loadTwoToneHouseOrgan
+	| keymap |
+	keymap := Dictionary new.
+	#('C1' 'A#1' 'F1' 'D#2' 'G#2' 'C#3') withIndexDo: [:noteName :i|
+		| filename reader buffer |
+		filename := noteName, '.wav'.
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Two Tone House Organ' // filename.
+		buffer := reader leftSamples + reader rightSamples.
+		keymap at: noteName nameToSemitones put:
+			{Sample buffer: buffer sampleRate: reader sampleRate}].
+	^ self new label: 'Two Tone House Organ'; keymap: keymap! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 15:14:12'!
 loadVibraphone
@@ -5214,23 +5442,25 @@ readBackwards: aBuffer
 			aBuffer from: i to: aBuffer size put: 0.0.
 			^ self]]! !
 
-!Sample methodsFor: 'processing' stamp: 'len 24/Feb/2026 22:14:42'!
+!Sample methodsFor: 'processing' stamp: 'len 13/Mar/2026 14:52:10'!
 readForward: aBuffer
-	| end |
+	| end loopEndMinusOne |
 	end := buffer size.
+	smooth ifTrue: [end := end - 1]. "to allow for interpolation with next sample without checking bounds every time"
+	loopEndMinusOne := loopEnd - 1.
 	position < end ifFalse:
 		[aBuffer atAllPut: 0.0.
 		^ self].
-	smooth ifTrue: [end := end - 1]. "to allow for interpolation with next sample without checking bounds every time"
 	1 to: aBuffer size do: [:i|
 		"if smooth = true perform linear interpolation between samples:"
 		aBuffer at: i put: (smooth ifTrue: [buffer atSmooth: position + 1.0] ifFalse: [buffer at: position truncated + 1]).
-		(position := position + increment) < end ifFalse:
+		((position := position + increment) >= loopEndMinusOne and: [released not]) ifTrue:
+			[position := position - loopLength].
+		position < end ifFalse:
 			[released := true.
 			position := end - 1.0.
 			aBuffer from: i to: aBuffer size put: 0.0.
-			^ self].
-		(position > loopEnd and: [released not]) ifTrue: [position := position - loopLength]]! !
+			^ self]]! !
 
 !Sample methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:13:45'!
 readWarp: aBuffer
@@ -6739,14 +6969,11 @@ initializeControls
 	super initializeControls.
 	self addControl: #drive min: 0.0 max: 2.0 value: 1.0! !
 
-!Overdrive methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:37'!
+!Overdrive methodsFor: 'processing' stamp: 'len 12/Mar/2026 16:41:54'!
 tick
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
-	output replaceWith: input.
-	output *= pregain.
-	output softclip.
-	output *= postgain! !
+	output replaceWith: input; *= pregain; softclip; *= postgain! !
 
 !Overdrive methodsFor: 'processing' stamp: 'len 20/Nov/2025 00:39:00'!
 value: in
@@ -6892,26 +7119,21 @@ initializeControls
 	super initializeControls.
 	(self addControl: #mix min: -1.0 max: 1.0 value: 0.0) printer: [:x| 'A ', (1.0 - x * 50.0) rounded printString, '% + B ', (1.0 + x * 50.0) rounded printString, '%']! !
 
-!Crossfader methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:16:43'!
+!Crossfader methodsFor: 'processing' stamp: 'len 12/Mar/2026 16:42:49'!
 tick
 	| x |
 	output ifNil: [^ self].
 	x := (self get: #mix) + 1.0 / 2.0.
 	inputB ifNil:
 		[inputA ifNil: [output atAllPut: 0.0. ^ self].
-		output replaceWith: inputA.
-		output *= (1.0 - x).
+		output replaceWith: inputA; *= (1.0 - x).
 		^ self].
 	inputA ifNil:
-		[output replaceWith: inputB.
-		output *= x.
+		[output replaceWith: inputB; *= x.
 		^ self].
 	x = 0.0 ifTrue: [output replaceWith: inputA. ^ self].
 	x = 1.0 ifTrue: [output replaceWith: inputB. ^ self].
-	output replaceWith: inputA.
-	output *= ((1.0 - x) / x).
-	output += inputB.
-	output *= x! !
+	output replaceWith: inputA; *= ((1.0 - x) / x); += inputB; *= x! !
 
 !Crossfader methodsFor: 'tools' stamp: 'len 27/Jan/2026 15:19:30'!
 panel
@@ -6947,7 +7169,7 @@ initializeControls
 	self addVolumeControl: #gainA value: 0.6;
 		addVolumeControl: #gainB value: 0.6! !
 
-!Mixer methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:16:47'!
+!Mixer methodsFor: 'processing' stamp: 'len 12/Mar/2026 16:43:14'!
 tick
 	| gainA gainB |
 	output ifNil: [^ self].
@@ -6962,10 +7184,7 @@ tick
 		[output replaceWith: inputB.
 		gainB = 1.0 ifFalse: [output *= gainB].
 		^ self].
-	output replaceWith: inputA.
-	output *= (gainA / gainB).
-	output += inputB.
-	output *= gainB! !
+	output replaceWith: inputA; *= (gainA / gainB); += inputB; *= gainB! !
 
 !Mixer methodsFor: 'tools' stamp: 'len 27/Jan/2026 15:18:20'!
 panel
@@ -7011,14 +7230,14 @@ initializeControls
 		addVolumeControl: #gainC value: 0.6;
 		addVolumeControl: #gainD value: 0.6! !
 
-!Mixer4 methodsFor: 'processing' stamp: 'len 10/Feb/2026 20:14:16'!
+!Mixer4 methodsFor: 'processing' stamp: 'len 12/Mar/2026 16:43:42'!
 tick
 	output ifNil: [^ self].
 	output atAllPut: 0.0.
-	inputA ifNotNil: [aux replaceWith: inputA. aux *= (self get: #gainA). output += aux].
-	inputB ifNotNil: [aux replaceWith: inputB. aux *= (self get: #gainB). output += aux].
-	inputC ifNotNil: [aux replaceWith: inputC. aux *= (self get: #gainC). output += aux].
-	inputD ifNotNil: [aux replaceWith: inputD. aux *= (self get: #gainD). output += aux]! !
+	inputA ifNotNil: [aux replaceWith: inputA; *= (self get: #gainA). output += aux].
+	inputB ifNotNil: [aux replaceWith: inputB; *= (self get: #gainB). output += aux].
+	inputC ifNotNil: [aux replaceWith: inputC; *= (self get: #gainC). output += aux].
+	inputD ifNotNil: [aux replaceWith: inputD; *= (self get: #gainD). output += aux]! !
 
 !Mixer4 methodsFor: 'tools' stamp: 'len 10/Feb/2026 20:14:42'!
 panel
@@ -7119,7 +7338,7 @@ initializeControls
 	self addControl: #balance min: -1.0 max: 1.0 value: 0.0
 ! !
 
-!StereoMatrix methodsFor: 'processing' stamp: 'len 14/Feb/2026 19:47:38'!
+!StereoMatrix methodsFor: 'processing' stamp: 'len 12/Mar/2026 16:45:10'!
 tick
 	| width balance |
 	(inputA isNil or: [inputB isNil]) ifTrue:
@@ -7128,13 +7347,9 @@ tick
 		^ self].
 	width := self get: #width.
 	balance := self get: #balance.
-	outputL replaceWith: inputA.
-	outputL += inputB.
-	outputL *= ((1.0 + balance) * 0.5).
+	outputL replaceWith: inputA; += inputB; *= ((1.0 + balance) * 0.5).
 	outputR replaceWith: outputL.
-	aux replaceWith: inputA.
-	aux -= inputB.
-	aux *= ((1.0 - balance) * width * 0.5).
+	aux replaceWith: inputA; -= inputB; *= ((1.0 - balance) * width * 0.5).
 	outputL += aux.
 	outputR -= aux! !
 
@@ -7830,6 +8045,13 @@ setOutputHP: aBuffer
 setOutputLP: aBuffer
 	outputLP := aBuffer! !
 
+!ControlPanel methodsFor: 'building' stamp: 'len 12/Mar/2026 17:50:50'!
+addColumn
+	| column |
+	column := self class newColumn.
+	self addMorph: column.
+	^ column! !
+
 !ControlPanel methodsFor: 'building' stamp: 'len 27/Jan/2026 14:58:32'!
 addHorizontalSlider: aControl
 	self addMorph: (SliderControlMorph control: aControl) transpose! !
@@ -7841,6 +8063,13 @@ addKnob: aControl
 !ControlPanel methodsFor: 'building' stamp: 'len 27/Jan/2026 14:43:54'!
 addKnob: aControl label: labelString
 	self addMorph: ((KnobControlMorph control: aControl) withLabel: labelString)! !
+
+!ControlPanel methodsFor: 'building' stamp: 'len 12/Mar/2026 17:50:35'!
+addRow
+	| row |
+	row := self class newRow.
+	self addMorph: row.
+	^ row! !
 
 !ControlPanel methodsFor: 'building' stamp: 'len 23/Feb/2026 19:56:11'!
 addSmallKnob: aControl label: labelString
@@ -7875,11 +8104,14 @@ defaultColor
 defaultGap
 	^ 12! !
 
-!ControlPanel methodsFor: 'initialization' stamp: 'len 25/Nov/2025 00:50:00'!
+!ControlPanel methodsFor: 'initialization' stamp: 'len 12/Mar/2026 17:54:58'!
 initialize
 	super initialize.
-	layoutObject := RowLayout new gap: self defaultGap.
 	color := Color transparent! !
+
+!ControlPanel class methodsFor: 'instance creation' stamp: 'len 12/Mar/2026 17:56:12'!
+new
+	^ self newRow! !
 
 !RoundedLinearLayoutMorph methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 19:19:39'!
 drawOn: aCanvas

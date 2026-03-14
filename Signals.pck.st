@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 13 March 2026 at 3:44:33 pm'!
+'From Cuis7.7 [latest update: #7797] on 14 March 2026 at 6:22:35 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 492!
+!provides: 'Signals' 1 493!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1669,7 +1669,7 @@ This is a state variable filter with a 12 dB/oct slope (2 poles). It has outputs
 This module receives a stereo signal from a bus.!
 
 !AudioOut commentStamp: '<historical>' prior: 0!
-This module takes a mono or stereo signal, applies volume level and pan, and sends it to a bus. The default bus 0 is the master bus.!
+This module takes a mono or stereo signal, applies volume level and pan, and sends it to a bus. The default output is the master bus (port 0).!
 
 !ControlIn commentStamp: '<historical>' prior: 0!
 This module produces a control signal from values received from an external source, for example MIDI CC messages.!
@@ -5056,18 +5056,37 @@ loadBookerT
 				Sample buffer: bufferFast sampleRate: reader sampleRate loopStart: loopStartFast loopEnd: loopEndFast}]].
 	^ self new label: 'BookerT'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 12/Mar/2026 00:13:41'!
+!Multisample class methodsFor: 'library' stamp: 'len 13/Mar/2026 19:11:55'!
 loadChoirAah
 	| keymap |
 	keymap := Dictionary new.
-	#('A2' 'A3' 'A5' 'C3' 'C4' 'C5' 'D#2' 'D#3' 'D#4' 'D#5' 'F#3' 'F#4') do: [:noteName|
+	#('G3' 'A3' 'B3' 'C4' 'D4' 'E4' 'F4' 'G4' 'A4' 'B4' 'C5' 'D5' 'E5') do: [:noteName|
 		| filename reader buffer |
-		filename := 'Choir Aah - Choir-', noteName, '1.wav'.
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'MCO' // filename.
+		filename := 'Choir Aah - ', noteName, '(L).wav'.
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Choir Aah Ouh' // filename.
 		buffer := reader leftSamples.
+"		filename := 'Choir Aah - ', noteName, '(R).wav'.
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Choir Aah Ouh' // filename.
+		buffer +=​ reader leftSamples."
 		keymap at: noteName nameToSemitones put:
 			{Sample buffer: buffer sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Choir Aah'; keymap: keymap! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 13/Mar/2026 19:22:04'!
+loadChoirOuh
+	| keymap |
+	keymap := Dictionary new.
+	#('A3' 'B3' 'C4' 'D4' 'F4' 'G4' 'A4' 'B4' 'C5' 'D5' 'E5') do: [:noteName|
+		| filename reader buffer |
+		filename := 'Choir Ouh - ', noteName, '(L).wav'.
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Choir Aah Ouh' // filename.
+		buffer := reader leftSamples.
+"		filename := 'Choir Ouh - ', noteName, '(R).wav'.
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Choir Aah Ouh' // filename.
+		buffer +=​ reader leftSamples."
+		keymap at: noteName nameToSemitones put:
+			{Sample buffer: buffer sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
+	^ self new label: 'Choir Ouh'; keymap: keymap! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 16:33:56'!
 loadDancePiano
@@ -5152,7 +5171,7 @@ loadJRhodes3D
 	keymap := samples collect: [:each| each associations sorted reversed collect: #value].
 	^ self new label: 'Rhodes'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 12/Mar/2026 00:21:40'!
+!Multisample class methodsFor: 'library' stamp: 'len 13/Mar/2026 19:15:16'!
 loadLibrary
 	"
 	Multisample loadLibrary
@@ -5177,7 +5196,8 @@ loadLibrary
 		at: '6-String Steel Guitar' put: self loadSixStringSteelGuitar;
 		at: 'Two Tone House Organ' put: self loadTwoToneHouseOrgan;
 		at: 'String Ensemble' put: self loadStringEnsemble;
-		at: 'Choir Aah' put: self loadChoirAah "bad loop points"! !
+		at: 'Choir Aah' put: self loadChoirAah;
+		at: 'Choir Ouh' put: self loadChoirOuh! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 17:15:48'!
 loadLoFiRhodes
@@ -5266,7 +5286,7 @@ loadStringEnsemble
 			{Sample buffer: buffer sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'String Ensemble'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 13/Mar/2026 02:13:40'!
+!Multisample class methodsFor: 'library' stamp: 'len 13/Mar/2026 19:15:54'!
 loadTrumpet
 	"Jazz Trumpet."
 	| keymap |
@@ -5276,7 +5296,6 @@ loadTrumpet
 		filename := 'Jazz Trumpet ', noteName, '.wav'.
 		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Jazz Trumpet' // filename.
 		buffer := reader leftSamples.
-		(noteName, ' ', buffer size printString, ' ', reader loopStart printString, ' ', reader loopEnd printString) print.
 		keymap at: noteName nameToSemitones put:
 			{Sample buffer: buffer sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Jazz Trumpet'; keymap: keymap! !
@@ -5431,7 +5450,7 @@ read: aBuffer
 	speed < 0 ifTrue: [^ self readBackwards: aBuffer].
 	self readForward: aBuffer! !
 
-!Sample methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:13:17'!
+!Sample methodsFor: 'processing' stamp: 'len 13/Mar/2026 18:27:48'!
 readBackwards: aBuffer
 	1 to: aBuffer size do: [:i|
 		"if smooth = true perform linear interpolation between samples:"
@@ -5439,10 +5458,10 @@ readBackwards: aBuffer
 		(position := position - increment) >= 0.0 ifFalse:
 			[position := 0.0.
 			released := true.
-			aBuffer from: i to: aBuffer size put: 0.0.
+			aBuffer from: i + 1 to: aBuffer size put: 0.0.
 			^ self]]! !
 
-!Sample methodsFor: 'processing' stamp: 'len 13/Mar/2026 14:52:10'!
+!Sample methodsFor: 'processing' stamp: 'len 13/Mar/2026 18:27:36'!
 readForward: aBuffer
 	| end loopEndMinusOne |
 	end := buffer size.
@@ -5459,7 +5478,7 @@ readForward: aBuffer
 		position < end ifFalse:
 			[released := true.
 			position := end - 1.0.
-			aBuffer from: i to: aBuffer size put: 0.0.
+			aBuffer from: i + 1 to: aBuffer size put: 0.0.
 			^ self]]! !
 
 !Sample methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:13:45'!

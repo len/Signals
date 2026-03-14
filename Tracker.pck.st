@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 11 March 2026 at 7:58:18 pm'!
+'From Cuis7.7 [latest update: #7797] on 14 March 2026 at 6:56:07 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 5!
+!provides: 'Tracker' 1 6!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -78,7 +78,7 @@ Instrument class
 
 !classDefinition: #Pattern category: #'Tracker-Kernel'!
 Object subclass: #Pattern
-	instanceVariableNames: 'blocks length'
+	instanceVariableNames: 'blocks length lpb'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Tracker-Kernel'!
@@ -98,7 +98,7 @@ Track class
 
 !classDefinition: #Tracker category: #'Tracker-Kernel'!
 Object subclass: #Tracker
-	instanceVariableNames: 'instruments tracks sequence label bpm lpb swing level inputCenterKey cursorPattern cursorLine cursorTrack playheadPattern playheadLine followPlayhead playStartPattern playStartLine playEndPattern playEndLine playingMask loop anyTrackSoloed ticksToLine peakLeft peakRight buses random'
+	instanceVariableNames: 'instruments tracks sequence label bpm swing level inputCenterKey cursorPattern cursorLine cursorTrack playheadPattern playheadLine followPlayhead playStartPattern playStartLine playEndPattern playEndLine playingMask loop anyTrackSoloed ticksToLine peakLeft peakRight buses random'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Tracker-Kernel'!
@@ -157,19 +157,14 @@ saveProject
 setBPM
 	self request: 'BPM' initialAnswer: model bpm printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| model bpm: s asNumber]! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 7/Jan/2026 14:26:25'!
-setLPB
-	self request: 'LPB' initialAnswer: model lpb printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| model lpb: s asNumber]! !
-
 !TrackerWindow methodsFor: 'actions' stamp: 'len 17/Feb/2026 19:20:00'!
 toggleLowerPane
 	lowerPane visible: lowerPane visible not.
 	instrumentEditor layoutSpec proportionalHeight: (lowerPane visible ifTrue: [0.38] ifFalse: [1.0])! !
 
-!TrackerWindow methodsFor: 'events' stamp: 'len 24/Feb/2026 01:14:07'!
+!TrackerWindow methodsFor: 'events' stamp: 'len 14/Mar/2026 18:30:25'!
 handleCommandHotkey: anEvent
 	anEvent keyCharacter = $f ifTrue: [self setBPM. ^ true].
-	anEvent keyCharacter = $b ifTrue: [self setLPB. ^ true].
 	anEvent keyCharacter = $o ifTrue: [self openProject. ^ true].
 	anEvent keyCharacter = $s ifTrue: [self saveProject. ^ true].
 	anEvent keyCharacter = $j ifTrue: [self toggleLowerPane. ^ true].
@@ -489,6 +484,10 @@ selectionDelete
 			pattern track: k at: i put: nil]].
 	self redrawNeeded! !
 
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 14/Mar/2026 18:30:14'!
+setPatternLPB
+	self request: 'LPB' initialAnswer: tracker selectedPattern lpb printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| tracker selectedPattern lpb: s asNumber. self redrawNeeded]! !
+
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 4/Jan/2026 15:52:47'!
 setPatternLength
 	tracker isPlaying ifTrue: [^ self].
@@ -517,7 +516,7 @@ drawOn: aCanvas
 	self drawCursorOn: aCanvas.
 	self drawPatternOn: aCanvas! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 9/Mar/2026 17:13:53'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 14/Mar/2026 18:33:11'!
 drawPatternOn: aCanvas
 	| lineSpacing charWidth y unsetColor noteColor velocityColor pattern endLine middle startLine darkColor lightColor xLeft xRight beatColor trackWidth |
 	pattern := tracker selectedPattern.
@@ -554,7 +553,7 @@ drawPatternOn: aCanvas
 	startLine to: endLine do: [:i|
 		| s c x |
 		"Draw line offsets at left and right, and highlight lines at beats:"
-		i - 1 \\ tracker lpb = 0
+		i - 1 \\ pattern lpb = 0
 			ifTrue: [i = tracker cursorLine ifFalse: [aCanvas fillRectangle: (0@y extent: extent x @ lineSpacing) color: beatColor]. c := lightColor]
 			ifFalse: [c := darkColor].
 		s := i - 1 printStringBase: 16 nDigits: 2.
@@ -638,11 +637,14 @@ drawTracksOn: aCanvas
 tracksWidthInCharacters
 	^ 15! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 10/Mar/2026 20:53:37'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 14/Mar/2026 18:30:58'!
 handleCommandHotkey: anEvent
+	"Font size:"
 	anEvent keyCharacter = $- ifTrue: [self adjustFontSizeBy: -1. ^ true].
 	anEvent keyCharacter = $= ifTrue: [self adjustFontSizeBy: 1. ^ true].
+	"Pattern properties:"
 	anEvent keyCharacter = $l ifTrue: [self setPatternLength. ^ true].
+	anEvent keyCharacter = $b ifTrue: [self setPatternLPB. ^ true].
 	"Clipboard:"
 	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
 	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
@@ -786,7 +788,7 @@ initialize
 	showCursor := true.
 	pauseBlinking := false! !
 
-!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 9/Mar/2026 19:08:08'!
+!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 14/Mar/2026 18:36:21'!
 setTracker: aTracker
 	tracker := aTracker.
 	cursorPosition := 1.
@@ -794,7 +796,6 @@ setTracker: aTracker
 	aTracker when: #tracksChanged send: #updateTracks to: self.
 	aTracker when: #cursorChanged send: #updateCursor to: self.
 	aTracker when: #playheadChanged send: #redrawNeeded to: self.
-	aTracker when: #lpbChanged send: #redrawNeeded to: self.
 	self updateTracks! !
 
 !PatternEditorMorph methodsFor: 'private' stamp: 'len 31/Dec/2025 01:25:06'!
@@ -1073,7 +1074,7 @@ update
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 20/Feb/2026 20:28:08'!
+!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 14/Mar/2026 18:45:42'!
 drawOn: aCanvas
 	| color |
 	aCanvas fillRectangle: (0 @ 0 extent: extent) color: Color darkGray.
@@ -1081,7 +1082,7 @@ drawOn: aCanvas
 	color := Color white.
 	aCanvas
 		drawString: (tracker isPlaying ifTrue: ['▶'] ifFalse: ['◼']) at: 4 @ 0 font: font color: color;
-		drawString: (tracker bpm printStringFractionDigits: 1), ' / ', tracker lpb printString at: 32 @ 2 font: font color: color;
+		drawString: (tracker bpm printStringFractionDigits: 1), ' BPM' at: 32 @ 2 font: font color: color;
 		drawString: '↧' at: 160 @ 3 font: font color: (tracker followPlayhead ifTrue: [color] ifFalse: [Color lightGray]);
 		drawString: tracker inputCenterKey semitonesToName at: 210 @ 3 font: font color: color.
 "	tracker selectedInstrumentNumber ifNotNil: [:instrumentNumber|
@@ -1097,13 +1098,12 @@ initialize
 	super initialize.
 	font := FontFamily defaultFamilyPointSize: 15! !
 
-!TrackerBarMorph methodsFor: 'initialization' stamp: 'len 18/Feb/2026 17:06:45'!
+!TrackerBarMorph methodsFor: 'initialization' stamp: 'len 14/Mar/2026 18:36:28'!
 setTracker: aTracker
 	tracker := aTracker.
 	tracker
 		when: #playingStatusChanged send: #redrawNeeded to: self;
 		when: #bpmChanged send: #redrawNeeded to: self;
-		when: #lpbChanged send: #redrawNeeded to: self;
 		when: #followPlayheadChanged send: #redrawNeeded to: self;
 		when: #inputCenterKeyChanged send: #redrawNeeded to: self! !
 
@@ -1366,6 +1366,14 @@ length: anInteger
 	anInteger < length ifTrue: [blocks := blocks collect: [:each| each ifNotNil: [each copyFrom: 1 to: anInteger]]].
 	length := anInteger! !
 
+!Pattern methodsFor: 'accessing' stamp: 'len 14/Mar/2026 18:31:54'!
+lpb
+	^ lpb ifNil: [4]! !
+
+!Pattern methodsFor: 'accessing' stamp: 'len 14/Mar/2026 18:26:07'!
+lpb: anInteger
+	lpb := anInteger! !
+
 !Pattern methodsFor: 'accessing' stamp: 'len 27/Dec/2025 02:03:30'!
 track: trackIndex at: index
 	^ (blocks at: trackIndex) ifNotNil: [:anArray| anArray at: index]! !
@@ -1399,33 +1407,18 @@ track: trackIndex instrumentAbove: line
 postCopy
 	blocks := blocks collect: [:eachBlock| eachBlock ifNotNil: [eachBlock collect: [:each| each copy]]]! !
 
-!Pattern methodsFor: 'initialization' stamp: 'len 2/Jan/2026 19:26:26'!
+!Pattern methodsFor: 'initialization' stamp: 'len 14/Mar/2026 18:26:57'!
 initialize: anInteger
 	length := 64.
-	blocks := Array new: anInteger.
-"	self setRandomEntries"! !
+	lpb := 4.
+	blocks := Array new: anInteger! !
 
-!Pattern methodsFor: 'initialization' stamp: 'len 2/Jan/2026 19:26:36'!
-setRandomEntries
-	| trig |
-	self flag: #deprecated.
-	1 to: blocks size do: [:t|
-		2 atRandom = 1 ifTrue:
-			[1 to: length do: [:i|
-				10 atRandom = 1 ifTrue:
-					[trig := Trigger new.
-					trig note: 127 atRandom.
-					2 atRandom = 1 ifTrue: [trig instrument: 127 atRandom].
-					2 atRandom = 1 ifTrue: [trig velocity: 127 atRandom].
-					4 atRandom = 1 ifTrue: [trig fx1: (('01234567890ABCDEFEGHPQRXYZ' atRandom asciiValue bitShift: 8) bitOr: 256 atRandom - 1)].
-					4 atRandom = 1 ifTrue: [trig fx2: (('01234567890ABCDEFEGHPQRXYZ' atRandom asciiValue bitShift: 8) bitOr: 256 atRandom - 1)].
-					self track: t at: i put: trig]]]]! !
-
-!Pattern methodsFor: 'serialization' stamp: 'len 6/Feb/2026 15:32:46'!
+!Pattern methodsFor: 'serialization' stamp: 'len 14/Mar/2026 18:28:00'!
 asJson
 	| answer blocksJson |
-	answer := OrderedDictionary new.
-	answer at: #length put: length.
+	(answer := OrderedDictionary new)
+		at: #length put: length;
+		at: #lpb put: lpb.
 	blocksJson := blocks collect: [:eachBlock|
 		| blockJson |
 		blockJson := OrderedCollection new.
@@ -1437,10 +1430,11 @@ asJson
 	answer at: #blocks put: blocksJson.
 	^ answer! !
 
-!Pattern methodsFor: 'serialization' stamp: 'len 6/Feb/2026 15:34:16'!
+!Pattern methodsFor: 'serialization' stamp: 'len 14/Mar/2026 18:28:37'!
 readFromJson: json
 	| blocksJson |
 	length := json at: #length.
+	lpb := json at: #lpb ifAbsent: [4].
 	blocksJson := json at: #blocks.
 	blocks := Array new: blocksJson size.
 	blocksJson withIndexDo: [:eachBlockJson :t|
@@ -1625,15 +1619,6 @@ level: aNumber
 	level := aNumber min: 1.0 max: 0.0.
 	self triggerEvent: #levelChanged! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 16/Dec/2025 17:27:31'!
-lpb
-	^ lpb! !
-
-!Tracker methodsFor: 'accessing' stamp: 'len 3/Jan/2026 02:48:48'!
-lpb: anInteger
-	lpb := anInteger.
-	self triggerEvent: #lpbChanged! !
-
 !Tracker methodsFor: 'accessing' stamp: 'len 24/Jan/2026 22:29:37'!
 peakLeft
 	^ peakLeft := peakLeft * 0.95! !
@@ -1668,10 +1653,10 @@ swing: aNumber
 	swing := aNumber min: 1.0 max: 0.0.
 	self triggerEvent: #swingChanged! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 26/Feb/2026 17:35:05'!
+!Tracker methodsFor: 'accessing' stamp: 'len 14/Mar/2026 18:24:45'!
 tpl
 	"Answer the number of ticks per line."
-	^ Module controlRate * 60.0 / (bpm * lpb)! !
+	^ Module controlRate * 60.0 / (bpm * self playingPattern lpb)! !
 
 !Tracker methodsFor: 'accessing' stamp: 'len 16/Dec/2025 21:18:23'!
 tracks
@@ -1701,13 +1686,13 @@ inputOctaveUp
 	inputCenterKey := inputCenterKey + 12.
 	self triggerEvent: #inputCenterKeyChanged! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 10/Jan/2026 22:27:20'!
+!Tracker methodsFor: 'cursor' stamp: 'len 14/Mar/2026 18:22:50'!
 moveCursorBeatDown
-	self moveCursorLineDown: lpb! !
+	self moveCursorLineDown: self selectedPattern lpb! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 10/Jan/2026 22:27:14'!
+!Tracker methodsFor: 'cursor' stamp: 'len 14/Mar/2026 18:22:59'!
 moveCursorBeatUp
-	self moveCursorLineUp: lpb! !
+	self moveCursorLineUp: self selectedPattern lpb! !
 
 !Tracker methodsFor: 'cursor' stamp: 'len 1/Jan/2026 16:41:01'!
 moveCursorLineBottom
@@ -1781,13 +1766,12 @@ setCursorTrack: anInteger
 	cursorTrack := anInteger.
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'initialization' stamp: 'len 9/Mar/2026 17:34:08'!
+!Tracker methodsFor: 'initialization' stamp: 'len 14/Mar/2026 18:25:01'!
 initialize
 	instruments := Dictionary new.
 	tracks := #().
 	sequence := #().
 	bpm := 120.
-	lpb := 4.
 	swing := 0.0.
 	level := 1.0.
 	inputCenterKey := 60.
@@ -1938,7 +1922,7 @@ playFrom: startPattern line: startLine to: endPattern line: endLine tracks: trac
 	self triggerEvent: #playheadChanged.
 	self triggerEvent: #playingStatusChanged! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 9/Mar/2026 17:32:07'!
+!Tracker methodsFor: 'playing' stamp: 'len 14/Mar/2026 18:24:05'!
 playLineIfFinished: aBlock
 	| pattern mask ticksPerLine ticksSwing |
 	"Advance playhead:"
@@ -1965,7 +1949,7 @@ playLineIfFinished: aBlock
 	ticksPerLine := self tpl.
 	ticksToLine := ticksToLine + ticksPerLine.
 	ticksSwing := ticksPerLine * 0.333 * swing squared.
-	(playheadLine \\ lpb) even ifTrue: [ticksSwing := ticksSwing negated].
+	(playheadLine \\ pattern lpb) even ifTrue: [ticksSwing := ticksSwing negated].
 	ticksToLine := ticksToLine + ticksSwing! !
 
 !Tracker methodsFor: 'playing' stamp: 'len 9/Mar/2026 17:23:40'!
@@ -2017,13 +2001,12 @@ toggleFollowPlayhead
 	followPlayhead := followPlayhead not.
 	self triggerEvent: #followPlayheadChanged! !
 
-!Tracker methodsFor: 'serialization' stamp: 'len 21/Feb/2026 16:54:14'!
+!Tracker methodsFor: 'serialization' stamp: 'len 14/Mar/2026 18:34:45'!
 asJsonWithBuffers: bufferList
 	| uniquePatterns |
 	uniquePatterns := self sequenceUniquePatterns.
 	^ OrderedDictionary new
 		at: #bpm put: bpm;
-		at: #lpb put: lpb;
 		at: #swing put: swing;
 		at: #level put: level;
 		at: #tracks put: tracks size;
@@ -2046,11 +2029,10 @@ readFrom: aStream
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 
-!Tracker methodsFor: 'serialization' stamp: 'len 24/Feb/2026 17:39:25'!
+!Tracker methodsFor: 'serialization' stamp: 'len 14/Mar/2026 18:35:15'!
 readFromJson: json buffers: bufferList
 	| uniquePatterns |
 	bpm := json at: #bpm.
-	lpb := json at: #lpb.
 	swing := json at: #swing.
 	level := json at: #level.
 	cursorPattern := 1.

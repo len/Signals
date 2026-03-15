@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 14 March 2026 at 6:56:07 pm'!
+'From Cuis7.7 [latest update: #7797] on 16 March 2026 at 4:43:26 am'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 6!
+!provides: 'Tracker' 1 7!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -157,18 +157,25 @@ saveProject
 setBPM
 	self request: 'BPM' initialAnswer: model bpm printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| model bpm: s asNumber]! !
 
+!TrackerWindow methodsFor: 'actions' stamp: 'len 15/Mar/2026 15:08:22'!
+setSwing
+	self request: 'Swing' initialAnswer: (model swing * 100) truncated printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 0 and: 100]] do: [:s| model swing: s asNumber / 100.0]! !
+
 !TrackerWindow methodsFor: 'actions' stamp: 'len 17/Feb/2026 19:20:00'!
 toggleLowerPane
 	lowerPane visible: lowerPane visible not.
 	instrumentEditor layoutSpec proportionalHeight: (lowerPane visible ifTrue: [0.38] ifFalse: [1.0])! !
 
-!TrackerWindow methodsFor: 'events' stamp: 'len 14/Mar/2026 18:30:25'!
+!TrackerWindow methodsFor: 'events' stamp: 'len 15/Mar/2026 18:55:17'!
 handleCommandHotkey: anEvent
 	anEvent keyCharacter = $f ifTrue: [self setBPM. ^ true].
+	anEvent keyCharacter = $g ifTrue: [self setSwing. ^ true].
 	anEvent keyCharacter = $o ifTrue: [self openProject. ^ true].
 	anEvent keyCharacter = $s ifTrue: [self saveProject. ^ true].
 	anEvent keyCharacter = $j ifTrue: [self toggleLowerPane. ^ true].
 	anEvent keyCharacter = $r ifTrue: [instrumentEditor renameInstrument. ^ true].
+	anEvent keyCharacter = $e ifTrue: [instrumentEditor exportInstrument. ^ true].
+	anEvent keyCharacter = $i ifTrue: [instrumentEditor importInstrument. ^ true].
 	anEvent keyCharacter = $] ifTrue: [model inputOctaveUp. ^ true].
 	anEvent keyCharacter = $[ ifTrue: [model inputOctaveDown. ^ true].
 	anEvent keyCharacter = $n ifTrue: [model insertPattern. ^ true].
@@ -255,10 +262,8 @@ renameInstrument
 drawOn: aCanvas
 "	aCanvas fillRectangle: self localBounds color: tracker selectedTrack backgroundColor"! !
 
-!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 01:04:50'!
+!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 15/Mar/2026 18:55:03'!
 handleCommandHotkey: anEvent
-	anEvent keyCharacter = $e ifTrue: [self exportInstrument. ^ true].
-	anEvent keyCharacter = $i ifTrue: [self importInstrument. ^ true].
 	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
 	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
@@ -429,6 +434,28 @@ clipboardPaste
 		line withIndexDo: [:trigger :k|
 			(k0 + k <= tracker tracks size and: [i0 + i <= pattern length])
 				ifTrue: [pattern track: k0 + k at: i0 + i put: trigger copy]]].
+	self redrawNeeded! !
+
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Mar/2026 19:14:42'!
+moveCursorColumnLeft
+	cursorPosition <= 2
+		ifTrue:
+			[tracker cursorTrack = 1 ifTrue: [^ self].
+			tracker moveCursorTrackLeft.
+			cursorPosition := self tracksMaxPosition - 2]
+		ifFalse:
+			[cursorPosition := #(1 1 1 3 3 4 4 4 6 6 6) at: cursorPosition].
+	self redrawNeeded! !
+
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Mar/2026 19:14:19'!
+moveCursorColumnRight
+	cursorPosition >= (self tracksMaxPosition - 2)
+		ifTrue:
+			[tracker cursorTrack = tracker tracks size ifTrue: [^ self].
+			tracker moveCursorTrackRight.
+			cursorPosition := 1]
+		ifFalse:
+			[cursorPosition := #(3 3 4 6 6 9 9 9) at: cursorPosition].
 	self redrawNeeded! !
 
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 1/Jan/2026 16:37:27'!
@@ -637,7 +664,7 @@ drawTracksOn: aCanvas
 tracksWidthInCharacters
 	^ 15! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 14/Mar/2026 18:30:58'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Mar/2026 19:17:43'!
 handleCommandHotkey: anEvent
 	"Font size:"
 	anEvent keyCharacter = $- ifTrue: [self adjustFontSizeBy: -1. ^ true].
@@ -707,12 +734,17 @@ handleKeyStroke: anEvent
 	(anEvent anyModifierKeyPressed not and: [self handleInputKey: anEvent]) ifTrue: [^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:09:21'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Mar/2026 19:19:22'!
 handleNavigationKey: anEvent
 	selectionLineStart := selectionTrackStart := nil.
 	anEvent isArrowUp ifTrue: [tracker moveCursorLineUp. ^ true].
 	anEvent isArrowDown ifTrue: [tracker moveCursorLineDown. ^ true].
-	anEvent isArrowLeft ifTrue: [self moveCursorLeft. ^ true].
+	anEvent isArrowLeft ifTrue:
+		[anEvent primaryModifierPressed ifTrue: [self moveCursorColumnLeft] ifFalse: [self moveCursorLeft].
+		^ true].
+	anEvent isArrowRight ifTrue:
+		[anEvent primaryModifierPressed ifTrue: [self moveCursorColumnRight] ifFalse: [self moveCursorRight].
+		^ true].
 	anEvent isArrowRight ifTrue: [self moveCursorRight. ^ true].
 	anEvent isPageUp ifTrue: [tracker moveCursorBeatUp. ^ true].
 	anEvent isPageDown ifTrue: [tracker moveCursorBeatDown. ^ true].
@@ -1074,7 +1106,7 @@ update
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 14/Mar/2026 18:45:42'!
+!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 15/Mar/2026 15:09:21'!
 drawOn: aCanvas
 	| color |
 	aCanvas fillRectangle: (0 @ 0 extent: extent) color: Color darkGray.
@@ -1082,12 +1114,16 @@ drawOn: aCanvas
 	color := Color white.
 	aCanvas
 		drawString: (tracker isPlaying ifTrue: ['▶'] ifFalse: ['◼']) at: 4 @ 0 font: font color: color;
-		drawString: (tracker bpm printStringFractionDigits: 1), ' BPM' at: 32 @ 2 font: font color: color;
-		drawString: '↧' at: 160 @ 3 font: font color: (tracker followPlayhead ifTrue: [color] ifFalse: [Color lightGray]);
-		drawString: tracker inputCenterKey semitonesToName at: 210 @ 3 font: font color: color.
+		drawString: (tracker bpm printStringFractionDigits: 1), ' BPM ⇄ ', (tracker swing * 100) truncated printString, '%' at: 32 @ 2 font: font color: color;
+		drawString: '↧' at: 240 @ 3 font: font color: (tracker followPlayhead ifTrue: [color] ifFalse: [Color lightGray]);
+		drawString: tracker inputCenterKey semitonesToName at: 280 @ 3 font: font color: color.
 "	tracker selectedInstrumentNumber ifNotNil: [:instrumentNumber|
 		patchLabel := (instrumentNumber printStringBase: 16 nDigits: 2), ' ', (tracker selectedInstrument ifNil: ['EMPTY'] ifNotNil: [:anInstrument| anInstrument label ifNil: ['']]).
 		aCanvas drawString: patchLabel at: (extent x - 4 - (font widthOfString: patchLabel)) @ 2 font: font color: color]"! !
+
+!TrackerBarMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 17:31:36'!
+handlesKeyboardFocus
+	^ false! !
 
 !TrackerBarMorph methodsFor: 'geometry' stamp: 'len 7/Jan/2026 14:33:18'!
 minimumExtent
@@ -1098,18 +1134,15 @@ initialize
 	super initialize.
 	font := FontFamily defaultFamilyPointSize: 15! !
 
-!TrackerBarMorph methodsFor: 'initialization' stamp: 'len 14/Mar/2026 18:36:28'!
+!TrackerBarMorph methodsFor: 'initialization' stamp: 'len 15/Mar/2026 15:02:29'!
 setTracker: aTracker
 	tracker := aTracker.
 	tracker
 		when: #playingStatusChanged send: #redrawNeeded to: self;
 		when: #bpmChanged send: #redrawNeeded to: self;
+		when: #swingChanged send: #redrawNeeded to: self;
 		when: #followPlayheadChanged send: #redrawNeeded to: self;
 		when: #inputCenterKeyChanged send: #redrawNeeded to: self! !
-
-!TrackerBarMorph methodsFor: 'as yet unclassified' stamp: 'len 24/Feb/2026 17:31:36'!
-handlesKeyboardFocus
-	^ false! !
 
 !Instrument methodsFor: 'accessing' stamp: 'len 28/Dec/2025 15:47:17'!
 label
@@ -1207,9 +1240,9 @@ noteOn: midiKey
 	noteReceivers do: [:each| each setNote: midiKey].
 	gateReceivers do: [:each| each gateOn]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 2/Mar/2026 03:23:43'!
+!Instrument methodsFor: 'playing' stamp: 'len 15/Mar/2026 15:17:19'!
 playTrigger
-	trigger isNoteOn ifTrue: [self setOffset: 0.0; setSpeed: 1.0; setGlide: 0.0].
+	trigger isNoteOn ifTrue: [self setVelocity: 0.5; setOffset: 0.0; setSpeed: 1.0; setGlide: 0.0].
 	trigger velocity ifNotNil: [:vel| self setVelocity: vel / 255.0].
 	trigger fx1 ifNotNil: [:fx| self handleFX: fx].
 	trigger fx2 ifNotNil: [:fx| self handleFX: fx].

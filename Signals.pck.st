@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 14 March 2026 at 6:22:35 pm'!
+'From Cuis7.7 [latest update: #7797] on 16 March 2026 at 3:41:27 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 493!
+!provides: 'Signals' 1 494!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -397,7 +397,7 @@ VOSIM class
 
 !classDefinition: #Multisample category: #'Signals-Samples'!
 TunedGenerator subclass: #Multisample
-	instanceVariableNames: 'keymap velocity sample label'
+	instanceVariableNames: 'keymap velocity sample tailSample label'
 	classVariableNames: 'Library'
 	poolDictionaries: ''
 	category: 'Signals-Samples'!
@@ -407,7 +407,7 @@ Multisample class
 
 !classDefinition: #Sample category: #'Signals-Samples'!
 TunedGenerator subclass: #Sample
-	instanceVariableNames: 'buffer baseRate loopEnd loopLength offset speed smooth warp released position increment label'
+	instanceVariableNames: 'buffer baseRate loopEnd loopLength offset speed warp released position tailPosition increment label'
 	classVariableNames: 'Library'
 	poolDictionaries: ''
 	category: 'Signals-Samples'!
@@ -4955,7 +4955,7 @@ adjustVelocityBy: aNumber
 gateOff
 	sample ifNotNil: [sample gateOff]! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 13/Mar/2026 15:40:01'!
+!Multisample methodsFor: 'controlling' stamp: 'len 16/Mar/2026 15:37:11'!
 gateOn
 	| frequency key closestKey speedFactor samplesByVelocity |
 	frequency := ((self get: #tune) + note) semitonesToHertz.
@@ -4963,6 +4963,7 @@ gateOn
 	closestKey := keymap keys detectMin: [:x| (x - key) abs].
 	speedFactor := key semitonesToHertz / closestKey semitonesToHertz.
 	samplesByVelocity := keymap at: closestKey.
+	(tailSample := sample) ifNotNil: [tailSample gateOn "to setup the tail position"].
 	sample := (samplesByVelocity at: ((velocity sqrt * (samplesByVelocity size - 1)) truncated + 1 min: samplesByVelocity size)) copy.
 	sample baseRate: sample baseRate * speedFactor.
 	sample gateOn.
@@ -4989,10 +4990,10 @@ initialize
 keymap: aDictionary
 	keymap := aDictionary! !
 
-!Multisample methodsFor: 'processing' stamp: 'len 16/Feb/2026 18:23:25'!
+!Multisample methodsFor: 'processing' stamp: 'len 16/Mar/2026 15:33:47'!
 read: aBuffer
-	sample ifNil: [^ aBuffer atAllPut: 0.0].
-	sample read: aBuffer! !
+	sample ifNil: [aBuffer atAllPut: 0.0] ifNotNil: [sample read: aBuffer].
+	tailSample ifNotNil: [tailSample mixTailInto: aBuffer. tailSample := nil]! !
 
 !Multisample methodsFor: 'serialization' stamp: 'len 16/Feb/2026 16:35:47'!
 asJsonWithBuffers: aList
@@ -5376,15 +5377,6 @@ loopStart: anInteger loopEnd: anotherInteger.
 position
 	^ position! !
 
-!Sample methodsFor: 'accessing' stamp: 'len 20/Jan/2026 20:21:45'!
-smooth
-	^ smooth! !
-
-!Sample methodsFor: 'accessing' stamp: 'len 20/Jan/2026 20:21:50'!
-smooth: aBoolean
-	smooth := aBoolean.
-	self changed! !
-
 !Sample methodsFor: 'accessing' stamp: 'len 21/Jan/2026 23:01:44'!
 warp
 	^ warp! !
@@ -5398,14 +5390,16 @@ warp: aBoolean
 gateOff
 	released := true! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 24/Feb/2026 22:17:51'!
+!Sample methodsFor: 'controlling' stamp: 'len 16/Mar/2026 15:11:40'!
 gateOn
+	position > 0 ifTrue: [tailPosition := position].
 	position := (buffer size - 1) * offset.
 	released := false! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 24/Feb/2026 22:24:07'!
+!Sample methodsFor: 'controlling' stamp: 'len 16/Mar/2026 15:11:51'!
 reset
 	position := buffer size.
+	tailPosition := nil.
 	released := false! !
 
 !Sample methodsFor: 'controlling' stamp: 'len 24/Feb/2026 20:46:57'!
@@ -5423,20 +5417,18 @@ update
 	increment := baseRate * ((self get: #tune) + note - 60.0) semitonesToRatio / self class sampleRate.
 	warp ifFalse: [increment := increment * speed abs]! !
 
-!Sample methodsFor: 'copying' stamp: 'len 13/Feb/2026 00:25:49'!
+!Sample methodsFor: 'copying' stamp: 'len 16/Mar/2026 15:13:33'!
 copy
 	^ (self class buffer: buffer baseRate: baseRate)
 		settings: self settings;
 		loopEnd: loopEnd;
 		loopLength: loopLength;
-		smooth: smooth;
 		warp: warp;
 		label: label! !
 
-!Sample methodsFor: 'initialization' stamp: 'len 21/Jan/2026 23:00:53'!
+!Sample methodsFor: 'initialization' stamp: 'len 16/Mar/2026 15:14:41'!
 initialize
 	super initialize.
-	smooth := true.
 	warp := false! !
 
 !Sample methodsFor: 'initialization' stamp: 'len 21/Jan/2026 23:14:32'!
@@ -5444,40 +5436,54 @@ initializeControls
 	super initializeControls.
 	(self addControl: #speed min: -4.0 max: 4.0 value: 1.0) printer: [:x| '×', (x printStringFractionDigits: 2)]! !
 
-!Sample methodsFor: 'processing' stamp: 'len 24/Feb/2026 22:16:24'!
+!Sample methodsFor: 'processing' stamp: 'len 16/Mar/2026 15:35:09'!
+mixTailInto: aBuffer
+	| damping end gain |
+	tailPosition ifNil: [^ self].
+	end := buffer size - 1.
+	tailPosition < (end - 1) ifFalse: [^ self].
+	damping := 0.95. "-60 decibelsToLinear raisedTo: 1/128"
+	gain := 1.0.
+	1 to: aBuffer size do: [:i|
+		aBuffer at: i put: (aBuffer at: i) + ((buffer atSmooth: tailPosition + 1.0) * gain).
+		gain := gain * damping.
+		(tailPosition := tailPosition + increment) < end ifFalse:
+			[tailPosition := nil.
+			^ self]].
+	tailPosition := nil! !
+
+!Sample methodsFor: 'processing' stamp: 'len 16/Mar/2026 15:25:58'!
 read: aBuffer
 	(warp and: [speed abs ~= 1.0]) ifTrue: [^ self readWarp: aBuffer].
 	speed < 0 ifTrue: [^ self readBackwards: aBuffer].
-	self readForward: aBuffer! !
+	self readForward: aBuffer.
+	self mixTailInto: aBuffer! !
 
-!Sample methodsFor: 'processing' stamp: 'len 13/Mar/2026 18:27:48'!
+!Sample methodsFor: 'processing' stamp: 'len 16/Mar/2026 15:17:20'!
 readBackwards: aBuffer
 	1 to: aBuffer size do: [:i|
-		"if smooth = true perform linear interpolation between samples:"
-		aBuffer at: i put: (smooth ifTrue: [buffer atSmooth: position + 1.0] ifFalse: [buffer at: position truncated + 1]).
+		aBuffer at: i put: (buffer atSmooth: position + 1.0).
 		(position := position - increment) >= 0.0 ifFalse:
 			[position := 0.0.
 			released := true.
 			aBuffer from: i + 1 to: aBuffer size put: 0.0.
 			^ self]]! !
 
-!Sample methodsFor: 'processing' stamp: 'len 13/Mar/2026 18:27:36'!
+!Sample methodsFor: 'processing' stamp: 'len 16/Mar/2026 15:17:24'!
 readForward: aBuffer
 	| end loopEndMinusOne |
-	end := buffer size.
-	smooth ifTrue: [end := end - 1]. "to allow for interpolation with next sample without checking bounds every time"
+	end := buffer size - 1. "- 1 to allow for interpolation with next sample without checking bounds every time"
 	loopEndMinusOne := loopEnd - 1.
-	position < end ifFalse:
+	position < (end - 1) ifFalse:
 		[aBuffer atAllPut: 0.0.
 		^ self].
 	1 to: aBuffer size do: [:i|
-		"if smooth = true perform linear interpolation between samples:"
-		aBuffer at: i put: (smooth ifTrue: [buffer atSmooth: position + 1.0] ifFalse: [buffer at: position truncated + 1]).
+		aBuffer at: i put: (buffer atSmooth: position + 1.0).
 		((position := position + increment) >= loopEndMinusOne and: [released not]) ifTrue:
 			[position := position - loopLength].
 		position < end ifFalse:
 			[released := true.
-			position := end - 1.0.
+"			position := end - 1.0."
 			aBuffer from: i + 1 to: aBuffer size put: 0.0.
 			^ self]]! !
 
@@ -5505,11 +5511,10 @@ readFromJson: json buffers: aList
 	label := json at: #label ifAbsent: [''].
 	label isEmpty ifTrue: [label := nil]! !
 
-!Sample methodsFor: 'tools' stamp: 'len 22/Jan/2026 04:28:30'!
+!Sample methodsFor: 'tools' stamp: 'len 16/Mar/2026 15:14:52'!
 panel
 	^ super panel
 		addMorph: (TextControlMorph control: (controls at: #speed));
-		addMorph: (PluggableToggleMorph new model: self; getter: #smooth; setter: #smooth:; label: 'HQ');
 		addMorph: (PluggableToggleMorph new model: self; getter: #warp; setter: #warp:; label: 'Warp')! !
 
 !Sample methodsFor: 'tools' stamp: 'len 13/Feb/2026 00:24:19'!

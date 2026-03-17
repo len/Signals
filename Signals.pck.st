@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 16 March 2026 at 3:41:27 pm'!
+'From Cuis7.7 [latest update: #7797] on 17 March 2026 at 6:34:41 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 494!
+!provides: 'Signals' 1 495!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -613,6 +613,16 @@ Transform subclass: #EQ3
 	category: 'Signals-Filters'!
 !classDefinition: 'EQ3 class' category: #'Signals-Filters'!
 EQ3 class
+	instanceVariableNames: ''!
+
+!classDefinition: #EQ5 category: #'Signals-Filters'!
+Transform subclass: #EQ5
+	instanceVariableNames: 'lowShelf bell1 bell2 bell3 highShelf'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Filters'!
+!classDefinition: 'EQ5 class' category: #'Signals-Filters'!
+EQ5 class
 	instanceVariableNames: ''!
 
 !classDefinition: #HPF category: #'Signals-Filters'!
@@ -1467,7 +1477,7 @@ AllpassComb class
 
 !classDefinition: #Biquad category: #'Signals-Support'!
 Object subclass: #Biquad
-	instanceVariableNames: 'a0 a1 a2 b1 b2 c0 d0 x1 x2 y1 y2'
+	instanceVariableNames: 'a0 a1 a2 b1 b2 x1 x2 y1 y2'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Support'!
@@ -1687,10 +1697,18 @@ Abstract superclass for simple oscillators that can be defined by a single phase
 This oscillator emulates the oscillators of the Yamaha sound chips YM2414 (used in the TX81Z and DX11 synthesizers) and YM2612 (used in the Sega Mega Drive game console). It has a choice of 8 waveforms.!
 
 !Pulse commentStamp: '<historical>' prior: 0!
-This is a virtual analog oscillator. It generates a pulse wave applying PolyBLEP to prevent aliasing. This oscillator supports audio-rate pulse width modulation (PWM).!
+This is a virtual analog oscillator. It generates a pulse wave applying PolyBLEP to prevent aliasing. This oscillator supports audio-rate pulse width modulation (PWM).
+
+For a duty cycle of 50% (1/2 width), the pulse wave is a square wave and consists of a fundamental sine wave frequency (f) and an infinite series of odd harmonics (3f, 5f, 7f, ...). The harmonics have amplitudes inversely proportional to their harmonic number 1/n (e.g., the 3rd harmonic has 1/3 the amplitude of the fundamental).
+
+Pulse waves with duty cycles other than 50% have both odd and even harmonics. Specific duty cycles can eliminate certain harmonics; for example, a 25% duty cycle (1/4 width) causes every fourth harmonic to be missing.
+
+Pulse waves with a 50% duty cycle sound hollow, like a clarinet, while narrower pulses (smaller duty cycles) sound more nasal, resembling an oboe.!
 
 !Saw commentStamp: '<historical>' prior: 0!
-This is a virtual analog oscillator. It generates a variable-slope saw that morphs between falling saw, triangle and rising saw, applying PolyBLEP and PolyBLAMP to prevent aliasing.!
+This is a virtual analog oscillator. It generates a variable-slope saw that morphs between falling saw, triangle and rising saw, applying PolyBLEP and PolyBLAMP to prevent aliasing.
+
+A sawtooth wave contains a both even and odd harmonics (2f, 3f, 4f, ...) of the fundamental frequency (f). The amplitude of each harmonic is inversely proportional to its harmonic number (e.g., the 3rd harmonic 3f is 1/3 the amplitude of the fundamental), creating a gradual, harmonic-rich decay.!
 
 !Sine commentStamp: '<historical>' prior: 0!
 This is a sine wave oscillator with variable warping produced by self-phase modulation. At zero warp, it's a sine. As the warp parameter moves from 0 to 1, integer harmonics (both odd and even) are added up to about the 6th harmonic.!
@@ -1699,13 +1717,15 @@ This is a sine wave oscillator with variable warping produced by self-phase modu
 This is a virtual analog oscillator that can morph between triangle, saw and pulse waves. It uses PolyBLEP and PolyBLAMP to prevent aliasing.!
 
 !Triangle commentStamp: '<historical>' prior: 0!
-This is a virtual analog triangle oscillator that uses PolyBLAMP for antialiasing. It morphs from a pure triangle to a sine wave.!
+This is a virtual analog triangle oscillator that uses PolyBLAMP for antialiasing. It morphs from a pure triangle to a sine wave.
+
+A triangle wave consists of only odd harmonics (f, 3f, 5f, 7f, ...) of the fundamental frequency, similar to a square wave, but its harmonic amplitudes decrease much faster, proportional to the inverse square of the harmonic number (1/n²). This results in a brighter tone than a sine wave but mellower than a square wave, with 12 dB per octave roll-off.!
 
 !Wavetable commentStamp: '<historical>' prior: 0!
 This is a wavetable oscillator inspired by classic wavetable synthesizers such as the PPG Wave and the Waldorf Microwave 1. The waves are typically small and low-resolution (e.g., 128 8-bit PCM samples), and this can result in digital artifacts such as aliasing and imaging characteristic of the classic wavetable sound.!
 
-!Supersaw commentStamp: 'len 5/Jan/2026 15:49:43' prior: 0!
-Emulation of the Roland JP-8000 and JP-8080 supersaw oscillator based on Adam Szabo's thesis [1]. It consists of 7 detuned saws. It is not a perfect emulation, e.g. it uses PolyBLEP saws to achieve antialiasing, instead of oversampling and applying a high pass filter as the original.
+!Supersaw commentStamp: '<historical>' prior: 0!
+Emulation of the Roland JP-8000 and JP-8080 supersaw oscillator based on Adam Szabo's thesis [1]. It consists of 7 detuned saws. It is not a perfect emulation, e.g. it uses antialiased PolyBLEP saws, instead of oversampling a digital saw and applying a high pass filter as the original.
 
 [1] Szabo, Adam; "How to Emulate the Super Saw"; Skolan för datavetenskap och kommunikation, Kungliga Tekniska högskolan, 2010.!
 
@@ -1794,6 +1814,11 @@ This is a second order (12 dB/oct) band-stop or notch filter implemented with a 
 Three-band DJ-style equalizer. This is a crossover-based EQ that splits the audio into three fixed frequency bands (low, mid, high) using Linkwitz-Riley filters. Each band has an independent gain control. Crossover frequencies: Low/Mid at 250 Hz, and Mid/High at 2.5 kHz.
 
 The implementation uses 4 second-order Linkwitz-Riley biquad filters (Q=0.707) configured as two crossover points, with parallel band processing and summing.!
+
+!EQ5 commentStamp: '<historical>' prior: 0!
+Five-band parametric equalizer. This is a cascade-based EQ that processes the signal through a series of independent second-order filters (biquads), each with adjustable frequency, gain, and Q (bandwidth). The bands are overlapping and not constrained by fixed crossovers, allowing flexible shaping from broad tonal adjustments to narrow resonant boosts or cuts.
+
+The implementation uses 5 second-order biquad filters in series: low-shelf (band 1), three peaking (bell) filters (bands 2–4), and high-shelf (band 5).!
 
 !HPF commentStamp: '<historical>' prior: 0!
 This is a second order (12 dB/oct) high-pass filter implemented with a biquad.!
@@ -1933,8 +1958,8 @@ A bus is just the sum of a number of audio signals (mono or stereo). It is used 
 !AllpassComb commentStamp: '<historical>' prior: 0!
 Schroeder allpass filter.!
 
-!Biquad commentStamp: 'len 27/Jan/2026 23:55:10' prior: 0!
-This is a biquad filter in direct form 1, modified with extra parameters c0 (amount of the filtered signal) and d1 (amount of the dry signal).
+!Biquad commentStamp: '<historical>' prior: 0!
+This is a biquad filter in direct form 1.
 
 There are methods to setup the following types of biquad filters:
 	∙ Standard LP/HP/BP/notch with a resonance parameter Q;
@@ -5057,36 +5082,39 @@ loadBookerT
 				Sample buffer: bufferFast sampleRate: reader sampleRate loopStart: loopStartFast loopEnd: loopEndFast}]].
 	^ self new label: 'BookerT'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 13/Mar/2026 19:11:55'!
+!Multisample class methodsFor: 'library' stamp: 'len 16/Mar/2026 21:45:35'!
 loadChoirAah
 	| keymap |
 	keymap := Dictionary new.
 	#('G3' 'A3' 'B3' 'C4' 'D4' 'E4' 'F4' 'G4' 'A4' 'B4' 'C5' 'D5' 'E5') do: [:noteName|
 		| filename reader buffer |
+		"Read only the left channel because the right channel doesnt match (different size and loop points):"
 		filename := 'Choir Aah - ', noteName, '(L).wav'.
 		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Choir Aah Ouh' // filename.
 		buffer := reader leftSamples.
-"		filename := 'Choir Aah - ', noteName, '(R).wav'.
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Choir Aah Ouh' // filename.
-		buffer +=​ reader leftSamples."
 		keymap at: noteName nameToSemitones put:
 			{Sample buffer: buffer sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Choir Aah'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 13/Mar/2026 19:22:04'!
+!Multisample class methodsFor: 'library' stamp: 'len 16/Mar/2026 21:43:10'!
 loadChoirOuh
-	| keymap |
+	| keymap oldAttack newAttack |
 	keymap := Dictionary new.
+	oldAttack := 10000.
+	newAttack := 100.
 	#('A3' 'B3' 'C4' 'D4' 'F4' 'G4' 'A4' 'B4' 'C5' 'D5' 'E5') do: [:noteName|
-		| filename reader buffer |
+		| filename reader buffer loopStart loopEnd |
+		"Read only the left channel because the right channel doesnt match (different size and loop points):"
 		filename := 'Choir Ouh - ', noteName, '(L).wav'.
 		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Choir Aah Ouh' // filename.
-		buffer := reader leftSamples.
-"		filename := 'Choir Ouh - ', noteName, '(R).wav'.
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Choir Aah Ouh' // filename.
-		buffer +=​ reader leftSamples."
+		"Remove attack, otherwise it's too long:"
+		buffer := reader leftSamples allButFirst: oldAttack.
+		"Smooth out:"
+		1 to: newAttack do: [:i| buffer at: i put: (buffer at: i) * i asFloat / newAttack].
+		loopStart := reader loopStart - oldAttack.
+		loopEnd := reader loopEnd - oldAttack.
 		keymap at: noteName nameToSemitones put:
-			{Sample buffer: buffer sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
+			{Sample buffer: buffer sampleRate: reader sampleRate loopStart: loopStart loopEnd: loopEnd}].
 	^ self new label: 'Choir Ouh'; keymap: keymap! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 16:33:56'!
@@ -6496,6 +6524,13 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
+!EQ3 methodsFor: 'controlling' stamp: 'len 17/Mar/2026 15:48:10'!
+reset
+	lowPassLow reset.
+	lowPassMid reset.
+	highPassMid reset.
+	highPassHigh reset! !
+
 !EQ3 methodsFor: 'controlling' stamp: 'len 8/Feb/2026 14:51:14'!
 update
 	super update.
@@ -6533,6 +6568,69 @@ tick
 	highPassHigh write: input read: aux.
 	aux *= (self get: #high).
 	output += aux! !
+
+!EQ5 methodsFor: 'controlling' stamp: 'len 17/Mar/2026 15:49:09'!
+reset
+	lowShelf reset.
+	bell1 reset.
+	bell2 reset.
+	bell3 reset.
+	highShelf reset! !
+
+!EQ5 methodsFor: 'controlling' stamp: 'len 17/Mar/2026 15:35:49'!
+update
+	super update.
+	lowShelf undenormalize; ls: (self get: #f1) / self class sampleRate Q: (self get: #q1) gain: (self get: #g1).
+	bell1 undenormalize; peaking: (self get: #f2) / self class sampleRate Q: (self get: #q2) gain: (self get: #g2).
+	bell2 undenormalize; peaking: (self get: #f3) / self class sampleRate Q: (self get: #q3) gain: (self get: #g3).
+	bell3 undenormalize; peaking: (self get: #f4) / self class sampleRate Q: (self get: #q4) gain: (self get: #g4).
+	highShelf undenormalize; ls: (self get: #f5) / self class sampleRate Q: (self get: #q5) gain: (self get: #g5)! !
+
+!EQ5 methodsFor: 'initialization' stamp: 'len 17/Mar/2026 15:40:59'!
+initialize
+	super initialize.
+	lowShelf := Biquad new.
+	bell1 := Biquad new.
+	bell2 := Biquad new.
+	bell3 := Biquad new.
+	highShelf := Biquad new! !
+
+!EQ5 methodsFor: 'initialization' stamp: 'len 17/Mar/2026 15:43:36'!
+initializeControls
+	super initializeControls.
+	
+	(self addFrequencyControl: #f1 min: 20.0 max: 200.0 value: 80.0) label: 'Frequency'.
+	(self addControl: #q1 min: 0.4 max: 2.0 value: 0.707) label: 'Q'.
+	(self addVolumeControl: #g1 min: 1.0 / 16 max: 16.0 value: 1.0) label: 'Gain'.
+
+	(self addFrequencyControl: #f2 min: 80.0 max: 800.0 value: 250.0) label: 'Frequency'.
+	(self addControl: #q2 min: 0.3 max: 10.0 value: 1.0) label: 'Q'.
+	(self addVolumeControl: #g2 min: 1.0 / 16 max: 16.0 value: 1.0) label: 'Gain'.
+
+	(self addFrequencyControl: #f3 min: 200.0 max: 3000.0 value: 1000.0) label: 'Frequency'.
+	(self addControl: #q3 min: 0.3 max: 10.0 value: 1.0) label: 'Q'.
+	(self addVolumeControl: #g3 min: 1.0 / 16 max: 16.0 value: 1.0) label: 'Gain'.
+
+	(self addFrequencyControl: #f4 min: 1000.0 max: 10000.0 value: 4000.0) label: 'Frequency'.
+	(self addControl: #q4 min: 0.4 max: 2.0 value: 1.0) label: 'Q'.
+	(self addVolumeControl: #g4 min: 1.0 / 16 max: 16.0 value: 1.0) label: 'Gain'.
+
+	(self addFrequencyControl: #f5 min: 4000.0 max: 20000.0 value: 10000.0) label: 'Frequency'.
+	(self addControl: #q5 min: 0.4 max: 2.0 value: 0.707) label: 'Q'.
+	(self addVolumeControl: #g5 min: 1.0 / 16 max: 16.0 value: 1.0) label: 'Gain'! !
+
+!EQ5 methodsFor: 'processing' stamp: 'len 17/Mar/2026 15:36:55'!
+value: in
+	^ lowShelf value: (bell1 value: (bell2 value: (bell3 value: (highShelf value: in))))! !
+
+!EQ5 methodsFor: 'tools' stamp: 'len 17/Mar/2026 15:45:30'!
+panel
+	^ ControlPanel new
+		addMorph: (ControlPanel newColumn addKnob: (controls at: #g1); addSmallKnob: (controls at: #f1); addSmallKnob: (controls at: #q1));
+		addMorph: (ControlPanel newColumn addKnob: (controls at: #g2); addSmallKnob: (controls at: #f2); addSmallKnob: (controls at: #q2));
+		addMorph: (ControlPanel newColumn addKnob: (controls at: #g3); addSmallKnob: (controls at: #f3); addSmallKnob: (controls at: #q3));
+		addMorph: (ControlPanel newColumn addKnob: (controls at: #g4); addSmallKnob: (controls at: #f4); addSmallKnob: (controls at: #q4));
+		addMorph: (ControlPanel newColumn addKnob: (controls at: #g5); addSmallKnob: (controls at: #f5); addSmallKnob: (controls at: #q5))! !
 
 !HPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:18:06'!
 reset
@@ -8094,6 +8192,10 @@ addRow
 	row := self class newRow.
 	self addMorph: row.
 	^ row! !
+
+!ControlPanel methodsFor: 'building' stamp: 'len 17/Mar/2026 15:44:56'!
+addSmallKnob: aControl
+	self addMorph: ((KnobControlMorph control: aControl) morphExtent: 24 @ 24)! !
 
 !ControlPanel methodsFor: 'building' stamp: 'len 23/Feb/2026 19:56:11'!
 addSmallKnob: aControl label: labelString
@@ -12357,22 +12459,21 @@ ls: frequency Q: Q gain: gain
 	b1 := -2.0 * ((A - 1.0) + ((A + 1.0) * cosω)) / b0.
 	b2 := ((A + 1.0) + ((A - 1.0) * cosω) - (2.0 * sqrtA * α)) / b0! !
 
-!Biquad methodsFor: 'accessing' stamp: 'len 27/Jan/2026 22:22:41'!
+!Biquad methodsFor: 'accessing' stamp: 'len 17/Mar/2026 18:20:34'!
 peaking: frequency Q: Q gain: gain
-	"Setup coefficients for a second order parametric/peaking filter with non-constant Q.
-	See also >>#bp:Q:."
-	| ω α b g |
+	"Setup coefficients for a second order peaking (bell) filter.
+	The gain is linear, and the frequency is normalized (already divided by the sample rate)."
+	| ω α A cosω b0 |
 	ω := Float twoPi * frequency.
-	α := 4.0 / (1.0 + gain) * (ω / (2.0 * Q)) tan.
-	b := 0.5 * (1.0 - α) / (1.0 + α).
-	g := (0.5 + b) * ω cos.
-	a0 := 0.5 - b.
-	a1 := 0.0.
-	a2 := b - 0.5.
-	b1 := -2.0 * g.
-	b2 := 2.0 * b.
-	c0 := gain - 1.0.
-	d0 := 1.0! !
+	α := ω sin / (Q * 2.0).
+	A := gain sqrt.
+	cosω := ω cos.
+	b0 := 1.0 + (α / A).
+	a0 := (1.0 + (α * A)) / b0.
+	a1 := (-2.0 * cosω) / b0.
+	a2 := (1.0 - (α * A)) / b0.
+	b1 := (2.0 * cosω negated) / b0.
+	b2 := (1.0 - (α / A)) / b0! !
 
 !Biquad methodsFor: 'controlling' stamp: 'len 22/Sep/2025 19:52:00'!
 reset
@@ -12384,42 +12485,23 @@ undenormalize
 	y1 abs < 1.0e-15 ifTrue: [y1 := 0.0].
 	y2 abs < 1.0e-15 ifTrue: [y2 := 0.0]! !
 
-!Biquad methodsFor: 'initialization' stamp: 'len 25/Jan/2026 16:16:29'!
+!Biquad methodsFor: 'initialization' stamp: 'len 17/Mar/2026 18:15:10'!
 initialize
-	c0 := 1.0.
-	d0 := 0.0.
 	self reset! !
 
-!Biquad methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:54:58'!
-modifiedWrite: inputBuffer read: outputBuffer
-	"Direct Form 1."
-	1 to: inputBuffer size do: [:i|
-		| in out |
-		in := inputBuffer at: i.
-		out := d0 * in + ((a0 * in + (a1 * x1) + (a2 * x2) - (b1 * y1) - (b2 * y2)) * c0).
-		x2 := x1.
-		y2 := y1.
-		x1 := in.
-		outputBuffer at: i put: (y1 := out)].
-	x1 abs < 1.0e-15 ifTrue: [x1 := 0.0].
-	x2 abs < 1.0e-15 ifTrue: [x2 := 0.0].
-	y1 abs < 1.0e-15 ifTrue: [y1 := 0.0].
-	y2 abs < 1.0e-15 ifTrue: [y2 := 0.0]! !
-
-!Biquad methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:32:24'!
+!Biquad methodsFor: 'processing' stamp: 'len 17/Mar/2026 18:17:12'!
 value: in
 	"Direct Form 1."
 	| out |
-	out := d0 * in + ((a0 * in + (a1 * x1) + (a2 * x2) - (b1 * y1) - (b2 * y2)) * c0).
+	out := a0 * in + (a1 * x1) + (a2 * x2) - (b1 * y1) - (b2 * y2).
 	x2 := x1.
 	y2 := y1.
 	x1 := in.
 	^ y1 := out! !
 
-!Biquad methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:55:13'!
+!Biquad methodsFor: 'processing' stamp: 'len 17/Mar/2026 18:14:54'!
 write: inputBuffer read: outputBuffer
 	"Direct Form 1."
-	(c0 = 1.0 and: [d0 = 0.0]) ifFalse: [^ self modifiedWrite: inputBuffer read: outputBuffer].
 	1 to: inputBuffer size do: [:i|
 		| in out |
 		in := inputBuffer at: i.

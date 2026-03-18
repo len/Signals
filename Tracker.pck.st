@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 16 March 2026 at 4:43:26 am'!
+'From Cuis7.7 [latest update: #7797] on 19 March 2026 at 2:41:27 am'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 7!
+!provides: 'Tracker' 1 8!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -68,7 +68,7 @@ TrackerBarMorph class
 
 !classDefinition: #Instrument category: #'Tracker-Kernel'!
 Object subclass: #Instrument
-	instanceVariableNames: 'label patch modules noteReceivers gateReceivers velocityReceivers glideReceivers tempoReceivers samples controlInputs audioOutput buffer track trigger'
+	instanceVariableNames: 'label patch modules noteReceivers velocityReceivers glideReceivers tempoReceivers samples controlValues audioOutput buffer track trigger'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Tracker-Kernel'!
@@ -678,7 +678,7 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 10/Mar/2026 15:58:22'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 16/Mar/2026 21:41:10'!
 handleInputKey: anEvent
 	| c i |
 	anEvent isBackspace ifTrue:
@@ -1177,9 +1177,9 @@ setOwnerTrack: aTrack
 track
 	^ track! !
 
-!Instrument methodsFor: 'initialization' stamp: 'len 19/Feb/2026 01:48:16'!
+!Instrument methodsFor: 'initialization' stamp: 'len 19/Mar/2026 02:32:17'!
 initialize
-	controlInputs := Array new: 10.
+	controlValues := Float32Array new: 10.
 	patch := PatchMorph new.
 	patch when: #recomputeNeeded send: #scheduleRecompute to: self.
 ! !
@@ -1200,7 +1200,7 @@ adjustPanBy: aNumber
 adjustVelocityBy: aNumber
 	velocityReceivers do: [:each| each adjustVelocityBy: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 10/Mar/2026 22:21:59'!
+!Instrument methodsFor: 'playing' stamp: 'len 19/Mar/2026 02:32:17'!
 handleFX: anInteger
 	| command |
 	command := anInteger bitShift: -8.
@@ -1222,23 +1222,19 @@ handleFX: anInteger
 	command = 60 "< (speed backwards)" ifTrue: [self setSpeed: (anInteger bitAnd: 16rFF) / -255.0. ^ self].
 	command = 62 "> (speed forward)" ifTrue: [self setSpeed: (anInteger bitAnd: 16rFF) / 255.0. ^ self].
 	"Control change commands:"
-	(command between: 48 and: 57) "0 to 9" ifTrue:
-		[(controlInputs at: command - 47) ifNotNil:
-			[:input| | v |
-				"map 0 to 0.0, 7F to 1.0 and 80 to -1.0:"
-				input setValue: ((v := anInteger bitAnd: 16rFF) < 128 ifTrue: [v / 127.0] ifFalse: [v - 128 / 128.0])].
-		^ self].
+	(command between: 48 and: 57) "0 to 9" ifTrue: "map 0 to 0.0, 7F to 1.0 and 80 to -1.0:"
+		[| v |
+		controlValues at: command - 47 put: ((v := anInteger bitAnd: 16rFF) < 128 ifTrue: [v / 127.0] ifFalse: [v - 128 / 128.0])].
 	"Global commands:"
 	command = 70 "F (set bpm)" ifTrue: [track tracker bpm: ((anInteger bitAnd: 16rFF) max: 1). ^ self]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 21/Jan/2026 04:39:07'!
+!Instrument methodsFor: 'playing' stamp: 'len 19/Mar/2026 02:06:03'!
 noteOff
-	gateReceivers do: [:each| each gateOff]! !
+	noteReceivers do: [:each| each noteOff]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 18/Feb/2026 23:42:54'!
+!Instrument methodsFor: 'playing' stamp: 'len 19/Mar/2026 02:21:55'!
 noteOn: midiKey
-	noteReceivers do: [:each| each setNote: midiKey].
-	gateReceivers do: [:each| each gateOn]! !
+	noteReceivers do: [:each| each noteOn: midiKey]! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 15/Mar/2026 15:17:19'!
 playTrigger
@@ -1249,24 +1245,21 @@ playTrigger
 	trigger isNoteOn ifTrue: [self noteOn: trigger note] ifFalse: [trigger isNoteOff ifTrue: [self noteOff]].
 	trigger := nil! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 8/Mar/2026 19:38:49'!
+!Instrument methodsFor: 'playing' stamp: 'len 19/Mar/2026 02:32:40'!
 recomputeModules
 	| currentModules buses |
 	currentModules := patch modules.
 	modules := currentModules.
-	noteReceivers := currentModules select: [:each| each respondsTo: #setNote:].
-	gateReceivers := currentModules select: [:each| each respondsTo: #gateOn].
+	noteReceivers := currentModules select: [:each| each respondsTo: #noteOn:].
 	velocityReceivers := currentModules select: [:any| any respondsTo: #setVelocity:].
 	glideReceivers := currentModules select: [:any| any respondsTo: #setGlide:].
 	tempoReceivers := currentModules select: [:any| any respondsTo: #setBPM:].
 	samples := currentModules select: [:each| each isMemberOf: Sample].
-	controlInputs atAllPut: nil.
 	buses := track tracker buses.
 	audioOutput := nil.
-	controlInputs atAllPut: nil.
 	currentModules do: [:each|
 		(each isMemberOf: ControlIn)
-			ifTrue: [controlInputs at: each port + 1 put: each]
+			ifTrue: [each setValues: controlValues]
 			ifFalse:
 				[(each isMemberOf: AudioIn)
 					ifTrue: [each setBuses: buses]

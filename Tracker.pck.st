@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 19 March 2026 at 2:41:27 am'!
+'From Cuis7.7 [latest update: #7797] on 19 March 2026 at 3:25:13 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 8!
+!provides: 'Tracker' 1 9!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -68,7 +68,7 @@ TrackerBarMorph class
 
 !classDefinition: #Instrument category: #'Tracker-Kernel'!
 Object subclass: #Instrument
-	instanceVariableNames: 'label patch modules noteReceivers velocityReceivers glideReceivers tempoReceivers samples controlValues audioOutput buffer track trigger'
+	instanceVariableNames: 'label patch modules noteReceivers velocityReceivers glideReceivers tempoReceivers samples audioOutput controlValues track trigger'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Tracker-Kernel'!
@@ -1269,11 +1269,11 @@ recomputeModules
 							each port = 0 ifTrue: [audioOutput := each]]]]].
 	^ currentModules! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 21/Feb/2026 19:49:45'!
+!Instrument methodsFor: 'playing' stamp: 'len 19/Mar/2026 15:13:17'!
 reset
 	| currentModules |
 	currentModules := modules ifNil: [self recomputeModules].
-	currentModules do: [:each| (each is: #Module) ifTrue: [each reset]]! !
+	currentModules do: [:each| (each is: #Morph) ifFalse: [each reset]]! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 6/Jan/2026 16:00:00'!
 scheduleRecompute
@@ -1311,16 +1311,16 @@ setSpeed: aNumber
 setVelocity: aNumber
 	velocityReceivers do: [:each| each setVelocity: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 5/Mar/2026 18:13:15'!
+!Instrument methodsFor: 'playing' stamp: 'len 19/Mar/2026 15:12:15'!
 tick
 	| currentModules enabled |
 	currentModules := modules ifNil: [self recomputeModules].
 	enabled := track enabled.
 	currentModules do: [:each|
 		(each isMemberOf: AudioOut) ifTrue: [each enabled: enabled].
-		(each is: #Module) ifTrue: [each clear]].
+		(each is: #Morph) ifFalse: [each clear]].
 	trigger ifNotNil: [self playTrigger].
-	currentModules do: [:each| (each is: #Module) ifTrue: [each update]. each tick]! !
+	currentModules do: [:each| (each is: #Morph) ifFalse: [each update]. each tick]! !
 
 !Instrument methodsFor: 'serialization' stamp: 'len 17/Feb/2026 19:39:10'!
 asJsonWithBuffers: aList

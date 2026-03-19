@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 19 March 2026 at 2:41:03 am'!
+'From Cuis7.7 [latest update: #7797] on 19 March 2026 at 3:25:09 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 496!
+!provides: 'Signals' 1 497!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1325,16 +1325,6 @@ BoxMorph subclass: #ZoomerMorph
 ZoomerMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #OscilloscopeMorph category: #'Signals-Morphic-Widgets'!
-BoxMorph subclass: #OscilloscopeMorph
-	instanceVariableNames: 'input samples currentPosition color'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Widgets'!
-!classDefinition: 'OscilloscopeMorph class' category: #'Signals-Morphic-Widgets'!
-OscilloscopeMorph class
-	instanceVariableNames: ''!
-
 !classDefinition: #PlotMorph category: #'Signals-Morphic-Widgets'!
 BoxMorph subclass: #PlotMorph
 	instanceVariableNames: 'functions domain colors max min font'
@@ -1375,33 +1365,43 @@ BoxMorph subclass: #SamplePlayerMorph
 SamplePlayerMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #SpectrogramMorph category: #'Signals-Morphic-Widgets'!
+!classDefinition: #OscilloscopeMorph category: #'Signals-Utility'!
+BoxMorph subclass: #OscilloscopeMorph
+	instanceVariableNames: 'input samples currentPosition color'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Utility'!
+!classDefinition: 'OscilloscopeMorph class' category: #'Signals-Utility'!
+OscilloscopeMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #SpectrogramMorph category: #'Signals-Utility'!
 BoxMorph subclass: #SpectrogramMorph
 	instanceVariableNames: 'input image position fft hop buffer bufferIndex colormap frequencyScale logSpectrum'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Morphic-Widgets'!
-!classDefinition: 'SpectrogramMorph class' category: #'Signals-Morphic-Widgets'!
+	category: 'Signals-Utility'!
+!classDefinition: 'SpectrogramMorph class' category: #'Signals-Utility'!
 SpectrogramMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #SpectrumAnalyzerMorph category: #'Signals-Morphic-Widgets'!
+!classDefinition: #SpectrumAnalyzerMorph category: #'Signals-Utility'!
 BoxMorph subclass: #SpectrumAnalyzerMorph
 	instanceVariableNames: 'input color spectrum fft buffer bufferIndex frequencyScale displayMode'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Morphic-Widgets'!
-!classDefinition: 'SpectrumAnalyzerMorph class' category: #'Signals-Morphic-Widgets'!
+	category: 'Signals-Utility'!
+!classDefinition: 'SpectrumAnalyzerMorph class' category: #'Signals-Utility'!
 SpectrumAnalyzerMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #VectorscopeMorph category: #'Signals-Morphic-Widgets'!
+!classDefinition: #VectorscopeMorph category: #'Signals-Utility'!
 BoxMorph subclass: #VectorscopeMorph
 	instanceVariableNames: 'inputX inputY scaleX scaleY image color colorHigh'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Morphic-Widgets'!
-!classDefinition: 'VectorscopeMorph class' category: #'Signals-Morphic-Widgets'!
+	category: 'Signals-Utility'!
+!classDefinition: 'VectorscopeMorph class' category: #'Signals-Utility'!
 VectorscopeMorph class
 	instanceVariableNames: ''!
 
@@ -1525,16 +1525,6 @@ Object subclass: #DelayLineTap
 DelayLineTap class
 	instanceVariableNames: ''!
 
-!classDefinition: #Downsampler2x category: #'Signals-Support'!
-Object subclass: #Downsampler2x
-	instanceVariableNames: 'd0 d1 d2 d3'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'Downsampler2x class' category: #'Signals-Support'!
-Downsampler2x class
-	instanceVariableNames: ''!
-
 !classDefinition: #FFT category: #'Signals-Support'!
 Object subclass: #FFT
 	instanceVariableNames: 'nu n sinTable permTable realData imagData window spectrum aux'
@@ -1613,16 +1603,6 @@ Object subclass: #Polyphase13TapOversampler2x
 	category: 'Signals-Support'!
 !classDefinition: 'Polyphase13TapOversampler2x class' category: #'Signals-Support'!
 Polyphase13TapOversampler2x class
-	instanceVariableNames: ''!
-
-!classDefinition: #Upsampler2x category: #'Signals-Support'!
-Object subclass: #Upsampler2x
-	instanceVariableNames: 'u0 u1 u2 u3'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'Upsampler2x class' category: #'Signals-Support'!
-Upsampler2x class
 	instanceVariableNames: ''!
 
 !classDefinition: #WAVFileReader category: #'Signals-Support'!
@@ -1946,7 +1926,7 @@ An attenuverter is similar to an attenuator, but it can also invert the polarity
 Control-rate envelope follower with selectable peak or RMS detection and independent attack and release times.!
 
 !LFO commentStamp: '<historical>' prior: 0!
-Low frequency oscillator.!
+Low-frequency oscillator.!
 
 !LogAttenuator commentStamp: '<historical>' prior: 0!
 An attenuator scales a control signal by a positive number. It is typically used to control modulation depth.!
@@ -1999,20 +1979,6 @@ Butterworth filters are specifically designed for maximally flat passband respon
 Linkwitz-Riley filters are built from cascaded Butterworth filters, designed specifically for crossover applications. Their key feature is that when you use complementary LP and HP Linkwitz-Riley filters at the same frequency, they sum to a flat magnitude response with no phase issues at the crossover point. This makes them ideal for splitting a signal and processing bands separately while maintaining coherent recombination.
 !
 
-!Downsampler2x commentStamp: '<historical>' prior: 0!
-This is a polyphase 2x oversampler designed to reduce aliasing in non-linear DSP modules (e.g. distortion, saturation or virtual analog filters).
-
-This class uses a Polyphase Half-Band FIR filter (13-tap) to increase the internal sample rate. By processing signals at 2x the original frequency, we push the Nyquist limit higher, allowing harmonics to exist without folding back (aliasing) into the audible spectrum.
-
-The polyphase implementation is highly efficient:
-1. It avoids zero-stuffing (doesn't multiply by 0.0),
-2. It splits the work intwo two paths (an FIR branch and a pure delay branch),
-3. It maintains internal state for both upsampling and downsampling.
-
-Usage: 'anOversampler oversampling: inputSample do: [:subsample| ... ]'. Two subsamples are derived from the input sample, then the block is evaluated twice (once per subsample), and the result is downsampled and returned.
-
-Note: this process introduces a fixed latency (group delay) of approximately 6 samples. If mixing this signal with a 'dry' signal, the dry path must be delayed by the same amount to maintain phase alignment.!
-
 !FFT commentStamp: '<historical>' prior: 0!
 This class implements the Fast Fourier Transform roughly as described on page 367
 of "Theory and Application of Digital Signal Processing" by Rabiner and Gold.
@@ -2064,20 +2030,6 @@ For each input sample, two subsamples (even and odd phases) are generated. A use
 The implementation maintains separate internal state for the upsampling and downsampling polyphase paths and preserves correct phase alignment.
 
 Latency: This process introduces a fixed group delay of 6 samples at the base sample rate (corresponding to the 13-tap FIR length). When mixing with an unprocessed (“dry”) signal, the dry path must be delayed by the same amount to maintain phase alignment.!
-
-!Upsampler2x commentStamp: '<historical>' prior: 0!
-This is a polyphase 2x oversampler designed to reduce aliasing in non-linear DSP modules (e.g. distortion, saturation or virtual analog filters).
-
-This class uses a Polyphase Half-Band FIR filter (13-tap) to increase the internal sample rate. By processing signals at 2x the original frequency, we push the Nyquist limit higher, allowing harmonics to exist without folding back (aliasing) into the audible spectrum.
-
-The polyphase implementation is highly efficient:
-1. It avoids zero-stuffing (doesn't multiply by 0.0),
-2. It splits the work intwo two paths (an FIR branch and a pure delay branch),
-3. It maintains internal state for both upsampling and downsampling.
-
-Usage: 'anOversampler oversampling: inputSample do: [:subsample| ... ]'. Two subsamples are derived from the input sample, then the block is evaluated twice (once per subsample), and the result is downsampled and returned.
-
-Note: this process introduces a fixed latency (group delay) of approximately 6 samples. If mixing this signal with a 'dry' signal, the dry path must be delayed by the same amount to maintain phase alignment.!
 
 !ControlOld methodsFor: 'accessing' stamp: 'len 3/Mar/2026 19:31:13'!
 adjustBy: aNumber
@@ -2343,6 +2295,10 @@ printedBaseValueWithLabel
 printer: aSymbol
 	printer := aSymbol! !
 
+!Choice methodsFor: 'accessing' stamp: 'len 18/Mar/2026 18:50:08'!
+options
+	^ options! !
+
 !Choice methodsFor: 'private' stamp: 'len 8/Mar/2026 15:51:42'!
 positionFromValue: anObject
 	^ (options indexOf: anObject) - 1.0 / (options size - 1)! !
@@ -2358,10 +2314,6 @@ setOptions: anArray value: defaultValue
 !Choice methodsFor: 'private' stamp: 'len 8/Mar/2026 15:52:22'!
 valueFromPosition: aNumber
 	^ options at: (aNumber * (options size - 1)) truncated + 1! !
-
-!Choice methodsFor: 'as yet unclassified' stamp: 'len 18/Mar/2026 18:50:08'!
-options
-	^ options! !
 
 !Choice class methodsFor: 'instance creation' stamp: 'len 18/Mar/2026 18:40:34'!
 options: anArray value: defaultValue
@@ -2620,11 +2572,7 @@ asJsonWithBuffers: aList
 readFromJson: json buffers: aList
 	self settings: (json at: #settings)! !
 
-!Module methodsFor: 'testing' stamp: 'len 7/Dec/2025 00:18:27'!
-is: aSymbol
-	^ aSymbol == #Module or: [super is: aSymbol]! !
-
-!Module methodsFor: 'tools' stamp: 'len 10/Mar/2026 16:23:47'!
+!Module methodsFor: 'ui' stamp: 'len 10/Mar/2026 16:23:47'!
 panel
 	"Answer a panel to use in the patchable views."
 	| panel |
@@ -2632,7 +2580,7 @@ panel
 	controls keysAndValuesDo: [:name :control| panel addKnob: control label: (control label ifNil: [name capitalized])].
 	^ panel! !
 
-!Module methodsFor: 'tools' stamp: 'len 10/Jan/2026 16:16:26'!
+!Module methodsFor: 'ui' stamp: 'len 10/Jan/2026 16:16:26'!
 patchable
 	"Answer a patchable view of the receiver, with input and output pins, intended to be used in patches.
 	See also messages #edit and #panel, and see PatchMorph and PatchableMorph."
@@ -2641,7 +2589,7 @@ patchable
 	controls ifNotEmpty: [answer body addMorph: self panel].
 	^ answer! !
 
-!Module methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:32:09'!
+!Module methodsFor: 'ui' stamp: 'len 27/Jan/2026 14:32:09'!
 title
 	^ self class name camelSeparatedWords! !
 
@@ -2686,11 +2634,11 @@ tick
 				output at: i put: (input at: i) * gain]].
 	inputRM ifNotNil: [output *= inputRM]! !
 
-!Amp methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:56:14'!
+!Amp methodsFor: 'ui' stamp: 'len 27/Jan/2026 14:56:14'!
 panel
 	^ ControlPanel new addVerticalSlider: (controls at: #gain)! !
 
-!Amp methodsFor: 'tools' stamp: 'len 10/Mar/2026 14:28:10'!
+!Amp methodsFor: 'ui' stamp: 'len 10/Mar/2026 14:28:10'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -2776,7 +2724,7 @@ tick
 	(inputL notNil and: [outputL notNil]) ifTrue: [outputL replaceWith: inputL; *= aux].
 	(inputR notNil and: [outputR notNil]) ifTrue: [outputR replaceWith: inputR; *= aux]! !
 
-!Compressor methodsFor: 'tools' stamp: 'len 12/Mar/2026 18:11:56'!
+!Compressor methodsFor: 'ui' stamp: 'len 12/Mar/2026 18:11:56'!
 panel
 	| answer |
 	answer := ControlPanel newColumn.
@@ -2788,7 +2736,7 @@ panel
 		addKnob: (controls at: #release) label: 'Release'.
 	^ answer! !
 
-!Compressor methodsFor: 'tools' stamp: 'len 18/Mar/2026 18:54:23'!
+!Compressor methodsFor: 'ui' stamp: 'len 18/Mar/2026 18:54:23'!
 panel2
 	^​ ControlPanel new
 		addChoice: (controls at: #mode);
@@ -2796,7 +2744,7 @@ panel2
 		addSmallKnob: (controls at: #knee) label: 'Knee';
 		addSmallKnob: (controls at: #makeup) label: 'Makeup'! !
 
-!Compressor methodsFor: 'tools' stamp: 'len 12/Mar/2026 18:08:37'!
+!Compressor methodsFor: 'ui' stamp: 'len 12/Mar/2026 18:08:37'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -2885,7 +2833,7 @@ tick
 	(inputL notNil and: [outputL notNil]) ifTrue: [outputL replaceWith: inputL; *= aux].
 	(inputR notNil and: [outputR notNil]) ifTrue: [outputR replaceWith: inputR; *= aux]! !
 
-!Gate methodsFor: 'tools' stamp: 'len 12/Mar/2026 18:44:53'!
+!Gate methodsFor: 'ui' stamp: 'len 12/Mar/2026 18:44:53'!
 panel
 	| answer |
 	answer := ControlPanel newColumn.
@@ -2898,14 +2846,14 @@ panel
 		addSmallKnob: (controls at: #release) label: 'Release'.
 	^ answer! !
 
-!Gate methodsFor: 'tools' stamp: 'len 18/Mar/2026 18:56:01'!
+!Gate methodsFor: 'ui' stamp: 'len 18/Mar/2026 18:56:01'!
 panel2
 	^​ ControlPanel new
 		addChoice: (controls at: #mode);
 		addSmallKnob: (controls at: #schpf) label: 'SC HPF';
 		addSmallKnob: (controls at: #knee) label: 'Knee'! !
 
-!Gate methodsFor: 'tools' stamp: 'len 12/Mar/2026 18:23:07'!
+!Gate methodsFor: 'ui' stamp: 'len 12/Mar/2026 18:23:07'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -2995,7 +2943,7 @@ next
 tick
 	stage = #idle ifFalse: [self triggerEvent: #output: with: self next]! !
 
-!EG methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:42:05'!
+!EG methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:42:05'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -3028,13 +2976,13 @@ next
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value * velocity! !
 
-!AD methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:57:03'!
+!AD methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:57:03'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #decay) label: 'D'! !
 
-!AD methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:42:58'!
+!AD methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:42:58'!
 patchable
 	^ super patchable
 		addControlInput: #attack;
@@ -3080,7 +3028,7 @@ next
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value * velocity! !
 
-!ADSR methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:56:25'!
+!ADSR methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:56:25'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
@@ -3088,7 +3036,7 @@ panel
 		addSmallKnob: (controls at: #sustain) label: 'S';
 		addSmallKnob: (controls at: #release) label: 'R'! !
 
-!ADSR methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:43:31'!
+!ADSR methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:43:31'!
 patchable
 	^ super patchable
 		addControlInput: #attack;
@@ -3125,14 +3073,14 @@ next
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value * velocity! !
 
-!AHD methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:57:11'!
+!AHD methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:57:11'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #hold) label: 'H';
 		addSmallKnob: (controls at: #decay) label: 'D'! !
 
-!AHD methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:44:18'!
+!AHD methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:44:18'!
 patchable
 	^ super patchable
 		addControlInput: #attack;
@@ -3169,13 +3117,13 @@ next
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value * velocity! !
 
-!AR methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:57:17'!
+!AR methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:57:17'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #release) label: 'R'! !
 
-!AR methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:44:28'!
+!AR methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:44:28'!
 patchable
 	^ super patchable
 		addControlInput: #attack;
@@ -3213,14 +3161,14 @@ next
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value * velocity! !
 
-!ASR methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:57:24'!
+!ASR methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:57:24'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #sustain) label: 'S';
 		addSmallKnob: (controls at: #release) label: 'R'! !
 
-!ASR methodsFor: 'tools' stamp: 'len 23/Feb/2026 19:44:35'!
+!ASR methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:44:35'!
 patchable
 	^ super patchable
 		addControlInput: #attack;
@@ -3337,11 +3285,11 @@ tick2
 		outputLP2 ifNotNil: [outputLP2 at: i put: y2].
 		outputLP1 ifNotNil: [outputLP1 at: i put: y1]]! !
 
-!DiodeLadder methodsFor: 'tools' stamp: 'len 29/Jan/2026 03:00:39'!
+!DiodeLadder methodsFor: 'ui' stamp: 'len 29/Jan/2026 03:00:39'!
 display
 	^ super display mode: #LP! !
 
-!DiodeLadder methodsFor: 'tools' stamp: 'len 29/Jan/2026 03:00:39'!
+!DiodeLadder methodsFor: 'ui' stamp: 'len 29/Jan/2026 03:00:39'!
 patchable
 	^ super patchable
 		addAudioOutput: #setOutputLP4: label: 'LP4';
@@ -3430,7 +3378,7 @@ tick
 				outputL at: i put: in + (mid + side * mix).
 				outputR at: i put: in + (mid - side * mix)]]! !
 
-!Chorus methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:40:47'!
+!Chorus methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:40:47'!
 patchable
 	^ super patchable
 		addAudioInput: #setInput:;
@@ -3544,7 +3492,7 @@ tick
 		outputL at: i put: inL * dry + (outL * wet).
 		outputR ifNotNil: [outputR at: i put: inR * dry + (outR * wet)]]! !
 
-!StereoEcho methodsFor: 'tools' stamp: 'len 12/Mar/2026 18:03:54'!
+!StereoEcho methodsFor: 'ui' stamp: 'len 12/Mar/2026 18:03:54'!
 panel
 	| answer |
 	answer := ControlPanel newColumn.
@@ -3559,7 +3507,7 @@ panel
 		addSmallKnob: (controls at: #mix) label: 'Mix'.
 	^ answer! !
 
-!StereoEcho methodsFor: 'tools' stamp: 'len 12/Mar/2026 18:04:40'!
+!StereoEcho methodsFor: 'ui' stamp: 'len 12/Mar/2026 18:04:40'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -3657,7 +3605,7 @@ tick
 				outputL at: i put: inL * dry + (outR * width) + (outL * width2).
 				outputR at: i put: inR * dry + (outR * width2) + (outL * width)]]! !
 
-!StereoReverb methodsFor: 'tools' stamp: 'len 9/Mar/2026 15:59:43'!
+!StereoReverb methodsFor: 'ui' stamp: 'len 9/Mar/2026 15:59:43'!
 panel
 	^ ControlPanel new
 		addKnob: (controls at: #predelay) label: 'Delay';
@@ -3666,7 +3614,7 @@ panel
 		addKnob: (controls at: #width) label: 'Width';
 		addKnob: (controls at: #mix) label: 'Mix'! !
 
-!StereoReverb methodsFor: 'tools' stamp: 'len 9/Mar/2026 15:54:50'!
+!StereoReverb methodsFor: 'ui' stamp: 'len 9/Mar/2026 15:54:50'!
 patchable
 	^ super patchable
 		addAudioInput: #setInputL: label: 'In L/M';
@@ -3734,7 +3682,7 @@ tick
 	s1 abs < 1.0e-15 ifTrue: [s1 := 0.0].
 	s2 abs < 1.0e-15 ifTrue: [s1 := 0.0]! !
 
-!SVF methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:40:56'!
+!SVF methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:40:56'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -3809,7 +3757,7 @@ tick
 		[meterRightValue := meterRightValue * 0.9 "dampen" max: (bus rightBuffer rms max: bus rightBuffer last abs).
 		outputR replaceWith: bus rightBuffer]! !
 
-!AudioIn methodsFor: 'tools' stamp: 'len 18/Mar/2026 20:13:48'!
+!AudioIn methodsFor: 'ui' stamp: 'len 18/Mar/2026 20:13:48'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -3916,7 +3864,7 @@ tick
 	aux replaceWith: inputL; *= levelLeft.
 	bus leftBuffer += aux! !
 
-!AudioOut methodsFor: 'tools' stamp: 'len 12/Mar/2026 18:00:03'!
+!AudioOut methodsFor: 'ui' stamp: 'len 12/Mar/2026 18:00:03'!
 panel
 	| answer |
 	answer := ControlPanel new.
@@ -3926,7 +3874,7 @@ panel
 		addHorizontalSlider: (controls at: #pan).
 	^ answer! !
 
-!AudioOut methodsFor: 'tools' stamp: 'len 18/Mar/2026 20:31:55'!
+!AudioOut methodsFor: 'ui' stamp: 'len 18/Mar/2026 20:31:55'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -3976,7 +3924,7 @@ tick
 	lastValue := values at: (self get: #port).
 	lastValue = 0.0 ifFalse: [self triggerEvent: #output: with: lastValue]! !
 
-!ControlIn methodsFor: 'tools' stamp: 'len 19/Mar/2026 02:35:53'!
+!ControlIn methodsFor: 'ui' stamp: 'len 19/Mar/2026 02:35:53'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -4019,7 +3967,7 @@ tick
 value
 	^ self next! !
 
-!Generator methodsFor: 'tools' stamp: 'len 26/Jan/2026 11:07:48'!
+!Generator methodsFor: 'ui' stamp: 'len 26/Jan/2026 11:07:48'!
 bench
 	| n buffer t |
 	n := 1024*1024. "1 M  samples"
@@ -4028,11 +3976,11 @@ bench
 	t := [self read: buffer] timeToRun.
 	^ (n / t) truncated printString, ' kHz'! !
 
-!Generator methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:45:22'!
+!Generator methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:45:22'!
 patchable
 	^ super patchable addAudioOutput: #setOutput:; yourself! !
 
-!Generator methodsFor: 'tools' stamp: 'len 3/Jan/2026 18:51:41'!
+!Generator methodsFor: 'ui' stamp: 'len 3/Jan/2026 18:51:41'!
 playSampleCount: n into: anAudioBuffer startingAt: startIndex
 	| j x s |
 	j := 2 * startIndex - 1.
@@ -4050,7 +3998,7 @@ playSampleCount: n into: anAudioBuffer startingAt: startIndex
 		j := j + 1].
 	^ n! !
 
-!Generator methodsFor: 'tools' stamp: 'len 26/Jan/2026 11:08:02'!
+!Generator methodsFor: 'ui' stamp: 'len 26/Jan/2026 11:08:02'!
 timeProfile
 	| n buffer |
 	n := 1024*1024*20. "20 M  samples"
@@ -4084,11 +4032,11 @@ noteOff
 noteOn: aNumber
 	note := aNumber! !
 
-!TunedGenerator methodsFor: 'tools' stamp: 'len 18/Mar/2026 23:38:25'!
+!TunedGenerator methodsFor: 'ui' stamp: 'len 18/Mar/2026 23:38:25'!
 panel
 	^​ ControlPanel new addMorph: (TextualControlMorph control: (controls at: #tune))! !
 
-!TunedGenerator methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:09:43'!
+!TunedGenerator methodsFor: 'ui' stamp: 'len 2/Feb/2026 16:09:43'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -4183,7 +4131,7 @@ tick
 	inputFM ifNotNil: [^ self read: output PM: inputFM].
 	self read: output! !
 
-!Oscillator methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:09:33'!
+!Oscillator methodsFor: 'ui' stamp: 'len 2/Feb/2026 16:09:33'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -4211,6 +4159,11 @@ initialize
 peek
 	^ self wave: wave at: phase! !
 
+!OPN methodsFor: 'ui' stamp: 'len 27/Feb/2026 00:49:34'!
+panel
+	^ super panel
+		addMorph: (PluggableChoiceMorph new options: #(1 2 3 4 5 6 7 8); model: self; getter: #wave; setter: #wave:)! !
+
 !OPN methodsFor: 'private' stamp: 'len 29/Sep/2025 19:37:00'!
 wave: s at: t
 	s <= 1 ifTrue: [^ (t * Float twoPi) sin].
@@ -4226,11 +4179,6 @@ wave: s at: t
 		^ 0.0].
 	t > 0.5 ifTrue: [^ 0.0].
 	^ self wave: s - 4 at: t * 2.0! !
-
-!OPN methodsFor: 'as yet unclassified' stamp: 'len 27/Feb/2026 00:49:34'!
-panel
-	^ super panel
-		addMorph: (PluggableChoiceMorph new options: #(1 2 3 4 5 6 7 8); model: self; getter: #wave; setter: #wave:)! !
 
 !Pulse methodsFor: 'controlling' stamp: 'len 22/Nov/2025 22:49:00'!
 update
@@ -4266,7 +4214,7 @@ tick
 	inputPWM ifNotNil: [self assert: inputFM isNil. ^ self read: output PWM: inputPWM].
 	self read: output! !
 
-!Pulse methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:09:51'!
+!Pulse methodsFor: 'ui' stamp: 'len 2/Feb/2026 16:09:51'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -4306,7 +4254,7 @@ peek
 	shape = 1.0 ifTrue: [^ phase saw: frequency].
 	^ phase triangle: frequency skew: shape! !
 
-!Saw methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:09:58'!
+!Saw methodsFor: 'ui' stamp: 'len 2/Feb/2026 16:09:58'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -4353,7 +4301,7 @@ read: aBuffer
 	phase := α / Float twoPi.
 	phase := phase - phase truncated! !
 
-!Sine methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:10:02'!
+!Sine methodsFor: 'ui' stamp: 'len 2/Feb/2026 16:10:02'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -4393,7 +4341,7 @@ peek
 	shape < 0.5 ifTrue: [^ (phase saw: frequency) * (0.5 - shape) + ((phase pulse: frequency width: shape - 0.25 * 2) * 0.577 * (shape - 0.25)) / 0.25].
 	^ (phase pulse: frequency width: shape) * 0.577! !
 
-!TriSawPulse methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:10:07'!
+!TriSawPulse methodsFor: 'ui' stamp: 'len 2/Feb/2026 16:10:07'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -4433,7 +4381,7 @@ initializeControls
 peek
 	^ (phase triangle: frequency) * (1.0 - shape) + ((phase * Float twoPi) sin * shape)! !
 
-!Triangle methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:10:11'!
+!Triangle methodsFor: 'ui' stamp: 'len 2/Feb/2026 16:10:11'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -4528,7 +4476,7 @@ readFromJson: json buffers: aList
 	label := json at: #label ifAbsent: [''].
 	label isEmpty ifTrue: [label := nil]! !
 
-!Wavetable methodsFor: 'tools' stamp: 'len 5/Mar/2026 02:17:25'!
+!Wavetable methodsFor: 'ui' stamp: 'len 5/Mar/2026 02:17:25'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -4703,7 +4651,7 @@ peek
 	1 to: 7 do: [:i| answer := ((phases at: i) saw: (frequencies at: i)) * (i = 4 ifTrue: [centerGain] ifFalse: [sideGain]) + answer].
 	^ answer! !
 
-!Supersaw methodsFor: 'tools' stamp: 'len 2/Feb/2026 16:10:21'!
+!Supersaw methodsFor: 'ui' stamp: 'len 2/Feb/2026 16:10:21'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -4799,7 +4747,7 @@ peek
 	click > 0.01 ifTrue: [answer := (random next * 2.0 - 1.0) * click + answer. click := click * 0.8]. 
 	^ answer! !
 
-!TonewheelOrgan methodsFor: 'tools' stamp: 'len 14/Feb/2026 22:30:45'!
+!TonewheelOrgan methodsFor: 'ui' stamp: 'len 14/Feb/2026 22:30:45'!
 patchable
 	| answer drawbars |
 	answer := PatchableMorph new model: self.
@@ -4887,7 +4835,7 @@ peek
 	1 to: 5 do: [:i| answer := ((phases at: i) pulse: (frequencies at: i) width: 0.35) * (amplitudes at: i) + answer].
 	^ answer! !
 
-!TransistorOrgan methodsFor: 'tools' stamp: 'len 14/Feb/2026 22:32:00'!
+!TransistorOrgan methodsFor: 'ui' stamp: 'len 14/Feb/2026 22:32:00'!
 patchable
 	| answer drawbars |
 	answer := PatchableMorph new model: self.
@@ -4956,7 +4904,7 @@ peek
 	formant2 := ((formant2Phase + resetPhase) * Float twoPi) sin - resetAmplitude.
 	^ carrier * (formant1 + formant2) * 0.25 + resetAmplitude! !
 
-!VOSIM methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:48:37'!
+!VOSIM methodsFor: 'ui' stamp: 'len 27/Jan/2026 14:48:37'!
 panel
 	^​ super panel
 		addKnob: (controls at: #shape) label: 'Shape';
@@ -5037,7 +4985,7 @@ readFromJson: json buffers: aList
 	label := json at: #label.
 	label isEmpty ifTrue: [label := nil]! !
 
-!Multisample methodsFor: 'tools' stamp: 'len 15/Feb/2026 20:42:04'!
+!Multisample methodsFor: 'ui' stamp: 'len 15/Feb/2026 20:42:04'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -5530,13 +5478,13 @@ readFromJson: json buffers: aList
 	label := json at: #label ifAbsent: [''].
 	label isEmpty ifTrue: [label := nil]! !
 
-!Sample methodsFor: 'tools' stamp: 'len 18/Mar/2026 23:38:25'!
+!Sample methodsFor: 'ui' stamp: 'len 18/Mar/2026 23:38:25'!
 panel
 	^ super panel
 		addMorph: (TextualControlMorph control: (controls at: #speed));
 		addToggle: (controls at: #warp) label: 'Warp'! !
 
-!Sample methodsFor: 'tools' stamp: 'len 18/Mar/2026 23:58:35'!
+!Sample methodsFor: 'ui' stamp: 'len 18/Mar/2026 23:58:35'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -5550,11 +5498,11 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!Sample methodsFor: 'tools' stamp: 'len 2/Oct/2025 20:06:00'!
+!Sample methodsFor: 'ui' stamp: 'len 2/Oct/2025 20:06:00'!
 plot
 	^ PlotMorph new domain: (1 to: buffer size); plot: [:t| buffer at: t]! !
 
-!Sample methodsFor: 'tools' stamp: 'len 31/Oct/2025 14:40:00'!
+!Sample methodsFor: 'ui' stamp: 'len 31/Oct/2025 14:40:00'!
 waveform
 	"Answer a form of bit depth 1 with a graphical representation of the waveform."
 	| h answer canvas x y |
@@ -5724,7 +5672,7 @@ nextWhite
 	state := (state * 16807.0 \\ 2147483647.0) truncated asFloat.
 	^​ state / 1073741823.5  - 1.0! !
 
-!ColoredNoise methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:45:44'!
+!ColoredNoise methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:45:44'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -5799,36 +5747,36 @@ next
 		jitterRange > 0 ifTrue: [counter := counter + (jitterRange * (random next * 2.0 - 1.0)) truncated]].
 	^ currentImpulse! !
 
-!SineSweep methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 19:33:21'!
+!SineSweep methodsFor: 'controlling' stamp: 'len 3/Feb/2026 17:22:48'!
+reset
+	phase := 0.0.
+	frequency := startFrequency! !
+
+!SineSweep methodsFor: 'controlling' stamp: 'len 4/Feb/2026 03:42:13'!
+update
+	super update.
+	startFrequency := (self get: #start) / self class sampleRate.
+	endFrequency := (self get: #end) / self class sampleRate.
+	(frequency isNil or: [frequency > endFrequency]) ifTrue: [self reset]! !
+
+!SineSweep methodsFor: 'initialization' stamp: 'len 2/Feb/2026 19:33:21'!
 initialize
 	super initialize.
 	self reset! !
 
-!SineSweep methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 17:21:47'!
+!SineSweep methodsFor: 'initialization' stamp: 'len 3/Feb/2026 17:21:47'!
 initializeControls
 	super initializeControls.
 	self addFrequencyControl: #start value: 20.0.
 	self addFrequencyControl: #end value: 20000.0! !
 
-!SineSweep methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 19:34:34'!
+!SineSweep methodsFor: 'processing' stamp: 'len 2/Feb/2026 19:34:34'!
 next
 	| answer |
 	answer := (phase * Float twoPi) sin.
 	(phase := phase + frequency) >= 1.0 ifTrue: [phase := phase - phase truncated].
 	frequency := frequency * 1.00001.
 	^ answer! !
-
-!SineSweep methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 17:22:48'!
-reset
-	phase := 0.0.
-	frequency := startFrequency! !
-
-!SineSweep methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 03:42:13'!
-update
-	super update.
-	startFrequency := (self get: #start) / self class sampleRate.
-	endFrequency := (self get: #end) / self class sampleRate.
-	(frequency isNil or: [frequency > endFrequency]) ifTrue: [self reset]! !
 
 !Transform methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:17'!
 tick
@@ -5840,7 +5788,7 @@ tick
 value: in
 	^ in! !
 
-!Transform methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:42:15'!
+!Transform methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:42:15'!
 patchable
 	^ super patchable
 		addAudioInput: #setInput:;
@@ -5929,11 +5877,11 @@ value: in
 	s4 = dt * ((vc4 - vc3) / (2.0 * γ)) tanh + vc4.
 	^ vout! !
 
-!DiodeLadder2 methodsFor: 'tools' stamp: 'len 29/Jan/2026 15:19:55'!
+!DiodeLadder2 methodsFor: 'ui' stamp: 'len 29/Jan/2026 15:19:55'!
 display
 	^ super display mode: #LP! !
 
-!DiodeLadder2 methodsFor: 'tools' stamp: 'len 29/Jan/2026 15:19:55'!
+!DiodeLadder2 methodsFor: 'ui' stamp: 'len 29/Jan/2026 15:19:55'!
 patchable
 	^ super patchable
 		addAudioOutput: #setOutput: label: 'Out';
@@ -6070,7 +6018,7 @@ value: in
 	delayLine write: in + (x0 * feedback).
 	^ out! !
 
-!Comb methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:48:54'!
+!Comb methodsFor: 'ui' stamp: 'len 27/Jan/2026 14:48:54'!
 panel
 	^ ControlPanel new
 		addKnob: (controls at: #time) label: 'Time';
@@ -6103,7 +6051,7 @@ value: in
 	delayLine write: in.
 	^ tap read! !
 
-!Echo methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:33:21'!
+!Echo methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:33:21'!
 patchable
 	^ super patchable
 		addControlInput: #time;
@@ -6155,7 +6103,7 @@ tick
 		delayLine write: out * feedback + in.
 		output at: i put: in * (1.0 - mix) + (out * mix)]! !
 
-!Flanger methodsFor: 'tools' stamp: 'len 2/Mar/2026 16:14:47'!
+!Flanger methodsFor: 'ui' stamp: 'len 2/Mar/2026 16:14:47'!
 panel
 	^ ControlPanel new
 		addKnob: (controls at: #time) label: 'Time';
@@ -6214,7 +6162,7 @@ tick
 		lastOutput := out.
 		output at: i put: in * (1.0 - mix) + (out * mix)]! !
 
-!Phaser methodsFor: 'tools' stamp: 'len 2/Mar/2026 16:15:14'!
+!Phaser methodsFor: 'ui' stamp: 'len 2/Mar/2026 16:15:14'!
 panel
 	^ ControlPanel new
 		addKnob: (controls at: #speed) label: 'Speed';
@@ -6222,7 +6170,7 @@ panel
 		addKnob: (controls at: #feedback) label: 'FB';
 		addKnob: (controls at: #mix) label: 'Mix'! !
 
-!PitchShifter methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 17:18:20'!
+!PitchShifter methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:18:20'!
 initialize
 	| maxLength |
 	super initialize.
@@ -6230,14 +6178,14 @@ initialize
 	delayLine1 := DelayLine new: maxLength.
 	delayLine2 := DelayLine new: maxLength.! !
 
-!PitchShifter methodsFor: 'as yet unclassified' stamp: 'len 26/Jan/2026 17:19:26'!
+!PitchShifter methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:19:26'!
 initializeControls
 	super initializeControls.
 	(self addControl: #shift min: -48.0 max: 48.0 value: 0.0) printer: #semitonesOffsetPrintString.
 	self addTimeControl: #time min: 0.010 "10 ms" max: 0.160 "160 ms" value: 0.04 "40 ms".
 	self addTimeControl: #window min: 0.005 "5 ms" max: 0.080 "80 ms" value: 0.02 "20 ms"! !
 
-!PitchShifter methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 02:04:52'!
+!PitchShifter methodsFor: 'controlling' stamp: 'len 27/Jan/2026 02:04:52'!
 update
 "	window := self get: #window."
 	| delayIncrement delayTime length |
@@ -6248,37 +6196,13 @@ update
 	delayLine1 setLength: length; setDelay: delayTime; setDelayIncrement: delayIncrement.
 	delayLine1 setLength: length; setDelay: length - delayTime; setDelayIncrement: delayIncrement! !
 
-!Reverb methodsFor: 'as yet unclassified' stamp: 'len 6/Mar/2026 19:14:50'!
-initialize
-	super initialize.
-	predelayLine := DelayLine new: (self class sampleRate * 0.15) ceiling. "150 ms"
-	predelayTap := DelayLineTap on: predelayLine.
-	combs := #(1116 1188 1277 1356 1422 1491 1557 1617) collect: [:each| LowpassComb new: (each * self class sampleRate / 44100.0) truncated].
-	allpasses := #(556 441 341 225) collect: [:each| AllpassComb new: (each * self class sampleRate / 44100.0) truncated]! !
-
-!Reverb methodsFor: 'as yet unclassified' stamp: 'len 9/Mar/2026 16:47:21'!
-initializeControls
-	super initializeControls.
-	self addTimeControl: #predelay min: 0.0001 "0.1 ms" max: 0.15 "150 ms" value: 0.005 "5 ms".
-	self addLogControl: #feedback min: 0.01 max: 1.0 value: 0.5.
-	self addControl: #damp min: 0.0 max: 1.0 value: 0.5.
-	self addDryWetControl: #mix value: 0.5! !
-
-!Reverb methodsFor: 'as yet unclassified' stamp: 'len 9/Mar/2026 16:47:32'!
-panel
-	^ ControlPanel new
-		addKnob: (controls at: #predelay) label: 'Delay';
-		addKnob: (controls at: #feedback) label: 'FB';
-		addKnob: (controls at: #damp) label: 'Damp';
-		addKnob: (controls at: #mix) label: 'Mix'! !
-
-!Reverb methodsFor: 'as yet unclassified' stamp: 'len 6/Mar/2026 18:57:31'!
+!Reverb methodsFor: 'controlling' stamp: 'len 6/Mar/2026 18:57:31'!
 reset
 	predelayLine reset.
 	combs do: [:each| each reset].
 	allpasses do: [:each| each reset]! !
 
-!Reverb methodsFor: 'as yet unclassified' stamp: 'len 9/Mar/2026 16:48:24'!
+!Reverb methodsFor: 'controlling' stamp: 'len 9/Mar/2026 16:48:24'!
 update
 	| feedback damp |
 	super update.
@@ -6288,7 +6212,23 @@ update
 	combs do: [:each| each undenormalize; feedback: feedback; damp: damp].
 	mix := self get: #mix! !
 
-!Reverb methodsFor: 'as yet unclassified' stamp: 'len 6/Mar/2026 19:08:33'!
+!Reverb methodsFor: 'initialization' stamp: 'len 6/Mar/2026 19:14:50'!
+initialize
+	super initialize.
+	predelayLine := DelayLine new: (self class sampleRate * 0.15) ceiling. "150 ms"
+	predelayTap := DelayLineTap on: predelayLine.
+	combs := #(1116 1188 1277 1356 1422 1491 1557 1617) collect: [:each| LowpassComb new: (each * self class sampleRate / 44100.0) truncated].
+	allpasses := #(556 441 341 225) collect: [:each| AllpassComb new: (each * self class sampleRate / 44100.0) truncated]! !
+
+!Reverb methodsFor: 'initialization' stamp: 'len 9/Mar/2026 16:47:21'!
+initializeControls
+	super initializeControls.
+	self addTimeControl: #predelay min: 0.0001 "0.1 ms" max: 0.15 "150 ms" value: 0.005 "5 ms".
+	self addLogControl: #feedback min: 0.01 max: 1.0 value: 0.5.
+	self addControl: #damp min: 0.0 max: 1.0 value: 0.5.
+	self addDryWetControl: #mix value: 0.5! !
+
+!Reverb methodsFor: 'processing' stamp: 'len 6/Mar/2026 19:08:33'!
 value: in
 	| delayed out |
 	predelayLine write: in.
@@ -6297,6 +6237,14 @@ value: in
 	combs do: [:each| out := (each value: delayed) + out].
 	allpasses do: [:each| out := each value: out].
 	^ out * mix + (in * (1.0 - mix))! !
+
+!Reverb methodsFor: 'ui' stamp: 'len 9/Mar/2026 16:47:32'!
+panel
+	^ ControlPanel new
+		addKnob: (controls at: #predelay) label: 'Delay';
+		addKnob: (controls at: #feedback) label: 'FB';
+		addKnob: (controls at: #damp) label: 'Damp';
+		addKnob: (controls at: #mix) label: 'Mix'! !
 
 !TapeEcho methodsFor: 'controlling' stamp: 'len 6/Mar/2026 22:26:12'!
 reset
@@ -6367,7 +6315,7 @@ value: in
 	delayLine write: x.
 	^ in * (1.0 - mix) + (echos * mix)! !
 
-!TapeEcho methodsFor: 'tools' stamp: 'len 3/Mar/2026 16:39:40'!
+!TapeEcho methodsFor: 'ui' stamp: 'len 3/Mar/2026 16:39:40'!
 panel
 	^ ControlPanel new
 		addKnob: (controls at: #time) label: 'Time';
@@ -6376,14 +6324,14 @@ panel
 		addSmallVerticalSlider: (controls at: #'2') label: '2';
 		addSmallVerticalSlider: (controls at: #'3') label: '3'! !
 
-!TapeEcho methodsFor: 'tools' stamp: 'len 3/Mar/2026 16:38:10'!
+!TapeEcho methodsFor: 'ui' stamp: 'len 3/Mar/2026 16:38:10'!
 panel2
 	^ ControlPanel new
 		addSmallKnob: (controls at: #bass) label: 'Bass';
 		addSmallKnob: (controls at: #treble) label: 'Treble';
 		addSmallKnob: (controls at: #mix) label: 'Mix'! !
 
-!TapeEcho methodsFor: 'tools' stamp: 'len 3/Mar/2026 16:38:33'!
+!TapeEcho methodsFor: 'ui' stamp: 'len 3/Mar/2026 16:38:33'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -6462,7 +6410,7 @@ tick
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	biquad write: input read: output! !
 
-!BPF methodsFor: 'tools' stamp: 'len 3/Feb/2026 18:08:00'!
+!BPF methodsFor: 'ui' stamp: 'len 3/Feb/2026 18:08:00'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -6502,7 +6450,7 @@ tick
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	biquad write: input read: output! !
 
-!BSF methodsFor: 'tools' stamp: 'len 3/Feb/2026 18:08:09'!
+!BSF methodsFor: 'ui' stamp: 'len 3/Feb/2026 18:08:09'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -6614,7 +6562,7 @@ initializeControls
 value: in
 	^ lowShelf value: (bell1 value: (bell2 value: (bell3 value: (highShelf value: in))))! !
 
-!EQ5 methodsFor: 'tools' stamp: 'len 17/Mar/2026 15:45:30'!
+!EQ5 methodsFor: 'ui' stamp: 'len 17/Mar/2026 15:45:30'!
 panel
 	^ ControlPanel new
 		addMorph: (ControlPanel newColumn addKnob: (controls at: #g1); addSmallKnob: (controls at: #f1); addSmallKnob: (controls at: #q1));
@@ -6650,7 +6598,7 @@ tick
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	biquad write: input read: output! !
 
-!HPF methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:43:13'!
+!HPF methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:43:13'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -6690,7 +6638,7 @@ tick
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	biquad write: input read: output! !
 
-!LPF methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:43:22'!
+!LPF methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:43:22'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -6759,13 +6707,13 @@ value: in
 	y := postlpf value: y * postgain.
 	^​ y - (dcblock value: y)! !
 
-!TubeSaturator methodsFor: 'tools' stamp: 'len 12/Feb/2026 05:36:32'!
+!TubeSaturator methodsFor: 'ui' stamp: 'len 12/Feb/2026 05:36:32'!
 panel
 	^​ ControlPanel new
 		addKnob: (controls at: #tone) label: 'Tone';
 		addKnob: (controls at: #postgain) label: 'Output'! !
 
-!TubeSaturator methodsFor: 'tools' stamp: 'len 13/Feb/2026 19:40:37'!
+!TubeSaturator methodsFor: 'ui' stamp: 'len 13/Feb/2026 19:40:37'!
 patchable
 	| answer display inputPin |
 	answer := PatchableMorph new model: self.
@@ -6808,14 +6756,14 @@ apply: x
 value: in
 	^ in * dry + (((self apply: in * pregain + bias) - dc) * postgain)! !
 
-!Waveshaper methodsFor: 'tools' stamp: 'len 13/Feb/2026 19:47:24'!
+!Waveshaper methodsFor: 'ui' stamp: 'len 13/Feb/2026 19:47:24'!
 panel
 	^​ ControlPanel new
 "		addKnob: (controls at: #pregain) label: 'Input';"
 		addKnob: (controls at: #postgain) label: 'Output';
 		addKnob: (controls at: #mix) label: 'Mix'! !
 
-!Waveshaper methodsFor: 'tools' stamp: 'len 14/Feb/2026 00:45:19'!
+!Waveshaper methodsFor: 'ui' stamp: 'len 14/Feb/2026 00:45:19'!
 patchable
 	| answer display inputPin |
 	answer := PatchableMorph new model: self.
@@ -6919,7 +6867,7 @@ value: in
 	s3 := v3 * 2.0 + s3.
 	^ y! !
 
-!Korg35HPF methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:43:39'!
+!Korg35HPF methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:43:39'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -6987,7 +6935,7 @@ value: in
 	s3 := u3 + v3.
 	^ y "tanh"! !
 
-!Korg35LPF methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:43:48'!
+!Korg35LPF methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:43:48'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -7053,7 +7001,7 @@ value: in
 	mix = 1.0 ifTrue: [^ heldValue].
 	^ in * (1.0 - mix) + (heldValue * mix)! !
 
-!Decimator methodsFor: 'tools' stamp: 'len 12/Feb/2026 14:57:20'!
+!Decimator methodsFor: 'ui' stamp: 'len 12/Feb/2026 14:57:20'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -7092,7 +7040,7 @@ tick
 value: in
 	^ (in * pregain) softclip * postgain! !
 
-!Overdrive methodsFor: 'tools' stamp: 'len 13/Feb/2026 19:45:30'!
+!Overdrive methodsFor: 'ui' stamp: 'len 13/Feb/2026 19:45:30'!
 patchable
 	| answer display inputPin |
 	answer := PatchableMorph new model: self.
@@ -7146,14 +7094,14 @@ value: in
 	"post lowpass:"
 	^​ (postlpf value: y) * postgain! !
 
-!TapeSaturator methodsFor: 'tools' stamp: 'len 12/Feb/2026 14:16:11'!
+!TapeSaturator methodsFor: 'ui' stamp: 'len 12/Feb/2026 14:16:11'!
 panel
 	^​ ControlPanel new
 "		addKnob: (controls at: #bias) label: 'Bias';"
 		addKnob: (controls at: #tone) label: 'Tone';
 		addKnob: (controls at: #postgain) label: 'Output'! !
 
-!TapeSaturator methodsFor: 'tools' stamp: 'len 13/Feb/2026 19:40:56'!
+!TapeSaturator methodsFor: 'ui' stamp: 'len 13/Feb/2026 19:40:56'!
 patchable
 	| answer display inputPin |
 	answer := PatchableMorph new model: self.
@@ -7194,11 +7142,11 @@ tick
 			ifTrue: [outputR replaceWith: inputA; *= (sin / cos); += inputB; *= cos]
 			ifFalse: [outputR replaceWith: inputB; *= (cos / sin); += inputA; *= sin]]! !
 
-!Balance methodsFor: 'tools' stamp: 'len 2/Feb/2026 03:12:01'!
+!Balance methodsFor: 'ui' stamp: 'len 2/Feb/2026 03:12:01'!
 panel
 	^ ControlPanel new addKnob: (controls at: #balance)! !
 
-!Balance methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:36:03'!
+!Balance methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:36:03'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -7248,11 +7196,11 @@ tick
 	x = 1.0 ifTrue: [output replaceWith: inputB. ^ self].
 	output replaceWith: inputA; *= ((1.0 - x) / x); += inputB; *= x! !
 
-!Crossfader methodsFor: 'tools' stamp: 'len 27/Jan/2026 15:19:30'!
+!Crossfader methodsFor: 'ui' stamp: 'len 27/Jan/2026 15:19:30'!
 panel
 	^ ControlPanel new addKnob: (controls at: #mix)! !
 
-!Crossfader methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:44:08'!
+!Crossfader methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:44:08'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -7299,13 +7247,13 @@ tick
 		^ self].
 	output replaceWith: inputA; *= (gainA / gainB); += inputB; *= gainB! !
 
-!Mixer methodsFor: 'tools' stamp: 'len 27/Jan/2026 15:18:20'!
+!Mixer methodsFor: 'ui' stamp: 'len 27/Jan/2026 15:18:20'!
 panel
 	^ ControlPanel new
 		addKnob: (controls at: #gainA);
 		addKnob: (controls at: #gainB)! !
 
-!Mixer methodsFor: 'tools' stamp: 'len 10/Feb/2026 20:19:33'!
+!Mixer methodsFor: 'ui' stamp: 'len 10/Feb/2026 20:19:33'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -7352,7 +7300,7 @@ tick
 	inputC ifNotNil: [aux replaceWith: inputC; *= (self get: #gainC). output += aux].
 	inputD ifNotNil: [aux replaceWith: inputD; *= (self get: #gainD). output += aux]! !
 
-!Mixer4 methodsFor: 'tools' stamp: 'len 10/Feb/2026 20:14:42'!
+!Mixer4 methodsFor: 'ui' stamp: 'len 10/Feb/2026 20:14:42'!
 panel
 	^ ControlPanel new
 		addKnob: (controls at: #gainA);
@@ -7360,7 +7308,7 @@ panel
 		addKnob: (controls at: #gainC);
 		addKnob: (controls at: #gainD)! !
 
-!Mixer4 methodsFor: 'tools' stamp: 'len 10/Feb/2026 20:16:55'!
+!Mixer4 methodsFor: 'ui' stamp: 'len 10/Feb/2026 20:16:55'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -7411,11 +7359,11 @@ tick
 	outputL ifNotNil: [outputL replaceWith: input; *= θ cos].
 	outputR ifNotNil: [outputR replaceWith: input; *= θ sin]! !
 
-!Pan methodsFor: 'tools' stamp: 'len 27/Jan/2026 15:05:19'!
+!Pan methodsFor: 'ui' stamp: 'len 27/Jan/2026 15:05:19'!
 panel
 	^ ControlPanel new addKnob: (controls at: #pan)! !
 
-!Pan methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:44:23'!
+!Pan methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:44:23'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -7466,7 +7414,7 @@ tick
 	outputL += aux.
 	outputR -= aux! !
 
-!StereoMatrix methodsFor: 'tools' stamp: 'len 2/Feb/2026 04:09:58'!
+!StereoMatrix methodsFor: 'ui' stamp: 'len 2/Feb/2026 04:09:58'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -7514,11 +7462,11 @@ initializeControls
 tick
 	value = 0.0 ifFalse: [self triggerEvent: #output: with: value * (self get: #amount). value := 0.0]! !
 
-!Attenuator methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:53:48'!
+!Attenuator methodsFor: 'ui' stamp: 'len 27/Jan/2026 14:53:48'!
 panel
 	^​ ControlPanel new addKnob: (controls at: #amount)! !
 
-!Attenuator methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:36:40'!
+!Attenuator methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:36:40'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -7547,11 +7495,11 @@ initializeControls
 tick
 	value = 0.0 ifFalse: [self triggerEvent: #output: with: value * (self get: #amount). value := 0.0]! !
 
-!Attenuverter methodsFor: 'tools' stamp: 'len 27/Jan/2026 14:53:58'!
+!Attenuverter methodsFor: 'ui' stamp: 'len 27/Jan/2026 14:53:58'!
 panel
 	^​ ControlPanel new addKnob: (controls at: #amount)! !
 
-!Attenuverter methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:36:47'!
+!Attenuverter methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:36:47'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -7591,7 +7539,7 @@ tick
 	envelope < 1.0e-15 ifTrue: [envelope := 0.0].
 	self triggerEvent: #output: with: envelope! !
 
-!EnvelopeFollower methodsFor: 'tools' stamp: 'len 23/Feb/2026 20:25:49'!
+!EnvelopeFollower methodsFor: 'ui' stamp: 'len 23/Feb/2026 20:25:49'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -7632,11 +7580,11 @@ initializeControls
 tick
 	self triggerEvent: #output: with: (note - 60.0) / 48.0 * (self get: #amount)! !
 
-!KeyTracker methodsFor: 'tools' stamp: 'len 11/Feb/2026 22:21:54'!
+!KeyTracker methodsFor: 'ui' stamp: 'len 11/Feb/2026 22:21:54'!
 panel
 	^ ControlPanel new addKnob: (controls at: #amount)! !
 
-!KeyTracker methodsFor: 'tools' stamp: 'len 10/Feb/2026 17:03:17'!
+!KeyTracker methodsFor: 'ui' stamp: 'len 10/Feb/2026 17:03:17'!
 patchable
 	^ super patchable
 		addControlOutput: #output: label: 'Out';
@@ -7742,7 +7690,7 @@ peek
 tick
 	self triggerEvent: #output: with: self next! !
 
-!LFO methodsFor: 'tools' stamp: 'len 18/Mar/2026 19:16:05'!
+!LFO methodsFor: 'ui' stamp: 'len 18/Mar/2026 19:16:05'!
 panel
 	^ ControlPanel new
 		addChoice: (controls at: #mode);
@@ -7750,7 +7698,7 @@ panel
 		addToggle: (controls at: #bipolar) label: '±';
 		addChoice: (controls at: #shape)! !
 
-!LFO methodsFor: 'tools' stamp: 'len 23/Feb/2026 22:23:17'!
+!LFO methodsFor: 'ui' stamp: 'len 23/Feb/2026 22:23:17'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -7781,11 +7729,11 @@ initializeControls
 tick
 	value = 0.0 ifFalse: [self triggerEvent: #output: with: value * (self get: #amount). value := 0.0]! !
 
-!LogAttenuator methodsFor: 'tools' stamp: 'len 3/Feb/2026 18:03:22'!
+!LogAttenuator methodsFor: 'ui' stamp: 'len 3/Feb/2026 18:03:22'!
 panel
 	^​ ControlPanel new addKnob: (controls at: #amount)! !
 
-!LogAttenuator methodsFor: 'tools' stamp: 'len 3/Feb/2026 18:03:22'!
+!LogAttenuator methodsFor: 'ui' stamp: 'len 3/Feb/2026 18:03:22'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -7818,11 +7766,11 @@ initializeControls
 tick
 	self triggerEvent: #output: with: velocity * (self get: #amount)! !
 
-!VelocityTracker methodsFor: 'tools' stamp: 'len 11/Feb/2026 22:22:48'!
+!VelocityTracker methodsFor: 'ui' stamp: 'len 11/Feb/2026 22:22:48'!
 panel
 	^ ControlPanel new addKnob: (controls at: #amount)! !
 
-!VelocityTracker methodsFor: 'tools' stamp: 'len 10/Feb/2026 17:03:46'!
+!VelocityTracker methodsFor: 'ui' stamp: 'len 10/Feb/2026 17:03:46'!
 patchable
 	^ super patchable
 		addControlOutput: #output: label: 'Out';
@@ -7890,7 +7838,7 @@ tick
 	y3 abs < 1.0e-15 ifTrue: [y3 := 0.0].
 	y4 abs < 1.0e-15 ifTrue: [y4 := 0.0]! !
 
-!MoogLPF methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:44:33'!
+!MoogLPF methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:44:33'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -7993,7 +7941,7 @@ tick
 	s3 abs < 1.0e-15 ifTrue: [s3 := 0.0].
 	s4 abs < 1.0e-15 ifTrue: [s4 := 0.0]! !
 
-!MoogLadder methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:44:38'!
+!MoogLadder methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:44:38'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -8075,7 +8023,7 @@ tick
 	s1 abs < 1.0e-15 ifTrue: [s1 := 0.0].
 	s2 abs < 1.0e-15 ifTrue: [s2 := 0.0]! !
 
-!OberheimSVF methodsFor: 'tools' stamp: 'len 2/Feb/2026 15:44:43'!
+!OberheimSVF methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:44:43'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -8191,7 +8139,7 @@ initialize
 new
 	^ self newRow! !
 
-!RoundedLinearLayoutMorph methodsFor: 'as yet unclassified' stamp: 'len 27/Jan/2026 19:19:39'!
+!RoundedLinearLayoutMorph methodsFor: 'drawing' stamp: 'len 27/Jan/2026 19:19:39'!
 drawOn: aCanvas
 	| rect |
 	rect := self localBounds.
@@ -10637,68 +10585,6 @@ defaultExtent
 wantsSteps
 	^ true! !
 
-!OscilloscopeMorph methodsFor: 'drawing' stamp: 'len 18/Mar/2026 23:50:10'!
-drawOn: aCanvas
-	| step buf x y h |
-	step := self morphWidth / samples size.
-	buf := samples copy.
-	h := self morphHeight / 2.0.
-	x := 0.
-	y := 1.0 - (buf at: 1) * h.
-	aCanvas strokeWidth: 2 color: color do:
-		[aCanvas moveTo: x@y.
-		2 to: buf size do: [:i|
-			x := x + step.
-			y := 1.0 - (buf at: i) * h.
-			aCanvas lineTo: x@y]]! !
-
-!OscilloscopeMorph methodsFor: 'drawing' stamp: 'len 23/Feb/2026 00:34:49'!
-requiresVectorCanvas
-	^ true! !
-
-!OscilloscopeMorph methodsFor: 'initialization' stamp: 'len 21/Sep/2025 15:07:00'!
-color: aColor
-	color := aColor.
-	self redrawNeeded! !
-
-!OscilloscopeMorph methodsFor: 'initialization' stamp: 'len 9/Feb/2026 01:07:22'!
-defaultExtent
-	^`144@96`! !
-
-!OscilloscopeMorph methodsFor: 'initialization' stamp: 'len 18/Mar/2026 23:44:38'!
-initialize
-	super initialize.
-	color := PatchMorph waveformColor.
-	samples := Float32Array new: 64.
-	currentPosition := 0! !
-
-!OscilloscopeMorph methodsFor: 'module' stamp: 'len 27/Sep/2025 16:52:00'!
-addSample: aNumber
-	currentPosition := currentPosition + 1.
-	currentPosition > samples size ifTrue: [currentPosition := 1].
-	samples at: currentPosition put: (aNumber min: 1.0 max: -1.0)! !
-
-!OscilloscopeMorph methodsFor: 'module' stamp: 'len 13/Feb/2026 00:26:58'!
-patchable
-	| answer |
-	answer := PatchableMorph new model: self.
-	answer setTitle: 'Oscilloscope'.
-	answer body addMorph: self.
-	answer addAudioInput: #setInput:.
-	^ answer! !
-
-!OscilloscopeMorph methodsFor: 'module' stamp: 'len 18/Mar/2026 23:45:01'!
-setInput: aBuffer
-	input := aBuffer! !
-
-!OscilloscopeMorph methodsFor: 'module' stamp: 'len 18/Mar/2026 23:53:47'!
-tick
-	| i |
-	input ifNil: [^ self].
-	i := 1.
-	[i <= input size] whileTrue: [self addSample: (input at: i). i := i + 8]. "assume the block size is divisible by 8"
-	self redrawNeeded! !
-
 !PlotMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 15:48:29'!
 computeMinMax
 	(functions isEmpty or: [domain isEmpty]) ifTrue: [min := max := 0.0. ^ self].
@@ -10920,6 +10806,68 @@ stepTime
 !SamplePlayerMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Jan/2026 16:39:33'!
 wantsSteps
 	^ true! !
+
+!OscilloscopeMorph methodsFor: 'drawing' stamp: 'len 18/Mar/2026 23:50:10'!
+drawOn: aCanvas
+	| step buf x y h |
+	step := self morphWidth / samples size.
+	buf := samples copy.
+	h := self morphHeight / 2.0.
+	x := 0.
+	y := 1.0 - (buf at: 1) * h.
+	aCanvas strokeWidth: 2 color: color do:
+		[aCanvas moveTo: x@y.
+		2 to: buf size do: [:i|
+			x := x + step.
+			y := 1.0 - (buf at: i) * h.
+			aCanvas lineTo: x@y]]! !
+
+!OscilloscopeMorph methodsFor: 'drawing' stamp: 'len 23/Feb/2026 00:34:49'!
+requiresVectorCanvas
+	^ true! !
+
+!OscilloscopeMorph methodsFor: 'initialization' stamp: 'len 21/Sep/2025 15:07:00'!
+color: aColor
+	color := aColor.
+	self redrawNeeded! !
+
+!OscilloscopeMorph methodsFor: 'initialization' stamp: 'len 9/Feb/2026 01:07:22'!
+defaultExtent
+	^`144@96`! !
+
+!OscilloscopeMorph methodsFor: 'initialization' stamp: 'len 18/Mar/2026 23:44:38'!
+initialize
+	super initialize.
+	color := PatchMorph waveformColor.
+	samples := Float32Array new: 64.
+	currentPosition := 0! !
+
+!OscilloscopeMorph methodsFor: 'module' stamp: 'len 27/Sep/2025 16:52:00'!
+addSample: aNumber
+	currentPosition := currentPosition + 1.
+	currentPosition > samples size ifTrue: [currentPosition := 1].
+	samples at: currentPosition put: (aNumber min: 1.0 max: -1.0)! !
+
+!OscilloscopeMorph methodsFor: 'module' stamp: 'len 13/Feb/2026 00:26:58'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer setTitle: 'Oscilloscope'.
+	answer body addMorph: self.
+	answer addAudioInput: #setInput:.
+	^ answer! !
+
+!OscilloscopeMorph methodsFor: 'module' stamp: 'len 18/Mar/2026 23:45:01'!
+setInput: aBuffer
+	input := aBuffer! !
+
+!OscilloscopeMorph methodsFor: 'module' stamp: 'len 18/Mar/2026 23:53:47'!
+tick
+	| i |
+	input ifNil: [^ self].
+	i := 1.
+	[i <= input size] whileTrue: [self addSample: (input at: i). i := i + 8]. "assume the block size is divisible by 8"
+	self redrawNeeded! !
 
 !SpectrogramMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Feb/2026 19:10:35'!
 drawNextLinearSpectrumFrame
@@ -12413,21 +12361,21 @@ mixInto: anAudioBuffer startingAt: startIndex
 			anAudioBuffer at: j put: s].	
 		j := j + 1]! !
 
-!AllpassComb methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 22:17:13'!
+!AllpassComb methodsFor: 'accessing' stamp: 'len 5/Mar/2026 22:17:13'!
 feedback: aNumber
 	feedback := aNumber! !
 
-!AllpassComb methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 22:26:19'!
+!AllpassComb methodsFor: 'controlling' stamp: 'len 5/Mar/2026 22:17:59'!
+reset
+	buffer atAllPut: 0.0! !
+
+!AllpassComb methodsFor: 'initialization' stamp: 'len 5/Mar/2026 22:26:19'!
 initialize: anInteger
 	buffer := Float32Array new: anInteger.
 	position := 1.
 	feedback := 0.5! !
 
-!AllpassComb methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 22:17:59'!
-reset
-	buffer atAllPut: 0.0! !
-
-!AllpassComb methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 22:13:54'!
+!AllpassComb methodsFor: 'processing' stamp: 'len 5/Mar/2026 22:13:54'!
 value: in
 	| y |
 	y := buffer at: position.
@@ -12763,25 +12711,6 @@ read
 !DelayLineTap class methodsFor: 'instance creation' stamp: 'len 26/Jan/2026 17:11:08'!
 on: aDelayLine
 	^ self new setDelayLine: aDelayLine! !
-
-!Downsampler2x methodsFor: 'as yet unclassified' stamp: 'len 30/Jan/2026 15:12:33'!
-downsample: subsample1 and: subsample2
-	| o1 o2 |
-	d3 := d2.
-	d2 := d1.
-	d1 := d0.
-	d0 := subsample1.
-	o1 := (d0 + d3) * -0.031 + ((d1 + d2) * 0.113) + (d1 * -0.251).
-	o2 := subsample2 * 0.5.
-	^ o1 + o2! !
-
-!Downsampler2x methodsFor: 'as yet unclassified' stamp: 'len 30/Jan/2026 15:09:48'!
-initialize
-	self reset! !
-
-!Downsampler2x methodsFor: 'as yet unclassified' stamp: 'len 30/Jan/2026 15:10:00'!
-reset
-	d0 := d1 := d2 := d3 := 0.0! !
 
 !FFT methodsFor: 'initialization' stamp: 'jmv 10/Aug/2010 10:51:00'!
 basicRealData: real
@@ -13141,11 +13070,15 @@ value: in
 	out := (stateIn dot: numerators) - (stateOut dot: denominators).
 	^ stateOut replaceFrom: 1 to: n - 1 with: stateOut startingAt: 2; at: n put: out! !
 
-!LagrangeOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:26:13'!
+!LagrangeOversampler2x methodsFor: 'controlling' stamp: 'len 2/Feb/2026 01:26:13'!
+reset
+	u0 := u1 := u2 := u3 := d0 := d1 := d2 := d3 := 0.0! !
+
+!LagrangeOversampler2x methodsFor: 'initialization' stamp: 'len 2/Feb/2026 01:26:13'!
 initialize
 	self reset! !
 
-!LagrangeOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 02:47:21'!
+!LagrangeOversampler2x methodsFor: 'processing' stamp: 'len 3/Feb/2026 02:47:21'!
 oversampling: aNumber do: aBlock
 	| f1 f2 o1 o2 s1 s2 |
 	"1. Upsample (generate 2 subsamples):"
@@ -13172,19 +13105,25 @@ oversampling: aNumber do: aBlock
 	"The o1 branch also needs the 0.5 gain for downsampling averaging."
 	^ o1 * 0.5 + o2! !
 
-!LagrangeOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 2/Feb/2026 01:26:13'!
-reset
-	u0 := u1 := u2 := u3 := d0 := d1 := d2 := d3 := 0.0! !
-
-!LowpassComb methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 22:19:21'!
+!LowpassComb methodsFor: 'accessing' stamp: 'len 5/Mar/2026 22:19:21'!
 damp: aNumber
 	damp := aNumber! !
 
-!LowpassComb methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 22:19:03'!
+!LowpassComb methodsFor: 'accessing' stamp: 'len 5/Mar/2026 22:19:03'!
 feedback: aNumber
 	feedback := aNumber! !
 
-!LowpassComb methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 22:22:44'!
+!LowpassComb methodsFor: 'controlling' stamp: 'len 5/Mar/2026 22:22:31'!
+reset
+	buffer atAllPut: 0.0.
+	state := 0.0! !
+
+!LowpassComb methodsFor: 'controlling' stamp: 'len 9/Mar/2026 16:45:40'!
+undenormalize
+	"Clear any denormal state."
+	state abs < 1.0e-15 ifTrue: [state := 0.0]! !
+
+!LowpassComb methodsFor: 'initialization' stamp: 'len 5/Mar/2026 22:22:44'!
 initialize: anInteger
 	buffer := Float32Array new: anInteger.
 	position := 1.
@@ -13192,17 +13131,7 @@ initialize: anInteger
 	feedback := 0.0.
 	damp := 0.0! !
 
-!LowpassComb methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 22:22:31'!
-reset
-	buffer atAllPut: 0.0.
-	state := 0.0! !
-
-!LowpassComb methodsFor: 'as yet unclassified' stamp: 'len 9/Mar/2026 16:45:40'!
-undenormalize
-	"Clear any denormal state."
-	state abs < 1.0e-15 ifTrue: [state := 0.0]! !
-
-!LowpassComb methodsFor: 'as yet unclassified' stamp: 'len 5/Mar/2026 22:23:03'!
+!LowpassComb methodsFor: 'processing' stamp: 'len 5/Mar/2026 22:23:03'!
 value: in
 	| y |
 	y := buffer at: position.
@@ -13215,7 +13144,7 @@ value: in
 new: anInteger
 	^ self new initialize: anInteger! !
 
-!MultiTapDelayLine methodsFor: 'as yet unclassified' stamp: 'len 6/Mar/2026 16:56:35'!
+!MultiTapDelayLine methodsFor: 'accessing' stamp: 'len 6/Mar/2026 16:56:35'!
 delays: delayList gains: gainList
 	"For best results it's desirable that the delays are primes.
 	
@@ -13230,7 +13159,11 @@ delays: delayList gains: gainList
 	buffer := Float32Array new: delayList max.
 	position := 1! !
 
-!MultiTapDelayLine methodsFor: 'as yet unclassified' stamp: 'len 6/Mar/2026 16:56:35'!
+!MultiTapDelayLine methodsFor: 'controlling' stamp: 'len 6/Mar/2026 16:56:35'!
+reset
+	buffer atAllPut: 0.0! !
+
+!MultiTapDelayLine methodsFor: 'initialization' stamp: 'len 6/Mar/2026 16:56:35'!
 initialize
 	super initialize.
 "	self delays: #(537 691 1191) gains: #(0.07 0.07 0.07)
@@ -13238,11 +13171,7 @@ initialize
 	"The default in Squeak SoundPlayer:"
 	self delays: #(1601 7919) gains: #(0.12 0.07)! !
 
-!MultiTapDelayLine methodsFor: 'as yet unclassified' stamp: 'len 6/Mar/2026 16:56:35'!
-reset
-	buffer atAllPut: 0.0! !
-
-!MultiTapDelayLine methodsFor: 'as yet unclassified' stamp: 'len 6/Mar/2026 16:57:18'!
+!MultiTapDelayLine methodsFor: 'processing' stamp: 'len 6/Mar/2026 16:57:18'!
 value: in
 	| n i out |
 	n := buffer size. "max delay"
@@ -13258,37 +13187,41 @@ value: in
 	position := position \\ buffer size.
 	^ out! !
 
-!OnePole methodsFor: 'as yet unclassified' stamp: 'len 8/Feb/2026 14:34:39'!
-initialize
-	a := 1.0.
-	self reset! !
-
-!OnePole methodsFor: 'as yet unclassified' stamp: 'len 8/Mar/2026 17:07:25'!
+!OnePole methodsFor: 'accessing' stamp: 'len 8/Mar/2026 17:07:25'!
 pole: normalizedFrequency
 	a := (Float pi * normalizedFrequency * -2.0) exp! !
 
-!OnePole methodsFor: 'as yet unclassified' stamp: 'len 8/Feb/2026 14:54:09'!
-reset
-	y := 0.0! !
-
-!OnePole methodsFor: 'as yet unclassified' stamp: 'len 8/Mar/2026 17:08:49'!
+!OnePole methodsFor: 'accessing' stamp: 'len 8/Mar/2026 17:08:49'!
 time: timeInSamples
 	a := (-1.0 / timeInSamples) exp! !
 
-!OnePole methodsFor: 'as yet unclassified' stamp: 'len 8/Feb/2026 14:54:09'!
+!OnePole methodsFor: 'controlling' stamp: 'len 8/Feb/2026 14:54:09'!
+reset
+	y := 0.0! !
+
+!OnePole methodsFor: 'controlling' stamp: 'len 8/Feb/2026 14:54:09'!
 undenormalize
 	"Clear any denormal state."
 	y abs < 1.0e-15 ifTrue: [y := 0.0]! !
 
-!OnePole methodsFor: 'as yet unclassified' stamp: 'len 8/Feb/2026 14:54:09'!
+!OnePole methodsFor: 'initialization' stamp: 'len 8/Feb/2026 14:34:39'!
+initialize
+	a := 1.0.
+	self reset! !
+
+!OnePole methodsFor: 'processing' stamp: 'len 8/Feb/2026 14:54:09'!
 value: in
 	^ y := (1.0 - a) * in + (a * y)! !
 
-!Polyphase13TapOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 03:43:37'!
+!Polyphase13TapOversampler2x methodsFor: 'controlling' stamp: 'len 3/Feb/2026 03:43:38'!
+reset
+	x0 := x1 := x2 := x3 := x4 := x5 := x6 := d0 := d1 := d2 := d3 := d4 := d5 := d6 := e0 := e1 := 0.0! !
+
+!Polyphase13TapOversampler2x methodsFor: 'initialization' stamp: 'len 3/Feb/2026 03:43:37'!
 initialize
 	self reset! !
 
-!Polyphase13TapOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 03:55:41'!
+!Polyphase13TapOversampler2x methodsFor: 'processing' stamp: 'len 3/Feb/2026 03:55:41'!
 oversampling: x0 do: aBlock
 	| even odd d0 e0 answer |
 	"Note: we use coefficients ​-0.0083, 0.0625, 0.1958.
@@ -13311,34 +13244,31 @@ oversampling: x0 do: aBlock
 	e1 := e0.
 	^ answer! !
 
-!Polyphase13TapOversampler2x methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 03:43:38'!
-reset
-	x0 := x1 := x2 := x3 := x4 := x5 := x6 := d0 := d1 := d2 := d3 := d4 := d5 := d6 := e0 := e1 := 0.0! !
-
-!Upsampler2x methodsFor: 'as yet unclassified' stamp: 'len 30/Jan/2026 15:09:20'!
-initialize
-	self reset! !
-
-!Upsampler2x methodsFor: 'as yet unclassified' stamp: 'len 30/Jan/2026 15:09:32'!
-reset
-	u0 := u1 := u2 := u3 :=​ 0.0! !
-
-!Upsampler2x methodsFor: 'as yet unclassified' stamp: 'len 30/Jan/2026 15:11:02'!
-upsampling: aNumber do: aBlock
-	| s1 s2 |
-	u3 := u2.
-	u2 := u1.
-	u1 := u0.
-	u0 := aNumber.
-	s1 := (u0 + u3) * -0.031 + ((u1 + u2) * 0.113) + (u1 * -0.251).
-	s2 := u1 * 0.5.
-	^ aBlock value: s1 value: s2! !
-
-!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 31/Dec/2025 01:15:55'!
+!WAVFileReader methodsFor: 'accessing' stamp: 'len 31/Dec/2025 01:15:55'!
 channels
 	^ channels! !
 
-!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 31/Dec/2025 14:33:14'!
+!WAVFileReader methodsFor: 'accessing' stamp: 'len 31/Dec/2025 01:16:11'!
+leftSamples
+	^ leftSamples! !
+
+!WAVFileReader methodsFor: 'accessing' stamp: 'len 17/Feb/2026 15:00:34'!
+loopEnd
+	^ loopEnd! !
+
+!WAVFileReader methodsFor: 'accessing' stamp: 'len 17/Feb/2026 15:00:30'!
+loopStart
+	^ loopStart! !
+
+!WAVFileReader methodsFor: 'accessing' stamp: 'len 31/Dec/2025 01:16:17'!
+rightSamples
+	^ rightSamples! !
+
+!WAVFileReader methodsFor: 'accessing' stamp: 'len 15/Feb/2026 15:36:14'!
+sampleRate
+	^ sampleRate! !
+
+!WAVFileReader methodsFor: 'reading' stamp: 'len 31/Dec/2025 14:33:14'!
 convert8bitUnsignedToFloat: anArray
 	"Convert the given array of samples--assumed to be 8-bit unsigned, linear data--into 32-bit float samples. Return an array containing the resulting samples. Typically used to read uncompressed WAVE sound data."
 	| answer |
@@ -13346,7 +13276,7 @@ convert8bitUnsignedToFloat: anArray
 	1 to: anArray do: [:i| answer at: i put: ((anArray at: i) - 128 / 128.0)].
 	^ answer! !
 
-!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 31/Dec/2025 14:36:05'!
+!WAVFileReader methodsFor: 'reading' stamp: 'len 31/Dec/2025 14:36:05'!
 convertBytesToFloat: aByteArray
 	"Convert the given ByteArray sample data to 32 bit float."
 	| n answer j b1 b2 w |
@@ -13362,19 +13292,7 @@ convertBytesToFloat: aByteArray
 		j := j + 2].
 	^ answer! !
 
-!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 31/Dec/2025 01:16:11'!
-leftSamples
-	^ leftSamples! !
-
-!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 17/Feb/2026 15:00:34'!
-loopEnd
-	^ loopEnd! !
-
-!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 17/Feb/2026 15:00:30'!
-loopStart
-	^ loopStart! !
-
-!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 31/Dec/2025 00:55:57'!
+!WAVFileReader methodsFor: 'reading' stamp: 'len 31/Dec/2025 00:55:57'!
 next16BitWord
 	"Read a 16-bit positive integer from the input stream."
 	"Assume: Stream has at least two bytes left."
@@ -13382,7 +13300,7 @@ next16BitWord
 	n := stream next: 2.
 	^ (n at: 2) * 256 + (n at: 1)! !
 
-!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 31/Dec/2025 00:55:57'!
+!WAVFileReader methodsFor: 'reading' stamp: 'len 31/Dec/2025 00:55:57'!
 next32BitWord
 	"Read a 32-bit positive integer from the input stream."
 	"Assume: Stream has at least four bytes left."
@@ -13390,11 +13308,11 @@ next32BitWord
 	n := stream next: 4.
 	^ (n at: 4) * 256 + (n at: 3) * 256 + (n at: 2) * 256 + (n at: 1)! !
 
-!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 31/Dec/2025 15:30:17'!
+!WAVFileReader methodsFor: 'reading' stamp: 'len 31/Dec/2025 15:30:17'!
 readFromFileEntry: fileEntry
 	^ fileEntry readStreamDo: [:strm| self readFromStream: strm]! !
 
-!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 17/Feb/2026 15:05:37'!
+!WAVFileReader methodsFor: 'reading' stamp: 'len 17/Feb/2026 15:05:37'!
 readFromStream: fileStream
 	| header data smpl type blockAlign numberOfLoops |
 	stream := fileStream.
@@ -13435,7 +13353,7 @@ readFromStream: fileStream
 		ifFalse:
 			[leftSamples := rightSamples := data]! !
 
-!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 17/Feb/2026 14:51:14'!
+!WAVFileReader methodsFor: 'reading' stamp: 'len 17/Feb/2026 14:51:14'!
 readWaveChunk: chunkType
 	"Search the stream for a format chunk of the given type and return its contents."
 
@@ -13455,14 +13373,6 @@ readWaveChunk: chunkType
 
 	^ stream next: count  "return raw chunk data"
 ! !
-
-!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 31/Dec/2025 01:16:17'!
-rightSamples
-	^ rightSamples! !
-
-!WAVFileReader methodsFor: 'as yet unclassified' stamp: 'len 15/Feb/2026 15:36:14'!
-sampleRate
-	^ sampleRate! !
 
 !SequenceableCollection methodsFor: '*signals' stamp: 'len 2/Oct/2025 21:40:00'!
 plot

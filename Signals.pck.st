@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 19 March 2026 at 3:25:09 pm'!
+'From Cuis7.7 [latest update: #7797] on 24 March 2026 at 2:06:46 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 497!
+!provides: 'Signals' 1 499!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -867,7 +867,7 @@ KeyTracker class
 
 !classDefinition: #LFO category: #'Signals-Modulation'!
 Module subclass: #LFO
-	instanceVariableNames: 'shape bipolar bpm speed offset mode phase heldValue seed random randomValue'
+	instanceVariableNames: 'shape bipolar speed offset mode phase heldValue seed random randomValue'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Modulation'!
@@ -1075,6 +1075,16 @@ BoxMorph subclass: #WaveformScrollingMorph
 WaveformScrollingMorph class
 	instanceVariableNames: ''!
 
+!classDefinition: #XxxMorph category: #'Signals-Etc'!
+BoxMorph subclass: #XxxMorph
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Etc'!
+!classDefinition: 'XxxMorph class' category: #'Signals-Etc'!
+XxxMorph class
+	instanceVariableNames: ''!
+
 !classDefinition: #ChoiceControlMorph category: #'Signals-Morphic-Controls'!
 BoxMorph subclass: #ChoiceControlMorph
 	instanceVariableNames: 'control color font'
@@ -1153,6 +1163,26 @@ VariableWaveControlMorph subclass: #SymmetricWaveshaperControlMorph
 	category: 'Signals-Morphic-Controls'!
 !classDefinition: 'SymmetricWaveshaperControlMorph class' category: #'Signals-Morphic-Controls'!
 SymmetricWaveshaperControlMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #DualControlMorph category: #'Signals-Morphic-Controls'!
+BoxMorph subclass: #DualControlMorph
+	instanceVariableNames: 'control1 control2'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'DualControlMorph class' category: #'Signals-Morphic-Controls'!
+DualControlMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #DynamicsActivityMorph category: #'Signals-Morphic-Controls'!
+DualControlMorph subclass: #DynamicsActivityMorph
+	instanceVariableNames: 'envelopeBuffer gainReductionBuffer currentPosition'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'DynamicsActivityMorph class' category: #'Signals-Morphic-Controls'!
+DynamicsActivityMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #ToggleControlMorph category: #'Signals-Morphic-Controls'!
@@ -1507,7 +1537,7 @@ Biquad class
 
 !classDefinition: #DelayLine category: #'Signals-Support'!
 Object subclass: #DelayLine
-	instanceVariableNames: 'buffer length position'
+	instanceVariableNames: 'buffer position'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Support'!
@@ -1515,14 +1545,54 @@ Object subclass: #DelayLine
 DelayLine class
 	instanceVariableNames: ''!
 
-!classDefinition: #DelayLineTap category: #'Signals-Support'!
-Object subclass: #DelayLineTap
-	instanceVariableNames: 'delayLine delay increment x1 y1'
+!classDefinition: #DelayTap category: #'Signals-Support'!
+Object subclass: #DelayTap
+	instanceVariableNames: 'delayLine delay increment'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Support'!
-!classDefinition: 'DelayLineTap class' category: #'Signals-Support'!
-DelayLineTap class
+!classDefinition: 'DelayTap class' category: #'Signals-Support'!
+DelayTap class
+	instanceVariableNames: ''!
+
+!classDefinition: #DelayTapC category: #'Signals-Support'!
+DelayTap subclass: #DelayTapC
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Support'!
+!classDefinition: 'DelayTapC class' category: #'Signals-Support'!
+DelayTapC class
+	instanceVariableNames: ''!
+
+!classDefinition: #DelayTapL category: #'Signals-Support'!
+DelayTap subclass: #DelayTapL
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Support'!
+!classDefinition: 'DelayTapL class' category: #'Signals-Support'!
+DelayTapL class
+	instanceVariableNames: ''!
+
+!classDefinition: #DelayTapT1 category: #'Signals-Support'!
+DelayTap subclass: #DelayTapT1
+	instanceVariableNames: 'x1 y1'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Support'!
+!classDefinition: 'DelayTapT1 class' category: #'Signals-Support'!
+DelayTapT1 class
+	instanceVariableNames: ''!
+
+!classDefinition: #DelayTapT2 category: #'Signals-Support'!
+DelayTap subclass: #DelayTapT2
+	instanceVariableNames: 'x1 x2 y1 y2'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Support'!
+!classDefinition: 'DelayTapT2 class' category: #'Signals-Support'!
+DelayTapT2 class
 	instanceVariableNames: ''!
 
 !classDefinition: #FFT category: #'Signals-Support'!
@@ -1587,7 +1657,7 @@ MultiTapDelayLine class
 
 !classDefinition: #OnePole category: #'Signals-Support'!
 Object subclass: #OnePole
-	instanceVariableNames: 'a y'
+	instanceVariableNames: 'pole y'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Support'!
@@ -1979,6 +2049,21 @@ Butterworth filters are specifically designed for maximally flat passband respon
 Linkwitz-Riley filters are built from cascaded Butterworth filters, designed specifically for crossover applications. Their key feature is that when you use complementary LP and HP Linkwitz-Riley filters at the same frequency, they sum to a flat magnitude response with no phase issues at the crossover point. This makes them ideal for splitting a signal and processing bands separately while maintaining coherent recombination.
 !
 
+!DelayLine commentStamp: '<historical>' prior: 0!
+A delay line is a circular buffer. See also DelayTap.!
+
+!DelayTapC commentStamp: '<historical>' prior: 0!
+This class implements a fractional delay tap with Lagrange cubic interpolation (4 points).!
+
+!DelayTapL commentStamp: '<historical>' prior: 0!
+This class implements a fractional delay tap with linear interpolation.!
+
+!DelayTapT1 commentStamp: '<historical>' prior: 0!
+This class implements a fractional delay tap with a first-order Thiran allpass filter.!
+
+!DelayTapT2 commentStamp: '<historical>' prior: 0!
+This class implements a fractional delay tap with a second-order Thiran allpass filter.!
+
 !FFT commentStamp: '<historical>' prior: 0!
 This class implements the Fast Fourier Transform roughly as described on page 367
 of "Theory and Application of Digital Signal Processing" by Rabiner and Gold.
@@ -2014,6 +2099,9 @@ Lowpass feedback comb filter (LBCF), or Schroeder-Moorer filtered-feedback comb 
 
 !MultiTapDelayLine commentStamp: '<historical>' prior: 0!
 This is based on Squeak's original ReverbSound by John Maloney.!
+
+!OnePole commentStamp: '<historical>' prior: 0!
+A one-pole (6 dB/oct) lowpass filter. It can be setup by specifying the normalized frequency (frequency / sample rate), or the time in number of samples, or the pole coefficient directly.!
 
 !Polyphase13TapOversampler2x commentStamp: '<historical>' prior: 0!
 This class implements a 2x polyphase half-band oversampler intended to reduce aliasing in non-linear DSP modules (e.g. distortion, saturation, wavefolders, or virtual-analog filters).
@@ -2668,32 +2756,33 @@ reset
 	schpf reset.
 	rmslpf reset! !
 
-!Compressor methodsFor: 'controlling' stamp: 'len 12/Mar/2026 16:56:53'!
+!Compressor methodsFor: 'controlling' stamp: 'len 19/Mar/2026 16:57:56'!
 update
 	super update.
-	schpf undenormalize; pole: (self get: #schpf) / self class sampleRate.
+	schpf undenormalize; frequency: (self get: #schpf) / self class sampleRate.
 	rmslpf undenormalize! !
 
-!Compressor methodsFor: 'initialization' stamp: 'len 18/Mar/2026 18:44:52'!
+!Compressor methodsFor: 'initialization' stamp: 'len 19/Mar/2026 21:22:43'!
 initialize
 	super initialize.
-	schpf := OnePole new pole: 100.0 / self class sampleRate "100 hz".
+	schpf := OnePole new frequency: 100.0 / self class sampleRate "100 hz".
 	rmslpf := OnePole new time: 0.01 * self class sampleRate. "10 ms"
+	envelope := 0.0.
 	aux := Float32Array new: self class blockSize! !
 
-!Compressor methodsFor: 'initialization' stamp: 'len 18/Mar/2026 20:08:10'!
+!Compressor methodsFor: 'initialization' stamp: 'len 19/Mar/2026 21:33:55'!
 initializeControls
 	super initializeControls.
 	self addVolumeControl: #threshold value: 0.126.
 	(self addLogControl: #ratio min: 1.0 max: 20.0 value: 4.0) printer: [:x| (x printStringFractionDigits: 1), ':1'].
 	self addTimeControl: #attack min: 0.0001 "0.1 ms" max: 0.1 "100 ms" value: 0.01 "10 ms".
 	self addTimeControl: #release min: 0.01 "10 ms" max: 1.5 "s" value: 0.1 "100 ms".
-	self addChoiceControl: #mode options: #(peak rms) value: #rms.
+	self addChoiceControl: #mode options: #(peak rms) value: #peak.
 	(self addFrequencyControl: #schpf min: 20.0 max: 200.0 value: 100.0) label: 'SC HPF'.
 	self addVolumeControl: #knee min: 1.0 "0 dB" max: 4.0 "+12 dB" value: 2.0 "+6 dB".
 	self addVolumeControl: #makeup min: 0.25 "-12 dB" max: 16.0 "+24 dB" value: 1.0! !
 
-!Compressor methodsFor: 'processing' stamp: 'len 18/Mar/2026 18:45:17'!
+!Compressor methodsFor: 'processing' stamp: 'len 20/Mar/2026 15:11:01'!
 tick
 	| sc isPeak threshold ratio knee halfKnee α β |
 	sc := inputSC ifNil: [inputL ifNil:
@@ -2722,33 +2811,40 @@ tick
 			aux at: i put: (((gr max: 0.0) / ratio + threshold) / envelope - 1.0) * t + 1.0]].
 	aux *= (self get: #makeup).
 	(inputL notNil and: [outputL notNil]) ifTrue: [outputL replaceWith: inputL; *= aux].
-	(inputR notNil and: [outputR notNil]) ifTrue: [outputR replaceWith: inputR; *= aux]! !
+	(inputR notNil and: [outputR notNil]) ifTrue: [outputR replaceWith: inputR; *= aux].
+	self triggerEvent: #envelope: with: envelope; triggerEvent: #gainReduction: with: aux last / (self get: #makeup)! !
 
-!Compressor methodsFor: 'ui' stamp: 'len 12/Mar/2026 18:11:56'!
+!Compressor methodsFor: 'ui' stamp: 'len 20/Mar/2026 18:36:01'!
 panel
 	| answer |
 	answer := ControlPanel newColumn.
 	answer addRow
-		addKnob: (controls at: #threshold) label: 'Thresh';
-		addKnob: (controls at: #ratio) label: 'Ratio'.
-	answer addRow
-		addKnob: (controls at: #attack) label: 'Attack';
-		addKnob: (controls at: #release) label: 'Release'.
+"		addTextualControl: (controls at: #threshold);"
+		addTextualControl: (controls at: #ratio);
+		addChoice: (controls at: #mode).
+"	answer addRow
+		addSmallKnob: (controls at: #attack) label: 'Attack';
+		addSmallKnob: (controls at: #release) label: 'Release'."
 	^ answer! !
 
-!Compressor methodsFor: 'ui' stamp: 'len 18/Mar/2026 18:54:23'!
+!Compressor methodsFor: 'ui' stamp: 'len 20/Mar/2026 18:37:23'!
 panel2
 	^​ ControlPanel new
-		addChoice: (controls at: #mode);
+		addSmallKnob: (controls at: #attack) label: 'Attack';
+		addSmallKnob: (controls at: #release) label: 'Release';
 		addSmallKnob: (controls at: #schpf) label: 'SC HPF';
 		addSmallKnob: (controls at: #knee) label: 'Knee';
 		addSmallKnob: (controls at: #makeup) label: 'Makeup'! !
 
-!Compressor methodsFor: 'ui' stamp: 'len 12/Mar/2026 18:08:37'!
+!Compressor methodsFor: 'ui' stamp: 'len 20/Mar/2026 19:09:30'!
 patchable
-	| answer |
+	| answer display |
 	answer := PatchableMorph new model: self.
-	answer body addMorph: self panel.
+	display := DynamicsActivityMorph new.
+	self when: #envelope: send: #addEnvelope: to: display.
+	self when: #gainReduction: send: #addGainReduction: to: display.
+	display control1: (controls at: #threshold).
+	answer body addMorph: display; addMorph: self panel.
 	answer flap addMorph: self panel2.
 	answer
 		addAudioInput: #setInputL: label: 'In L/M';
@@ -2784,20 +2880,21 @@ reset
 	schpf reset.
 	rmslpf reset! !
 
-!Gate methodsFor: 'controlling' stamp: 'len 12/Mar/2026 18:23:07'!
+!Gate methodsFor: 'controlling' stamp: 'len 19/Mar/2026 16:58:08'!
 update
 	super update.
-	schpf undenormalize; pole: (self get: #schpf) / self class sampleRate.
+	schpf undenormalize; frequency: (self get: #schpf) / self class sampleRate.
 	rmslpf undenormalize! !
 
-!Gate methodsFor: 'initialization' stamp: 'len 18/Mar/2026 18:56:59'!
+!Gate methodsFor: 'initialization' stamp: 'len 19/Mar/2026 21:29:26'!
 initialize
 	super initialize.
-	schpf := OnePole new pole: 100.0 / self class sampleRate "100 hz".
+	schpf := OnePole new frequency: 100.0 / self class sampleRate "100 hz".
 	rmslpf := OnePole new time: 0.01 * self class sampleRate. "10 ms"
+	envelope := 0.0.
 	aux := Float32Array new: self class blockSize! !
 
-!Gate methodsFor: 'initialization' stamp: 'len 18/Mar/2026 20:08:10'!
+!Gate methodsFor: 'initialization' stamp: 'len 19/Mar/2026 21:33:45'!
 initializeControls
 	super initializeControls.
 	self addVolumeControl: #threshold value: 0.126.
@@ -2805,11 +2902,11 @@ initializeControls
 	self addTimeControl: #hold min: 0.0001 "0.1 ms" max: 0.1 "100 ms" value: 0.01 "10 ms".
 	self addTimeControl: #release min: 0.01 "10 ms" max: 1.5 "s" value: 0.1 "100 ms".
 	self addControl: #return min: 0.0 max: 1.0 value: 0.1.
-	self addChoiceControl: #mode options: #(peak rms) value: #rms.
+	self addChoiceControl: #mode options: #(peak rms) value: #peak.
 	(self addFrequencyControl: #schpf min: 20.0 max: 200.0 value: 100.0) label: 'SC HPF'.
 	self addVolumeControl: #knee min: 1.0 "0 dB" max: 4.0 "+12 dB" value: 2.0 "+6 dB"! !
 
-!Gate methodsFor: 'processing' stamp: 'len 18/Mar/2026 18:57:28'!
+!Gate methodsFor: 'processing' stamp: 'len 19/Mar/2026 21:27:11'!
 tick
 	| sc isPeak threshold α β |
 	sc := inputSC ifNil: [inputL ifNil:
@@ -2831,33 +2928,33 @@ tick
 		envelope := (level - envelope) * slope + envelope.
 		(gr := envelope - threshold) > 0.0 ifTrue: [aux at: i put: 0.0]].
 	(inputL notNil and: [outputL notNil]) ifTrue: [outputL replaceWith: inputL; *= aux].
-	(inputR notNil and: [outputR notNil]) ifTrue: [outputR replaceWith: inputR; *= aux]! !
+	(inputR notNil and: [outputR notNil]) ifTrue: [outputR replaceWith: inputR; *= aux].
+	self triggerEvent: #envelope: with: envelope; triggerEvent: #gainReduction: with: aux last! !
 
-!Gate methodsFor: 'ui' stamp: 'len 12/Mar/2026 18:44:53'!
+!Gate methodsFor: 'ui' stamp: 'len 20/Mar/2026 19:14:53'!
 panel
-	| answer |
-	answer := ControlPanel newColumn.
-	answer addRow
-		addKnob: (controls at: #threshold) label: 'Thresh';
-		addKnob: (controls at: #return) label: 'Return'.
-	answer addRow
+	^​ ControlPanel new
+		addChoice: (controls at: #mode)! !
+
+!Gate methodsFor: 'ui' stamp: 'len 20/Mar/2026 19:15:49'!
+panel2
+	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'Attack';
 		addSmallKnob: (controls at: #hold) label: 'Hold';
-		addSmallKnob: (controls at: #release) label: 'Release'.
-	^ answer! !
-
-!Gate methodsFor: 'ui' stamp: 'len 18/Mar/2026 18:56:01'!
-panel2
-	^​ ControlPanel new
-		addChoice: (controls at: #mode);
+		addSmallKnob: (controls at: #release) label: 'Release';
 		addSmallKnob: (controls at: #schpf) label: 'SC HPF';
 		addSmallKnob: (controls at: #knee) label: 'Knee'! !
 
-!Gate methodsFor: 'ui' stamp: 'len 12/Mar/2026 18:23:07'!
+!Gate methodsFor: 'ui' stamp: 'len 20/Mar/2026 19:09:54'!
 patchable
-	| answer |
+	| answer display |
 	answer := PatchableMorph new model: self.
-	answer body addMorph: self panel.
+	display := DynamicsActivityMorph new.
+	display control1: (controls at: #threshold).
+	display control2: (controls at: #return).
+	self when: #envelope: send: #addEnvelope: to: display.
+	self when: #gainReduction: send: #addGainReduction: to: display.
+	answer body addMorph: display; addMorph: self panel.
 	answer flap addMorph: self panel2.
 	answer
 		addAudioInput: #setInputL: label: 'In L/M';
@@ -2903,12 +3000,12 @@ adjustNoteBy: aNumber
 adjustVelocityBy: aNumber
 	velocity := velocity + aNumber min: 1.0 max: 0.0! !
 
-!EG methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:08:52'!
-noteOff
+!EG methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:21:00'!
+gateOff
 	^ self! !
 
-!EG methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:11:01'!
-noteOn: aNumber
+!EG methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:21:20'!
+gateOn
 	self update.
 	stage := #attack.
 "	factor := 1.0 - (0.001 raisedTo: 1.0 / attack)"
@@ -2989,8 +3086,8 @@ patchable
 		addControlInput: #decay;
 		yourself! !
 
-!ADSR methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:13:49'!
-noteOff
+!ADSR methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:21:00'!
+gateOff
 	self update.
 	stage := #release.
 	factor := 0.001 raisedTo: 1.0 / release! !
@@ -3088,8 +3185,8 @@ patchable
 		addControlInput: #decay;
 		yourself! !
 
-!AR methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:14:18'!
-noteOff
+!AR methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:21:00'!
+gateOff
 	self update.
 	stage := #release.
 	factor := 0.001 raisedTo: 1.0 / release! !
@@ -3130,8 +3227,8 @@ patchable
 		addControlInput: #release;
 		yourself! !
 
-!ASR methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:14:28'!
-noteOff
+!ASR methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:21:00'!
+gateOff
 	self update.
 	stage := #release.
 	factor := 0.001 raisedTo: 1.0 / release! !
@@ -3327,13 +3424,13 @@ update
 	time := self get: #time.
 	mix := self get: #mix! !
 
-!Chorus methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:46:23'!
+!Chorus methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:59:02'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (self class sampleRate * 0.035 "35 ms max") ceiling.
-	tap1 := DelayLineTap on: delayLine.
-	tap2 := DelayLineTap on: delayLine.
-	tap3 := DelayLineTap on: delayLine.
+	tap1 := DelayTapT1 on: delayLine.
+	tap2 := DelayTapT1 on: delayLine.
+	tap3 := DelayTapT1 on: delayLine.
 	self reset! !
 
 !Chorus methodsFor: 'initialization' stamp: 'len 24/Feb/2026 23:52:24'!
@@ -3413,7 +3510,7 @@ reset
 	lsfR reset.
 	hsfR reset! !
 
-!StereoEcho methodsFor: 'controlling' stamp: 'len 9/Mar/2026 16:43:26'!
+!StereoEcho methodsFor: 'controlling' stamp: 'len 19/Mar/2026 16:58:31'!
 update
 	| delay thirtyMsecs bass treble spread lpfSpread trebleSpread |
 	super update.
@@ -3423,8 +3520,8 @@ update
 	tapR setDelayIncrement: delay - tapR delay / thirtyMsecs. "slide over 30 ms"
 	spread := self get: #spread.
 	lpfSpread := 1500.0 * spread. "± 1.5 kHz"
-	lpfL undenormalize; pole: 6000.0 - lpfSpread / self class sampleRate. "6 kHz - spreading"
-	lpfR undenormalize; pole: 6000.0 + lpfSpread / self class sampleRate. "6 kHz + spreading"
+	lpfL undenormalize; frequency: 6000.0 - lpfSpread / self class sampleRate. "6 kHz - spreading"
+	lpfR undenormalize; frequency: 6000.0 + lpfSpread / self class sampleRate. "6 kHz + spreading"
 	hpfL undenormalize.
 	hpfR undenormalize.
 	bass := self get: #bass.
@@ -3435,19 +3532,19 @@ update
 	hsfL undenormalize; hs: 4000.0 / self class sampleRate Q: 0.707 gain: treble / trebleSpread. "4 kHz"
 	hsfR undenormalize; hs: 4000.0 / self class sampleRate Q: 0.707 gain: treble * trebleSpread. "4 kHz"! !
 
-!StereoEcho methodsFor: 'initialization' stamp: 'len 6/Mar/2026 22:07:27'!
+!StereoEcho methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:59:02'!
 initialize
 	super initialize.
 	delayLineL := DelayLine new: (self class sampleRate * 2) ceiling.
-	tapL := DelayLineTap on: delayLineL.
+	tapL := DelayTapT1 on: delayLineL.
 	delayLineR := DelayLine new: (self class sampleRate * 2) ceiling.
-	tapR := DelayLineTap on: delayLineR.
-	lpfL := OnePole new pole: 8000.0 / self class sampleRate. "8 kHz"
-	hpfL := OnePole new pole: 40.0 / self class sampleRate. "40 Hz"
+	tapR := DelayTapT1 on: delayLineR.
+	lpfL := OnePole new frequency: 8000.0 / self class sampleRate. "8 kHz"
+	hpfL := OnePole new frequency: 40.0 / self class sampleRate. "40 Hz"
 	lsfL := Biquad new.
 	hsfL := Biquad new.
-	lpfR := OnePole new pole: 8000.0 / self class sampleRate. "8 kHz"
-	hpfR := OnePole new pole: 40.0 / self class sampleRate. "40 Hz"
+	lpfR := OnePole new frequency: 8000.0 / self class sampleRate. "8 kHz"
+	hpfR := OnePole new frequency: 40.0 / self class sampleRate. "40 Hz"
 	lsfR := Biquad new.
 	hsfR := Biquad new! !
 
@@ -3555,11 +3652,11 @@ update
 	combsL do: [:each| each undenormalize; feedback: feedback; damp: damp].
 	combsR do: [:each| each undenormalize; feedback: feedback; damp: damp]! !
 
-!StereoReverb methodsFor: 'initialization' stamp: 'len 7/Mar/2026 16:24:34'!
+!StereoReverb methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:59:02'!
 initialize
 	super initialize.
 	predelayLine := DelayLine new: (self class sampleRate * 0.15) ceiling. "150 ms"
-	predelayTap := DelayLineTap on: predelayLine.
+	predelayTap := DelayTapT1 on: predelayLine.
 	combsL := #(1116 1188 1277 1356 1422 1491 1557 1617) collect: [:each| LowpassComb new: (each * self class sampleRate / 44100.0) truncated].
 	allpassesL := #(556 441 341 225) collect: [:each| AllpassComb new: (each * self class sampleRate / 44100.0) truncated].
 	"for stereo effect, right side uses longer delays by 23 samples:"
@@ -4024,17 +4121,13 @@ initializeControls
 adjustNoteBy: aNumber
 	note := note + aNumber min: 127.0 max: 0! !
 
-!TunedGenerator methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:06:11'!
-noteOff
-	^ self! !
-
-!TunedGenerator methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:10:41'!
-noteOn: aNumber
+!TunedGenerator methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:14:57'!
+setNote: aNumber
 	note := aNumber! !
 
-!TunedGenerator methodsFor: 'ui' stamp: 'len 18/Mar/2026 23:38:25'!
+!TunedGenerator methodsFor: 'ui' stamp: 'len 20/Mar/2026 15:01:33'!
 panel
-	^​ ControlPanel new addMorph: (TextualControlMorph control: (controls at: #tune))! !
+	^​ ControlPanel new addTextualControl: (controls at: #tune)! !
 
 !TunedGenerator methodsFor: 'ui' stamp: 'len 2/Feb/2026 16:09:43'!
 patchable
@@ -4431,21 +4524,21 @@ initializeControls
 	self addControl: #index min: 0.0 max: 1.0 value: 0.0.
 	self addControl: #position min: 0.0 max: 1.0 value: 0.0! !
 
-!Wavetable methodsFor: 'processing' stamp: 'len 18/Mar/2026 20:46:23'!
+!Wavetable methodsFor: 'processing' stamp: 'len 22/Mar/2026 15:54:55'!
 peek
 	| table wave |
 	table := (bank at: index) value.
 	wave := table at: (position * (table size - 1)) truncated + 1.
-	^ wave atWrapSmooth: phase * (wave size - 1) + 1.0! !
+	^ wave atWrapLinear: phase * (wave size - 1) + 1.0! !
 
-!Wavetable methodsFor: 'processing' stamp: 'len 18/Mar/2026 20:46:40'!
+!Wavetable methodsFor: 'processing' stamp: 'len 22/Mar/2026 15:55:06'!
 read: aBuffer
 	| table wave n |
 	table := (bank at: index) value.
 	wave := table at: (position * (table size - 1)) truncated + 1.
 	n := wave size - 1.0.
 	1 to: aBuffer size do: [:i|
-		aBuffer at: i put: (wave atWrapSmooth: phase * n + 1.0).
+		aBuffer at: i put: (wave atWrapLinear: phase * n + 1.0).
 		phase := phase + frequency.
 		phase >= 1.0 ifTrue: [phase := phase - phase truncated]]! !
 
@@ -4684,13 +4777,12 @@ initialize
 			+ 0.6717417634) * x
 			+ 0.0030115596]! !
 
-!TonewheelOrgan methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:23:00'!
-noteOff
+!TonewheelOrgan methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:21:00'!
+gateOff
 	released := true! !
 
-!TonewheelOrgan methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:22:54'!
-noteOn: aNumber
-	super noteOn: aNumber.
+!TonewheelOrgan methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:19:59'!
+gateOn
 	click := self get: #click.
 	released := false! !
 
@@ -4770,13 +4862,12 @@ foldback: aFrequency
 	[answer < 32.0] whileTrue: [answer := answer * 2.0].
 	^ answer! !
 
-!TransistorOrgan methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:23:31'!
-noteOff
+!TransistorOrgan methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:21:00'!
+gateOff
 	released := true! !
 
-!TransistorOrgan methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:23:24'!
-noteOn: aNumber
-	super noteOn: aNumber.
+!TransistorOrgan methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:21:46'!
+gateOn
 	released := false! !
 
 !TransistorOrgan methodsFor: 'controlling' stamp: 'len 14/Feb/2026 17:15:36'!
@@ -4802,14 +4893,14 @@ update
 		at: 7 put: r4.
 	filter undenormalize! !
 
-!TransistorOrgan methodsFor: 'initialization' stamp: 'len 14/Feb/2026 17:44:42'!
+!TransistorOrgan methodsFor: 'initialization' stamp: 'len 19/Mar/2026 16:58:35'!
 initialize
 	super initialize.
 	phases := Float32Array new: 7.
 	frequencies := Float32Array new: 7.
 	amplitudes := Float32Array new: 7.
 	released := true.
-	filter := OnePole new pole: 6000.0 / self class sampleRate "6 kHz"! !
+	filter := OnePole new frequency: 6000.0 / self class sampleRate "6 kHz"! !
 
 !TransistorOrgan methodsFor: 'initialization' stamp: 'len 14/Feb/2026 23:50:05'!
 initializeControls
@@ -4849,18 +4940,18 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!VOSIM methodsFor: 'controlling' stamp: 'len 2/Jan/2026 01:10:32'!
+!VOSIM methodsFor: 'controlling' stamp: 'len 22/Mar/2026 15:52:56'!
 update
 	| f1 f2 vowelIndex |
 	super update.
 	carrierFrequency := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
 	carrierShape := self get: #shape.
 	vowelIndex := ((self get: #vowel) * 15.0 + 1.0).
-	f1 := #[240.0 235.0 390.0 370.0 610.0 585.0 850.0 820.0 750.0 700.0 600.0 500.0 460.0 360.0 300.0 250.0] atSmooth: vowelIndex.
-	f2 := #[2400.0 2100.0 2300.0 1900.0 1900.0 1710.0 1610.0 1530.0 940.0 760.0 1170.0 700.0 1310.0 640.0 1390.0 595.0] atSmooth: vowelIndex.
+	f1 := #[240.0 235.0 390.0 370.0 610.0 585.0 850.0 820.0 750.0 700.0 600.0 500.0 460.0 360.0 300.0 250.0] atLinear: vowelIndex.
+	f2 := #[2400.0 2100.0 2300.0 1900.0 1900.0 1710.0 1610.0 1530.0 940.0 760.0 1170.0 700.0 1310.0 640.0 1390.0 595.0] atLinear: vowelIndex.
 "	vowelIndex := (self get: #vowel) * 3.0 + 1.0.
-	f1 := #[270.0 730.0 570.0 300.0] atSmooth: vowelIndex.
-	f2 := #[2300.0 1090.0 840.0 870.0] atSmooth: vowelIndex."
+	f1 := #[270.0 730.0 570.0 300.0] atLinear: vowelIndex.
+	f2 := #[2300.0 1090.0 840.0 870.0] atLinear: vowelIndex."
 	formant1Frequency := f1 / self class sampleRate.
 	formant2Frequency := f2 / self class sampleRate! !
 
@@ -4922,23 +5013,23 @@ label: aString
 adjustVelocityBy: aNumber
 	velocity := velocity + aNumber min: 1.0 max: 0.0! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:10:17'!
-noteOff
-	sample ifNotNil: [sample noteOff]! !
+!Multisample methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:21:00'!
+gateOff
+	sample ifNotNil: [sample gateOff]! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:21:29'!
-noteOn: aNumber
+!Multisample methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:36:39'!
+gateOn
 	| frequency key closestKey speedFactor samplesByVelocity |
-	super noteOn: aNumber.
 	frequency := ((self get: #tune) + note) semitonesToHertz.
 	key := frequency hertzToSemitones.
 	closestKey := keymap keys detectMin: [:x| (x - key) abs].
 	speedFactor := key semitonesToHertz / closestKey semitonesToHertz.
 	samplesByVelocity := keymap at: closestKey.
-	(tailSample := sample) ifNotNil: [tailSample noteOn "to setup the tail position"].
+	(tailSample := sample) ifNotNil: [tailSample gateOn "to setup the tail position"].
 	sample := (samplesByVelocity at: ((velocity sqrt * (samplesByVelocity size - 1)) truncated + 1 min: samplesByVelocity size)) copy.
 	sample baseRate: sample baseRate * speedFactor.
-	sample noteOn: 60.
+	sample setNote: 60. "?"
+	sample gateOn.
 	sample update! !
 
 !Multisample methodsFor: 'controlling' stamp: 'len 15/Feb/2026 20:41:02'!
@@ -4976,6 +5067,13 @@ asJsonWithBuffers: aList
 		at: #keymap put: keymapJson;
 		at: #label put: (label ifNil: ['']);
 		yourself! !
+
+!Multisample methodsFor: 'serialization' stamp: 'len 22/Mar/2026 00:32:27'!
+memoryUsage
+"
+	Multisample library keysAndValuesDo: [:k :v| (k, ': ', v memoryUsage) print]
+"
+	^ (((keymap sum: [:each| each sum: [:s| s buffer size]]) * 4.0 / 1024 / 1024) printStringFractionDigits: 1), ' MBs'! !
 
 !Multisample methodsFor: 'serialization' stamp: 'len 17/Feb/2026 17:49:41'!
 readFromJson: json buffers: aList
@@ -5352,20 +5450,15 @@ loopStart: anInteger loopEnd: anotherInteger.
 position
 	^ position! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:20:10'!
-noteOff
+!Sample methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:21:00'!
+gateOff
 	released := true! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:20:02'!
-noteOn
+!Sample methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:23:34'!
+gateOn
 	position > 0 ifTrue: [tailPosition := position].
 	position := (buffer size - 1) * offset.
 	released := false! !
-
-!Sample methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:21:02'!
-noteOn: aNumber
-	super noteOn: aNumber.
-	self noteOn! !
 
 !Sample methodsFor: 'controlling' stamp: 'len 16/Mar/2026 15:11:51'!
 reset
@@ -5403,7 +5496,7 @@ initializeControls
 	(self addControl: #speed min: -4.0 max: 4.0 value: 1.0) printer: [:x| '×', (x printStringFractionDigits: 2)].
 	self addToggleControl: #warp value: false! !
 
-!Sample methodsFor: 'processing' stamp: 'len 16/Mar/2026 15:35:09'!
+!Sample methodsFor: 'processing' stamp: 'len 22/Mar/2026 15:53:06'!
 mixTailInto: aBuffer
 	| damping end gain |
 	tailPosition ifNil: [^ self].
@@ -5412,7 +5505,7 @@ mixTailInto: aBuffer
 	damping := 0.95. "-60 decibelsToLinear raisedTo: 1/128"
 	gain := 1.0.
 	1 to: aBuffer size do: [:i|
-		aBuffer at: i put: (aBuffer at: i) + ((buffer atSmooth: tailPosition + 1.0) * gain).
+		aBuffer at: i put: (aBuffer at: i) + ((buffer atLinear: tailPosition + 1.0) * gain).
 		gain := gain * damping.
 		(tailPosition := tailPosition + increment) < end ifFalse:
 			[tailPosition := nil.
@@ -5426,17 +5519,17 @@ read: aBuffer
 	self readForward: aBuffer.
 	self mixTailInto: aBuffer! !
 
-!Sample methodsFor: 'processing' stamp: 'len 16/Mar/2026 15:17:20'!
+!Sample methodsFor: 'processing' stamp: 'len 22/Mar/2026 15:53:15'!
 readBackwards: aBuffer
 	1 to: aBuffer size do: [:i|
-		aBuffer at: i put: (buffer atSmooth: position + 1.0).
+		aBuffer at: i put: (buffer atLinear: position + 1.0).
 		(position := position - increment) >= 0.0 ifFalse:
 			[position := 0.0.
 			released := true.
 			aBuffer from: i + 1 to: aBuffer size put: 0.0.
 			^ self]]! !
 
-!Sample methodsFor: 'processing' stamp: 'len 16/Mar/2026 15:17:24'!
+!Sample methodsFor: 'processing' stamp: 'len 22/Mar/2026 15:53:24'!
 readForward: aBuffer
 	| end loopEndMinusOne |
 	end := buffer size - 1. "- 1 to allow for interpolation with next sample without checking bounds every time"
@@ -5445,7 +5538,7 @@ readForward: aBuffer
 		[aBuffer atAllPut: 0.0.
 		^ self].
 	1 to: aBuffer size do: [:i|
-		aBuffer at: i put: (buffer atSmooth: position + 1.0).
+		aBuffer at: i put: (buffer atLinear: position + 1.0).
 		((position := position + increment) >= loopEndMinusOne and: [released not]) ifTrue:
 			[position := position - loopLength].
 		position < end ifFalse:
@@ -5478,10 +5571,10 @@ readFromJson: json buffers: aList
 	label := json at: #label ifAbsent: [''].
 	label isEmpty ifTrue: [label := nil]! !
 
-!Sample methodsFor: 'ui' stamp: 'len 18/Mar/2026 23:38:25'!
+!Sample methodsFor: 'ui' stamp: 'len 20/Mar/2026 15:01:52'!
 panel
 	^ super panel
-		addMorph: (TextualControlMorph control: (controls at: #speed));
+		addTextualControl: (controls at: #speed);
 		addToggle: (controls at: #warp) label: 'Warp'! !
 
 !Sample methodsFor: 'ui' stamp: 'len 18/Mar/2026 23:58:35'!
@@ -5955,11 +6048,11 @@ update
 	tap setDelayIncrement: (self get: #time) * self class sampleRate - tap delay / (self class sampleRate * 0.1). "slide over 100 ms to avoid phaser effect"
 	gain := self get: #gain! !
 
-!Allpass methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:46:14'!
+!Allpass methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:59:02'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (0.03 * self class sampleRate) ceiling.
-	tap := DelayLineTap on: delayLine.
+	tap := DelayTapT1 on: delayLine.
 	gain := 0.0! !
 
 !Allpass methodsFor: 'initialization' stamp: 'len 14/Jan/2026 15:34:24'!
@@ -5989,11 +6082,11 @@ update
 	feedback := self get: #feedback.
 	damping := self get: #damping! !
 
-!Comb methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:46:14'!
+!Comb methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:59:02'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (0.5 * self class sampleRate) ceiling.
-	tap := DelayLineTap on: delayLine.
+	tap := DelayTapT1 on: delayLine.
 	feedback := 0.0.
 	damping := 0.0.
 	x0 := 0.0! !
@@ -6035,11 +6128,11 @@ update
 	super update.
 	tap setDelayIncrement: (self get: #time) * self class sampleRate - tap delay / (self class sampleRate * 0.03) "slide over 30 ms"! !
 
-!Echo methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:46:14'!
+!Echo methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:59:02'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: self class sampleRate ceiling.
-	tap := DelayLineTap on: delayLine! !
+	tap := DelayTapT1 on: delayLine! !
 
 !Echo methodsFor: 'initialization' stamp: 'len 14/Jan/2026 15:44:28'!
 initializeControls
@@ -6072,11 +6165,11 @@ update
 	feedback := self get: #feedback.
 	mix := self get: #mix! !
 
-!Flanger methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:46:14'!
+!Flanger methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:59:02'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (self class sampleRate * 0.005 "5 ms max") ceiling.
-	tap := DelayLineTap on: delayLine.
+	tap := DelayTapT1 on: delayLine.
 	self reset! !
 
 !Flanger methodsFor: 'initialization' stamp: 'len 24/Feb/2026 23:52:59'!
@@ -6212,11 +6305,11 @@ update
 	combs do: [:each| each undenormalize; feedback: feedback; damp: damp].
 	mix := self get: #mix! !
 
-!Reverb methodsFor: 'initialization' stamp: 'len 6/Mar/2026 19:14:50'!
+!Reverb methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:59:02'!
 initialize
 	super initialize.
 	predelayLine := DelayLine new: (self class sampleRate * 0.15) ceiling. "150 ms"
-	predelayTap := DelayLineTap on: predelayLine.
+	predelayTap := DelayTapT1 on: predelayLine.
 	combs := #(1116 1188 1277 1356 1422 1491 1557 1617) collect: [:each| LowpassComb new: (each * self class sampleRate / 44100.0) truncated].
 	allpasses := #(556 441 341 225) collect: [:each| AllpassComb new: (each * self class sampleRate / 44100.0) truncated]! !
 
@@ -6278,15 +6371,15 @@ update
 	lsf undenormalize; ls: 120.0 / self class sampleRate Q: 0.707 gain: (self get: #bass). "120 Hz"
 	hsf undenormalize; hs: 4000.0 / self class sampleRate Q: 0.707 gain: (self get: #treble) "4 kHz"! !
 
-!TapeEcho methodsFor: 'initialization' stamp: 'len 3/Mar/2026 16:36:09'!
+!TapeEcho methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:59:02'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (self class sampleRate * 2) ceiling.
-	tap1 := DelayLineTap on: delayLine.
-	tap2 := DelayLineTap on: delayLine.
-	tap3 := DelayLineTap on: delayLine.
-	lpf := OnePole new pole: 8000.0 / self class sampleRate. "8 kHz"
-	hpf := OnePole new pole: 40.0 / self class sampleRate. "40 Hz"
+	tap1 := DelayTapT1 on: delayLine.
+	tap2 := DelayTapT1 on: delayLine.
+	tap3 := DelayTapT1 on: delayLine.
+	lpf := OnePole new frequency: 8000.0 / self class sampleRate. "8 kHz"
+	hpf := OnePole new frequency: 40.0 / self class sampleRate. "40 Hz"
 	lsf := Biquad new.
 	hsf := Biquad new! !
 
@@ -6356,11 +6449,11 @@ update
 	depth := self get: #depth.
 	time := self get: #time! !
 
-!Vibrato methodsFor: 'initialization' stamp: 'len 26/Jan/2026 18:15:10'!
+!Vibrato methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:59:02'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (self class sampleRate * 0.015 "15 ms max") ceiling.
-	tap := DelayLineTap on: delayLine.
+	tap := DelayTapT1 on: delayLine.
 	self reset! !
 
 !Vibrato methodsFor: 'initialization' stamp: 'len 1/Feb/2026 15:46:49'!
@@ -6667,24 +6760,24 @@ internalSampleRate
 	"The internal sample rate is doubled."
 	^ self class sampleRate * 2! !
 
-!TubeSaturator methodsFor: 'controlling' stamp: 'len 12/Feb/2026 14:45:28'!
+!TubeSaturator methodsFor: 'controlling' stamp: 'len 19/Mar/2026 16:58:59'!
 update
 	super update.
 	drive := self get: #drive.
 	postgain := self get: #postgain.
-	prelpf pole: (self get: #tone) / self internalSampleRate.
+	prelpf frequency: (self get: #tone) / self internalSampleRate.
 	prehpf undenormalize.
 	prelpf undenormalize.
 	postlpf undenormalize.
 	dcblock undenormalize! !
 
-!TubeSaturator methodsFor: 'initialization' stamp: 'len 12/Feb/2026 14:45:19'!
+!TubeSaturator methodsFor: 'initialization' stamp: 'len 19/Mar/2026 16:58:54'!
 initialize
 	super initialize.
-	prehpf := OnePole new pole: 120.0 / self internalSampleRate.  "120 hz"
+	prehpf := OnePole new frequency: 120.0 / self internalSampleRate.  "120 hz"
 	prelpf := OnePole new. "frequency set from the tone control"
-	postlpf := OnePole new pole: 18000.0 / self internalSampleRate. "18 khz"
-	dcblock := OnePole new pole: 10.0 / self internalSampleRate "10 hz"! !
+	postlpf := OnePole new frequency: 18000.0 / self internalSampleRate. "18 khz"
+	dcblock := OnePole new frequency: 10.0 / self internalSampleRate "10 hz"! !
 
 !TubeSaturator methodsFor: 'initialization' stamp: 'len 13/Feb/2026 16:00:05'!
 initializeControls
@@ -7055,7 +7148,7 @@ patchable
 		addAudioOutput: #setOutput:;
 		yourself! !
 
-!TapeSaturator methodsFor: 'controlling' stamp: 'len 12/Feb/2026 14:47:08'!
+!TapeSaturator methodsFor: 'controlling' stamp: 'len 19/Mar/2026 16:59:09'!
 update
 	super update.
 	drive := self get: #drive.
@@ -7065,14 +7158,14 @@ update
 	tone := self get: #tone.
 	postgain := self get: #postgain.
 	"darker at high drive:"
-	postlpf pole: ((drive * 0.08) tanh * 12000.0 + 6000.0) / self class sampleRate. "6 kHz to 18 kHz"
+	postlpf frequency: ((drive * 0.08) tanh * 12000.0 + 6000.0) / self class sampleRate. "6 kHz to 18 kHz"
 	prehpf undenormalize.
 	postlpf undenormalize! !
 
-!TapeSaturator methodsFor: 'initialization' stamp: 'len 12/Feb/2026 14:47:14'!
+!TapeSaturator methodsFor: 'initialization' stamp: 'len 19/Mar/2026 16:59:02'!
 initialize
 	super initialize.
-	prehpf := OnePole new pole: 4000.0 / self class sampleRate. "4 khz"
+	prehpf := OnePole new frequency: 4000.0 / self class sampleRate. "4 khz"
 	postlpf := OnePole new! !
 
 !TapeSaturator methodsFor: 'initialization' stamp: 'len 13/Feb/2026 15:48:51'!
@@ -7562,8 +7655,8 @@ setInput: aBuffer
 adjustNoteBy: aNumber
 	note := note + aNumber min: 127.0 max: 0! !
 
-!KeyTracker methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:06:31'!
-noteOn: aNumber
+!KeyTracker methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:18:55'!
+setNote: aNumber
 	note := aNumber! !
 
 !KeyTracker methodsFor: 'initialization' stamp: 'len 10/Feb/2026 17:00:18'!
@@ -7602,12 +7695,12 @@ phase
 adjustNoteBy: aNumber
 	^ self! !
 
-!LFO methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:24:04'!
-noteOff
+!LFO methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:21:00'!
+gateOff
 	heldValue := nil! !
 
-!LFO methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:23:54'!
-noteOn: aNumber
+!LFO methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:23:47'!
+gateOn
 	heldValue := nil.
 	mode = #trig ifTrue: [self reset]! !
 
@@ -7616,10 +7709,6 @@ reset
 	phase := offset.
 	random seed: seed + offset hash.
 	randomValue := random next! !
-
-!LFO methodsFor: 'controlling' stamp: 'len 22/Jan/2026 16:24:41'!
-setBPM: aNumber
-	bpm := aNumber! !
 
 !LFO methodsFor: 'controlling' stamp: 'len 18/Mar/2026 19:06:04'!
 update
@@ -8100,6 +8189,10 @@ addSmallKnob: aControl label: labelString
 !ControlPanel methodsFor: 'building' stamp: 'len 3/Mar/2026 16:33:01'!
 addSmallVerticalSlider: aControl label: aString
 	self addMorph: ((SliderControlMorph control: aControl) morphExtent: 24 @ 36; withLabel: aString)! !
+
+!ControlPanel methodsFor: 'building' stamp: 'len 20/Mar/2026 15:01:13'!
+addTextualControl: aControl
+	self addMorph: (TextualControlMorph new control: aControl)! !
 
 !ControlPanel methodsFor: 'building' stamp: 'len 18/Mar/2026 19:16:03'!
 addToggle: aControl label: aString
@@ -8887,6 +8980,15 @@ process: aBuffer
 		position := position + 1 \\ image width].
 	self redrawNeeded! !
 
+!XxxMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Mar/2026 15:17:34'!
+drawOn: aCanvas
+	aCanvas strokeWidth: 2 color: Color white fillColor: Color lightGray do:
+		[aCanvas moveTo: 0 @ extent y; lineTo: extent x / 2.0 @ 0; lineTo: extent; closePath]! !
+
+!XxxMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Mar/2026 15:16:28'!
+requiresVectorCanvas
+	^ true! !
+
 !ChoiceControlMorph methodsFor: 'accessing' stamp: 'len 18/Mar/2026 18:46:40'!
 color: aColor
 	color := aColor! !
@@ -9019,11 +9121,11 @@ defaultLabelFontSize
 inactiveColor
 	^ self hasKeyboardFocus ifTrue: [Color veryLightGray] ifFalse: [Color lightGray]! !
 
-!ControlMorph methodsFor: 'building' stamp: 'len 13/Feb/2026 15:35:33'!
+!ControlMorph methodsFor: 'building' stamp: 'len 20/Mar/2026 18:48:42'!
 withLabel: aString
 	^ LinearLayoutMorph newColumn
 		color: Color transparent;
-		gap: 4;
+		gap: 2;
 		addMorph: self;
 		addMorph: (LabelMorph contents: aString fontSize: self defaultLabelFontSize)! !
 
@@ -9082,21 +9184,6 @@ adjustControlBy: aNumber
 	control apply.
 	self redrawNeeded.
 	self wantsBalloon ifTrue: [self showBalloon: control printedBaseValueWithLabel]! !
-
-!ControlMorph methodsFor: 'drawing' stamp: 'len 14/Jan/2026 16:57:23'!
-drawFocusIndicatorOn: aCanvas
-	aCanvas fillRectangle: self localBounds color: (Color redCathode alpha: 0.3)
-
-"	| d h w |
-	w := extent x.
-	h := extent y - 1.
-	d := 4.0.
-	aCanvas strokeWidth: 2 color: Color redCathode do:
-		[aCanvas
-			moveTo: 0 @ d; lineTo: 0 @ 0; lineTo: d @ 0;
-			moveTo: w - d @ 0; lineTo: w @ 0; lineTo: w @ d;
-			moveTo: w @ (h - d); lineTo: w @ h; lineTo: w - d @ h;
-			moveTo: 0 @ (h - d); lineTo: 0 @ h; lineTo: d @ h]"! !
 
 !ControlMorph class methodsFor: 'instance creation' stamp: 'len 4/Nov/2025 15:49:00'!
 control: aControl
@@ -9353,6 +9440,131 @@ stepTime
 !SymmetricWaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 13/Feb/2026 19:32:58'!
 wantsSteps
 	^ true! !
+
+!DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Mar/2026 19:03:18'!
+adjust: control by: aNumber
+	control adjustBy: aNumber.
+	control apply.
+	self redrawNeeded.
+	self showBalloon: control printedBaseValueWithLabel! !
+
+!DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Mar/2026 19:08:39'!
+balloonText
+	| answer |
+	answer := control1 printedBaseValueWithLabel.
+	control2 ifNotNil: [answer := answer, ', ', control2 printedBaseValueWithLabel].
+	^ answer! !
+
+!DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Mar/2026 18:56:44'!
+control1: aControl
+	control1 removeDependent: self.
+	control1 := aControl.
+	aControl addDependent: self! !
+
+!DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Mar/2026 18:56:51'!
+control2: aControl
+	control2 removeDependent: self.
+	control2 := aControl.
+	aControl addDependent: self! !
+
+!DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Mar/2026 19:08:51'!
+defaultExtent
+	^ `128 @ 64`! !
+
+!DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Mar/2026 19:05:29'!
+handlesMouseScroll: anEvent
+	^ anEvent anyModifierKeyPressed not or: [anEvent secondaryModifierPressed]! !
+
+!DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Mar/2026 19:02:53'!
+keyStroke: anEvent
+	| control |
+	control := anEvent secondaryModifierPressed ifTrue: [control2] ifFalse: [control1].
+	control ifNil: [^ self].
+	anEvent isEsc ifTrue:
+		[anEvent wasHandled: true. control resetToDefault. ^ self].
+	(anEvent isArrowUp or: [anEvent isArrowRight]) ifTrue:
+		[anEvent wasHandled: true. self adjust: control by: (anEvent shiftPressed ifTrue: [control fineStep] ifFalse: [control coarseStep]). ^ self].
+	(anEvent isArrowDown or: [anEvent isArrowLeft]) ifTrue:
+		[anEvent wasHandled: true. self adjust: control by: (anEvent shiftPressed ifTrue: [control fineStep] ifFalse: [control coarseStep]) negated. ^ self]! !
+
+!DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Mar/2026 19:07:53'!
+mouseScroll: anEvent localPosition: localEventPosition
+	| control |
+	control := anEvent secondaryModifierPressed ifTrue: [control2] ifFalse: [control1].
+	control ifNil: [^ self].
+	(anEvent direction = #left or: [anEvent direction = #down]) ifTrue: [self adjust: control by: (anEvent shiftPressed ifTrue: [control fineStep] ifFalse: [control coarseStep]). ^ self].
+	(anEvent direction = #right or: [anEvent direction = #up]) ifTrue: [self adjust: control by: (anEvent shiftPressed ifTrue: [control fineStep] ifFalse: [control coarseStep]) negated. ^ self]! !
+
+!DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Mar/2026 18:57:05'!
+requiresVectorCanvas
+	^ true! !
+
+!DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Mar/2026 18:56:57'!
+update: anObject
+	self redrawNeeded! !
+
+!DynamicsActivityMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Mar/2026 21:17:50'!
+addEnvelope: aNumber
+	currentPosition := currentPosition < envelopeBuffer size ifTrue: [currentPosition + 1] ifFalse: [1].
+	envelopeBuffer at: currentPosition put: (aNumber min: 1.0 max: 0.0)! !
+
+!DynamicsActivityMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Mar/2026 21:17:44'!
+addGainReduction: aNumber
+	gainReductionBuffer at: currentPosition put: (aNumber min: 1.0 max: 0.0).
+	self redrawNeeded! !
+
+!DynamicsActivityMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Mar/2026 21:07:05'!
+defaultExtent
+	^`128 @ 64`! !
+
+!DynamicsActivityMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Mar/2026 19:12:38'!
+drawOn: aCanvas
+	| step x y h pos delta |
+	delta := 20.
+	step := self morphWidth / (envelopeBuffer size - delta) * 5.
+	(pos := currentPosition + delta) > envelopeBuffer size ifTrue: [pos := pos - envelopeBuffer size].
+	h := self morphHeight - 6.0.
+	x := 0.
+	y := 1.0 - (gainReductionBuffer at: pos) * h + 3.0.
+	aCanvas strokeWidth: 2 color: PatchMorph waveformColor3 do:
+		[aCanvas moveTo: x @ y.
+		0 to: gainReductionBuffer size - delta - 5 by: 5 do: [:i|
+			x := x + step.
+			y := 1.0 - (gainReductionBuffer at: pos + i \\ gainReductionBuffer size + 1) * h + 3.0.
+			aCanvas lineTo: x @ y]].
+	x := 0.
+	y := 1.0 - (envelopeBuffer at: pos) * h + 3.0.
+	aCanvas fillColor: Color lightGray do:
+		[aCanvas moveTo: x @ (h + 3.0); lineTo: x @ y.
+		0 to: envelopeBuffer size - delta - 5 by: 5 do: [:i|
+			x := x + step.
+			y := 1.0 - (envelopeBuffer at: pos + i \\ envelopeBuffer size + 1) * h + 3.0.
+			aCanvas lineTo: x @ y].
+		aCanvas lineTo: x @ (h + 3.0); closePath].
+	y := 1.0 - control1 modulatedPosition * h + 3.0.
+	aCanvas line: 0 @ y to: self morphWidth @ y width: 2 color: PatchMorph waveformColor.
+	control2 ifNil: [^ self].
+	y := 1.0 - control2 modulatedPosition * h + 3.0.
+	aCanvas line: 0 @ y to: self morphWidth @ y width: 2 color: (PatchMorph waveformColor darker: 0.25)! !
+
+!DynamicsActivityMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Mar/2026 21:19:34'!
+initialize
+	super initialize.
+	envelopeBuffer := Float32Array new: 64*5.
+	gainReductionBuffer := Float32Array new: 64*5 withAll: 1.0.
+	currentPosition := 1! !
+
+!DynamicsActivityMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Mar/2026 21:07:05'!
+requiresVectorCanvas
+	^ true! !
+
+!DynamicsActivityMorph methodsFor: 'as yet unclassified' stamp: 'len 21/Mar/2026 17:52:02'!
+return: aControl
+	self control2: aControl! !
+
+!DynamicsActivityMorph methodsFor: 'as yet unclassified' stamp: 'len 21/Mar/2026 17:51:47'!
+threshold: aControl
+	self control1: aControl! !
 
 !ToggleControlMorph methodsFor: 'accessing' stamp: 'len 18/Mar/2026 19:11:13'!
 color: aColor
@@ -12623,78 +12835,109 @@ write: inputBuffer read: outputBuffer
 	y1 abs < 1.0e-15 ifTrue: [y1 := 0.0].
 	y2 abs < 1.0e-15 ifTrue: [y2 := 0.0]! !
 
-!DelayLine methodsFor: 'accessing' stamp: 'len 20/Feb/2026 15:08:46'!
+!DelayLine methodsFor: 'accessing' stamp: 'len 23/Mar/2026 16:36:37'!
 at: anInteger
 	"Answer the value of the delay line at anInteger samples in the past.
 	1 corresponds to the last written sample."
 	| i |
-	(i := position - anInteger) >= 1 ifFalse: [i := i + length].
+	(i := position - anInteger) >= 1 ifFalse: [i := i + buffer size].
 	^ buffer at: i! !
 
 !DelayLine methodsFor: 'accessing' stamp: 'len 20/Feb/2026 15:02:19'!
 buffer
 	^ buffer! !
 
-!DelayLine methodsFor: 'accessing' stamp: 'len 26/Jan/2026 14:53:09'!
+!DelayLine methodsFor: 'accessing' stamp: 'len 23/Mar/2026 16:36:51'!
 length
-	^ length! !
+	^ buffer size! !
 
 !DelayLine methodsFor: 'accessing' stamp: 'len 26/Jan/2026 14:56:55'!
 position
 	^ position! !
 
-!DelayLine methodsFor: 'accessing' stamp: 'len 26/Jan/2026 14:53:09'!
-setLength: anInteger
-	length := anInteger "min: buffer size max: 1"! !
-
 !DelayLine methodsFor: 'controlling' stamp: 'len 26/Jan/2026 14:54:03'!
 reset
 	buffer atAllPut: 0.0! !
 
-!DelayLine methodsFor: 'initialization' stamp: 'len 26/Jan/2026 14:56:48'!
+!DelayLine methodsFor: 'initialization' stamp: 'len 23/Mar/2026 16:35:55'!
 initialize: anInteger
 	buffer := Float32Array new: anInteger + 1.
-	length := anInteger + 1.
 	position := 0! !
 
-!DelayLine methodsFor: 'processing' stamp: 'len 26/Jan/2026 14:56:48'!
+!DelayLine methodsFor: 'processing' stamp: 'len 23/Mar/2026 16:36:25'!
 write: in
+	| n |
 	position := position + 1.
-	position > length ifTrue: [position := position - length].
+	position > (n := buffer size) ifTrue: [position := position - n].
 	buffer at: position put: in! !
 
 !DelayLine class methodsFor: 'instance creation' stamp: 'len 26/Jan/2026 14:53:09'!
 new: anInteger
 	^ self new initialize: anInteger! !
 
-!DelayLineTap methodsFor: 'accessing' stamp: 'len 25/Feb/2026 00:01:01'!
+!DelayTap methodsFor: 'accessing' stamp: 'len 22/Mar/2026 15:22:16'!
 delay
 	"Answer the number of samples delayed by this tap."
 	^ delay! !
 
-!DelayLineTap methodsFor: 'accessing' stamp: 'len 26/Jan/2026 14:55:50'!
+!DelayTap methodsFor: 'accessing' stamp: 'len 22/Mar/2026 15:22:16'!
 setDelay: aNumber
 	"Set a new delay time.."
 	delay := aNumber.
 	increment := 0.0! !
 
-!DelayLineTap methodsFor: 'accessing' stamp: 'len 26/Jan/2026 14:55:50'!
+!DelayTap methodsFor: 'accessing' stamp: 'len 22/Mar/2026 15:22:16'!
 setDelayIncrement: aNumber
 	"Set a delay increment. This is added to the delay time on every read."
 	increment := aNumber! !
 
-!DelayLineTap methodsFor: 'controlling' stamp: 'len 26/Jan/2026 15:06:11'!
+!DelayTap methodsFor: 'controlling' stamp: 'len 22/Mar/2026 15:26:14'!
 reset
-	x1 := y1 := 0! !
+	increment := 0.0! !
 
-!DelayLineTap methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:10:46'!
+!DelayTap methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:26:29'!
 setDelayLine: aDelayLine
 	delayLine := aDelayLine.
 	delay := delayLine length.
-	x1 := y1 := 0.
-	increment := 0.0! !
+	self reset! !
 
-!DelayLineTap methodsFor: 'processing' stamp: 'len 20/Feb/2026 15:03:30'!
+!DelayTap methodsFor: 'processing' stamp: 'len 22/Mar/2026 15:39:19'!
+read
+	| n i |
+	delay := delay + increment.
+	delay >= (n := delayLine length) ifTrue: [delay := delay - n].
+	i := delayLine position - delay.
+	i >= 1.0 ifFalse: [i := i + n].
+	^​ delayLine buffer at: i truncated "no interpolation"! !
+
+!DelayTap class methodsFor: 'instance creation' stamp: 'len 22/Mar/2026 15:22:16'!
+on: aDelayLine
+	^ self new setDelayLine: aDelayLine! !
+
+!DelayTapC methodsFor: 'processing' stamp: 'len 23/Mar/2026 16:33:35'!
+read
+	| n i |
+	delay := delay + increment.
+	delay >= (n := delayLine length) ifTrue: [delay := delay - n].
+	i := delayLine position - delay.
+	i >= 1.0 ifFalse: [i := i + n].
+	^​ delayLine buffer atWrapCubic: i "Lagrange cubic interpolation"! !
+
+!DelayTapL methodsFor: 'processing' stamp: 'len 23/Mar/2026 16:30:45'!
+read
+	| n i |
+	delay := delay + increment.
+	delay >= (n := delayLine length) ifTrue: [delay := delay - n].
+	i := delayLine position - delay.
+	i >= 1.0 ifFalse: [i := i + n].
+	^​ delayLine buffer atWrapLinear: i "linear interpolation"! !
+
+!DelayTapT1 methodsFor: 'controlling' stamp: 'len 22/Mar/2026 15:36:09'!
+reset
+	super reset.
+	x1 := y1 := 0.0! !
+
+!DelayTapT1 methodsFor: 'processing' stamp: 'len 20/Feb/2026 15:03:30'!
 read
 	| n i f a x |
 	delay := delay + increment.
@@ -12708,7 +12951,40 @@ read
 	x1 := x.
 	^ y1! !
 
-!DelayLineTap class methodsFor: 'instance creation' stamp: 'len 26/Jan/2026 17:11:08'!
+!DelayTapT1 class methodsFor: 'instance creation' stamp: 'len 26/Jan/2026 17:11:08'!
+on: aDelayLine
+	^ self new setDelayLine: aDelayLine! !
+
+!DelayTapT2 methodsFor: 'controlling' stamp: 'len 22/Mar/2026 15:35:59'!
+reset
+	super reset.
+	x1 := x2 := y1 := y2 := 0.0! !
+
+!DelayTapT2 methodsFor: 'processing' stamp: 'len 22/Mar/2026 15:34:56'!
+read
+	| n i f a1 a2 x y |
+	delay := delay + increment.
+	delay >= (n := delayLine length) ifTrue: [delay := delay - n].
+	i := delayLine position - delay.
+	i >= 1.0 ifFalse: [i := i + n].
+	f := i - (i := i truncated).
+
+	"2nd-order filter delay is 1+f, so read one sample newer to compensate"
+	i := i + 1.
+	i > n ifTrue: [i := i - n].
+	x := delayLine buffer at: i.
+
+	"Thiran coefficients for D = 1+f, derived by substituting into the general formula"
+	a1 := 2.0 * (1.0 - f) / (f + 2.0).
+	a2 := f * (f - 1.0) / ((f + 2.0) * (f + 3.0)).
+
+	"y[n] = a2*x[n] + a1*x[n-1] + x[n-2] - a1*y[n-1] - a2*y[n-2]"
+ 	y := a2 * x + (a1 * x1) + x2 - (a1 * y1) - (a2 * y2).
+	x2 := x1. x1 := x.
+	y2 := y1. y1 := y.
+	^ y! !
+
+!DelayTapT2 class methodsFor: 'instance creation' stamp: 'len 22/Mar/2026 15:27:44'!
 on: aDelayLine
 	^ self new setDelayLine: aDelayLine! !
 
@@ -12787,10 +13063,6 @@ setSize: anIntegerPowerOfTwo
 	n = anIntegerPowerOfTwo ifFalse: [self error: 'size must be a power of two']
 ! !
 
-!FFT methodsFor: 'accessing' stamp: 'len 19/Oct/2025 14:40:00'!
-data
-	^ ComplexArray real: realData imaginary: imagData! !
-
 !FFT methodsFor: 'accessing' stamp: 'len 19/Oct/2025 20:50:00'!
 imaginary
 	^ imagData! !
@@ -12806,51 +13078,6 @@ real
 !FFT methodsFor: 'accessing' stamp: 'len 19/Oct/2025 20:49:00'!
 size
 	^ n! !
-
-!FFT methodsFor: 'testing' stamp: 'jmv 15/Aug/2012 15:35:00'!
-plot: samples in: rect
-	"Throw-away code just to check out a couple of examples"
-	| min max x dx pen y |
-	Display fillWhite: rect; border: (rect expandBy: 2) width: 2.
-	min _ 1.0e30.  max _ -1.0e30.
-	samples do: [ :v |
-		min _ min min: v.
-		max _ max max: v].
-	pen _ Pen new.
-	pen up.
-	y _ (max/(max-min) * rect height + rect top).
-	pen goto: rect left@ y.
-	pen down.
-	pen goto: rect right@ y.
-	pen up.
-	x _ rect left.
-	dx _ rect width asFloat / (samples size-1).
-	samples do: [ :v |
-		y _ (max-v) / (max-min) * rect height asFloat.
-		pen goto: x asInteger @ (rect top + y asInteger).
-		pen down.
-		x _ x + dx].
-	max printString displayOn: Display at: (x+2) @ (rect top-9).
-	min printString displayOn: Display at: (x+2) @ (rect bottom - 9)! !
-
-!FFT methodsFor: 'testing' stamp: 'jmv 27/Aug/2014 15:07:00'!
-plot: samples in: rect color: aColor min: min max: max
-	"Throw-away code just to check out a couple of examples"
-	| x dx pen y |
-	pen _ Pen new.
-	pen color: aColor.
-	pen up.
-	x _ rect left.
-	dx _ rect width asFloat / (samples size-1).
-	samples do: [ :v |
-		y _ (max-v) / (max-min) * rect height asFloat.
-		y _ y min: rect height.
-		y _ y max: 0.
-		pen goto: x asInteger @ (rect top + y asInteger).
-		pen down.
-		x _ x + dx].
-	max printString displayOn: Display at: (x+2) @ (rect top-9).
-	min printString displayOn: Display at: (x+2) @ (rect bottom - 9)! !
 
 !FFT methodsFor: 'testing' stamp: 'len 19/Oct/2025 13:37:00'!
 samplesPerCycleForIndex: i
@@ -13187,13 +13414,17 @@ value: in
 	position := position \\ buffer size.
 	^ out! !
 
-!OnePole methodsFor: 'accessing' stamp: 'len 8/Mar/2026 17:07:25'!
-pole: normalizedFrequency
-	a := (Float pi * normalizedFrequency * -2.0) exp! !
+!OnePole methodsFor: 'accessing' stamp: 'len 19/Mar/2026 16:59:30'!
+frequency: normalizedFrequency
+	pole := (Float pi * normalizedFrequency * -2.0) exp! !
 
-!OnePole methodsFor: 'accessing' stamp: 'len 8/Mar/2026 17:08:49'!
+!OnePole methodsFor: 'accessing' stamp: 'len 19/Mar/2026 16:59:45'!
+pole: aNumber
+	pole := aNumber! !
+
+!OnePole methodsFor: 'accessing' stamp: 'len 19/Mar/2026 16:59:30'!
 time: timeInSamples
-	a := (-1.0 / timeInSamples) exp! !
+	pole := (-1.0 / timeInSamples) exp! !
 
 !OnePole methodsFor: 'controlling' stamp: 'len 8/Feb/2026 14:54:09'!
 reset
@@ -13204,18 +13435,18 @@ undenormalize
 	"Clear any denormal state."
 	y abs < 1.0e-15 ifTrue: [y := 0.0]! !
 
-!OnePole methodsFor: 'initialization' stamp: 'len 8/Feb/2026 14:34:39'!
+!OnePole methodsFor: 'initialization' stamp: 'len 19/Mar/2026 16:59:30'!
 initialize
-	a := 1.0.
+	pole := 1.0.
 	self reset! !
 
-!OnePole methodsFor: 'processing' stamp: 'len 8/Feb/2026 14:54:09'!
+!OnePole methodsFor: 'processing' stamp: 'len 19/Mar/2026 16:59:30'!
 value: in
-	^ y := (1.0 - a) * in + (a * y)! !
+	^ y := (1.0 - pole) * in + (pole * y)! !
 
-!Polyphase13TapOversampler2x methodsFor: 'controlling' stamp: 'len 3/Feb/2026 03:43:38'!
+!Polyphase13TapOversampler2x methodsFor: 'controlling' stamp: 'len 23/Mar/2026 16:40:25'!
 reset
-	x0 := x1 := x2 := x3 := x4 := x5 := x6 := d0 := d1 := d2 := d3 := d4 := d5 := d6 := e0 := e1 := 0.0! !
+	x1 := x2 := x3 := x4 := x5 := x6 := d1 := d2 := d3 := d4 := d5 := d6 := e1 := 0.0! !
 
 !Polyphase13TapOversampler2x methodsFor: 'initialization' stamp: 'len 3/Feb/2026 03:43:37'!
 initialize
@@ -13378,15 +13609,52 @@ readWaveChunk: chunkType
 plot
 	^ PlotMorph new plot: self! !
 
-!FloatArray methodsFor: '*signals' stamp: 'len 9/Dec/2025 15:20:44'!
-atSmooth: floatIndex
+!FloatArray methodsFor: '*signals' stamp: 'len 23/Mar/2026 16:43:37'!
+atCubic: floatIndex
+	"Cubic Lagrange interpolation (4 points).
+	Note: this is about 3 times slower than linear interpolation (atLinear:)"
+	| i f n x0 x1 x2 x3 c0 c1 c2 c3 |
+	i := floatIndex truncated.
+	(f := floatIndex - i) = 0.0 ifTrue: [^ self at: i].
+	n := self size.
+	x0 := i > 1 ifTrue: [self at: i - 1] ifFalse: [0.0].
+	x1 := self at: i.
+	x2 := i < n ifTrue: [self at: i + 1] ifFalse: [0.0].
+	x3 := i < (n+1) ifTrue: [self at: i + 2] ifFalse: [0.0].
+	c0 := x0.
+	c1 := 0.5 * (x2 - x0).
+	c2 := x0 - (2.5 * x1) + (2.0 * x2) - (0.5 * x3).
+	c3 := (0.5 * (x3 - x0)) + (1.5 * (x1 - x2)).
+	^ ((((c3 * f) + c2) * f) + c1) * f + c0! !
+
+!FloatArray methodsFor: '*signals' stamp: 'len 22/Mar/2026 15:49:30'!
+atLinear: floatIndex
+	"Linear interpolation."
 	| i f |
 	i := floatIndex truncated.
 	(f := floatIndex - i) = 0.0 ifTrue: [^ self at: i].
 	^ (1.0 - f) * (self at: i) + (f * (self at: i+1))! !
 
-!FloatArray methodsFor: '*signals' stamp: 'len 9/Dec/2025 15:20:33'!
-atWrapSmooth: floatIndex
+!FloatArray methodsFor: '*signals' stamp: 'len 23/Mar/2026 16:33:17'!
+atWrapCubic: floatIndex
+	"Cubic Lagrange interpolation (4 points)."
+	| i f n x0 x1 x2 x3 c0 c1 c2 c3 |
+	i := floatIndex truncated.
+	(f := floatIndex - i) = 0.0 ifTrue: [^ self at: i].
+	n := self size.
+	x0 := self atWrap: i - 1.
+	x1 := self atWrap: i.
+	x2 := self atWrap: i + 1.
+	x3 := self atWrap: i + 2.
+	c0 := x0.
+	c1 := 0.5 * (x2 - x0).
+	c2 := x0 - (2.5 * x1) + (2.0 * x2) - (0.5 * x3).
+	c3 := (0.5 * (x3 - x0)) + (1.5 * (x1 - x2)).
+	^ ((((c3 * f) + c2) * f) + c1) * f + c0! !
+
+!FloatArray methodsFor: '*signals' stamp: 'len 23/Mar/2026 16:33:30'!
+atWrapLinear: floatIndex
+	"Linear interpolation."
 	| i f |
 	i := floatIndex truncated.
 	f := floatIndex - i.

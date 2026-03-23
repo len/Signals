@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 19 March 2026 at 3:25:13 pm'!
+'From Cuis7.7 [latest update: #7797] on 24 March 2026 at 1:59:57 am'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 9!
+!provides: 'Tracker' 1 10!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -68,7 +68,7 @@ TrackerBarMorph class
 
 !classDefinition: #Instrument category: #'Tracker-Kernel'!
 Object subclass: #Instrument
-	instanceVariableNames: 'label patch modules noteReceivers velocityReceivers glideReceivers tempoReceivers samples audioOutput controlValues track trigger'
+	instanceVariableNames: 'label patch modules noteReceivers velocityReceivers gateReceivers samples audioOutput controlValues note noteIncrement glideTicks track trigger'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Tracker-Kernel'!
@@ -123,7 +123,7 @@ A trigger is a cell in a pattern. It can contain any of the following (optional)
 Commands:
 ∙ Cxy set velocity to x (0.0 to 1.0) after (y+1)/16 of a line
 ∙ Rxx retrigger every (xx+1)/256 of a line
-∙ Gxx glide to note at speed xx
+∙ Gxx glide to note at speed xx in 1/16th of a line
 ∙ Lxx set instrument volume level to xx (0.0 to 1.0)
 ∙ Pxx set instrument pan (00 = left, 80 = center, FF = right)
 ∙ Ixx / Oxx adjust volume level up/down
@@ -269,7 +269,7 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
 	^ false! !
 
-!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 9/Mar/2026 22:27:39'!
+!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 24/Mar/2026 01:22:06'!
 keyStroke: anEvent
 	| c i |
 	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
@@ -282,9 +282,9 @@ keyStroke: anEvent
 		^ self].
 	anEvent anyModifierKeyPressed ifFalse:
 		[c := anEvent keyCharacter.
-		c = $a ifTrue: [anEvent wasHandled: true. tracker selectedInstrument ifNotNil: [:aPatch| aPatch noteOff]. ^ self].
+		c = $a ifTrue: [anEvent wasHandled: true. tracker selectedInstrument ifNotNil: [:anInstument| anInstument noteOff]. ^ self].
 		(i := 'zsxdcvgbhnjmq2w3er5t6y7ui9o0p' indexOf: c) > 0 ifTrue:
-			[anEvent wasHandled: true. tracker selectedInstrument ifNotNil: [:aPatch| aPatch noteOn: i + tracker inputCenterKey - 1]. ^ self]].
+			[anEvent wasHandled: true. tracker selectedInstrument ifNotNil: [:anInstument| anInstument noteOn: i + tracker inputCenterKey - 1]. ^ self]].
 	^ super keyStroke: anEvent! !
 
 !InstrumentEditorMorph methodsFor: 'initialization' stamp: 'len 18/Feb/2026 17:30:12'!
@@ -1177,12 +1177,12 @@ setOwnerTrack: aTrack
 track
 	^ track! !
 
-!Instrument methodsFor: 'initialization' stamp: 'len 19/Mar/2026 02:32:17'!
+!Instrument methodsFor: 'initialization' stamp: 'len 24/Mar/2026 01:54:35'!
 initialize
 	controlValues := Float32Array new: 10.
 	patch := PatchMorph new.
 	patch when: #recomputeNeeded send: #scheduleRecompute to: self.
-! !
+	glideTicks := 0! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 3/Mar/2026 19:20:04'!
 adjustLevelBy: aNumber
@@ -1200,13 +1200,16 @@ adjustPanBy: aNumber
 adjustVelocityBy: aNumber
 	velocityReceivers do: [:each| each adjustVelocityBy: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 19/Mar/2026 02:32:17'!
+!Instrument methodsFor: 'playing' stamp: 'len 23/Mar/2026 19:34:40'!
+gateOn
+	gateReceivers do: [:each| each gateOn]! !
+
+!Instrument methodsFor: 'playing' stamp: 'len 24/Mar/2026 01:54:14'!
 handleFX: anInteger
 	| command |
 	command := anInteger bitShift: -8.
 	command = 67 "C (cut velocity)" ifTrue: [track scheduleTrigger: (Trigger new velocity: ((anInteger bitShift: -4) bitAnd: 16rF) / 15.0) after: (anInteger bitAnd: 16rF) + 1 / 16.0 * track tracker tpl. ^ self].
 	command = 82 "R (retrigger)" ifTrue: [track scheduleTrigger: (trigger copy velocity: nil) after: (anInteger bitAnd: 16rFF) + 1 / 256.0 * track tracker tpl. ^ self].
-	command = 71 "G (glide)" ifTrue: [self setGlide: (anInteger bitAnd: 16rFF) / 255.0. ^ self].
 	command = 76 "L (volume level)" ifTrue: [self setLevel:​ (anInteger bitAnd: 16rFF) / 255.0. ^ self].
 	command = 80 "P (pan)" ifTrue: [self setPan:  (anInteger bitAnd: 16rFF) / 255.0 * 2.0 - 1.0. ^ self].
 	command = 73 "I (volume level up)" ifTrue: [self adjustLevelBy: (anInteger bitAnd: 16rFF) / 255.0].
@@ -1228,32 +1231,45 @@ handleFX: anInteger
 	"Global commands:"
 	command = 70 "F (set bpm)" ifTrue: [track tracker bpm: ((anInteger bitAnd: 16rFF) max: 1). ^ self]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 19/Mar/2026 02:06:03'!
+!Instrument methodsFor: 'playing' stamp: 'len 24/Mar/2026 01:47:37'!
 noteOff
-	noteReceivers do: [:each| each noteOff]! !
+	gateReceivers do: [:each| each gateOff].
+	glideTicks := 0.
+	note := nil! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 19/Mar/2026 02:21:55'!
+!Instrument methodsFor: 'playing' stamp: 'len 24/Mar/2026 01:46:50'!
 noteOn: midiKey
-	noteReceivers do: [:each| each noteOn: midiKey]! !
+	self noteOn: midiKey glide: 0! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 15/Mar/2026 15:17:19'!
+!Instrument methodsFor: 'playing' stamp: 'len 24/Mar/2026 01:58:06'!
+noteOn: midiKey glide: glide
+	(glide > 0 and: [note notNil])
+		ifTrue:
+			[glideTicks := (glide / 16.0 * track tracker tpl) truncated.
+			noteIncrement := midiKey - note / glideTicks asFloat.
+			note := note + noteIncrement]
+		ifFalse:
+			[glideTicks := 0.
+			note := midiKey].
+	self setNote: note; gateOn! !
+
+!Instrument methodsFor: 'playing' stamp: 'len 24/Mar/2026 01:45:36'!
 playTrigger
-	trigger isNoteOn ifTrue: [self setVelocity: 0.5; setOffset: 0.0; setSpeed: 1.0; setGlide: 0.0].
+	trigger isNoteOn ifTrue: [self setVelocity: 0.5; setOffset: 0.0; setSpeed: 1.0].
 	trigger velocity ifNotNil: [:vel| self setVelocity: vel / 255.0].
 	trigger fx1 ifNotNil: [:fx| self handleFX: fx].
 	trigger fx2 ifNotNil: [:fx| self handleFX: fx].
-	trigger isNoteOn ifTrue: [self noteOn: trigger note] ifFalse: [trigger isNoteOff ifTrue: [self noteOff]].
+	trigger isNoteOn ifTrue: [self noteOn: trigger note glide: trigger glide] ifFalse: [trigger isNoteOff ifTrue: [self noteOff]].
 	trigger := nil! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 19/Mar/2026 02:32:40'!
+!Instrument methodsFor: 'playing' stamp: 'len 23/Mar/2026 19:27:27'!
 recomputeModules
 	| currentModules buses |
 	currentModules := patch modules.
 	modules := currentModules.
-	noteReceivers := currentModules select: [:each| each respondsTo: #noteOn:].
+	noteReceivers := currentModules select: [:each| each respondsTo: #setNote:].
 	velocityReceivers := currentModules select: [:any| any respondsTo: #setVelocity:].
-	glideReceivers := currentModules select: [:any| any respondsTo: #setGlide:].
-	tempoReceivers := currentModules select: [:any| any respondsTo: #setBPM:].
+	gateReceivers := currentModules select: [:any| any respondsTo: #gateOn].
 	samples := currentModules select: [:each| each isMemberOf: Sample].
 	buses := track tracker buses.
 	audioOutput := nil.
@@ -1283,17 +1299,13 @@ scheduleRecompute
 scheduleTrigger: aTrigger
 	trigger := aTrigger! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 22/Jan/2026 16:26:48'!
-setBPM: aNumber
-	tempoReceivers do: [:each| each setBPM: aNumber]! !
-
-!Instrument methodsFor: 'playing' stamp: 'len 24/Feb/2026 18:02:40'!
-setGlide: aNumber
-	glideReceivers do: [:each| each setGlide: aNumber]! !
-
 !Instrument methodsFor: 'playing' stamp: 'len 18/Jan/2026 02:31:21'!
 setLevel: aNumber
 	audioOutput ifNotNil: [audioOutput setLevel: aNumber]! !
+
+!Instrument methodsFor: 'playing' stamp: 'len 23/Mar/2026 19:24:27'!
+setNote: midiKey
+	noteReceivers do: [:each| each setNote: midiKey]! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 20/Jan/2026 14:27:42'!
 setOffset: aNumber
@@ -1311,7 +1323,7 @@ setSpeed: aNumber
 setVelocity: aNumber
 	velocityReceivers do: [:each| each setVelocity: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 19/Mar/2026 15:12:15'!
+!Instrument methodsFor: 'playing' stamp: 'len 24/Mar/2026 01:57:35'!
 tick
 	| currentModules enabled |
 	currentModules := modules ifNil: [self recomputeModules].
@@ -1319,6 +1331,7 @@ tick
 	currentModules do: [:each|
 		(each isMemberOf: AudioOut) ifTrue: [each enabled: enabled].
 		(each is: #Morph) ifFalse: [each clear]].
+	glideTicks > 0 ifTrue: [note := note + noteIncrement. glideTicks := glideTicks - 1. self setNote: note].
 	trigger ifNotNil: [self playTrigger].
 	currentModules do: [:each| (each is: #Morph) ifFalse: [each update]. each tick]! !
 
@@ -2226,6 +2239,13 @@ fx2
 !Trigger methodsFor: 'accessing' stamp: 'len 16/Dec/2025 20:35:04'!
 fx2: anInteger
 	fx2 := anInteger! !
+
+!Trigger methodsFor: 'accessing' stamp: 'len 24/Mar/2026 01:13:55'!
+glide
+	"Answer the glide or portamento effect for this trigger, i.e. the parameter of the effect command G."
+	fx1 ifNotNil: [(fx1 bitShift: -8) = 71 "G" ifTrue: [^ fx1 bitAnd: 16rFF]].
+	fx2 ifNotNil: [(fx2 bitShift: -8) = 71 "G" ifTrue: [^ fx2 bitAnd: 16rFF]].
+	^ 0! !
 
 !Trigger methodsFor: 'accessing' stamp: 'len 24/Dec/2025 15:57:45'!
 instrument

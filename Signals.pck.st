@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 24 March 2026 at 2:06:46 am'!
+'From Cuis7.7 [latest update: #7797] on 24 March 2026 at 6:17:21 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 499!
+!provides: 'Signals' 1 500!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -5013,24 +5013,27 @@ label: aString
 adjustVelocityBy: aNumber
 	velocity := velocity + aNumber min: 1.0 max: 0.0! !
 
+!Multisample methodsFor: 'controlling' stamp: 'len 24/Mar/2026 16:28:32'!
+clear
+	super clear.
+	sample ifNotNil: [sample clear]! !
+
 !Multisample methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:21:00'!
 gateOff
 	sample ifNotNil: [sample gateOff]! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:36:39'!
+!Multisample methodsFor: 'controlling' stamp: 'len 24/Mar/2026 18:12:33'!
 gateOn
-	| frequency key closestKey speedFactor samplesByVelocity |
-	frequency := ((self get: #tune) + note) semitonesToHertz.
-	key := frequency hertzToSemitones.
-	closestKey := keymap keys detectMin: [:x| (x - key) abs].
-	speedFactor := key semitonesToHertz / closestKey semitonesToHertz.
+	| closestKey speedFactor samplesByVelocity |
+	closestKey := keymap keys detectMin: [:x| (x - note) abs].
 	samplesByVelocity := keymap at: closestKey.
 	(tailSample := sample) ifNotNil: [tailSample gateOn "to setup the tail position"].
 	sample := (samplesByVelocity at: ((velocity sqrt * (samplesByVelocity size - 1)) truncated + 1 min: samplesByVelocity size)) copy.
+	sample controls at: #tune put: (controls at: #tune).
+	speedFactor := 60 semitonesToHertz / closestKey semitonesToHertz.
 	sample baseRate: sample baseRate * speedFactor.
-	sample setNote: 60. "?"
-	sample gateOn.
-	sample update! !
+	sample setNote: note.
+	sample gateOn! !
 
 !Multisample methodsFor: 'controlling' stamp: 'len 15/Feb/2026 20:41:02'!
 reset
@@ -5039,6 +5042,11 @@ reset
 !Multisample methodsFor: 'controlling' stamp: 'len 2/Dec/2025 14:33:00'!
 setVelocity: aNumber
 	velocity := aNumber! !
+
+!Multisample methodsFor: 'controlling' stamp: 'len 24/Mar/2026 18:10:12'!
+update
+	super update.
+	sample ifNotNil: [sample setNote: note; update]! !
 
 !Multisample methodsFor: 'copying' stamp: 'len 15/Feb/2026 21:02:02'!
 copy

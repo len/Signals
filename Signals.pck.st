@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 25 March 2026 at 8:48:24 pm'!
+'From Cuis7.7 [latest update: #7797] on 25 March 2026 at 11:15:50 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 502!
+!provides: 'Signals' 1 503!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -187,7 +187,7 @@ DiodeLadder class
 
 !classDefinition: #Chorus category: #'Signals-FX'!
 Module subclass: #Chorus
-	instanceVariableNames: 'input outputL outputR phase increment depth delayLine tap1 tap2 tap3 time mix'
+	instanceVariableNames: 'input outputL outputR phase delayLine tap1 tap2 tap3'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
@@ -527,7 +527,7 @@ Echo class
 
 !classDefinition: #Flanger category: #'Signals-FX'!
 Transform subclass: #Flanger
-	instanceVariableNames: 'phase increment depth delayLine tap time feedback mix'
+	instanceVariableNames: 'phase delayLine tap'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
@@ -537,7 +537,7 @@ Flanger class
 
 !classDefinition: #Phaser category: #'Signals-FX'!
 Transform subclass: #Phaser
-	instanceVariableNames: 'phase increment depth x1 y1 feedback lastOutput mix'
+	instanceVariableNames: 'phase x1 y1 lastOutput'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
@@ -577,7 +577,7 @@ TapeEcho class
 
 !classDefinition: #Vibrato category: #'Signals-FX'!
 Transform subclass: #Vibrato
-	instanceVariableNames: 'phase increment depth delayLine tap time'
+	instanceVariableNames: 'phase delayLine tap'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
@@ -1752,6 +1752,9 @@ See https://www.native-instruments.com/fileadmin/ni_media/downloads/pdf/VAFilter
 
 See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 
+!Chorus commentStamp: '<historical>' prior: 0!
+This is a classic chorus effect. It mixes the original signal with 3 delayed copies (tipically 10 to 20 ms). An internal LFO modulates the delay times, creating slight pitch variations that simulate the effect of multiple voices or instruments playing at unison.!
+
 !StereoEcho commentStamp: '<historical>' prior: 0!
 This is a stereo echo effect with feedback and ping pong mode.!
 
@@ -1879,6 +1882,12 @@ This is a virtual analog model of the Korg 35 low-pass 12 dB/oct filter found in
 !SqueakReverb commentStamp: '<historical>' prior: 0!
 This module is based on Squeak's original ReverbSound by John Maloney.!
 
+!Flanger commentStamp: 'len 25/Mar/2026 21:09:44' prior: 0!
+This is a classic flanger effect. It mixes the original signal with a copy delayed by a very short time (~ 1 ms). An internal LFO modulates the delay time, creating sweeping comb filtering, which is also enhanced with feedback.!
+
+!Phaser commentStamp: 'len 25/Mar/2026 23:12:28' prior: 0!
+A phaser (phase shifter) splits a signal, shifts the phase of one path using all-pass filters, and recombines them to create a sweeping, "whooshing" swirling sound. This process creates notches and peaks in the frequency spectrum that move over time.!
+
 !PitchShifter commentStamp: '<historical>' prior: 0!
 Time-domain pitch shifter based on two modulated delay lines with crossfading windows. This is the algorithm of the Eventide H3000 Ultra-Harmonizer.
 
@@ -1889,6 +1898,9 @@ This is a reverb effect based on Freeverb. It consists of 8 damped combs (lowpas
 
 !TapeEcho commentStamp: '<historical>' prior: 0!
 This is an echo effect inspired by the Roland RE-201 Space Echo and other tape delays.!
+
+!Vibrato commentStamp: 'len 25/Mar/2026 23:10:47' prior: 0!
+The vibrato effect is produced by passing the original signal through a delay line. An internal LFO modulates the delay time, creating periodic pitch variations (Doppler effect).!
 
 !BPF commentStamp: '<historical>' prior: 0!
 This is a second order (12 dB/oct) band-pass filter implemented with a biquad.!
@@ -3427,14 +3439,6 @@ reset
 	phase := 0.0.
 	delayLine reset! !
 
-!Chorus methodsFor: 'controlling' stamp: 'len 2/Feb/2026 16:14:07'!
-update
-	super update.
-	increment := (self get: #speed) / self class controlRate * Float twoPi.
-	depth := self get: #depth.
-	time := self get: #time.
-	mix := self get: #mix! !
-
 !Chorus methodsFor: 'initialization' stamp: 'len 25/Mar/2026 15:52:08'!
 initialize
 	super initialize.
@@ -3452,11 +3456,15 @@ initializeControls
 	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
 	self addDryWetControl: #mix value: 0.5! !
 
-!Chorus methodsFor: 'processing' stamp: 'len 12/Feb/2026 14:41:03'!
+!Chorus methodsFor: 'processing' stamp: 'len 25/Mar/2026 20:57:48'!
 tick
-	| twoPi d1 d2 d3 dry |
+	| increment depth time mix twoPi d1 d2 d3 dry |
 	outputL ifNil: [^ self].
 	input ifNil: [outputL atAllPut: 0.0. outputR ifNotNil: [outputR atAllPut: 0.0].^ self].
+	increment := (self get: #speed) / self class controlRate * Float twoPi.
+	depth := self get: #depth.
+	time := self get: #time.
+	mix := self get: #mix.
 	twoPi := Float twoPi.
 	d1 := (phase sin * depth * 0.002 "2 ms" + (time * 0.8)) * self class sampleRate.
 	d2 := ((twoPi/3.0 + phase) sin * depth * 0.002 "2 ms" + time) * self class sampleRate.
@@ -6193,15 +6201,6 @@ reset
 	delayLine reset.
 	tap reset! !
 
-!Flanger methodsFor: 'controlling' stamp: 'len 27/Jan/2026 02:04:37'!
-update
-	super update.
-	increment := (self get: #speed) / self class controlRate * Float twoPi.
-	depth := self get: #depth.
-	time := self get: #time.
-	feedback := self get: #feedback.
-	mix := self get: #mix! !
-
 !Flanger methodsFor: 'initialization' stamp: 'len 25/Mar/2026 15:54:06'!
 initialize
 	super initialize.
@@ -6218,11 +6217,16 @@ initializeControls
 	self addControl: #feedback min: -0.8 max: 0.8 value: 0.5.
 	self addDryWetControl: #mix value: 0.5! !
 
-!Flanger methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:31'!
+!Flanger methodsFor: 'processing' stamp: 'len 25/Mar/2026 21:04:57'!
 tick
-	| d |
+	| increment depth time feedback mix d |
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
+	increment := (self get: #speed) / self class controlRate * Float twoPi.
+	depth := self get: #depth.
+	time := self get: #time.
+	feedback := self get: #feedback.
+	mix := self get: #mix.
 	d := (phase sin * depth * 0.002 "2 ms" + time max: 0.0) * self class sampleRate.
 	(phase := phase + increment) > Float twoPi ifTrue: [phase := phase - Float twoPi].
 	tap setDelayIncrement: (d - tap delay) / self class blockSize.
@@ -6249,14 +6253,6 @@ reset
 	x1 atAllPut: 0.0.
 	y1 atAllPut: 0.0! !
 
-!Phaser methodsFor: 'controlling' stamp: 'len 27/Jan/2026 02:04:44'!
-update
-	super update.
-	increment := (self get: #speed) / self class sampleRate * Float twoPi.
-	depth := self get: #depth.
-	feedback := self get: #feedback.
-	mix := self get: #mix! !
-
 !Phaser methodsFor: 'initialization' stamp: 'len 26/Jan/2026 13:41:55'!
 initialize
 	super initialize.
@@ -6272,11 +6268,15 @@ initializeControls
 	self addControl: #feedback min: -0.7 max: 0.7 value: 0.5.
 	self addDryWetControl: #mix value: 0.5! !
 
-!Phaser methodsFor: 'processing' stamp: 'len 26/Feb/2026 23:02:57'!
+!Phaser methodsFor: 'processing' stamp: 'len 25/Mar/2026 21:12:08'!
 tick
-	| twoPi a |
+	| increment depth feedback mix twoPi a |
 	output ifNil: [^ self]. "actually, we should process the input anyway, if available"
 	input ifNil: [output atAllPut: 0.0. ^ self].
+	increment := (self get: #speed) / self class sampleRate * Float twoPi.
+	depth := self get: #depth.
+	feedback := self get: #feedback.
+	mix := self get: #mix.
 	twoPi := Float twoPi.
 	1 to: input size do: [:i|
 		| in out |
@@ -6479,13 +6479,6 @@ reset
 	phase := 0.0.
 	delayLine reset! !
 
-!Vibrato methodsFor: 'controlling' stamp: 'len 27/Jan/2026 02:05:00'!
-update
-	super update.
-	increment := (self get: #speed) / self class controlRate * Float twoPi.
-	depth := self get: #depth.
-	time := self get: #time! !
-
 !Vibrato methodsFor: 'initialization' stamp: 'len 25/Mar/2026 16:09:16'!
 initialize
 	super initialize.
@@ -6500,11 +6493,14 @@ initializeControls
 	self addFrequencyControl: #speed min: 3.0 "Hz" max: 8.0 "Hz" value: 5.0 "Hz".
 	self addControl: #depth min: 0.0 max: 1.0 value: 0.1! !
 
-!Vibrato methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:59'!
+!Vibrato methodsFor: 'processing' stamp: 'len 25/Mar/2026 21:14:24'!
 tick
-	| d twoPi |
+	| increment depth time d twoPi |
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
+	increment := (self get: #speed) / self class controlRate * Float twoPi.
+	depth := self get: #depth.
+	time := self get: #time.
 	twoPi := Float twoPi.
 	d := (phase sin * depth * 0.002 "2 ms" + time) * self class sampleRate.
 	(phase := phase + increment) > twoPi ifTrue: [phase := phase - twoPi].

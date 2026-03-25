@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 24 March 2026 at 6:17:21 pm'!
+'From Cuis7.7 [latest update: #7797] on 25 March 2026 at 4:09:44 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 500!
+!provides: 'Signals' 1 501!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -3424,13 +3424,13 @@ update
 	time := self get: #time.
 	mix := self get: #mix! !
 
-!Chorus methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:59:02'!
+!Chorus methodsFor: 'initialization' stamp: 'len 25/Mar/2026 15:52:08'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (self class sampleRate * 0.035 "35 ms max") ceiling.
-	tap1 := DelayTapT1 on: delayLine.
-	tap2 := DelayTapT1 on: delayLine.
-	tap3 := DelayTapT1 on: delayLine.
+	tap1 := DelayTapC on: delayLine.
+	tap2 := DelayTapC on: delayLine.
+	tap3 := DelayTapC on: delayLine.
 	self reset! !
 
 !Chorus methodsFor: 'initialization' stamp: 'len 24/Feb/2026 23:52:24'!
@@ -3532,13 +3532,13 @@ update
 	hsfL undenormalize; hs: 4000.0 / self class sampleRate Q: 0.707 gain: treble / trebleSpread. "4 kHz"
 	hsfR undenormalize; hs: 4000.0 / self class sampleRate Q: 0.707 gain: treble * trebleSpread. "4 kHz"! !
 
-!StereoEcho methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:59:02'!
+!StereoEcho methodsFor: 'initialization' stamp: 'len 25/Mar/2026 15:59:06'!
 initialize
 	super initialize.
 	delayLineL := DelayLine new: (self class sampleRate * 2) ceiling.
-	tapL := DelayTapT1 on: delayLineL.
+	tapL := DelayTapC on: delayLineL.
 	delayLineR := DelayLine new: (self class sampleRate * 2) ceiling.
-	tapR := DelayTapT1 on: delayLineR.
+	tapR := DelayTapC on: delayLineR.
 	lpfL := OnePole new frequency: 8000.0 / self class sampleRate. "8 kHz"
 	hpfL := OnePole new frequency: 40.0 / self class sampleRate. "40 Hz"
 	lsfL := Biquad new.
@@ -3559,11 +3559,11 @@ initializeControls
 	self addVolumeControl: #treble min: 0.4 max: 2.5 value: 1.0. "-8 dB to 8 dB"
 	self addDryWetControl: #mix value: 0.5! !
 
-!StereoEcho methodsFor: 'processing' stamp: 'len 7/Mar/2026 20:44:12'!
+!StereoEcho methodsFor: 'processing' stamp: 'len 25/Mar/2026 16:01:53'!
 tick
 	| feedback wet dry width gain1 gain2 |
-	inputL ifNil: [^ self].
 	outputL ifNil: [^ self].
+	inputL ifNil: [outputL atAllPut: 0.0. outputR ifNotNil: [outputR atAllPut: 0.0]. ^ self].
 	feedback := self get: #feedback.
 	wet := self get: #mix.
 	dry := 1.0 - wet.
@@ -3652,11 +3652,11 @@ update
 	combsL do: [:each| each undenormalize; feedback: feedback; damp: damp].
 	combsR do: [:each| each undenormalize; feedback: feedback; damp: damp]! !
 
-!StereoReverb methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:59:02'!
+!StereoReverb methodsFor: 'initialization' stamp: 'len 25/Mar/2026 15:58:40'!
 initialize
 	super initialize.
 	predelayLine := DelayLine new: (self class sampleRate * 0.15) ceiling. "150 ms"
-	predelayTap := DelayTapT1 on: predelayLine.
+	predelayTap := DelayTapL on: predelayLine.
 	combsL := #(1116 1188 1277 1356 1422 1491 1557 1617) collect: [:each| LowpassComb new: (each * self class sampleRate / 44100.0) truncated].
 	allpassesL := #(556 441 341 225) collect: [:each| AllpassComb new: (each * self class sampleRate / 44100.0) truncated].
 	"for stereo effect, right side uses longer delays by 23 samples:"
@@ -3672,11 +3672,11 @@ initializeControls
 	self addControl: #width min: 0.0 max: 1.0 value: 1.0.
 	self addDryWetControl: #mix value: 0.5! !
 
-!StereoReverb methodsFor: 'processing' stamp: 'len 7/Mar/2026 18:30:01'!
+!StereoReverb methodsFor: 'processing' stamp: 'len 25/Mar/2026 16:01:47'!
 tick
 	| width width2 wet dry |
-	inputL ifNil: [^ self].
 	outputL ifNil: [^ self].
+	inputL ifNil: [outputL atAllPut: 0.0. outputR ifNotNil: [outputR atAllPut: 0.0]. ^ self].
 	width := (self get: #width) / 2.0 + 0.5. "0 -> 0.5, 1 -> 1.0"
 	width2 := 1.0 - width. "0 -> 0.5, 1 -> 0.0"
 	wet := self get: #mix.
@@ -6056,11 +6056,11 @@ update
 	tap setDelayIncrement: (self get: #time) * self class sampleRate - tap delay / (self class sampleRate * 0.1). "slide over 100 ms to avoid phaser effect"
 	gain := self get: #gain! !
 
-!Allpass methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:59:02'!
+!Allpass methodsFor: 'initialization' stamp: 'len 25/Mar/2026 16:09:07'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (0.03 * self class sampleRate) ceiling.
-	tap := DelayTapT1 on: delayLine.
+	tap := DelayTapC on: delayLine.
 	gain := 0.0! !
 
 !Allpass methodsFor: 'initialization' stamp: 'len 14/Jan/2026 15:34:24'!
@@ -6090,11 +6090,11 @@ update
 	feedback := self get: #feedback.
 	damping := self get: #damping! !
 
-!Comb methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:59:02'!
+!Comb methodsFor: 'initialization' stamp: 'len 25/Mar/2026 16:09:11'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (0.5 * self class sampleRate) ceiling.
-	tap := DelayTapT1 on: delayLine.
+	tap := DelayTapT2 on: delayLine.
 	feedback := 0.0.
 	damping := 0.0.
 	x0 := 0.0! !
@@ -6136,11 +6136,11 @@ update
 	super update.
 	tap setDelayIncrement: (self get: #time) * self class sampleRate - tap delay / (self class sampleRate * 0.03) "slide over 30 ms"! !
 
-!Echo methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:59:02'!
+!Echo methodsFor: 'initialization' stamp: 'len 25/Mar/2026 15:58:18'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: self class sampleRate ceiling.
-	tap := DelayTapT1 on: delayLine! !
+	tap := DelayTapC on: delayLine! !
 
 !Echo methodsFor: 'initialization' stamp: 'len 14/Jan/2026 15:44:28'!
 initializeControls
@@ -6173,11 +6173,11 @@ update
 	feedback := self get: #feedback.
 	mix := self get: #mix! !
 
-!Flanger methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:59:02'!
+!Flanger methodsFor: 'initialization' stamp: 'len 25/Mar/2026 15:54:06'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (self class sampleRate * 0.005 "5 ms max") ceiling.
-	tap := DelayTapT1 on: delayLine.
+	tap := DelayTapT2 on: delayLine.
 	self reset! !
 
 !Flanger methodsFor: 'initialization' stamp: 'len 24/Feb/2026 23:52:59'!
@@ -6313,11 +6313,11 @@ update
 	combs do: [:each| each undenormalize; feedback: feedback; damp: damp].
 	mix := self get: #mix! !
 
-!Reverb methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:59:02'!
+!Reverb methodsFor: 'initialization' stamp: 'len 25/Mar/2026 15:55:27'!
 initialize
 	super initialize.
 	predelayLine := DelayLine new: (self class sampleRate * 0.15) ceiling. "150 ms"
-	predelayTap := DelayTapT1 on: predelayLine.
+	predelayTap := DelayTapL on: predelayLine.
 	combs := #(1116 1188 1277 1356 1422 1491 1557 1617) collect: [:each| LowpassComb new: (each * self class sampleRate / 44100.0) truncated].
 	allpasses := #(556 441 341 225) collect: [:each| AllpassComb new: (each * self class sampleRate / 44100.0) truncated]! !
 
@@ -6379,13 +6379,13 @@ update
 	lsf undenormalize; ls: 120.0 / self class sampleRate Q: 0.707 gain: (self get: #bass). "120 Hz"
 	hsf undenormalize; hs: 4000.0 / self class sampleRate Q: 0.707 gain: (self get: #treble) "4 kHz"! !
 
-!TapeEcho methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:59:02'!
+!TapeEcho methodsFor: 'initialization' stamp: 'len 25/Mar/2026 15:57:04'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (self class sampleRate * 2) ceiling.
-	tap1 := DelayTapT1 on: delayLine.
-	tap2 := DelayTapT1 on: delayLine.
-	tap3 := DelayTapT1 on: delayLine.
+	tap1 := DelayTapC on: delayLine.
+	tap2 := DelayTapC on: delayLine.
+	tap3 := DelayTapC on: delayLine.
 	lpf := OnePole new frequency: 8000.0 / self class sampleRate. "8 kHz"
 	hpf := OnePole new frequency: 40.0 / self class sampleRate. "40 Hz"
 	lsf := Biquad new.
@@ -6457,11 +6457,11 @@ update
 	depth := self get: #depth.
 	time := self get: #time! !
 
-!Vibrato methodsFor: 'initialization' stamp: 'len 22/Mar/2026 15:59:02'!
+!Vibrato methodsFor: 'initialization' stamp: 'len 25/Mar/2026 16:09:16'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (self class sampleRate * 0.015 "15 ms max") ceiling.
-	tap := DelayTapT1 on: delayLine.
+	tap := DelayTapC on: delayLine.
 	self reset! !
 
 !Vibrato methodsFor: 'initialization' stamp: 'len 1/Feb/2026 15:46:49'!

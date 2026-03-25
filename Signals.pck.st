@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 25 March 2026 at 4:09:44 pm'!
+'From Cuis7.7 [latest update: #7797] on 25 March 2026 at 8:48:24 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 501!
+!provides: 'Signals' 1 502!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1706,7 +1706,17 @@ Knobs are continuous controls with values that can vary within a range. Knobs ca
 A toggle is a discrete control with only two possible values: true or false.!
 
 !Module commentStamp: '<historical>' prior: 0!
-This is an abstract superclass for signal processing modules.!
+This is an abstract superclass for signal processing modules.
+
+A module has a list of controls (or parameters), that can be changed by the user via the UI or can be modulated by other modules. The controls of a module are created on initialization in #initializeControls.
+
+Modules can also have input and output sample buffers, and they process samples in blocks of fixed size. The default block size is 128 samples (2.9 ms at the default sampling rate of 44.1 kHz), which results in a control rate of 344 Hz. Before processing each block with the #tick message, the internal state of the module must be updated with the #update message.
+
+The playing loop for a patch of connected modules looks like this:
+1) Send #clear to each module to clear the control modulations;
+2) Iterate over the modules in order of dependency, and send #update followed by #tick to each one.
+
+The message #update updates the internal state of the module depending on the controls, which could be modulated and could vary at any time. The message #tick processes one block of samples, reading from the input buffers and writing to the output buffers.!
 
 !Amp commentStamp: '<historical>' prior: 0!
 An amplifier just multiplies the input signal by a gain parameter, typically modulated by an envolope. When the gain parameter changes, the actual gain is varied smoothly by sample to avoid clicks or zipper noise.!
@@ -2515,8 +2525,9 @@ clear
 	"Clear all modulations from the controls:"
 	controls do: [:each| each clear]! !
 
-!Module methodsFor: 'controlling' stamp: 'len 18/Nov/2025 15:19:00'!
+!Module methodsFor: 'controlling' stamp: 'len 25/Mar/2026 16:15:42'!
 reset
+	"Reset the module internal state."
 	^ self! !
 
 !Module methodsFor: 'controlling' stamp: 'len 8/Dec/2025 18:07:22'!
@@ -4531,14 +4542,14 @@ peek
 	wave := table at: (position * (table size - 1)) truncated + 1.
 	^ wave atWrapLinear: phase * (wave size - 1) + 1.0! !
 
-!Wavetable methodsFor: 'processing' stamp: 'len 22/Mar/2026 15:55:06'!
+!Wavetable methodsFor: 'processing' stamp: 'len 25/Mar/2026 19:09:24'!
 read: aBuffer
 	| table wave n |
 	table := (bank at: index) value.
 	wave := table at: (position * (table size - 1)) truncated + 1.
 	n := wave size - 1.0.
 	1 to: aBuffer size do: [:i|
-		aBuffer at: i put: (wave atWrapLinear: phase * n + 1.0).
+		aBuffer at: i put: (wave atLinear: phase * n + 1.0).
 		phase := phase + frequency.
 		phase >= 1.0 ifTrue: [phase := phase - phase truncated]]! !
 
@@ -5022,9 +5033,10 @@ clear
 gateOff
 	sample ifNotNil: [sample gateOff]! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 24/Mar/2026 18:12:33'!
+!Multisample methodsFor: 'controlling' stamp: 'len 25/Mar/2026 19:48:33'!
 gateOn
 	| closestKey speedFactor samplesByVelocity |
+	sample ifNotNil: [(sample isUnreleased and: [self get: #legato]) ifTrue: [^ self]].
 	closestKey := keymap keys detectMin: [:x| (x - note) abs].
 	samplesByVelocity := keymap at: closestKey.
 	(tailSample := sample) ifNotNil: [tailSample gateOn "to setup the tail position"].
@@ -5056,6 +5068,11 @@ copy
 initialize
 	super initialize.
 	velocity := 0.5! !
+
+!Multisample methodsFor: 'initialization' stamp: 'len 25/Mar/2026 19:33:30'!
+initializeControls
+	super initializeControls.
+	self addToggleControl: #legato value: false! !
 
 !Multisample methodsFor: 'initialization' stamp: 'len 15/Feb/2026 20:24:57'!
 keymap: aDictionary
@@ -5090,6 +5107,11 @@ readFromJson: json buffers: aList
 	(json at: #keymap) keysAndValuesDo: [:key :value| keymap at: key asNumber put: (value collect: [:each| Sample new readFromJson: each buffers: aList])].
 	label := json at: #label.
 	label isEmpty ifTrue: [label := nil]! !
+
+!Multisample methodsFor: 'ui' stamp: 'len 25/Mar/2026 19:34:38'!
+panel
+	^ super panel
+		addToggle: (controls at: #legato) label: 'Legato'! !
 
 !Multisample methodsFor: 'ui' stamp: 'len 15/Feb/2026 20:42:04'!
 patchable
@@ -5462,16 +5484,20 @@ position
 gateOff
 	released := true! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:23:34'!
+!Sample methodsFor: 'controlling' stamp: 'len 25/Mar/2026 19:46:27'!
 gateOn
-	position > 0 ifTrue: [tailPosition := position].
+	(self isUnreleased and: [self get: #legato]) ifTrue: [^ self].
+	tailPosition := position.
 	position := (buffer size - 1) * offset.
 	released := false! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 16/Mar/2026 15:11:51'!
+!Sample methodsFor: 'controlling' stamp: 'len 25/Mar/2026 19:46:09'!
+isUnreleased
+	^ position notNil and: [released not]! !
+
+!Sample methodsFor: 'controlling' stamp: 'len 25/Mar/2026 19:41:38'!
 reset
-	position := buffer size.
-	tailPosition := nil.
+	position := tailPosition := nil.
 	released := false! !
 
 !Sample methodsFor: 'controlling' stamp: 'len 24/Feb/2026 20:46:57'!
@@ -5498,11 +5524,12 @@ copy
 		loopLength: loopLength;
 		label: label! !
 
-!Sample methodsFor: 'initialization' stamp: 'len 18/Mar/2026 20:08:48'!
+!Sample methodsFor: 'initialization' stamp: 'len 25/Mar/2026 19:19:01'!
 initializeControls
 	super initializeControls.
 	(self addControl: #speed min: -4.0 max: 4.0 value: 1.0) printer: [:x| '×', (x printStringFractionDigits: 2)].
-	self addToggleControl: #warp value: false! !
+	self addToggleControl: #warp value: false.
+	self addToggleControl: #legato value: false! !
 
 !Sample methodsFor: 'processing' stamp: 'len 22/Mar/2026 15:53:06'!
 mixTailInto: aBuffer
@@ -5520,8 +5547,9 @@ mixTailInto: aBuffer
 			^ self]].
 	tailPosition := nil! !
 
-!Sample methodsFor: 'processing' stamp: 'len 16/Mar/2026 15:25:58'!
+!Sample methodsFor: 'processing' stamp: 'len 25/Mar/2026 19:42:03'!
 read: aBuffer
+	position ifNil: [aBuffer atAllPut: 0.0. ^ self].
 	(warp and: [speed abs ~= 1.0]) ifTrue: [^ self readWarp: aBuffer].
 	speed < 0 ifTrue: [^ self readBackwards: aBuffer].
 	self readForward: aBuffer.
@@ -5537,7 +5565,7 @@ readBackwards: aBuffer
 			aBuffer from: i + 1 to: aBuffer size put: 0.0.
 			^ self]]! !
 
-!Sample methodsFor: 'processing' stamp: 'len 22/Mar/2026 15:53:24'!
+!Sample methodsFor: 'processing' stamp: 'len 25/Mar/2026 19:16:10'!
 readForward: aBuffer
 	| end loopEndMinusOne |
 	end := buffer size - 1. "- 1 to allow for interpolation with next sample without checking bounds every time"
@@ -5579,11 +5607,12 @@ readFromJson: json buffers: aList
 	label := json at: #label ifAbsent: [''].
 	label isEmpty ifTrue: [label := nil]! !
 
-!Sample methodsFor: 'ui' stamp: 'len 20/Mar/2026 15:01:52'!
+!Sample methodsFor: 'ui' stamp: 'len 25/Mar/2026 19:19:24'!
 panel
 	^ super panel
 		addTextualControl: (controls at: #speed);
-		addToggle: (controls at: #warp) label: 'Warp'! !
+		addToggle: (controls at: #warp) label: 'Warp';
+		addToggle: (controls at: #legato) label: 'Legato'! !
 
 !Sample methodsFor: 'ui' stamp: 'len 18/Mar/2026 23:58:35'!
 patchable
@@ -13617,7 +13646,7 @@ readWaveChunk: chunkType
 plot
 	^ PlotMorph new plot: self! !
 
-!FloatArray methodsFor: '*signals' stamp: 'len 23/Mar/2026 16:43:37'!
+!FloatArray methodsFor: '*signals' stamp: 'len 25/Mar/2026 19:10:01'!
 atCubic: floatIndex
 	"Cubic Lagrange interpolation (4 points).
 	Note: this is about 3 times slower than linear interpolation (atLinear:)"
@@ -13625,10 +13654,13 @@ atCubic: floatIndex
 	i := floatIndex truncated.
 	(f := floatIndex - i) = 0.0 ifTrue: [^ self at: i].
 	n := self size.
-	x0 := i > 1 ifTrue: [self at: i - 1] ifFalse: [0.0].
 	x1 := self at: i.
-	x2 := i < n ifTrue: [self at: i + 1] ifFalse: [0.0].
-	x3 := i < (n+1) ifTrue: [self at: i + 2] ifFalse: [0.0].
+	x0 := i > 1 ifTrue: [self at: i - 1] ifFalse: [0.0].
+	(i := i + 1) <= n
+		ifTrue:
+			[x2 := self at: i.
+			x3 := (i := i + 1) <= n ifTrue: [self at: i] ifFalse: [0.0]]
+		ifFalse: [x2 := x3 := 0.0].
 	c0 := x0.
 	c1 := 0.5 * (x2 - x0).
 	c2 := x0 - (2.5 * x1) + (2.0 * x2) - (0.5 * x3).
@@ -13643,13 +13675,12 @@ atLinear: floatIndex
 	(f := floatIndex - i) = 0.0 ifTrue: [^ self at: i].
 	^ (1.0 - f) * (self at: i) + (f * (self at: i+1))! !
 
-!FloatArray methodsFor: '*signals' stamp: 'len 23/Mar/2026 16:33:17'!
+!FloatArray methodsFor: '*signals' stamp: 'len 25/Mar/2026 19:01:20'!
 atWrapCubic: floatIndex
 	"Cubic Lagrange interpolation (4 points)."
-	| i f n x0 x1 x2 x3 c0 c1 c2 c3 |
+	| i f x0 x1 x2 x3 c0 c1 c2 c3 |
 	i := floatIndex truncated.
-	(f := floatIndex - i) = 0.0 ifTrue: [^ self at: i].
-	n := self size.
+	(f := floatIndex - i) = 0.0 ifTrue: [^ self atWrap: i].
 	x0 := self atWrap: i - 1.
 	x1 := self atWrap: i.
 	x2 := self atWrap: i + 1.

@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 25 March 2026 at 11:15:50 pm'!
+'From Cuis7.7 [latest update: #7797] on 26 March 2026 at 3:12:30 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 503!
+!provides: 'Signals' 1 505!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1885,7 +1885,7 @@ This module is based on Squeak's original ReverbSound by John Maloney.!
 !Flanger commentStamp: 'len 25/Mar/2026 21:09:44' prior: 0!
 This is a classic flanger effect. It mixes the original signal with a copy delayed by a very short time (~ 1 ms). An internal LFO modulates the delay time, creating sweeping comb filtering, which is also enhanced with feedback.!
 
-!Phaser commentStamp: 'len 25/Mar/2026 23:12:28' prior: 0!
+!Phaser commentStamp: '<historical>' prior: 0!
 A phaser (phase shifter) splits a signal, shifts the phase of one path using all-pass filters, and recombines them to create a sweeping, "whooshing" swirling sound. This process creates notches and peaks in the frequency spectrum that move over time.!
 
 !PitchShifter commentStamp: '<historical>' prior: 0!
@@ -1899,7 +1899,7 @@ This is a reverb effect based on Freeverb. It consists of 8 damped combs (lowpas
 !TapeEcho commentStamp: '<historical>' prior: 0!
 This is an echo effect inspired by the Roland RE-201 Space Echo and other tape delays.!
 
-!Vibrato commentStamp: 'len 25/Mar/2026 23:10:47' prior: 0!
+!Vibrato commentStamp: '<historical>' prior: 0!
 The vibrato effect is produced by passing the original signal through a delay line. An internal LFO modulates the delay time, creating periodic pitch variations (Doppler effect).!
 
 !BPF commentStamp: '<historical>' prior: 0!
@@ -3055,6 +3055,11 @@ initialize
 	self reset.
 	velocity := 0.5! !
 
+!EG methodsFor: 'initialization' stamp: 'len 26/Mar/2026 15:07:19'!
+initializeControls
+	super initializeControls.
+	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01! !
+
 !EG methodsFor: 'processing' stamp: 'len 29/Nov/2025 20:41:00'!
 next
 	^ self subclassResponsibility! !
@@ -3079,10 +3084,9 @@ update
 	super update.
 	decay := (self get: #decay) * self class controlRate! !
 
-!AD methodsFor: 'initialization' stamp: 'len 28/Nov/2025 13:19:00'!
+!AD methodsFor: 'initialization' stamp: 'len 26/Mar/2026 15:07:12'!
 initializeControls
 	super initializeControls.
-	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01.
 	self addTimeControl: #decay min: 0.001 max: 2.0 value: 0.5! !
 
 !AD methodsFor: 'processing' stamp: 'len 15/Feb/2026 00:08:04'!
@@ -3115,6 +3119,14 @@ gateOff
 	stage := #release.
 	factor := 0.001 raisedTo: 1.0 / release! !
 
+!ADSR methodsFor: 'controlling' stamp: 'len 26/Mar/2026 15:06:32'!
+gateOn
+	(self isUnreleased and: [self get: #legato]) ifFalse: [super gateOn]! !
+
+!ADSR methodsFor: 'controlling' stamp: 'len 26/Mar/2026 15:10:41'!
+isUnreleased
+	^ stage = #attack or: [stage = #decay or: [stage = #sustain]]! !
+
 !ADSR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:38:34'!
 update
 	| rate |
@@ -3124,13 +3136,13 @@ update
 	sustain := self get: #sustain.
 	release := (self get: #release) * rate! !
 
-!ADSR methodsFor: 'initialization' stamp: 'len 6/Jan/2026 17:34:36'!
+!ADSR methodsFor: 'initialization' stamp: 'len 26/Mar/2026 15:08:58'!
 initializeControls
 	super initializeControls.
-	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01.
 	self addTimeControl: #decay min: 0.001 max: 2.0 value: 0.5.
 	self addVolumeControl: #sustain value: 0.6.
-	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0! !
+	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0.
+	self addToggleControl: #legato value: false! !
 
 !ADSR methodsFor: 'processing' stamp: 'len 15/Feb/2026 00:07:49'!
 next
@@ -3148,13 +3160,14 @@ next
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value * velocity! !
 
-!ADSR methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:56:25'!
+!ADSR methodsFor: 'ui' stamp: 'len 26/Mar/2026 15:11:27'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #decay) label: 'D';
 		addSmallKnob: (controls at: #sustain) label: 'S';
-		addSmallKnob: (controls at: #release) label: 'R'! !
+		addSmallKnob: (controls at: #release) label: 'R';
+		addToggle: (controls at: #legato) label: 'Legato'! !
 
 !ADSR methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:43:31'!
 patchable
@@ -3172,10 +3185,9 @@ update
 	hold := (self get: #hold) * rate.
 	decay := (self get: #decay) * rate! !
 
-!AHD methodsFor: 'initialization' stamp: 'len 28/Nov/2025 13:20:00'!
+!AHD methodsFor: 'initialization' stamp: 'len 26/Mar/2026 15:07:28'!
 initializeControls
 	super initializeControls.
-	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01.
 	self addTimeControl: #hold min: 0.001 max: 10.0 value: 1.0.
 	self addTimeControl: #decay min: 0.001 max: 2.0 value: 0.5! !
 
@@ -3214,16 +3226,24 @@ gateOff
 	stage := #release.
 	factor := 0.001 raisedTo: 1.0 / release! !
 
+!AR methodsFor: 'controlling' stamp: 'len 26/Mar/2026 15:08:13'!
+gateOn
+	(self isUnreleased and: [self get: #legato]) ifFalse: [super gateOn]! !
+
+!AR methodsFor: 'controlling' stamp: 'len 26/Mar/2026 15:10:18'!
+isUnreleased
+	^ stage = #attack or: [stage = #sustain]! !
+
 !AR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:39:44'!
 update
 	super update.
 	release := (self get: #release) * self class controlRate! !
 
-!AR methodsFor: 'initialization' stamp: 'len 28/Nov/2025 13:20:00'!
+!AR methodsFor: 'initialization' stamp: 'len 26/Mar/2026 15:09:04'!
 initializeControls
 	super initializeControls.
-	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01.
-	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0! !
+	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0.
+	self addToggleControl: #legato value: false! !
 
 !AR methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:46:53'!
 next
@@ -3237,11 +3257,12 @@ next
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value * velocity! !
 
-!AR methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:57:17'!
+!AR methodsFor: 'ui' stamp: 'len 26/Mar/2026 15:11:23'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
-		addSmallKnob: (controls at: #release) label: 'R'! !
+		addSmallKnob: (controls at: #release) label: 'R';
+		addToggle: (controls at: #legato) label: 'Legato'! !
 
 !AR methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:44:28'!
 patchable
@@ -3256,18 +3277,26 @@ gateOff
 	stage := #release.
 	factor := 0.001 raisedTo: 1.0 / release! !
 
+!ASR methodsFor: 'controlling' stamp: 'len 26/Mar/2026 15:06:44'!
+gateOn
+	(self isUnreleased and: [self get: #legato]) ifFalse: [super gateOn]! !
+
+!ASR methodsFor: 'controlling' stamp: 'len 26/Mar/2026 15:09:31'!
+isUnreleased
+	^ stage = #attack or: [stage = #sustain]! !
+
 !ASR methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:39:58'!
 update
 	super update.
 	sustain := self get: #sustain.
 	release := (self get: #release) * self class controlRate! !
 
-!ASR methodsFor: 'initialization' stamp: 'len 6/Jan/2026 17:34:20'!
+!ASR methodsFor: 'initialization' stamp: 'len 26/Mar/2026 15:09:10'!
 initializeControls
 	super initializeControls.
-	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01.
 	self addVolumeControl: #sustain value: 0.6.
-	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0! !
+	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0.
+	self addToggleControl: #legato value: false! !
 
 !ASR methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:47:02'!
 next
@@ -3281,12 +3310,13 @@ next
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value * velocity! !
 
-!ASR methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:57:24'!
+!ASR methodsFor: 'ui' stamp: 'len 26/Mar/2026 15:11:17'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #sustain) label: 'S';
-		addSmallKnob: (controls at: #release) label: 'R'! !
+		addSmallKnob: (controls at: #release) label: 'R';
+		addToggle: (controls at: #legato) label: 'Legato'! !
 
 !ASR methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:44:35'!
 patchable

@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 26 March 2026 at 3:12:30 pm'!
+'From Cuis7.7 [latest update: #7797] on 27 March 2026 at 4:26:28 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 505!
+!provides: 'Signals' 1 506!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -187,12 +187,22 @@ DiodeLadder class
 
 !classDefinition: #Chorus category: #'Signals-FX'!
 Module subclass: #Chorus
-	instanceVariableNames: 'input outputL outputR phase delayLine tap1 tap2 tap3'
+	instanceVariableNames: 'input outputL outputR phase delayLine tap1 tap2 tap3 lpfL lpfR'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
 !classDefinition: 'Chorus class' category: #'Signals-FX'!
 Chorus class
+	instanceVariableNames: ''!
+
+!classDefinition: #Ensemble category: #'Signals-FX'!
+Module subclass: #Ensemble
+	instanceVariableNames: 'input outputL outputR delayLine tap1 tap2 tap3 tap4 tap5 phase1 phase2 phase3 phase4 phase5 lpfL lpfR'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-FX'!
+!classDefinition: 'Ensemble class' category: #'Signals-FX'!
+Ensemble class
 	instanceVariableNames: ''!
 
 !classDefinition: #StereoEcho category: #'Signals-FX'!
@@ -347,7 +357,7 @@ Triangle class
 
 !classDefinition: #Wavetable category: #'Signals-Samples'!
 Oscillator subclass: #Wavetable
-	instanceVariableNames: 'bank index position label'
+	instanceVariableNames: 'waves position label'
 	classVariableNames: 'Library'
 	poolDictionaries: ''
 	category: 'Signals-Samples'!
@@ -527,7 +537,7 @@ Echo class
 
 !classDefinition: #Flanger category: #'Signals-FX'!
 Transform subclass: #Flanger
-	instanceVariableNames: 'phase delayLine tap'
+	instanceVariableNames: 'phase delayLine tap lpf'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
@@ -1165,6 +1175,16 @@ VariableWaveControlMorph subclass: #SymmetricWaveshaperControlMorph
 SymmetricWaveshaperControlMorph class
 	instanceVariableNames: ''!
 
+!classDefinition: #WavetableControlMorph category: #'Signals-Morphic-Controls'!
+ControlMorph subclass: #WavetableControlMorph
+	instanceVariableNames: 'waves currentPosition'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'WavetableControlMorph class' category: #'Signals-Morphic-Controls'!
+WavetableControlMorph class
+	instanceVariableNames: ''!
+
 !classDefinition: #DualControlMorph category: #'Signals-Morphic-Controls'!
 BoxMorph subclass: #DualControlMorph
 	instanceVariableNames: 'control1 control2'
@@ -1243,16 +1263,6 @@ XYControlMorph subclass: #WaveshaperControlMorph
 	category: 'Signals-Morphic-Controls'!
 !classDefinition: 'WaveshaperControlMorph class' category: #'Signals-Morphic-Controls'!
 WaveshaperControlMorph class
-	instanceVariableNames: ''!
-
-!classDefinition: #WavetableControlMorph category: #'Signals-Morphic-Controls'!
-XYControlMorph subclass: #WavetableControlMorph
-	instanceVariableNames: 'bank wavetable currentPosition color'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Controls'!
-!classDefinition: 'WavetableControlMorph class' category: #'Signals-Morphic-Controls'!
-WavetableControlMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #XYVariableWaveControlMorph category: #'Signals-Morphic-Controls'!
@@ -1753,7 +1763,10 @@ See https://www.native-instruments.com/fileadmin/ni_media/downloads/pdf/VAFilter
 See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 
 !Chorus commentStamp: '<historical>' prior: 0!
-This is a classic chorus effect. It mixes the original signal with 3 delayed copies (tipically 10 to 20 ms). An internal LFO modulates the delay times, creating slight pitch variations that simulate the effect of multiple voices or instruments playing at unison.!
+This is a classic mono-to-stereo chorus effect. It mixes the original signal with 3 delayed copies (tipically 10 to 20 ms). An internal LFO modulates the delay times, creating slight pitch variations that simulate the effect of multiple voices or instruments playing at unison.!
+
+!Ensemble commentStamp: '<historical>' prior: 0!
+The ensemble effect is similar to chorus, but it mixes more delay taps (5 instead of 3) and the modulation of the delay times is decorrelated (each delay time is modulated independently with LFO speeds in inharmonic ratios).!
 
 !StereoEcho commentStamp: '<historical>' prior: 0!
 This is a stereo echo effect with feedback and ping pong mode.!
@@ -1761,8 +1774,10 @@ This is a stereo echo effect with feedback and ping pong mode.!
 !StereoReverb commentStamp: '<historical>' prior: 0!
 This is a reverb effect based on Freeverb. It consists of 8 damped combs (lowpass feedback comb filters) in parallel followed by 4 Schroeder allpasses in series.!
 
-!SVF commentStamp: 'len 2/Feb/2026 18:24:09' prior: 0!
-This is a state variable filter with a 12 dB/oct slope (2 poles). It has outputs for low-pass, high-pass, band-pass and normalized band-pass modes. Based on stmlib/dsp/filter.h by Emilie Gillet.!
+!SVF commentStamp: '<historical>' prior: 0!
+This is a state variable filter with a 12 dB/oct slope (2 poles). It has outputs for low-pass, high-pass, band-pass and normalized band-pass modes. Based on stmlib/dsp/filter.h by Emilie Gillet.
+
+It implements the TPT (Topology-Preserving Transform) SVF, commonly called the Cytomic SVF or Simper SVF, from Andy Simper’s 2011 paper and Vadim Zavalishin’s "The Art of VA Filter Design".!
 
 !AudioIn commentStamp: '<historical>' prior: 0!
 This module receives a stereo signal from a bus.!
@@ -1811,7 +1826,7 @@ This is a virtual analog triangle oscillator that uses PolyBLAMP for antialiasin
 A triangle wave consists of only odd harmonics (f, 3f, 5f, 7f, ...) of the fundamental frequency, similar to a square wave, but its harmonic amplitudes decrease much faster, proportional to the inverse square of the harmonic number (1/n²). This results in a brighter tone than a sine wave but mellower than a square wave, with 12 dB per octave roll-off.!
 
 !Wavetable commentStamp: '<historical>' prior: 0!
-This is a wavetable oscillator inspired by classic wavetable synthesizers such as the PPG Wave and the Waldorf Microwave 1. The classic waves are typically small and low-resolution (e.g., 128 8-bit PCM samples).!
+This is a simple wavetable oscillator.!
 
 !Supersaw commentStamp: '<historical>' prior: 0!
 Emulation of the Roland JP-8000 and JP-8080 supersaw oscillator based on Adam Szabo's thesis [1]. It consists of 7 detuned saws. It is not a perfect emulation, e.g. it uses antialiased PolyBLEP saws, instead of oversampling a digital saw and applying a high pass filter as the original.
@@ -3464,37 +3479,23 @@ setOutputLP3: aBuffer
 setOutputLP4: aBuffer
 	outputLP4 := aBuffer! !
 
-!Chorus methodsFor: 'controlling' stamp: 'len 26/Jan/2026 17:46:23'!
+!Chorus methodsFor: 'controlling' stamp: 'len 27/Mar/2026 15:18:34'!
 reset
 	phase := 0.0.
-	delayLine reset! !
+	delayLine reset.
+	tap1 reset.
+	tap2 reset.
+	tap3 reset.
+	lpfL reset.
+	lpfR reset! !
 
-!Chorus methodsFor: 'initialization' stamp: 'len 25/Mar/2026 15:52:08'!
-initialize
-	super initialize.
-	delayLine := DelayLine new: (self class sampleRate * 0.035 "35 ms max") ceiling.
-	tap1 := DelayTapC on: delayLine.
-	tap2 := DelayTapC on: delayLine.
-	tap3 := DelayTapC on: delayLine.
-	self reset! !
-
-!Chorus methodsFor: 'initialization' stamp: 'len 24/Feb/2026 23:52:24'!
-initializeControls
-	super initializeControls.
-	self addTimeControl: #time min: 0.010 "10 ms" max: 0.025 "25 ms" value: 0.015 "15 ms".
-	self addFrequencyControl: #speed min: 0.1 "Hz" max: 1.5 "Hz" value: 0.5 "Hz".
-	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
-	self addDryWetControl: #mix value: 0.5! !
-
-!Chorus methodsFor: 'processing' stamp: 'len 25/Mar/2026 20:57:48'!
-tick
-	| increment depth time mix twoPi d1 d2 d3 dry |
-	outputL ifNil: [^ self].
-	input ifNil: [outputL atAllPut: 0.0. outputR ifNotNil: [outputR atAllPut: 0.0].^ self].
+!Chorus methodsFor: 'controlling' stamp: 'len 27/Mar/2026 14:58:50'!
+update
+	| increment depth time twoPi d1 d2 d3 tone |
+	super update.
 	increment := (self get: #speed) / self class controlRate * Float twoPi.
 	depth := self get: #depth.
 	time := self get: #time.
-	mix := self get: #mix.
 	twoPi := Float twoPi.
 	d1 := (phase sin * depth * 0.002 "2 ms" + (time * 0.8)) * self class sampleRate.
 	d2 := ((twoPi/3.0 + phase) sin * depth * 0.002 "2 ms" + time) * self class sampleRate.
@@ -3503,6 +3504,37 @@ tick
 	tap1 setDelayIncrement: (d1 - tap1 delay) / self class blockSize.
 	tap2 setDelayIncrement: (d2 - tap2 delay) / self class blockSize.
 	tap3 setDelayIncrement: (d3 - tap3 delay) / self class blockSize.
+	tone := self get: #tone.
+	lpfL frequency: tone.
+	lpfR frequency: tone.
+! !
+
+!Chorus methodsFor: 'initialization' stamp: 'len 26/Mar/2026 16:32:51'!
+initialize
+	super initialize.
+	delayLine := DelayLine new: (self class sampleRate * 0.035 "35 ms max") ceiling.
+	tap1 := DelayTapC on: delayLine.
+	tap2 := DelayTapC on: delayLine.
+	tap3 := DelayTapC on: delayLine.
+	lpfL:= OnePole new.
+	lpfR:= OnePole new.
+	self reset! !
+
+!Chorus methodsFor: 'initialization' stamp: 'len 26/Mar/2026 16:18:57'!
+initializeControls
+	super initializeControls.
+	self addTimeControl: #time min: 0.005 "5 ms" max: 0.02 "20 ms" value: 0.01 "10 ms".
+	self addFrequencyControl: #speed min: 0.1 "Hz" max: 1.5 "Hz" value: 0.5 "Hz".
+	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
+	self addFrequencyControl: #tone min: 2000.0 "2 kHz" max: 18000.0 "18 kHz" value: 8000.0. "8 kHz"
+	self addDryWetControl: #mix value: 0.5! !
+
+!Chorus methodsFor: 'processing' stamp: 'len 27/Mar/2026 14:58:10'!
+tick
+	| mix dry |
+	outputL ifNil: [^ self].
+	input ifNil: [outputL atAllPut: 0.0. outputR ifNotNil: [outputR atAllPut: 0.0].^ self].
+	mix := self get: #mix.
 	dry := 1.0 - mix.
 	outputR isNil
 		ifTrue:
@@ -3510,7 +3542,7 @@ tick
 				| in out |
 				delayLine write: (in := input at: i).
 				out := tap1 read + tap2 read + tap3 read / 3.0.
-				outputL at: i put: in * dry + (out * mix)]]
+				outputL at: i put: in * dry + ((lpfL value: out) * mix)]]
 		ifFalse:
 			[1 to: input size do: [:i|
 				| in v1 v2 v3 mid side |
@@ -3521,8 +3553,8 @@ tick
 				mid := v1 + v2 + v3 / 3.0.
 				side := v1 - v3 * 0.5.
 				in := in * dry.
-				outputL at: i put: in + (mid + side * mix).
-				outputR at: i put: in + (mid - side * mix)]]! !
+				outputL at: i put: in + ((lpfL value: mid + side) * mix).
+				outputR at: i put: in + ((lpfR value: mid - side) * mix)]]! !
 
 !Chorus methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:40:47'!
 patchable
@@ -3541,6 +3573,119 @@ setOutputL: aBuffer
 	outputL := aBuffer! !
 
 !Chorus methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:10:06'!
+setOutputR: aBuffer
+	outputR := aBuffer! !
+
+!Ensemble methodsFor: 'controlling' stamp: 'len 27/Mar/2026 15:19:17'!
+reset
+	phase1 := phase2 := phase3 := phase4 := phase5 := 0.0.
+	delayLine reset.
+	tap1 reset.
+	tap2 reset.
+	tap3 reset.
+	tap4 reset.
+	tap5 reset.
+	lpfL reset.
+	lpfR reset! !
+
+!Ensemble methodsFor: 'controlling' stamp: 'len 27/Mar/2026 15:50:29'!
+update
+	| increment depth time twoPi d1 d2 d3 d4 d5 tone |
+	super update.
+	twoPi := Float twoPi.
+	increment := (self get: #speed) / self class controlRate * Float twoPi.
+	depth := (self get: #depth) * 0.004. "4 ms max depth"
+	time := self get: #time.
+	d1 := (phase1 sin * depth + (time * 0.72)) * self class sampleRate.
+	d2 := (phase2 sin * depth + (time * 0.86)) * self class sampleRate.
+	d3 := (phase3 sin * depth + time) * self class sampleRate.
+	d4 := (phase4 sin * depth + (time * 1.14)) * self class sampleRate.
+	d5 := (phase5 sin * depth + (time * 1.28)) * self class sampleRate.
+	"powers of φ give a clean geometric series that's maximally inharmonic throughout:"
+	(phase1 := phase1 + (increment * 0.382)) > twoPi ifTrue: [phase1 := phase1 - twoPi].
+	(phase2 := phase2 + (increment * 0.618)) > twoPi ifTrue: [phase2 := phase2 - twoPi].
+	(phase3 := phase3 + increment) > twoPi ifTrue: [phase3 := phase3 - twoPi].
+	(phase4 := phase4 + (increment * 1.618)) > twoPi ifTrue: [phase4 := phase4 - twoPi].
+	(phase5 := phase5 + (increment * 2.618)) > twoPi ifTrue: [phase5 := phase5 - twoPi].
+	tap1 setDelayIncrement: (d1 - tap1 delay) / self class blockSize.
+	tap2 setDelayIncrement: (d2 - tap2 delay) / self class blockSize.
+	tap3 setDelayIncrement: (d3 - tap3 delay) / self class blockSize.
+	tap4 setDelayIncrement: (d4 - tap4 delay) / self class blockSize.
+	tap5 setDelayIncrement: (d5 - tap5 delay) / self class blockSize.
+	tone := self get: #tone.
+	lpfL frequency: tone.
+	lpfR frequency: tone! !
+
+!Ensemble methodsFor: 'initialization' stamp: 'len 27/Mar/2026 15:19:33'!
+initialize
+	super initialize.
+	delayLine := DelayLine new: (self class sampleRate * 0.05 "50 ms max") ceiling.
+	tap1 := DelayTapC on: delayLine.
+	tap2 := DelayTapC on: delayLine.
+	tap3 := DelayTapC on: delayLine.
+	tap4 := DelayTapC on: delayLine.
+	tap5 := DelayTapC on: delayLine.
+	lpfL:= OnePole new.
+	lpfR:= OnePole new.
+	self reset! !
+
+!Ensemble methodsFor: 'initialization' stamp: 'len 26/Mar/2026 16:19:48'!
+initializeControls
+	super initializeControls.
+	self addTimeControl: #time min: 0.015 "15 ms" max: 0.035 "35 ms" value: 0.02 "20 ms".
+	self addFrequencyControl: #speed min: 0.1 "Hz" max: 1.5 "Hz" value: 0.5 "Hz".
+	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
+	self addFrequencyControl: #tone min: 2000.0 "2 kHz" max: 18000.0 "18 kHz" value: 6000.0. "6 kHz"
+	self addDryWetControl: #mix value: 0.5! !
+
+!Ensemble methodsFor: 'processing' stamp: 'len 27/Mar/2026 15:43:02'!
+tick
+	| mix dry |
+	outputL ifNil: [^ self].
+	input ifNil: [outputL atAllPut: 0.0. outputR ifNotNil: [outputR atAllPut: 0.0].^ self].
+	mix := self get: #mix.
+	dry := 1.0 - mix.
+	outputR isNil
+		ifTrue:
+			[1 to: input size do: [:i|
+				| in out |
+				delayLine write: (in := input at: i).
+				out := tap1 read + tap2 read + tap3 read + tap4 read + tap5 read / 3.0.
+				outputL at: i put: in * dry + ((lpfL value: out) * mix)]]
+		ifFalse:
+			[1 to: input size do: [:i|
+				| in v1 v2 v3 v4 v5 outL outR |
+				delayLine write: (in := input at: i).
+				v1 := tap1 read.
+				v2 := tap2 read.
+				v3 := tap3 read.
+				v4 := tap4 read.
+				v5 := tap5 read.
+				"pan coefficients precomputed from cos/sin of pan angle;
+				and normalize (3.0 is approx RMS sum for 5 constant-power taps):"
+				outL := v1 + (v2 * 0.924) + (v3 * 0.707) + (v4 * 0.383) / 3.0. 
+				outR := v2 * 0.383 + (v3 * 0.707) + (v4 * 0.924) + v5 / 3.0.
+				in := in * dry.
+				outputL at: i put: in + ((lpfL value: outL) * mix).
+				outputR at: i put: in + ((lpfR value: outR) * mix)]]! !
+
+!Ensemble methodsFor: 'ui' stamp: 'len 26/Mar/2026 15:45:20'!
+patchable
+	^ super patchable
+		addAudioInput: #setInput:;
+		addAudioOutput: #setOutputL: label: 'Out L/M';
+		addAudioOutput: #setOutputR: label: 'Out R';
+		yourself! !
+
+!Ensemble methodsFor: 'wiring' stamp: 'len 26/Mar/2026 15:45:20'!
+setInput: aBuffer
+	input := aBuffer! !
+
+!Ensemble methodsFor: 'wiring' stamp: 'len 26/Mar/2026 15:45:20'!
+setOutputL: aBuffer
+	outputL := aBuffer! !
+
+!Ensemble methodsFor: 'wiring' stamp: 'len 26/Mar/2026 15:45:20'!
 setOutputR: aBuffer
 	outputR := aBuffer! !
 
@@ -3581,12 +3726,12 @@ update
 	hsfL undenormalize; hs: 4000.0 / self class sampleRate Q: 0.707 gain: treble / trebleSpread. "4 kHz"
 	hsfR undenormalize; hs: 4000.0 / self class sampleRate Q: 0.707 gain: treble * trebleSpread. "4 kHz"! !
 
-!StereoEcho methodsFor: 'initialization' stamp: 'len 25/Mar/2026 15:59:06'!
+!StereoEcho methodsFor: 'initialization' stamp: 'len 26/Mar/2026 16:23:10'!
 initialize
 	super initialize.
-	delayLineL := DelayLine new: (self class sampleRate * 2) ceiling.
+	delayLineL := DelayLine new: (self class sampleRate * 2) ceiling + 2.
 	tapL := DelayTapC on: delayLineL.
-	delayLineR := DelayLine new: (self class sampleRate * 2) ceiling.
+	delayLineR := DelayLine new: (self class sampleRate * 2) ceiling + 2.
 	tapR := DelayTapC on: delayLineR.
 	lpfL := OnePole new frequency: 8000.0 / self class sampleRate. "8 kHz"
 	hpfL := OnePole new frequency: 40.0 / self class sampleRate. "40 Hz"
@@ -4538,14 +4683,6 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!Wavetable methodsFor: 'accessing' stamp: 'len 4/Mar/2026 18:20:49'!
-bank: anArray
-	bank := anArray.
-	index := 0.0.
-	position := 0.0.
-	phase := 0.0.
-	frequency := 1.0 / bank first value size! !
-
 !Wavetable methodsFor: 'accessing' stamp: 'len 4/Mar/2026 18:18:00'!
 label
 	^ label! !
@@ -4554,77 +4691,67 @@ label
 label: aString
 	label := aString! !
 
-!Wavetable methodsFor: 'controlling' stamp: 'len 4/Mar/2026 18:21:47'!
+!Wavetable methodsFor: 'accessing' stamp: 'len 26/Mar/2026 23:33:45'!
+waves: anArray
+	waves := anArray.
+	position := 0.0.
+	phase := 0.0.
+	frequency := 1.0 / waves first size! !
+
+!Wavetable methodsFor: 'controlling' stamp: 'len 26/Mar/2026 23:32:24'!
 update
 	super update.
-	index := ((self get: #index) * (bank size - 1)) truncated + 1.
 	position := self get: #position! !
 
-!Wavetable methodsFor: 'copying' stamp: 'len 5/Mar/2026 02:09:33'!
+!Wavetable methodsFor: 'copying' stamp: 'len 26/Mar/2026 23:34:21'!
 copy
 	^ self class new
 		settings: self settings;
-		bank: bank;
+		waves: waves;
 		label: label! !
 
-!Wavetable methodsFor: 'initialization' stamp: 'len 4/Mar/2026 18:22:10'!
+!Wavetable methodsFor: 'initialization' stamp: 'len 26/Mar/2026 23:34:26'!
 initializeControls
 	super initializeControls.
-	self addControl: #index min: 0.0 max: 1.0 value: 0.0.
 	self addControl: #position min: 0.0 max: 1.0 value: 0.0! !
 
-!Wavetable methodsFor: 'processing' stamp: 'len 22/Mar/2026 15:54:55'!
+!Wavetable methodsFor: 'processing' stamp: 'len 26/Mar/2026 23:35:08'!
 peek
-	| table wave |
-	table := (bank at: index) value.
-	wave := table at: (position * (table size - 1)) truncated + 1.
+	| wave |
+	wave := waves at: (position * (waves size - 1)) truncated + 1.
 	^ wave atWrapLinear: phase * (wave size - 1) + 1.0! !
 
-!Wavetable methodsFor: 'processing' stamp: 'len 25/Mar/2026 19:09:24'!
+!Wavetable methodsFor: 'processing' stamp: 'len 26/Mar/2026 23:35:55'!
 read: aBuffer
-	| table wave n |
-	table := (bank at: index) value.
-	wave := table at: (position * (table size - 1)) truncated + 1.
+	| wave n |
+	wave := waves at: (position * (waves size - 1)) truncated + 1.
 	n := wave size - 1.0.
 	1 to: aBuffer size do: [:i|
 		aBuffer at: i put: (wave atLinear: phase * n + 1.0).
 		phase := phase + frequency.
 		phase >= 1.0 ifTrue: [phase := phase - phase truncated]]! !
 
-!Wavetable methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:12:42'!
-read: aBuffer WIM: modulatorBuffer
-"	1 to: aBuffer size do: [:i|
-		wave := (modulatorBuffer at: i) * depth + wave \\ 1.0.
-		aBuffer at: i put: (aBuffer at: i) + self next]"
-	self notYetImplemented! !
-
-!Wavetable methodsFor: 'serialization' stamp: 'len 18/Mar/2026 20:46:09'!
+!Wavetable methodsFor: 'serialization' stamp: 'len 26/Mar/2026 23:38:24'!
 asJsonWithBuffers: aList
-	| jsonBank |
-	jsonBank := bank collect: [:each|
-		OrderedDictionary new
-			at: #label put: each key;
-			at: #waves put: (each value collect: [:aBuffer| aList indexOf: aBuffer ifAbsent: [aList add: aBuffer. aList size]]);
-			yourself].
 	^ (super asJsonWithBuffers: aList)
-		at: #bank put: jsonBank;
 		at: #label put: (label ifNil: ['']);
+		at: #waves put: (waves collect: [:aBuffer| aList indexOf: aBuffer ifAbsent: [aList add: aBuffer. aList size]]);
 		yourself! !
 
-!Wavetable methodsFor: 'serialization' stamp: 'len 5/Mar/2026 18:39:08'!
+!Wavetable methodsFor: 'serialization' stamp: 'len 26/Mar/2026 23:38:57'!
 readFromJson: json buffers: aList
 	super readFromJson: json buffers: aList.
-	bank := (json at: #bank) collect: [:each| (each at: #label) -> ((each at: #waves) collect: [:anInteger| aList at: anInteger])].
+	waves := (json at: #waves) collect: [:anInteger| aList at: anInteger].
 	label := json at: #label ifAbsent: [''].
 	label isEmpty ifTrue: [label := nil]! !
 
-!Wavetable methodsFor: 'ui' stamp: 'len 5/Mar/2026 02:17:25'!
+!Wavetable methodsFor: 'ui' stamp: 'len 26/Mar/2026 23:32:54'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	label ifNotNil: [answer setTitle: label].
 	answer body
-		addMorph: (WavetableControlMorph new controlX: (controls at: #index); controlY: (controls at: #position); bank: bank);
+		addMorph: (WavetableControlMorph new control: (controls at: #position); waves: waves);
 		addMorph: self panel.
 	answer
 		addControlInput: #tune label: 'Pitch';
@@ -5772,14 +5899,16 @@ buffer: aFloatArray sampleRate: aNumber loopStart: loopStart loopEnd: loopEnd
 buffer: aFloatArray sampleRate: aNumber rootNote: anotherNumber
 	^ self buffer: aFloatArray baseRate: aNumber * (60 - anotherNumber) semitonesToRatio! !
 
-!Sample class methodsFor: 'instance creation' stamp: 'len 19/Feb/2026 17:19:41'!
+!Sample class methodsFor: 'instance creation' stamp: 'len 26/Mar/2026 23:10:01'!
 fromFileEntry: fileEntry
-	| reader samples |
+	| reader samples answer |
 	reader := WAVFileReader new readFromFileEntry: fileEntry.
 	"If stereo, sum channels:"
 	samples := reader channels = 2 ifTrue: [reader leftSamples + reader rightSamples] ifFalse: [reader leftSamples].
-	^ (self buffer: samples baseRate: reader sampleRate)
-		removeDCOffset! !
+	answer := self buffer: samples baseRate: reader sampleRate.
+	reader loopStart ifNotNil: [answer loopStart: reader loopStart loopEnd: reader loopEnd].
+	answer removeDCOffset.
+	^ answer! !
 
 !ColoredNoise methodsFor: 'controlling' stamp: 'len 1/Feb/2026 17:53:42'!
 reset
@@ -6225,46 +6354,56 @@ patchable
 		addControlInput: #time;
 		yourself! !
 
-!Flanger methodsFor: 'controlling' stamp: 'len 26/Jan/2026 17:08:06'!
+!Flanger methodsFor: 'controlling' stamp: 'len 27/Mar/2026 14:49:08'!
 reset
 	phase := 0.0.
 	delayLine reset.
-	tap reset! !
+	tap reset.
+	lpf reset! !
 
-!Flanger methodsFor: 'initialization' stamp: 'len 25/Mar/2026 15:54:06'!
+!Flanger methodsFor: 'controlling' stamp: 'len 27/Mar/2026 15:02:09'!
+update
+	| increment depth time d twoPi |
+	super update.
+	twoPi := Float twoPi.
+	increment := (self get: #speed) / self class controlRate * twoPi.
+	depth := self get: #depth.
+	time := self get: #time.
+	d := (phase sin * depth * 0.002 "2 ms" + time max: 0.0) * self class sampleRate.
+	(phase := phase + increment) > twoPi ifTrue: [phase := phase - twoPi].
+	tap setDelayIncrement: (d - tap delay) / self class blockSize.
+	lpf frequency: (self get: #tone)! !
+
+!Flanger methodsFor: 'initialization' stamp: 'len 27/Mar/2026 14:48:41'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (self class sampleRate * 0.005 "5 ms max") ceiling.
 	tap := DelayTapT2 on: delayLine.
+	lpf:= OnePole new.
 	self reset! !
 
-!Flanger methodsFor: 'initialization' stamp: 'len 24/Feb/2026 23:52:59'!
+!Flanger methodsFor: 'initialization' stamp: 'len 27/Mar/2026 14:47:57'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #time min: 0.0002 "0.2 ms" max: 0.002 "2 ms" value: 0.001 "1 ms".
 	self addFrequencyControl: #speed min: 0.05 "Hz" max: 1.0 "Hz" value: 0.1 "Hz".
 	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
 	self addControl: #feedback min: -0.8 max: 0.8 value: 0.5.
+	self addFrequencyControl: #tone min: 3000.0 "3 kHz" max: 18000.0 "18 kHz" value: 6000.0. "6 kHz"
 	self addDryWetControl: #mix value: 0.5! !
 
-!Flanger methodsFor: 'processing' stamp: 'len 25/Mar/2026 21:04:57'!
+!Flanger methodsFor: 'processing' stamp: 'len 27/Mar/2026 15:00:30'!
 tick
-	| increment depth time feedback mix d |
+	| feedback mix |
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
-	increment := (self get: #speed) / self class controlRate * Float twoPi.
-	depth := self get: #depth.
-	time := self get: #time.
 	feedback := self get: #feedback.
 	mix := self get: #mix.
-	d := (phase sin * depth * 0.002 "2 ms" + time max: 0.0) * self class sampleRate.
-	(phase := phase + increment) > Float twoPi ifTrue: [phase := phase - Float twoPi].
-	tap setDelayIncrement: (d - tap delay) / self class blockSize.
 	1 to: input size do: [:i|
 		| in out |
 		in := input at: i.
 		out := tap read.
-		delayLine write: out * feedback + in.
+		delayLine write: (lpf value: out) * feedback + in.
 		output at: i put: in * (1.0 - mix) + (out * mix)]! !
 
 !Flanger methodsFor: 'ui' stamp: 'len 2/Mar/2026 16:14:47'!
@@ -6298,18 +6437,19 @@ initializeControls
 	self addControl: #feedback min: -0.7 max: 0.7 value: 0.5.
 	self addDryWetControl: #mix value: 0.5! !
 
-!Phaser methodsFor: 'processing' stamp: 'len 25/Mar/2026 21:12:08'!
+!Phaser methodsFor: 'processing' stamp: 'len 27/Mar/2026 15:03:20'!
 tick
-	| increment depth feedback mix twoPi a |
+	| increment depth feedback mix dry twoPi |
 	output ifNil: [^ self]. "actually, we should process the input anyway, if available"
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	increment := (self get: #speed) / self class sampleRate * Float twoPi.
 	depth := self get: #depth.
 	feedback := self get: #feedback.
 	mix := self get: #mix.
+	dry := 1.0 - mix.
 	twoPi := Float twoPi.
 	1 to: input size do: [:i|
-		| in out |
+		| a in out |
 		a := ​(phase sin + 1.0) * depth * 0.3 + 0.3. "0.3 - 0.9"
 		(phase := phase + increment) > twoPi ifTrue: [phase := phase - twoPi].
 		in := input at: i.
@@ -6320,7 +6460,7 @@ tick
 			x1 at: k put: out.
 			y1 at: k put: (out := y)].
 		lastOutput := out.
-		output at: i put: in * (1.0 - mix) + (out * mix)]! !
+		output at: i put: in * dry + (out * mix)]! !
 
 !Phaser methodsFor: 'ui' stamp: 'len 2/Mar/2026 16:15:14'!
 panel
@@ -6509,6 +6649,18 @@ reset
 	phase := 0.0.
 	delayLine reset! !
 
+!Vibrato methodsFor: 'controlling' stamp: 'len 27/Mar/2026 15:04:49'!
+update
+	| increment time depth d twoPi |
+	super update.
+	increment := (self get: #speed) / self class controlRate * Float twoPi.
+	depth := self get: #depth.
+	time := self get: #time.
+	twoPi := Float twoPi.
+	d := (phase sin * depth * 0.002 "2 ms" + time) * self class sampleRate.
+	(phase := phase + increment) > twoPi ifTrue: [phase := phase - twoPi].
+	tap setDelayIncrement: (d - tap delay) / self class blockSize! !
+
 !Vibrato methodsFor: 'initialization' stamp: 'len 25/Mar/2026 16:09:16'!
 initialize
 	super initialize.
@@ -6523,18 +6675,10 @@ initializeControls
 	self addFrequencyControl: #speed min: 3.0 "Hz" max: 8.0 "Hz" value: 5.0 "Hz".
 	self addControl: #depth min: 0.0 max: 1.0 value: 0.1! !
 
-!Vibrato methodsFor: 'processing' stamp: 'len 25/Mar/2026 21:14:24'!
+!Vibrato methodsFor: 'processing' stamp: 'len 27/Mar/2026 15:04:04'!
 tick
-	| increment depth time d twoPi |
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
-	increment := (self get: #speed) / self class controlRate * Float twoPi.
-	depth := self get: #depth.
-	time := self get: #time.
-	twoPi := Float twoPi.
-	d := (phase sin * depth * 0.002 "2 ms" + time) * self class sampleRate.
-	(phase := phase + increment) > twoPi ifTrue: [phase := phase - twoPi].
-	tap setDelayIncrement: (d - tap delay) / self class blockSize.
 	1 to: input size do: [:i|
 		delayLine write: (input at: i).
 		output at: i put: tap read]! !
@@ -9504,6 +9648,93 @@ stepTime
 wantsSteps
 	^ true! !
 
+!WavetableControlMorph methodsFor: 'initialization' stamp: 'len 5/Mar/2026 02:20:15'!
+defaultExtent
+	^ `160 @ 96`! !
+
+!WavetableControlMorph methodsFor: 'initialization' stamp: 'len 26/Mar/2026 23:31:55'!
+initialize
+	super initialize.
+	waves := #().
+	currentPosition := 0.0.
+	color := PatchMorph waveformColor! !
+
+!WavetableControlMorph methodsFor: 'initialization' stamp: 'len 26/Mar/2026 23:33:04'!
+waves: anArray
+	waves := anArray.
+	currentPosition := control value.
+	self redrawNeeded! !
+
+!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 26/Mar/2026 23:31:55'!
+drawFlatOn: aCanvas
+	"Warning: this is slow, should use vector canvas' moveTo:, lineTo:"
+	| n waveSize w h j stepX stepY y0 alphaColor waveIndex |
+	(n := waves size) > 0 ifFalse: [^ self].
+	waveSize := waves first size.
+	waveIndex := (currentPosition * (n - 1) + 1) asInteger.
+	j := n - 1 * waveSize + 1.
+	w := self morphWidth.
+	h := self morphHeight.
+	stepX := w / waveSize.
+	stepY := h / 2.0 / n.
+	y0 := 0.0.
+	alphaColor := (color mixed: 0.5 with: Color white) alpha: 0.1.
+	n to: 1 by: -1 do: [:i| | x y waveColor |
+		x := 0.0.
+		y := 1.0 - ((waves at: i) at: 1) / 4.0 * h.
+		waveColor := waveIndex = i ifTrue: [color] ifFalse: [alphaColor].
+		2 to: waveSize do: [:k|
+			| x2 y2 |
+			y2 := 1.0 - ((waves at: i) at: k) / 4.0 * h.
+			x2 := x + stepX.
+			aCanvas line: x@(y+y0) to: x2@(y2+y0) width: 1 color: waveColor.
+			x := x2.
+			y := y2].
+		j := j - waveSize.
+		y0 := y0 + stepY]! !
+
+!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 26/Mar/2026 23:31:55'!
+drawIsometricOn: aCanvas
+	| n m projection w h  alphaColor strokeWidth waveIndex Sx Sy Sa cx cy |
+	(n := waves size) > 0 ifFalse: [^ self].
+	m := waves first size.
+	waveIndex := (currentPosition * (n - 1) + 1) asInteger.
+	w := self morphWidth - 4.0.
+	h := self morphHeight - 4.0.
+	alphaColor := (color mixed: 0.5 with: Color white) alpha: 0.1.
+
+	Sx := w * 0.50.  "horizontal spread"
+	Sy := h * 0.25.  "isometric tilt depth"
+	Sa := h * 0.25.  "amplitude height"
+	cx := w  / 2.0 + 2.0.
+	cy := h / 2.0 - Sy + 2.0.
+	projection := [:j :amp :i | | xNorm zNorm screenX screenY |
+		xNorm := (j - 1) / (m - 1.0).
+		zNorm := (n - i) / (n - 1.0).
+		"Classic isometric: x-axis at +30°, z-axis at +150°, y-axis vertical.
+		Scale factors tune the overall spread and amplitude height."
+		screenX := cx + ((xNorm - zNorm) * Sx).
+		screenY := cy + ((xNorm + zNorm) * Sy) - (amp * Sa).
+		screenX @ screenY].
+
+	"Draw back-to-front so later (closer) waves paint over earlier ones."
+	n to: 1 by: -1 do: [:i|
+		| wave waveColor |
+		wave := waves at: i.
+		i = waveIndex ifTrue: [waveColor := color. strokeWidth := 1.5] ifFalse: [waveColor := alphaColor. strokeWidth := 1].
+		aCanvas strokeWidth: strokeWidth color: waveColor do:
+			[aCanvas moveTo: (projection value: 1 value: (wave at: 1) value: i).
+			2 to: m do: [:j| aCanvas lineTo: (projection value: j value: (wave at: j) value: i)]]]! !
+
+!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 4/Mar/2026 14:48:47'!
+drawOn: aCanvas
+	self drawIsometricOn: aCanvas! !
+
+!WavetableControlMorph methodsFor: 'dependency mechanism' stamp: 'len 26/Mar/2026 23:30:44'!
+update: anObject
+	super update: anObject.
+	currentPosition := control value! !
+
 !DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Mar/2026 19:03:18'!
 adjust: control by: aNumber
 	control adjustBy: aNumber.
@@ -10207,95 +10438,6 @@ stepTime
 !WaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 12/Feb/2026 19:20:28'!
 wantsSteps
 	^ true! !
-
-!WavetableControlMorph methodsFor: 'initialization' stamp: 'len 5/Mar/2026 02:17:21'!
-bank: anArray
-	bank := anArray.
-	wavetable := (bank at: (controlX value * (bank size - 1)) truncated + 1) value.
-	currentPosition := controlY value.
-	self redrawNeeded! !
-
-!WavetableControlMorph methodsFor: 'initialization' stamp: 'len 5/Mar/2026 02:20:15'!
-defaultExtent
-	^ `160 @ 96`! !
-
-!WavetableControlMorph methodsFor: 'initialization' stamp: 'len 4/Mar/2026 18:34:17'!
-initialize
-	super initialize.
-	wavetable := #().
-	currentPosition := 0.0.
-	color := PatchMorph waveformColor! !
-
-!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 4/Mar/2026 18:34:17'!
-drawFlatOn: aCanvas
-	"Warning: this is slow, should use vector canvas' moveTo:, lineTo:"
-	| n waveSize w h j stepX stepY y0 alphaColor waveIndex |
-	(n := wavetable size) > 0 ifFalse: [^ self].
-	waveSize := wavetable first size.
-	waveIndex := (currentPosition * (n - 1) + 1) asInteger.
-	j := n - 1 * waveSize + 1.
-	w := self morphWidth.
-	h := self morphHeight.
-	stepX := w / waveSize.
-	stepY := h / 2.0 / n.
-	y0 := 0.0.
-	alphaColor := (color mixed: 0.5 with: Color white) alpha: 0.1.
-	n to: 1 by: -1 do: [:i| | x y waveColor |
-		x := 0.0.
-		y := 1.0 - ((wavetable at: i) at: 1) / 4.0 * h.
-		waveColor := waveIndex = i ifTrue: [color] ifFalse: [alphaColor].
-		2 to: waveSize do: [:k|
-			| x2 y2 |
-			y2 := 1.0 - ((wavetable at: i) at: k) / 4.0 * h.
-			x2 := x + stepX.
-			aCanvas line: x@(y+y0) to: x2@(y2+y0) width: 1 color: waveColor.
-			x := x2.
-			y := y2].
-		j := j - waveSize.
-		y0 := y0 + stepY]! !
-
-!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 4/Mar/2026 18:34:17'!
-drawIsometricOn: aCanvas
-	| n m projection w h  alphaColor strokeWidth waveIndex Sx Sy Sa cx cy |
-	(n := wavetable size) > 0 ifFalse: [^ self].
-	m := wavetable first size.
-	waveIndex := (currentPosition * (n - 1) + 1) asInteger.
-	w := self morphWidth - 4.0.
-	h := self morphHeight - 4.0.
-	alphaColor := (color mixed: 0.5 with: Color white) alpha: 0.1.
-
-	Sx := w * 0.50.  "horizontal spread"
-	Sy := h * 0.25.  "isometric tilt depth"
-	Sa := h * 0.25.  "amplitude height"
-	cx := w  / 2.0 + 2.0.
-	cy := h / 2.0 - Sy + 2.0.
-	projection := [:j :amp :i | | xNorm zNorm screenX screenY |
-		xNorm := (j - 1) / (m - 1.0).
-		zNorm := (n - i) / (n - 1.0).
-		"Classic isometric: x-axis at +30°, z-axis at +150°, y-axis vertical.
-		Scale factors tune the overall spread and amplitude height."
-		screenX := cx + ((xNorm - zNorm) * Sx).
-		screenY := cy + ((xNorm + zNorm) * Sy) - (amp * Sa).
-		screenX @ screenY].
-
-	"Draw back-to-front so later (closer) waves paint over earlier ones."
-	n to: 1 by: -1 do: [:i|
-		| wave waveColor |
-		wave := wavetable at: i.
-		i = waveIndex ifTrue: [waveColor := color. strokeWidth := 1.5] ifFalse: [waveColor := alphaColor. strokeWidth := 1].
-		aCanvas strokeWidth: strokeWidth color: waveColor do:
-			[aCanvas moveTo: (projection value: 1 value: (wave at: 1) value: i).
-			2 to: m do: [:j| aCanvas lineTo: (projection value: j value: (wave at: j) value: i)]]]! !
-
-!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 4/Mar/2026 14:48:47'!
-drawOn: aCanvas
-	self drawIsometricOn: aCanvas! !
-
-!WavetableControlMorph methodsFor: 'dependency mechanism' stamp: 'len 4/Mar/2026 18:34:17'!
-update: anObject
-	super update: anObject.
-	wavetable := (bank at: (controlX value * (bank size - 1)) truncated + 1) value.
-	currentPosition := controlY value! !
 
 !XYVariableWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Feb/2026 19:16:48'!
 color: aColor
@@ -11041,7 +11183,7 @@ computeImage
 defaultExtent
 	^ `384 @ 92`! !
 
-!SamplePlayerMorph methodsFor: 'as yet unclassified' stamp: 'len 21/Jan/2026 22:41:59'!
+!SamplePlayerMorph methodsFor: 'as yet unclassified' stamp: 'len 26/Mar/2026 18:39:40'!
 drawOn: aCanvas
 	| x |
 	aCanvas image: image at: 0@0.
@@ -11049,7 +11191,7 @@ drawOn: aCanvas
 	lastDirection = #backwards
 		ifTrue: [aCanvas fillRectangle: (x @ 0 extent: (extent x - x) @ extent y) color: (Color black alpha: 0.6)]
 		ifFalse: [aCanvas fillRectangle: (0@0 extent: x @ extent y) color: (Color black alpha: 0.6)]."
-	x := lastPosition / sample buffer size * self morphWidth.
+	x := (lastPosition ifNil: [^ self]) / sample buffer size * self morphWidth.
 	aCanvas line: x @ 0 to: x @ extent y width: 2 color: Color white! !
 
 !SamplePlayerMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Jan/2026 16:54:53'!
@@ -13562,16 +13704,8 @@ rightSamples
 sampleRate
 	^ sampleRate! !
 
-!WAVFileReader methodsFor: 'reading' stamp: 'len 31/Dec/2025 14:33:14'!
-convert8bitUnsignedToFloat: anArray
-	"Convert the given array of samples--assumed to be 8-bit unsigned, linear data--into 32-bit float samples. Return an array containing the resulting samples. Typically used to read uncompressed WAVE sound data."
-	| answer |
-	answer := Float32Array new: anArray size.
-	1 to: anArray do: [:i| answer at: i put: ((anArray at: i) - 128 / 128.0)].
-	^ answer! !
-
-!WAVFileReader methodsFor: 'reading' stamp: 'len 31/Dec/2025 14:36:05'!
-convertBytesToFloat: aByteArray
+!WAVFileReader methodsFor: 'reading' stamp: 'len 26/Mar/2026 18:29:36'!
+convert16bitSignedToFloat: aByteArray
 	"Convert the given ByteArray sample data to 32 bit float."
 	| n answer j b1 b2 w |
 	n := aByteArray size // 2.
@@ -13584,6 +13718,22 @@ convertBytesToFloat: aByteArray
 		w > 32767 ifTrue: [w := w - 65536].
 		answer at: i put: w / 32768.0.
 		j := j + 2].
+	^ answer! !
+
+!WAVFileReader methodsFor: 'reading' stamp: 'len 31/Dec/2025 14:33:14'!
+convert8bitUnsignedToFloat: anArray
+	"Convert the given array of samples--assumed to be 8-bit unsigned, linear data--into 32-bit float samples. Return an array containing the resulting samples. Typically used to read uncompressed WAVE sound data."
+	| answer |
+	answer := Float32Array new: anArray size.
+	1 to: anArray do: [:i| answer at: i put: ((anArray at: i) - 128 / 128.0)].
+	^ answer! !
+
+!WAVFileReader methodsFor: 'reading' stamp: 'len 26/Mar/2026 18:38:27'!
+convertBytesToFloat: aByteArray
+	"Convert the given ByteArray sample data in IEEE 32-bit float format to 32 bit float."
+	| answer |
+	answer := Float32Array new: aByteArray size // 4.
+	1 to: answer size do: [:i| answer at: i put: (aByteArray float32At: i - 1 * 4 + 1 bigEndian: false)].
 	^ answer! !
 
 !WAVFileReader methodsFor: 'reading' stamp: 'len 31/Dec/2025 00:55:57'!
@@ -13606,7 +13756,7 @@ next32BitWord
 readFromFileEntry: fileEntry
 	^ fileEntry readStreamDo: [:strm| self readFromStream: strm]! !
 
-!WAVFileReader methodsFor: 'reading' stamp: 'len 17/Feb/2026 15:05:37'!
+!WAVFileReader methodsFor: 'reading' stamp: 'len 26/Mar/2026 18:34:35'!
 readFromStream: fileStream
 	| header data smpl type blockAlign numberOfLoops |
 	stream := fileStream.
@@ -13615,16 +13765,16 @@ readFromStream: fileStream
 	smpl := self readWaveChunk: 'smpl'.
 	smpl isEmpty ifFalse:
 		[numberOfLoops := smpl uint32At: 16r24 - 8 + 1 bigEndian: false.
-		numberOfLoops > 1 ifTrue: [self error: 'More than one loop'].
+		numberOfLoops > 1 ifTrue: [self error: 'more than one loop'].
 		loopStart := smpl uint32At: 16r2C - 8 + 1 + 16r08 bigEndian: false.
 		loopEnd := smpl uint32At: 16r2C - 8 + 1 + 16r0C bigEndian: false].
 	stream close.
 	stream := ReadStream on: header.
 	type := self next16BitWord.
-	type = 1 ifFalse: [^ self error: 'Unexpected wave format'].
+	(type = 1 "PCM" or: [type = 3 "Float"]) ifFalse: [^ self error: 'unexpected wave format'].
 	channels := self next16BitWord.
 	(channels < 1 or: [channels > 2])
-		ifTrue: [^ self error: 'Unexpected number of wave channels'].
+		ifTrue: [^ self error: 'unexpected number of wave channels'].
 	sampleRate := self next32BitWord.
 	stream skip: 4. "skip average bytes per second"
 	blockAlign := self next16BitWord.
@@ -13633,9 +13783,13 @@ readFromStream: fileStream
 		ifFalse: [  "recompute bits per sample"
 			bitsPerSample := (blockAlign // channels) * 8].
 
-	bitsPerSample = 8
-		ifTrue: [data := self convert8bitUnsignedToFloat: data]
-		ifFalse: [data := self convertBytesToFloat: data].
+	type = 1
+		ifTrue: "PCM"
+			[bitsPerSample = 8
+				ifTrue: [data := self convert8bitUnsignedToFloat: data]
+				ifFalse: [data := self convert16bitSignedToFloat: data]]
+		ifFalse: "Float"
+			[data := self convertBytesToFloat: data].
 
 	channels = 2
 		ifTrue:

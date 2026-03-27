@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 27 March 2026 at 4:26:28 pm'!
+'From Cuis7.7 [latest update: #7797] on 27 March 2026 at 7:49:31 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 506!
+!provides: 'Signals' 1 507!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -3529,20 +3529,20 @@ initializeControls
 	self addFrequencyControl: #tone min: 2000.0 "2 kHz" max: 18000.0 "18 kHz" value: 8000.0. "8 kHz"
 	self addDryWetControl: #mix value: 0.5! !
 
-!Chorus methodsFor: 'processing' stamp: 'len 27/Mar/2026 14:58:10'!
+!Chorus methodsFor: 'processing' stamp: 'len 27/Mar/2026 16:41:10'!
 tick
-	| mix dry |
+	| wet dry |
 	outputL ifNil: [^ self].
 	input ifNil: [outputL atAllPut: 0.0. outputR ifNotNil: [outputR atAllPut: 0.0].^ self].
-	mix := self get: #mix.
-	dry := 1.0 - mix.
+	wet := self get: #mix.
+	dry := 1.0 - wet.
 	outputR isNil
 		ifTrue:
 			[1 to: input size do: [:i|
 				| in out |
 				delayLine write: (in := input at: i).
 				out := tap1 read + tap2 read + tap3 read / 3.0.
-				outputL at: i put: in * dry + ((lpfL value: out) * mix)]]
+				outputL at: i put: in * dry + ((lpfL value: out) * wet)]]
 		ifFalse:
 			[1 to: input size do: [:i|
 				| in v1 v2 v3 mid side |
@@ -3553,8 +3553,8 @@ tick
 				mid := v1 + v2 + v3 / 3.0.
 				side := v1 - v3 * 0.5.
 				in := in * dry.
-				outputL at: i put: in + ((lpfL value: mid + side) * mix).
-				outputR at: i put: in + ((lpfR value: mid - side) * mix)]]! !
+				outputL at: i put: in + ((lpfL value: mid + side) * wet).
+				outputR at: i put: in + ((lpfR value: mid - side) * wet)]]! !
 
 !Chorus methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:40:47'!
 patchable
@@ -3576,9 +3576,13 @@ setOutputL: aBuffer
 setOutputR: aBuffer
 	outputR := aBuffer! !
 
-!Ensemble methodsFor: 'controlling' stamp: 'len 27/Mar/2026 15:19:17'!
+!Ensemble methodsFor: 'controlling' stamp: 'len 27/Mar/2026 19:46:47'!
 reset
-	phase1 := phase2 := phase3 := phase4 := phase5 := 0.0.
+	phase1 := 0.0.
+	phase2 := Float twoPi * 0.2.
+	phase3 := Float twoPi * 0.4.
+	phase4 := Float twoPi * 0.6.
+	phase5 := Float twoPi * 0.8.
 	delayLine reset.
 	tap1 reset.
 	tap2 reset.
@@ -3638,20 +3642,20 @@ initializeControls
 	self addFrequencyControl: #tone min: 2000.0 "2 kHz" max: 18000.0 "18 kHz" value: 6000.0. "6 kHz"
 	self addDryWetControl: #mix value: 0.5! !
 
-!Ensemble methodsFor: 'processing' stamp: 'len 27/Mar/2026 15:43:02'!
+!Ensemble methodsFor: 'processing' stamp: 'len 27/Mar/2026 16:40:45'!
 tick
-	| mix dry |
+	| wet dry |
 	outputL ifNil: [^ self].
 	input ifNil: [outputL atAllPut: 0.0. outputR ifNotNil: [outputR atAllPut: 0.0].^ self].
-	mix := self get: #mix.
-	dry := 1.0 - mix.
+	wet := self get: #mix.
+	dry := 1.0 - wet.
 	outputR isNil
 		ifTrue:
 			[1 to: input size do: [:i|
 				| in out |
 				delayLine write: (in := input at: i).
 				out := tap1 read + tap2 read + tap3 read + tap4 read + tap5 read / 3.0.
-				outputL at: i put: in * dry + ((lpfL value: out) * mix)]]
+				outputL at: i put: in * dry + ((lpfL value: out) * wet)]]
 		ifFalse:
 			[1 to: input size do: [:i|
 				| in v1 v2 v3 v4 v5 outL outR |
@@ -3666,8 +3670,8 @@ tick
 				outL := v1 + (v2 * 0.924) + (v3 * 0.707) + (v4 * 0.383) / 3.0. 
 				outR := v2 * 0.383 + (v3 * 0.707) + (v4 * 0.924) + v5 / 3.0.
 				in := in * dry.
-				outputL at: i put: in + ((lpfL value: outL) * mix).
-				outputR at: i put: in + ((lpfR value: outR) * mix)]]! !
+				outputL at: i put: in + ((lpfL value: outL) * wet).
+				outputR at: i put: in + ((lpfR value: outR) * wet)]]! !
 
 !Ensemble methodsFor: 'ui' stamp: 'len 26/Mar/2026 15:45:20'!
 patchable
@@ -3828,9 +3832,10 @@ setOutputL: aBuffer
 setOutputR: aBuffer
 	outputR := aBuffer! !
 
-!StereoReverb methodsFor: 'controlling' stamp: 'len 7/Mar/2026 16:25:04'!
+!StereoReverb methodsFor: 'controlling' stamp: 'len 27/Mar/2026 16:36:51'!
 reset
 	predelayLine reset.
+	predelayTap reset.
 	combsL do: [:each| each reset].
 	allpassesL do: [:each| each reset].
 	combsR do: [:each| each reset].
@@ -3857,16 +3862,16 @@ initialize
 	combsR := #(1116 1188 1277 1356 1422 1491 1557 1617) collect: [:each| LowpassComb new: ((each + 23) * self class sampleRate / 44100.0) truncated].
 	allpassesR := #(556 441 341 225) collect: [:each| AllpassComb new: ((each + 23) * self class sampleRate / 44100.0) truncated]! !
 
-!StereoReverb methodsFor: 'initialization' stamp: 'len 9/Mar/2026 15:56:36'!
+!StereoReverb methodsFor: 'initialization' stamp: 'len 27/Mar/2026 19:30:56'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #predelay min: 0.0001 "0.1 ms" max: 0.15 "150 ms" value: 0.005 "5 ms".
-	self addControl: #feedback min: 0.01 max: 1.0 value: 0.5.
+	self addControl: #feedback min: 0.7 max: 0.98 value: 0.84.
 	self addControl: #damp min: 0.0 max: 1.0 value: 0.5.
 	self addControl: #width min: 0.0 max: 1.0 value: 1.0.
 	self addDryWetControl: #mix value: 0.5! !
 
-!StereoReverb methodsFor: 'processing' stamp: 'len 25/Mar/2026 16:01:47'!
+!StereoReverb methodsFor: 'processing' stamp: 'len 27/Mar/2026 17:36:23'!
 tick
 	| width width2 wet dry |
 	outputL ifNil: [^ self].
@@ -3881,7 +3886,7 @@ tick
 		inputR
 			ifNil: [inR := inL. predelayLine write: inL]
 			ifNotNil: [inR := inputR at: i. predelayLine write: (inL + inR) * 0.5].
-		delayed := predelayTap read.
+		delayed := predelayTap read * 0.015. "fixed gain"
 		outL := 0.0.
 		combsL do: [:each| outL := (each value: delayed) + outL].
 		allpassesL do: [:each| outL := each value: outL].
@@ -6392,19 +6397,20 @@ initializeControls
 	self addFrequencyControl: #tone min: 3000.0 "3 kHz" max: 18000.0 "18 kHz" value: 6000.0. "6 kHz"
 	self addDryWetControl: #mix value: 0.5! !
 
-!Flanger methodsFor: 'processing' stamp: 'len 27/Mar/2026 15:00:30'!
+!Flanger methodsFor: 'processing' stamp: 'len 27/Mar/2026 16:40:16'!
 tick
-	| feedback mix |
+	| feedback wet dry |
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	feedback := self get: #feedback.
-	mix := self get: #mix.
+	wet := self get: #mix.
+	dry := 1.0 - wet.
 	1 to: input size do: [:i|
 		| in out |
 		in := input at: i.
 		out := tap read.
 		delayLine write: (lpf value: out) * feedback + in.
-		output at: i put: in * (1.0 - mix) + (out * mix)]! !
+		output at: i put: in * dry + (out * wet)]! !
 
 !Flanger methodsFor: 'ui' stamp: 'len 2/Mar/2026 16:14:47'!
 panel
@@ -6437,16 +6443,16 @@ initializeControls
 	self addControl: #feedback min: -0.7 max: 0.7 value: 0.5.
 	self addDryWetControl: #mix value: 0.5! !
 
-!Phaser methodsFor: 'processing' stamp: 'len 27/Mar/2026 15:03:20'!
+!Phaser methodsFor: 'processing' stamp: 'len 27/Mar/2026 16:42:13'!
 tick
-	| increment depth feedback mix dry twoPi |
+	| increment depth feedback wet dry twoPi |
 	output ifNil: [^ self]. "actually, we should process the input anyway, if available"
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	increment := (self get: #speed) / self class sampleRate * Float twoPi.
 	depth := self get: #depth.
 	feedback := self get: #feedback.
-	mix := self get: #mix.
-	dry := 1.0 - mix.
+	wet := self get: #mix.
+	dry := 1.0 - wet.
 	twoPi := Float twoPi.
 	1 to: input size do: [:i|
 		| a in out |
@@ -6460,7 +6466,7 @@ tick
 			x1 at: k put: out.
 			y1 at: k put: (out := y)].
 		lastOutput := out.
-		output at: i put: in * dry + (out * mix)]! !
+		output at: i put: in * dry + (out * wet)]! !
 
 !Phaser methodsFor: 'ui' stamp: 'len 2/Mar/2026 16:15:14'!
 panel
@@ -6496,9 +6502,10 @@ update
 	delayLine1 setLength: length; setDelay: delayTime; setDelayIncrement: delayIncrement.
 	delayLine1 setLength: length; setDelay: length - delayTime; setDelayIncrement: delayIncrement! !
 
-!Reverb methodsFor: 'controlling' stamp: 'len 6/Mar/2026 18:57:31'!
+!Reverb methodsFor: 'controlling' stamp: 'len 27/Mar/2026 16:36:59'!
 reset
 	predelayLine reset.
+	predelayTap reset.
 	combs do: [:each| each reset].
 	allpasses do: [:each| each reset]! !
 
@@ -6520,19 +6527,19 @@ initialize
 	combs := #(1116 1188 1277 1356 1422 1491 1557 1617) collect: [:each| LowpassComb new: (each * self class sampleRate / 44100.0) truncated].
 	allpasses := #(556 441 341 225) collect: [:each| AllpassComb new: (each * self class sampleRate / 44100.0) truncated]! !
 
-!Reverb methodsFor: 'initialization' stamp: 'len 9/Mar/2026 16:47:21'!
+!Reverb methodsFor: 'initialization' stamp: 'len 27/Mar/2026 19:32:08'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #predelay min: 0.0001 "0.1 ms" max: 0.15 "150 ms" value: 0.005 "5 ms".
-	self addLogControl: #feedback min: 0.01 max: 1.0 value: 0.5.
+	self addControl: #feedback min: 0.7 max: 0.98 value: 0.84.
 	self addControl: #damp min: 0.0 max: 1.0 value: 0.5.
 	self addDryWetControl: #mix value: 0.5! !
 
-!Reverb methodsFor: 'processing' stamp: 'len 6/Mar/2026 19:08:33'!
+!Reverb methodsFor: 'processing' stamp: 'len 27/Mar/2026 17:37:07'!
 value: in
 	| delayed out |
 	predelayLine write: in.
-	delayed := predelayTap read.
+	delayed := predelayTap read * 0.015. "fixed gain"
 	out := 0.0.
 	combs do: [:each| out := (each value: delayed) + out].
 	allpasses do: [:each| out := each value: out].
@@ -6644,10 +6651,11 @@ patchable
 		addControlInput: #feedback;
 		yourself! !
 
-!Vibrato methodsFor: 'controlling' stamp: 'len 26/Jan/2026 18:09:39'!
+!Vibrato methodsFor: 'controlling' stamp: 'len 27/Mar/2026 16:37:48'!
 reset
 	phase := 0.0.
-	delayLine reset! !
+	delayLine reset.
+	tap reset! !
 
 !Vibrato methodsFor: 'controlling' stamp: 'len 27/Mar/2026 15:04:49'!
 update

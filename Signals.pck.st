@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 27 March 2026 at 7:49:31 pm'!
+'From Cuis7.7 [latest update: #7797] on 27 March 2026 at 9:03:48 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 507!
+!provides: 'Signals' 1 508!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -3489,35 +3489,35 @@ reset
 	lpfL reset.
 	lpfR reset! !
 
-!Chorus methodsFor: 'controlling' stamp: 'len 27/Mar/2026 14:58:50'!
+!Chorus methodsFor: 'controlling' stamp: 'len 27/Mar/2026 20:58:08'!
 update
-	| increment depth time twoPi d1 d2 d3 tone |
+	| increment depth time twoPi delay tone |
 	super update.
-	increment := (self get: #speed) / self class controlRate * Float twoPi.
-	depth := self get: #depth.
-	time := self get: #time.
 	twoPi := Float twoPi.
-	d1 := (phase sin * depth * 0.002 "2 ms" + (time * 0.8)) * self class sampleRate.
-	d2 := ((twoPi/3.0 + phase) sin * depth * 0.002 "2 ms" + time) * self class sampleRate.
-	d3 := ((twoPi/1.5 + phase) sin * depth * 0.002 "2 ms" + (time * 1.2)) * self class sampleRate.
+	time := self get: #time.
+	depth := (self get: #depth) * 0.002 "2 ms".
+	delay := (phase sin * depth + (time * 0.8)) * self class sampleRate.
+	tap1 setDelayIncrement: (delay - tap1 delay) / self class blockSize.
+	delay := ((twoPi/3.0 + phase) sin * depth + time) * self class sampleRate.
+	tap2 setDelayIncrement: (delay - tap2 delay) / self class blockSize.
+	delay := ((twoPi/1.5 + phase) sin * depth + (time * 1.2)) * self class sampleRate.
+	tap3 setDelayIncrement: (delay - tap3 delay) / self class blockSize.
+	increment := (self get: #speed) / self class controlRate * twoPi.
 	(phase := phase + increment) > twoPi ifTrue: [phase := phase - twoPi].
-	tap1 setDelayIncrement: (d1 - tap1 delay) / self class blockSize.
-	tap2 setDelayIncrement: (d2 - tap2 delay) / self class blockSize.
-	tap3 setDelayIncrement: (d3 - tap3 delay) / self class blockSize.
 	tone := self get: #tone.
 	lpfL frequency: tone.
 	lpfR frequency: tone.
 ! !
 
-!Chorus methodsFor: 'initialization' stamp: 'len 26/Mar/2026 16:32:51'!
+!Chorus methodsFor: 'initialization' stamp: 'len 27/Mar/2026 20:59:02'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (self class sampleRate * 0.035 "35 ms max") ceiling.
 	tap1 := DelayTapC on: delayLine.
 	tap2 := DelayTapC on: delayLine.
 	tap3 := DelayTapC on: delayLine.
-	lpfL:= OnePole new.
-	lpfR:= OnePole new.
+	lpfL := OnePole new.
+	lpfR := OnePole new.
 	self reset! !
 
 !Chorus methodsFor: 'initialization' stamp: 'len 26/Mar/2026 16:18:57'!
@@ -3592,35 +3592,35 @@ reset
 	lpfL reset.
 	lpfR reset! !
 
-!Ensemble methodsFor: 'controlling' stamp: 'len 27/Mar/2026 15:50:29'!
+!Ensemble methodsFor: 'controlling' stamp: 'len 27/Mar/2026 20:57:31'!
 update
-	| increment depth time twoPi d1 d2 d3 d4 d5 tone |
+	| increment depth time twoPi delay tone |
 	super update.
 	twoPi := Float twoPi.
-	increment := (self get: #speed) / self class controlRate * Float twoPi.
-	depth := (self get: #depth) * 0.004. "4 ms max depth"
 	time := self get: #time.
-	d1 := (phase1 sin * depth + (time * 0.72)) * self class sampleRate.
-	d2 := (phase2 sin * depth + (time * 0.86)) * self class sampleRate.
-	d3 := (phase3 sin * depth + time) * self class sampleRate.
-	d4 := (phase4 sin * depth + (time * 1.14)) * self class sampleRate.
-	d5 := (phase5 sin * depth + (time * 1.28)) * self class sampleRate.
+	depth := (self get: #depth) * 0.004. "4 ms max depth"
+	delay := (phase1 sin * depth + (time * 0.72)) * self class sampleRate.
+	tap1 setDelayIncrement: (delay - tap1 delay) / self class blockSize.
+	delay := (phase2 sin * depth + (time * 0.86)) * self class sampleRate.
+	tap2 setDelayIncrement: (delay - tap2 delay) / self class blockSize.
+	delay := (phase3 sin * depth + time) * self class sampleRate.
+	tap3 setDelayIncrement: (delay - tap3 delay) / self class blockSize.
+	delay := (phase4 sin * depth + (time * 1.14)) * self class sampleRate.
+	tap4 setDelayIncrement: (delay - tap4 delay) / self class blockSize.
+	delay := (phase5 sin * depth + (time * 1.28)) * self class sampleRate.
+	tap5 setDelayIncrement: (delay - tap5 delay) / self class blockSize.
+	increment := (self get: #speed) / self class controlRate * twoPi.
 	"powers of φ give a clean geometric series that's maximally inharmonic throughout:"
 	(phase1 := phase1 + (increment * 0.382)) > twoPi ifTrue: [phase1 := phase1 - twoPi].
 	(phase2 := phase2 + (increment * 0.618)) > twoPi ifTrue: [phase2 := phase2 - twoPi].
 	(phase3 := phase3 + increment) > twoPi ifTrue: [phase3 := phase3 - twoPi].
 	(phase4 := phase4 + (increment * 1.618)) > twoPi ifTrue: [phase4 := phase4 - twoPi].
 	(phase5 := phase5 + (increment * 2.618)) > twoPi ifTrue: [phase5 := phase5 - twoPi].
-	tap1 setDelayIncrement: (d1 - tap1 delay) / self class blockSize.
-	tap2 setDelayIncrement: (d2 - tap2 delay) / self class blockSize.
-	tap3 setDelayIncrement: (d3 - tap3 delay) / self class blockSize.
-	tap4 setDelayIncrement: (d4 - tap4 delay) / self class blockSize.
-	tap5 setDelayIncrement: (d5 - tap5 delay) / self class blockSize.
 	tone := self get: #tone.
 	lpfL frequency: tone.
 	lpfR frequency: tone! !
 
-!Ensemble methodsFor: 'initialization' stamp: 'len 27/Mar/2026 15:19:33'!
+!Ensemble methodsFor: 'initialization' stamp: 'len 27/Mar/2026 20:59:09'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (self class sampleRate * 0.05 "50 ms max") ceiling.
@@ -3629,8 +3629,8 @@ initialize
 	tap3 := DelayTapC on: delayLine.
 	tap4 := DelayTapC on: delayLine.
 	tap5 := DelayTapC on: delayLine.
-	lpfL:= OnePole new.
-	lpfR:= OnePole new.
+	lpfL := OnePole new.
+	lpfR := OnePole new.
 	self reset! !
 
 !Ensemble methodsFor: 'initialization' stamp: 'len 26/Mar/2026 16:19:48'!
@@ -6366,32 +6366,32 @@ reset
 	tap reset.
 	lpf reset! !
 
-!Flanger methodsFor: 'controlling' stamp: 'len 27/Mar/2026 15:02:09'!
+!Flanger methodsFor: 'controlling' stamp: 'len 27/Mar/2026 20:55:37'!
 update
-	| increment depth time d twoPi |
+	| increment depth time delay twoPi |
 	super update.
 	twoPi := Float twoPi.
-	increment := (self get: #speed) / self class controlRate * twoPi.
-	depth := self get: #depth.
 	time := self get: #time.
-	d := (phase sin * depth * 0.002 "2 ms" + time max: 0.0) * self class sampleRate.
+	depth := (self get: #depth) * time * 0.666.
+	delay := (phase sin * depth + time) * self class sampleRate.
+	tap setDelayIncrement: (delay - tap delay) / self class blockSize.
+	increment := (self get: #speed) / self class controlRate * twoPi.
 	(phase := phase + increment) > twoPi ifTrue: [phase := phase - twoPi].
-	tap setDelayIncrement: (d - tap delay) / self class blockSize.
 	lpf frequency: (self get: #tone)! !
 
-!Flanger methodsFor: 'initialization' stamp: 'len 27/Mar/2026 14:48:41'!
+!Flanger methodsFor: 'initialization' stamp: 'len 27/Mar/2026 20:59:20'!
 initialize
 	super initialize.
-	delayLine := DelayLine new: (self class sampleRate * 0.005 "5 ms max") ceiling.
+	delayLine := DelayLine new: (self class sampleRate * 0.015 "15 ms max") ceiling.
 	tap := DelayTapT2 on: delayLine.
-	lpf:= OnePole new.
+	lpf := OnePole new.
 	self reset! !
 
-!Flanger methodsFor: 'initialization' stamp: 'len 27/Mar/2026 14:47:57'!
+!Flanger methodsFor: 'initialization' stamp: 'len 27/Mar/2026 20:41:35'!
 initializeControls
 	super initializeControls.
-	self addTimeControl: #time min: 0.0002 "0.2 ms" max: 0.002 "2 ms" value: 0.001 "1 ms".
-	self addFrequencyControl: #speed min: 0.05 "Hz" max: 1.0 "Hz" value: 0.1 "Hz".
+	self addTimeControl: #time min: 0.0001 "0.1 ms" max: 0.01 "10 ms" value: 0.002 "2 ms".
+	self addFrequencyControl: #speed min: 0.05 "Hz" max: 2.0 "Hz" value: 0.1 "Hz".
 	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
 	self addControl: #feedback min: -0.8 max: 0.8 value: 0.5.
 	self addFrequencyControl: #tone min: 3000.0 "3 kHz" max: 18000.0 "18 kHz" value: 6000.0. "6 kHz"
@@ -6412,13 +6412,14 @@ tick
 		delayLine write: (lpf value: out) * feedback + in.
 		output at: i put: in * dry + (out * wet)]! !
 
-!Flanger methodsFor: 'ui' stamp: 'len 2/Mar/2026 16:14:47'!
+!Flanger methodsFor: 'ui' stamp: 'len 27/Mar/2026 21:01:51'!
 panel
 	^ ControlPanel new
 		addKnob: (controls at: #time) label: 'Time';
 		addKnob: (controls at: #speed) label: 'Speed';
 		addKnob: (controls at: #depth) label: 'Depth';
 		addKnob: (controls at: #feedback) label: 'FB';
+		addKnob: (controls at: #tone) label: 'Tone';
 		addKnob: (controls at: #mix) label: 'Mix'! !
 
 !Phaser methodsFor: 'controlling' stamp: 'len 26/Jan/2026 13:42:09'!

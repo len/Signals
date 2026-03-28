@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 27 March 2026 at 9:03:48 pm'!
+'From Cuis7.7 [latest update: #7797] on 28 March 2026 at 7:41:11 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 508!
+!provides: 'Signals' 1 509!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -4720,14 +4720,31 @@ initializeControls
 	super initializeControls.
 	self addControl: #position min: 0.0 max: 1.0 value: 0.0! !
 
-!Wavetable methodsFor: 'processing' stamp: 'len 26/Mar/2026 23:35:08'!
+!Wavetable methodsFor: 'processing' stamp: 'len 28/Mar/2026 04:11:42'!
 peek
 	| wave |
 	wave := waves at: (position * (waves size - 1)) truncated + 1.
-	^ wave atWrapLinear: phase * (wave size - 1) + 1.0! !
+	^ wave atWrapCubic: phase * (wave size - 1) + 1.0! !
 
-!Wavetable methodsFor: 'processing' stamp: 'len 26/Mar/2026 23:35:55'!
+!Wavetable methodsFor: 'processing' stamp: 'len 28/Mar/2026 19:39:23'!
 read: aBuffer
+	| wave1 wave2 weight1 weight2 k n |
+	weight1 := position * (waves size - 1).
+	k := weight1 truncated.
+	weight1 := weight1 - k.
+	weight2 := 1.0 - weight1.
+	wave1 := waves at: k + 1.
+	wave2 := waves atWrap: k + 2.
+	n := wave1 size - 1.0.
+	1 to: aBuffer size do: [:i|
+		| t |
+		t := phase * n + 1.0.
+		aBuffer at: i put: (wave1 atLinear: t) * weight1 + ((wave2 atLinear: t) * weight2).
+		phase := phase + frequency.
+		phase >= 1.0 ifTrue: [phase := phase - phase truncated]]! !
+
+!Wavetable methodsFor: 'processing' stamp: 'len 28/Mar/2026 19:38:23'!
+readSimple: aBuffer
 	| wave n |
 	wave := waves at: (position * (waves size - 1)) truncated + 1.
 	n := wave size - 1.0.
@@ -4765,22 +4782,46 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
+!Wavetable class methodsFor: 'library' stamp: 'len 27/Mar/2026 22:11:44'!
+fileReaderServicesForFileEntry: filename suffix: suffix
+	suffix = 'wav' ifTrue: [^ {self serviceLoadWavetable}].
+	^ #()! !
+
+!Wavetable class methodsFor: 'library' stamp: 'len 27/Mar/2026 22:20:57'!
+fromFileEntry: fileEntry waveSize: waveSize
+	| reader samples waves answer |
+	reader := WAVFileReader new readFromFileEntry: fileEntry.
+	samples := reader channels = 2 ifTrue: [reader leftSamples + reader rightSamples] ifFalse: [reader leftSamples].
+	samples size \\ waveSize = 0 ifFalse: [self error: 'unexpected number of samples'].
+	waves := (1 to: samples size by: waveSize) collect: [:i| samples copyFrom: i to: i + waveSize - 1].
+	answer := self new waves: waves.
+	^ answer! !
+
 !Wavetable class methodsFor: 'library' stamp: 'len 4/Mar/2026 18:49:49'!
 library
 	^ Library! !
 
-!Wavetable class methodsFor: 'library' stamp: 'len 4/Mar/2026 18:50:20'!
+!Wavetable class methodsFor: 'library' stamp: 'len 27/Mar/2026 22:21:35'!
+load: fileEntry
+	^ self load: fileEntry label: (fileEntry name allButLast: 4) waveSize: 2048! !
+
+!Wavetable class methodsFor: 'library' stamp: 'len 27/Mar/2026 22:21:24'!
+load: fileEntry label: aString waveSize: waveSize
+	^ (Library at: aString put: (self fromFileEntry: fileEntry waveSize: waveSize)) label: aString! !
+
+!Wavetable class methodsFor: 'library' stamp: 'len 27/Mar/2026 22:23:40'!
 loadLibrary
 	"
 	Wavetable loadLibrary
 	"
 	Library := OrderedDictionary new.
-	self loadMW1Wavetables.
-	self loadPPGWavetables! !
+	self load: self wavetablesDirectory // 'Saxophone.wav'.
+	self load: self wavetablesDirectory // 'Rhodes.wav'! !
 
-!Wavetable class methodsFor: 'library' stamp: 'len 4/Mar/2026 18:51:20'!
+!Wavetable class methodsFor: 'library' stamp: 'len 27/Mar/2026 22:22:18'!
 loadMW1Wavetables
 	| bank |
+	self flag: #deprecated.
 	bank := ((Sample samplesDirectory / 'wavetables' / 'mw1_wavetables') files asSortedCollection: [:a :b| a name <= b name]) asArray allButFirst "skip the first one with just 3 waves" collect: [:each|
 		| label allTables table |
 		label := (each name findTokens: '-.') second.
@@ -4789,9 +4830,10 @@ loadMW1Wavetables
 		label -> table].
 	Library at: #MW1 put: (self new label: 'MW1'; bank: bank)! !
 
-!Wavetable class methodsFor: 'library' stamp: 'len 4/Mar/2026 18:52:11'!
+!Wavetable class methodsFor: 'library' stamp: 'len 27/Mar/2026 22:22:24'!
 loadPPGWavetables
 	| bytes bank |
+	self flag: #deprecated.
 	"32 wavetables, with 64 waves each, and 256 signed bytes per wave:"
 	bytes := (Sample samplesDirectory / 'wavetables' // 'ppg.bin') binaryContents.
 	bank := (0 to: 31) collect: [:i|
@@ -4801,6 +4843,19 @@ loadPPGWavetables
 		table := (1 to: table size / 256) collect: [:k| table copyFrom: k-1*256+1 to: k*256].
 		i printString -> table].
 	Library at: #PPG put: (self new label: 'PPG'; bank: bank)! !
+
+!Wavetable class methodsFor: 'library' stamp: 'len 27/Mar/2026 22:11:23'!
+serviceLoadWavetable
+	^ (SimpleServiceEntry
+		provider: self
+		label: 'load wavetable to library'
+		selector: #load:
+		description:'load the wavetable to the wavetables library'
+		buttonLabel: 'load wavetable') argumentGetter: [:fileList| fileList selectedFileEntry]! !
+
+!Wavetable class methodsFor: 'library' stamp: 'len 27/Mar/2026 22:25:07'!
+wavetablesDirectory
+	^ Sample samplesDirectory / 'wavetables'! !
 
 !Supersaw methodsFor: 'controlling' stamp: 'len 1/Dec/2025 15:32:00'!
 reset
@@ -5298,36 +5353,41 @@ patchable
 library
 	^ Library! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 15:10:34'!
+!Multisample class methodsFor: 'library' stamp: 'len 28/Mar/2026 00:59:36'!
 loadBookerT
 	| keymap |
 	keymap := Dictionary new.
 	#('B' 'F') with: #(59 65) do: [:noteName :centerKey|
 		1 to: 7 do: [:octave|
-			| filename reader bufferSlow loopStartSlow loopEndSlow bufferFast loopStartFast loopEndFast midiKey |
-			"slow:"
+			| filename reader buffer midiKey |
 			filename := 'BookerT (slow) - booker_slow_', noteName, octave printString.
 			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'BookerT' // (filename, 'L.wav').
-			bufferSlow := reader leftSamples.
+			buffer := reader leftSamples.
 			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'BookerT' // (filename, 'R.wav').
-			bufferSlow += reader leftSamples.
-			loopStartSlow := reader loopStart.
-			loopEndSlow := reader loopEnd.
-			"fast:"
-			filename := 'BookerT (fast) - booker_fast_', noteName, octave printString.
-			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'BookerT' // (filename, 'L.wav').
-			bufferFast := reader leftSamples.
-			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'BookerT' // (filename, 'R.wav').
-			bufferFast += reader leftSamples.
-			loopStartFast := reader loopStart.
-			loopEndFast := reader loopEnd.
+			buffer += reader leftSamples.
 			midiKey := (octave - 4) * 12 + centerKey.
 			keymap at: midiKey put:
-				{Sample buffer: bufferSlow sampleRate: reader sampleRate loopStart: loopStartSlow loopEnd: loopEndSlow.
-				Sample buffer: bufferFast sampleRate: reader sampleRate loopStart: loopStartFast loopEnd: loopEndFast}]].
-	^ self new label: 'BookerT'; keymap: keymap! !
+				{Sample buffer: buffer sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}]].
+	^ self new label: 'Booker T'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 16/Mar/2026 21:45:35'!
+!Multisample class methodsFor: 'library' stamp: 'len 28/Mar/2026 00:58:09'!
+loadBookerTFast
+	| keymap |
+	keymap := Dictionary new.
+	#('B' 'F') with: #(59 65) do: [:noteName :centerKey|
+		1 to: 7 do: [:octave|
+			| filename reader buffer midiKey |
+			filename := 'BookerT (fast) - booker_fast_', noteName, octave printString.
+			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'BookerT' // (filename, 'L.wav').
+			buffer := reader leftSamples.
+			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'BookerT' // (filename, 'R.wav').
+			buffer += reader leftSamples.
+			midiKey := (octave - 4) * 12 + centerKey.
+			keymap at: midiKey put:
+				{Sample buffer: buffer sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}]].
+	^ self new label: 'Booker T (Fast)'; keymap: keymap! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 28/Mar/2026 00:53:18'!
 loadChoirAah
 	| keymap |
 	keymap := Dictionary new.
@@ -5362,7 +5422,7 @@ loadChoirOuh
 			{Sample buffer: buffer sampleRate: reader sampleRate loopStart: loopStart loopEnd: loopEnd}].
 	^ self new label: 'Choir Ouh'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 16:33:56'!
+!Multisample class methodsFor: 'library' stamp: 'len 28/Mar/2026 00:53:34'!
 loadDancePiano
 	"Salamander Dance Piano."
 	| keymap |
@@ -5388,7 +5448,7 @@ loadDoubleBass
 		keymap at: i+30 put: {Sample buffer: reader leftSamples sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Double Bass'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 16/Feb/2026 23:46:03'!
+!Multisample class methodsFor: 'library' stamp: 'len 28/Mar/2026 00:54:04'!
 loadFarfisa
 	"Farfisa with full drawbars."
 	"TODO: loop points"
@@ -5401,7 +5461,7 @@ loadFarfisa
 			reader := WAVFileReader new readFromFileEntry: each.
 			buffer := reader leftSamples + reader rightSamples.
 			keymap at: midiKey put: {Sample buffer: buffer sampleRate: reader sampleRate}]].
-	^ self new label: 'Farfisa Full'; keymap: keymap! !
+	^ self new label: 'Farfisa'; keymap: keymap! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 16:06:42'!
 loadFingerBass
@@ -5414,7 +5474,7 @@ loadFingerBass
 		keymap at: midiKey put: {Sample buffer: reader leftSamples sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Finger Bass'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 16:32:55'!
+!Multisample class methodsFor: 'library' stamp: 'len 28/Mar/2026 00:50:57'!
 loadFlute
 	"Iowa Flute with vibrato."
 	| keymap |
@@ -5445,33 +5505,17 @@ loadJRhodes3D
 	keymap := samples collect: [:each| each associations sorted reversed collect: #value].
 	^ self new label: 'Rhodes'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 13/Mar/2026 19:15:16'!
+!Multisample class methodsFor: 'library' stamp: 'len 28/Mar/2026 02:23:18'!
 loadLibrary
 	"
 	Multisample loadLibrary
 	"
 	
 	Library := OrderedDictionary new.
-	Library
-		at: 'Rhodes' put: self loadJRhodes3D;
-		at: 'LoFi Rhodes' put: self loadLoFiRhodes;
-		at: 'Dance Piano' put: self loadDancePiano;
-		at: 'Vibraphone' put: self loadVibraphone;
-		at: 'BookerT' put: self loadBookerT;
-		at: 'Farfisa' put: self loadFarfisa;
-		at: 'Trumpet' put: self loadTrumpet;
-		at: 'Flute' put: self loadFlute;
-		at: 'Squire Bass' put: self loadSquireBass;
-		at: 'Picked Bass' put: self loadPickedBass;
-		at: 'Slap Bass' put: self loadSlapBass;
-		at: 'Pop Bass' put: self loadPopBass;
-		at: 'Finger Bass' put: self loadFingerBass;
-		at: 'Double Bass' put: self loadDoubleBass;
-		at: '6-String Steel Guitar' put: self loadSixStringSteelGuitar;
-		at: 'Two Tone House Organ' put: self loadTwoToneHouseOrgan;
-		at: 'String Ensemble' put: self loadStringEnsemble;
-		at: 'Choir Aah' put: self loadChoirAah;
-		at: 'Choir Ouh' put: self loadChoirOuh! !
+	#(loadJRhodes3D loadLoFiRhodes loadDancePiano loadVibraphone loadBookerT loadBookerTFast loadFarfisa loadTrumpet loadFlute loadSquireBass loadPickedBass loadSlapBass loadPopBass loadFingerBass loadDoubleBass loadSixStringSteelGuitar loadTwoToneHouseOrgan loadStringEnsemble loadChoirAah loadChoirOuh) do: [:each|
+		| multisample |
+		multisample := self perform: each.
+		Library at: multisample label put: multisample]! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 17:15:48'!
 loadLoFiRhodes
@@ -5560,7 +5604,7 @@ loadStringEnsemble
 			{Sample buffer: buffer sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'String Ensemble'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 13/Mar/2026 19:15:54'!
+!Multisample class methodsFor: 'library' stamp: 'len 28/Mar/2026 00:55:21'!
 loadTrumpet
 	"Jazz Trumpet."
 	| keymap |
@@ -5572,9 +5616,9 @@ loadTrumpet
 		buffer := reader leftSamples.
 		keymap at: noteName nameToSemitones put:
 			{Sample buffer: buffer sampleRate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
-	^ self new label: 'Jazz Trumpet'; keymap: keymap! !
+	^ self new label: 'Trumpet'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 11/Mar/2026 18:57:46'!
+!Multisample class methodsFor: 'library' stamp: 'len 28/Mar/2026 00:55:29'!
 loadTwoToneHouseOrgan
 	| keymap |
 	keymap := Dictionary new.
@@ -5585,7 +5629,7 @@ loadTwoToneHouseOrgan
 		buffer := reader leftSamples + reader rightSamples.
 		keymap at: noteName nameToSemitones put:
 			{Sample buffer: buffer sampleRate: reader sampleRate}].
-	^ self new label: 'Two Tone House Organ'; keymap: keymap! !
+	^ self new label: 'Two-Tone House Organ'; keymap: keymap! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 15:14:12'!
 loadVibraphone

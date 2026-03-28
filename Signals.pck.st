@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 28 March 2026 at 7:41:11 pm'!
+'From Cuis7.7 [latest update: #7797] on 28 March 2026 at 9:47:06 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 509!
+!provides: 'Signals' 1 510!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -407,7 +407,7 @@ VOSIM class
 
 !classDefinition: #Multisample category: #'Signals-Samples'!
 TunedGenerator subclass: #Multisample
-	instanceVariableNames: 'keymap velocity sample tailSample label'
+	instanceVariableNames: 'keymap velocity offset sample tailSample label'
 	classVariableNames: 'Library'
 	poolDictionaries: ''
 	category: 'Signals-Samples'!
@@ -5258,7 +5258,7 @@ clear
 gateOff
 	sample ifNotNil: [sample gateOff]! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 25/Mar/2026 19:48:33'!
+!Multisample methodsFor: 'controlling' stamp: 'len 28/Mar/2026 21:42:22'!
 gateOn
 	| closestKey speedFactor samplesByVelocity |
 	sample ifNotNil: [(sample isUnreleased and: [self get: #legato]) ifTrue: [^ self]].
@@ -5267,14 +5267,26 @@ gateOn
 	(tailSample := sample) ifNotNil: [tailSample gateOn "to setup the tail position"].
 	sample := (samplesByVelocity at: ((velocity sqrt * (samplesByVelocity size - 1)) truncated + 1 min: samplesByVelocity size)) copy.
 	sample controls at: #tune put: (controls at: #tune).
+	sample controls at: #speed put: (controls at: #speed).
+	sample controls at: #warp put: (controls at: #warp).
 	speedFactor := 60 semitonesToHertz / closestKey semitonesToHertz.
 	sample baseRate: sample baseRate * speedFactor.
 	sample setNote: note.
+	offset ifNotNil: [sample setOffset: offset].
 	sample gateOn! !
 
 !Multisample methodsFor: 'controlling' stamp: 'len 15/Feb/2026 20:41:02'!
 reset
 	sample := nil! !
+
+!Multisample methodsFor: 'controlling' stamp: 'len 28/Mar/2026 21:42:07'!
+setOffset: aNumber
+	offset := aNumber.
+	sample ifNotNil: [sample setOffset: offset]! !
+
+!Multisample methodsFor: 'controlling' stamp: 'len 28/Mar/2026 20:34:21'!
+setSpeed: aNumber
+	self set: #speed to: aNumber! !
 
 !Multisample methodsFor: 'controlling' stamp: 'len 2/Dec/2025 14:33:00'!
 setVelocity: aNumber
@@ -5294,9 +5306,12 @@ initialize
 	super initialize.
 	velocity := 0.5! !
 
-!Multisample methodsFor: 'initialization' stamp: 'len 25/Mar/2026 19:33:30'!
+!Multisample methodsFor: 'initialization' stamp: 'len 28/Mar/2026 20:31:00'!
 initializeControls
 	super initializeControls.
+	"same as Sample:"
+	(self addControl: #speed min: -4.0 max: 4.0 value: 1.0) printer: [:x| '×', (x printStringFractionDigits: 2)].
+	self addToggleControl: #warp value: false.
 	self addToggleControl: #legato value: false! !
 
 !Multisample methodsFor: 'initialization' stamp: 'len 15/Feb/2026 20:24:57'!
@@ -5333,9 +5348,11 @@ readFromJson: json buffers: aList
 	label := json at: #label.
 	label isEmpty ifTrue: [label := nil]! !
 
-!Multisample methodsFor: 'ui' stamp: 'len 25/Mar/2026 19:34:38'!
+!Multisample methodsFor: 'ui' stamp: 'len 28/Mar/2026 20:32:51'!
 panel
 	^ super panel
+		addTextualControl: (controls at: #speed);
+		addToggle: (controls at: #warp) label: 'Warp';
 		addToggle: (controls at: #legato) label: 'Legato'! !
 
 !Multisample methodsFor: 'ui' stamp: 'len 15/Feb/2026 20:42:04'!
@@ -5698,11 +5715,12 @@ position
 gateOff
 	released := true! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 25/Mar/2026 19:46:27'!
+!Sample methodsFor: 'controlling' stamp: 'len 28/Mar/2026 21:37:54'!
 gateOn
 	(self isUnreleased and: [self get: #legato]) ifTrue: [^ self].
 	tailPosition := position.
-	position := (buffer size - 1) * offset.
+	position := (buffer size - 1) * offset + 1.0.
+	(self get: #speed) < 0.0 ifTrue: [position := buffer size - position + 1].
 	released := false! !
 
 !Sample methodsFor: 'controlling' stamp: 'len 25/Mar/2026 19:46:09'!
@@ -5745,62 +5763,66 @@ initializeControls
 	self addToggleControl: #warp value: false.
 	self addToggleControl: #legato value: false! !
 
-!Sample methodsFor: 'processing' stamp: 'len 22/Mar/2026 15:53:06'!
+!Sample methodsFor: 'processing' stamp: 'len 28/Mar/2026 20:38:00'!
 mixTailInto: aBuffer
-	| damping end gain |
+	| damping gain end |
 	tailPosition ifNil: [^ self].
-	end := buffer size - 1.
-	tailPosition < (end - 1) ifFalse: [^ self].
+	end := buffer size asFloat.
+	(tailPosition >= 1.0 and: [tailPosition < end]) ifFalse: [tailPosition := nil. ^ self].
 	damping := 0.95. "-60 decibelsToLinear raisedTo: 1/128"
 	gain := 1.0.
-	1 to: aBuffer size do: [:i|
-		aBuffer at: i put: (aBuffer at: i) + ((buffer atLinear: tailPosition + 1.0) * gain).
-		gain := gain * damping.
-		(tailPosition := tailPosition + increment) < end ifFalse:
-			[tailPosition := nil.
-			^ self]].
+	speed > 0.0
+		ifTrue: "forward:"
+			[1 to: aBuffer size do: [:i|
+				aBuffer at: i put: (aBuffer at: i) + ((buffer atLinear: tailPosition) * gain).
+				gain := gain * damping.
+				(tailPosition := tailPosition + increment) < end ifFalse:
+					[tailPosition := nil.
+					^ self]]]
+		ifFalse: "backwards:"
+			[1 to: aBuffer size do: [:i|
+				aBuffer at: i put: (aBuffer at: i) + ((buffer atLinear: tailPosition) * gain).
+				gain := gain * damping.
+				(tailPosition := tailPosition - increment) >= 1.0 ifFalse:
+					[tailPosition := nil.
+					^ self]]].
 	tailPosition := nil! !
 
-!Sample methodsFor: 'processing' stamp: 'len 25/Mar/2026 19:42:03'!
+!Sample methodsFor: 'processing' stamp: 'len 28/Mar/2026 20:19:42'!
 read: aBuffer
+	| end |
 	position ifNil: [aBuffer atAllPut: 0.0. ^ self].
 	(warp and: [speed abs ~= 1.0]) ifTrue: [^ self readWarp: aBuffer].
-	speed < 0 ifTrue: [^ self readBackwards: aBuffer].
-	self readForward: aBuffer.
-	self mixTailInto: aBuffer! !
-
-!Sample methodsFor: 'processing' stamp: 'len 22/Mar/2026 15:53:15'!
-readBackwards: aBuffer
-	1 to: aBuffer size do: [:i|
-		aBuffer at: i put: (buffer atLinear: position + 1.0).
-		(position := position - increment) >= 0.0 ifFalse:
-			[position := 0.0.
-			released := true.
-			aBuffer from: i + 1 to: aBuffer size put: 0.0.
-			^ self]]! !
-
-!Sample methodsFor: 'processing' stamp: 'len 25/Mar/2026 19:16:10'!
-readForward: aBuffer
-	| end loopEndMinusOne |
-	end := buffer size - 1. "- 1 to allow for interpolation with next sample without checking bounds every time"
-	loopEndMinusOne := loopEnd - 1.
-	position < (end - 1) ifFalse:
+	end := buffer size asFloat.
+	(position >= 1.0 and: [position <= end]) ifFalse:
 		[aBuffer atAllPut: 0.0.
 		^ self].
-	1 to: aBuffer size do: [:i|
-		aBuffer at: i put: (buffer atLinear: position + 1.0).
-		((position := position + increment) >= loopEndMinusOne and: [released not]) ifTrue:
-			[position := position - loopLength].
-		position < end ifFalse:
-			[released := true.
-"			position := end - 1.0."
-			aBuffer from: i + 1 to: aBuffer size put: 0.0.
-			^ self]]! !
+	speed > 0.0
+		ifTrue: "forward:"
+			[1 to: aBuffer size do: [:i|
+				aBuffer at: i put: (buffer atLinear: position).
+				((position := position + increment) >= loopEnd and: [released not]) ifTrue:
+					[position := position - loopLength + 1.0].
+				position < end ifFalse:
+					[released := true.
+					aBuffer from: i + 1 to: aBuffer size put: 0.0.
+					^ self]]]
+		ifFalse: "backwards:"
+			[| loopStart |
+			loopStart := loopEnd - loopLength + 1.0.
+			1 to: aBuffer size do: [:i|
+				aBuffer at: i put: (buffer atLinear: position).
+				((position := position - increment) <= loopStart and: [released not]) ifTrue:
+					[position := position + loopLength - 1.0].
+				position >= 1.0 ifFalse:
+					[released := true.
+					aBuffer from: i + 1 to: aBuffer size put: 0.0.
+					^ self]]].
+	self mixTailInto: aBuffer! !
 
-!Sample methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:13:45'!
+!Sample methodsFor: 'processing' stamp: 'len 28/Mar/2026 20:14:13'!
 readWarp: aBuffer
-	speed < 0 ifTrue: [^ self readWarpBackwards: aBuffer].
-	self readWarpForward: aBuffer! !
+	self notYetImplemented! !
 
 !Sample methodsFor: 'serialization' stamp: 'len 13/Feb/2026 00:17:52'!
 asJsonWithBuffers: aList
@@ -5859,14 +5881,14 @@ waveform
 		canvas line: x @ y to: x @ (h // 2) width: 1 color: Color black].
 	^ answer! !
 
-!Sample methodsFor: 'private' stamp: 'len 21/Jan/2026 22:44:13'!
+!Sample methodsFor: 'private' stamp: 'len 28/Mar/2026 20:00:47'!
 buffer: aFloatArray baseRate: aNumber
 	buffer := aFloatArray.
 	baseRate := aNumber.
 	offset := 0.0.
 	loopEnd := buffer size.
 	loopLength := 0.
-	increment := 1.
+	increment := 1.0.
 	self reset! !
 
 !Sample methodsFor: 'private' stamp: 'len 17/Feb/2026 19:03:05'!
@@ -11236,7 +11258,7 @@ computeImage
 defaultExtent
 	^ `384 @ 92`! !
 
-!SamplePlayerMorph methodsFor: 'as yet unclassified' stamp: 'len 26/Mar/2026 18:39:40'!
+!SamplePlayerMorph methodsFor: 'as yet unclassified' stamp: 'len 28/Mar/2026 20:21:00'!
 drawOn: aCanvas
 	| x |
 	aCanvas image: image at: 0@0.
@@ -11244,7 +11266,7 @@ drawOn: aCanvas
 	lastDirection = #backwards
 		ifTrue: [aCanvas fillRectangle: (x @ 0 extent: (extent x - x) @ extent y) color: (Color black alpha: 0.6)]
 		ifFalse: [aCanvas fillRectangle: (0@0 extent: x @ extent y) color: (Color black alpha: 0.6)]."
-	x := (lastPosition ifNil: [^ self]) / sample buffer size * self morphWidth.
+	x := (lastPosition ifNil: [^ self]) - 1.0 / sample buffer size * self morphWidth.
 	aCanvas line: x @ 0 to: x @ extent y width: 2 color: Color white! !
 
 !SamplePlayerMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Jan/2026 16:54:53'!
@@ -11252,21 +11274,17 @@ initialize
 	super initialize.
 	color := PatchMorph waveformColor! !
 
-!SamplePlayerMorph methodsFor: 'as yet unclassified' stamp: 'len 21/Jan/2026 22:51:51'!
+!SamplePlayerMorph methodsFor: 'as yet unclassified' stamp: 'len 28/Mar/2026 20:20:31'!
 sample: aSample
 	sample := aSample.
 	lastPosition := sample position.
-"	lastStartPosition := sample startPosition."
-"	lastDirection := sample direction."
 	self computeImage! !
 
-!SamplePlayerMorph methodsFor: 'as yet unclassified' stamp: 'len 21/Jan/2026 22:51:46'!
+!SamplePlayerMorph methodsFor: 'as yet unclassified' stamp: 'len 28/Mar/2026 20:20:36'!
 step
 	| position |
 	(position := sample position) = lastPosition ifTrue: [^ self].
 	lastPosition := position.
-"	lastStartPosition := sample startPosition."
-"	lastDirection := sample direction."
 	self redrawNeeded! !
 
 !SamplePlayerMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Jan/2026 17:03:09'!

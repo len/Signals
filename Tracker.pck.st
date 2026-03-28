@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 24 March 2026 at 1:59:57 am'!
+'From Cuis7.7 [latest update: #7797] on 28 March 2026 at 9:47:15 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 10!
+!provides: 'Tracker' 1 11!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -1262,7 +1262,7 @@ playTrigger
 	trigger isNoteOn ifTrue: [self noteOn: trigger note glide: trigger glide] ifFalse: [trigger isNoteOff ifTrue: [self noteOff]].
 	trigger := nil! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 23/Mar/2026 19:27:27'!
+!Instrument methodsFor: 'playing' stamp: 'len 28/Mar/2026 21:31:10'!
 recomputeModules
 	| currentModules buses |
 	currentModules := patch modules.
@@ -1270,7 +1270,7 @@ recomputeModules
 	noteReceivers := currentModules select: [:each| each respondsTo: #setNote:].
 	velocityReceivers := currentModules select: [:any| any respondsTo: #setVelocity:].
 	gateReceivers := currentModules select: [:any| any respondsTo: #gateOn].
-	samples := currentModules select: [:each| each isMemberOf: Sample].
+	samples := currentModules select: [:each| (each isMemberOf: Sample) or: [each isMemberOf: Multisample]].
 	buses := track tracker buses.
 	audioOutput := nil.
 	currentModules do: [:each|

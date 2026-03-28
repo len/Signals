@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 28 March 2026 at 9:47:06 pm'!
+'From Cuis7.7 [latest update: #7797] on 29 March 2026 at 3:50:46 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 510!
+!provides: 'Signals' 1 511!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -223,6 +223,16 @@ Module subclass: #StereoReverb
 	category: 'Signals-FX'!
 !classDefinition: 'StereoReverb class' category: #'Signals-FX'!
 StereoReverb class
+	instanceVariableNames: ''!
+
+!classDefinition: #Crossover category: #'Signals-Filters'!
+Module subclass: #Crossover
+	instanceVariableNames: 'lpf1 lpf2 hpf1 hpf2 input outputLow outputHigh'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Filters'!
+!classDefinition: 'Crossover class' category: #'Signals-Filters'!
+Crossover class
 	instanceVariableNames: ''!
 
 !classDefinition: #SVF category: #'Signals-Filters'!
@@ -1715,7 +1725,7 @@ Knobs are continuous controls with values that can vary within a range. Knobs ca
 !Toggle commentStamp: '<historical>' prior: 0!
 A toggle is a discrete control with only two possible values: true or false.!
 
-!Module commentStamp: '<historical>' prior: 0!
+!Module commentStamp: 'len 29/Mar/2026 00:07:25' prior: 0!
 This is an abstract superclass for signal processing modules.
 
 A module has a list of controls (or parameters), that can be changed by the user via the UI or can be modulated by other modules. The controls of a module are created on initialization in #initializeControls.
@@ -1723,8 +1733,8 @@ A module has a list of controls (or parameters), that can be changed by the user
 Modules can also have input and output sample buffers, and they process samples in blocks of fixed size. The default block size is 128 samples (2.9 ms at the default sampling rate of 44.1 kHz), which results in a control rate of 344 Hz. Before processing each block with the #tick message, the internal state of the module must be updated with the #update message.
 
 The playing loop for a patch of connected modules looks like this:
-1) Send #clear to each module to clear the control modulations;
-2) Iterate over the modules in order of dependency, and send #update followed by #tick to each one.
+1) Send #clear to each module to clear the control modulations for a new cycle;
+2) Iterate over the modules in order, and send #update followed by #tick to each one.
 
 The message #update updates the internal state of the module depending on the controls, which could be modulated and could vary at any time. The message #tick processes one block of samples, reading from the input buffers and writing to the output buffers.!
 
@@ -1773,6 +1783,15 @@ This is a stereo echo effect with feedback and ping pong mode.!
 
 !StereoReverb commentStamp: '<historical>' prior: 0!
 This is a reverb effect based on Freeverb. It consists of 8 damped combs (lowpass feedback comb filters) in parallel followed by 4 Schroeder allpasses in series.!
+
+!Crossover commentStamp: '<historical>' prior: 0!
+This is a Linkwitz-Riley 4th-order (LR4) crossover filter.
+
+An LR4 crossover splits a signal into two complementary bands (low and high) that sum back to a flat magnitude response with no phase artifacts at the crossover point. This makes it the standard building block for multiband processing: the two output bands can be processed independently (compressed, saturated, widened, etc.) and then summed back to reconstruct the signal cleanly.
+
+Internally, LR4 consists of two parallel paths, each a pair of cascaded 2nd-order Butterworth biquads at the same crossover frequency. The LP path produces the low band and the HP path produces the high band. Cascading two 2nd-order Butterworth filters gives a 4th-order rolloff (24 dB/oct) with a specific phase relationship: both LP and HP accumulate −180° of phase shift at the crossover frequency, which is precisely what guarantees flat magnitude when the bands are summed. Q is fixed at 1/√2 ≈ 0.707 (the Butterworth condition) and is not exposed as a parameter — changing it would break the complementary summing property.
+
+The only parameter is the crossover frequency, which sets the −6 dB point of each band. At the crossover frequency, LP and HP each contribute −6 dB, summing back to 0 dB.​​​​​​​​​​​​​​​​!
 
 !SVF commentStamp: '<historical>' prior: 0!
 This is a state variable filter with a 12 dB/oct slope (2 poles). It has outputs for low-pass, high-pass, band-pass and normalized band-pass modes. Based on stmlib/dsp/filter.h by Emilie Gillet.
@@ -2547,9 +2566,10 @@ valueFromPosition: aNumber
 value: aBoolean
 	^ self new setValue: aBoolean! !
 
-!Module methodsFor: 'controlling' stamp: 'len 8/Dec/2025 18:04:50'!
+!Module methodsFor: 'controlling' stamp: 'len 29/Mar/2026 00:08:38'!
 clear
-	"Clear all modulations from the controls:"
+	"Clear all modulations from the controls.
+	This message should be sent to all modules at the begining of each render cycle, before iterating over the modules and sending them #update and #tick."
 	controls do: [:each| each clear]! !
 
 !Module methodsFor: 'controlling' stamp: 'len 25/Mar/2026 16:15:42'!
@@ -2557,11 +2577,11 @@ reset
 	"Reset the module internal state."
 	^ self! !
 
-!Module methodsFor: 'controlling' stamp: 'len 8/Dec/2025 18:07:22'!
+!Module methodsFor: 'controlling' stamp: 'len 28/Mar/2026 23:59:50'!
 update
-	"Apply modulations again for each control and update internal state.
-	Subclasses with internal state that depends on the controls should implement this method."
-	controls do: [:each| each apply]! !
+	"Update the internal state of the module from the current modulated values of the controls.
+	Subclasses with internal state that depends on the controls should implement this method and call super."
+	controls do: [:each| each apply] "apply modulations to controls"! !
 
 !Module methodsFor: 'controls and modulations' stamp: 'len 18/Mar/2026 20:08:10'!
 addChoiceControl: aSymbol options: anArray value: defaultValue
@@ -2683,10 +2703,11 @@ initialize
 initializeControls
 	controls := OrderedDictionary new! !
 
-!Module methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:13:16'!
+!Module methodsFor: 'processing' stamp: 'len 29/Mar/2026 00:04:42'!
 tick
-	"Read input buffers, and write to output buffers. Here's where signal processing modules do they work, processing input signals and producing output signals.
-	Note: assume #update was called before calling #tick, so that the internal state was updated from the (possibly modulated) controls."! !
+	"Read input buffers, and write to output buffers. Here's where the signal processing takes place.modules do they work, processing input signals and producing output signals.
+	Note: assume #update was called before calling #tick, so that the internal state was updated from the (possibly modulated) controls."
+	^ self subclassResponsibility! !
 
 !Module methodsFor: 'serialization' stamp: 'len 5/Feb/2026 17:49:59'!
 asJsonWithBuffers: aList
@@ -3934,6 +3955,81 @@ setOutputL: aBuffer
 !StereoReverb methodsFor: 'wiring' stamp: 'len 7/Mar/2026 16:15:05'!
 setOutputR: aBuffer
 	outputR := aBuffer! !
+
+!Crossover methodsFor: 'controlling' stamp: 'len 29/Mar/2026 01:43:28'!
+reset
+	lpf1 reset.
+	lpf2 reset.
+	hpf1 reset.
+	hpf2 reset! !
+
+!Crossover methodsFor: 'controlling' stamp: 'len 29/Mar/2026 01:55:08'!
+undenormalize
+	lpf1 undenormalize.
+	lpf2 undenormalize.
+	hpf1 undenormalize.
+	hpf2 undenormalize! !
+
+!Crossover methodsFor: 'controlling' stamp: 'len 29/Mar/2026 03:26:53'!
+update
+	| frequency |
+	super update.
+	frequency := self get: #frequency.
+	lpf1 butterworth_lp: frequency.
+	lpf2 butterworth_lp: frequency.
+	hpf1 butterworth_hp: frequency.
+	hpf2 butterworth_hp: frequency! !
+
+!Crossover methodsFor: 'initialization' stamp: 'len 29/Mar/2026 03:33:11'!
+initialize
+	super initialize.
+	lpf1 := Biquad new.
+	lpf2 := Biquad new.
+	hpf1 := Biquad new.
+	hpf2 := Biquad new! !
+
+!Crossover methodsFor: 'initialization' stamp: 'len 29/Mar/2026 03:25:48'!
+initializeControls
+	super initializeControls.
+	self addFrequencyControl: #frequency min: 20.0 max: 20000.0 value: 2500.0! !
+
+!Crossover methodsFor: 'processing' stamp: 'len 29/Mar/2026 03:30:28'!
+tick
+	input ifNil:
+		[outputLow ifNotNil: [outputLow atAllPut: 0.0].
+		outputHigh ifNotNil: [outputHigh atAllPut: 0.0].
+		^ self].
+	outputLow ifNotNil:
+		[lpf1 process: input into: outputLow.
+		lpf2 process: outputLow into: outputLow].
+	outputHigh ifNotNil:
+		[hpf1 process: input into: outputHigh.
+		hpf2 process: outputHigh into: outputHigh]! !
+
+!Crossover methodsFor: 'ui' stamp: 'len 29/Mar/2026 03:35:40'!
+panel
+	^ ControlPanel new
+		addKnob: (controls at: #frequency)! !
+
+!Crossover methodsFor: 'ui' stamp: 'len 29/Mar/2026 03:32:39'!
+patchable
+	^ super patchable
+		addAudioInput: #setInput:;
+		addAudioOutput: #setOutputLow: label: 'Out Low';
+		addAudioOutput: #setOutputHigh: label: 'Out High';
+		yourself! !
+
+!Crossover methodsFor: 'wiring' stamp: 'len 29/Mar/2026 03:29:00'!
+setInput: aBuffer
+	input := aBuffer! !
+
+!Crossover methodsFor: 'wiring' stamp: 'len 29/Mar/2026 03:29:18'!
+setOutputHigh: aBuffer
+	outputHigh := aBuffer! !
+
+!Crossover methodsFor: 'wiring' stamp: 'len 29/Mar/2026 03:29:11'!
+setOutputLow: aBuffer
+	outputLow := aBuffer! !
 
 !SVF methodsFor: 'controlling' stamp: 'len 16/Oct/2025 19:38:00'!
 reset
@@ -5249,11 +5345,6 @@ label: aString
 adjustVelocityBy: aNumber
 	velocity := velocity + aNumber min: 1.0 max: 0.0! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 24/Mar/2026 16:28:32'!
-clear
-	super clear.
-	sample ifNotNil: [sample clear]! !
-
 !Multisample methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:21:00'!
 gateOff
 	sample ifNotNil: [sample gateOff]! !
@@ -5701,6 +5792,10 @@ loopLength
 !Sample methodsFor: 'accessing' stamp: 'len 8/Oct/2025 23:34:00'!
 loopLength: aNumber
 	loopLength := aNumber! !
+
+!Sample methodsFor: 'accessing' stamp: 'len 29/Mar/2026 03:41:10'!
+loopStart
+	^ loopEnd - loopLength + 1.0! !
 
 !Sample methodsFor: 'accessing' stamp: 'len 16/Feb/2026 20:21:13'!
 loopStart: anInteger loopEnd: anotherInteger.
@@ -6819,11 +6914,11 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	(self addControl: #bandwidth min: 0.1 max: 4.0 value: 1.0) printer: [:x| (x printStringFractionDigits: 2), ' oct']! !
 
-!BSF methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:16:12'!
+!BSF methodsFor: 'processing' stamp: 'len 29/Mar/2026 01:52:11'!
 tick
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
-	biquad write: input read: output! !
+	biquad process: input into: output! !
 
 !BSF methodsFor: 'ui' stamp: 'len 3/Feb/2026 18:08:09'!
 patchable
@@ -6869,17 +6964,17 @@ initializeControls
 	self addVolumeControl: #mid min: 0.001 max: 2.0 value: 1.0.
 	self addVolumeControl: #high min: 0.001 max: 2.0 value: 1.0! !
 
-!EQ3 methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:16:16'!
+!EQ3 methodsFor: 'processing' stamp: 'len 29/Mar/2026 01:52:11'!
 tick
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
-	lowPassLow write: input read: output.
+	lowPassLow process: input into: output.
 	output *= (self get: #low).
-	highPassMid write: input read: aux.
-	lowPassMid write: aux read: aux.
+	highPassMid process: input into: aux.
+	lowPassMid process: aux into: aux.
 	aux *= (self get: #mid).
 	output += aux.
-	highPassHigh write: input read: aux.
+	highPassHigh process: input into: aux.
 	aux *= (self get: #high).
 	output += aux! !
 
@@ -11258,15 +11353,17 @@ computeImage
 defaultExtent
 	^ `384 @ 92`! !
 
-!SamplePlayerMorph methodsFor: 'as yet unclassified' stamp: 'len 28/Mar/2026 20:21:00'!
+!SamplePlayerMorph methodsFor: 'as yet unclassified' stamp: 'len 29/Mar/2026 03:47:29'!
 drawOn: aCanvas
-	| x |
+	| x n |
 	aCanvas image: image at: 0@0.
-"	x := lastStartPosition / sample buffer size * self morphWidth.
-	lastDirection = #backwards
-		ifTrue: [aCanvas fillRectangle: (x @ 0 extent: (extent x - x) @ extent y) color: (Color black alpha: 0.6)]
-		ifFalse: [aCanvas fillRectangle: (0@0 extent: x @ extent y) color: (Color black alpha: 0.6)]."
-	x := (lastPosition ifNil: [^ self]) - 1.0 / sample buffer size * self morphWidth.
+	n := sample buffer size.
+	sample loopLength > 0 ifTrue:
+		[x := sample loopStart / n * self morphWidth.
+		aCanvas line: x @ 0 to: x @ extent y width: 1 color: Color lightGray.
+		x := sample loopEnd / n * self morphWidth.
+		aCanvas line: x @ 0 to: x @ extent y width: 1 color: Color lightGray].
+	x := (lastPosition ifNil: [^ self]) - 1.0 /  n * self morphWidth.
 	aCanvas line: x @ 0 to: x @ extent y width: 2 color: Color white! !
 
 !SamplePlayerMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Jan/2026 16:54:53'!
@@ -13085,18 +13182,8 @@ undenormalize
 initialize
 	self reset! !
 
-!Biquad methodsFor: 'processing' stamp: 'len 17/Mar/2026 18:17:12'!
-value: in
-	"Direct Form 1."
-	| out |
-	out := a0 * in + (a1 * x1) + (a2 * x2) - (b1 * y1) - (b2 * y2).
-	x2 := x1.
-	y2 := y1.
-	x1 := in.
-	^ y1 := out! !
-
-!Biquad methodsFor: 'processing' stamp: 'len 17/Mar/2026 18:14:54'!
-write: inputBuffer read: outputBuffer
+!Biquad methodsFor: 'processing' stamp: 'len 29/Mar/2026 01:52:11'!
+process: inputBuffer into: outputBuffer
 	"Direct Form 1."
 	1 to: inputBuffer size do: [:i|
 		| in out |
@@ -13110,6 +13197,16 @@ write: inputBuffer read: outputBuffer
 	x2 abs < 1.0e-15 ifTrue: [x2 := 0.0].
 	y1 abs < 1.0e-15 ifTrue: [y1 := 0.0].
 	y2 abs < 1.0e-15 ifTrue: [y2 := 0.0]! !
+
+!Biquad methodsFor: 'processing' stamp: 'len 17/Mar/2026 18:17:12'!
+value: in
+	"Direct Form 1."
+	| out |
+	out := a0 * in + (a1 * x1) + (a2 * x2) - (b1 * y1) - (b2 * y2).
+	x2 := x1.
+	y2 := y1.
+	x1 := in.
+	^ y1 := out! !
 
 !DelayLine methodsFor: 'accessing' stamp: 'len 23/Mar/2026 16:36:37'!
 at: anInteger

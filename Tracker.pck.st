@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 28 March 2026 at 9:47:15 pm'!
+'From Cuis7.7 [latest update: #7797] on 3 April 2026 at 4:55:35 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 11!
+!provides: 'Tracker' 1 13!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -1285,11 +1285,11 @@ recomputeModules
 							each port = 0 ifTrue: [audioOutput := each]]]]].
 	^ currentModules! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 19/Mar/2026 15:13:17'!
+!Instrument methodsFor: 'playing' stamp: 'len 3/Apr/2026 16:51:33'!
 reset
 	| currentModules |
 	currentModules := modules ifNil: [self recomputeModules].
-	currentModules do: [:each| (each is: #Morph) ifFalse: [each reset]]! !
+	currentModules do: [:each| each reset]! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 6/Jan/2026 16:00:00'!
 scheduleRecompute
@@ -1323,17 +1323,17 @@ setSpeed: aNumber
 setVelocity: aNumber
 	velocityReceivers do: [:each| each setVelocity: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 24/Mar/2026 01:57:35'!
+!Instrument methodsFor: 'playing' stamp: 'len 3/Apr/2026 16:52:08'!
 tick
 	| currentModules enabled |
 	currentModules := modules ifNil: [self recomputeModules].
 	enabled := track enabled.
 	currentModules do: [:each|
 		(each isMemberOf: AudioOut) ifTrue: [each enabled: enabled].
-		(each is: #Morph) ifFalse: [each clear]].
+		each clear].
 	glideTicks > 0 ifTrue: [note := note + noteIncrement. glideTicks := glideTicks - 1. self setNote: note].
 	trigger ifNotNil: [self playTrigger].
-	currentModules do: [:each| (each is: #Morph) ifFalse: [each update]. each tick]! !
+	currentModules do: [:each| each update; tick]! !
 
 !Instrument methodsFor: 'serialization' stamp: 'len 17/Feb/2026 19:39:10'!
 asJsonWithBuffers: aList

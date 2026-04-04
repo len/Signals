@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 3 April 2026 at 9:51:21 pm'!
+'From Cuis7.7 [latest update: #7797] on 4 April 2026 at 8:21:12 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 517!
+!provides: 'Signals' 1 518!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -297,7 +297,7 @@ TunedGenerator class
 
 !classDefinition: #Oscillator category: #'Signals-Oscillators'!
 TunedGenerator subclass: #Oscillator
-	instanceVariableNames: 'phase frequency frequencyIncrement inputFM'
+	instanceVariableNames: 'phase increment incrementRatio inputFM'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Oscillators'!
@@ -377,7 +377,7 @@ Wavetable class
 
 !classDefinition: #Supersaw category: #'Signals-Oscillators'!
 TunedGenerator subclass: #Supersaw
-	instanceVariableNames: 'frequency phases frequencies frequencyIncrement centerGain sideGain'
+	instanceVariableNames: 'increment phases increments incrementRatio centerGain sideGain'
 	classVariableNames: 'DetuneCurveLUT'
 	poolDictionaries: ''
 	category: 'Signals-Oscillators'!
@@ -427,7 +427,7 @@ Multisample class
 
 !classDefinition: #Sample category: #'Signals-Samples'!
 TunedGenerator subclass: #Sample
-	instanceVariableNames: 'buffer baseRate loopEnd loopLength offset speed warp released position tailPosition increment incrementIncrement label'
+	instanceVariableNames: 'buffer baseRate loopEnd loopLength offset speed warp released position tailPosition increment incrementRatio label'
 	classVariableNames: 'Library'
 	poolDictionaries: ''
 	category: 'Signals-Samples'!
@@ -1902,7 +1902,7 @@ Emulation of the Roland JP-8000 and JP-8080 supersaw oscillator based on Adam Sz
 This is a monophonic simplified model of a Hammond organ.!
 
 !TransistorOrgan commentStamp: '<historical>' prior: 0!
-This is a monophonic simplified model of a transistor organ like a Vox Continental.!
+This is a monophonic simplified model of a transistor organ. It uses the drawbars of a Vox Continental.!
 
 !VOSIM commentStamp: '<historical>' prior: 0!
 This is a VOSIM (VOcal SIMulation) oscillator based on the synthesis method developed by Kaegi and Tempelaars in the 1970s. The oscillator consists of two sine waves multiplied by and sync'ed to a carrier. Ported from plaits/dsp/oscillator/vosim_oscillator.h by Emilie Gillet.!
@@ -2764,9 +2764,9 @@ asJsonWithBuffers: aList
 		at: #settings put: self settings;
 		yourself! !
 
-!Module methodsFor: 'serialization' stamp: 'len 5/Feb/2026 14:43:18'!
+!Module methodsFor: 'serialization' stamp: 'len 4/Apr/2026 19:12:08'!
 readFromJson: json buffers: aList
-	self settings: (json at: #settings)! !
+	self settings: (json at: #settings ifAbsent: [^ self])! !
 
 !Module methodsFor: 'ui' stamp: 'len 10/Mar/2026 16:23:47'!
 panel
@@ -4487,40 +4487,40 @@ patchable
 reset
 	phase := 0.0! !
 
-!Oscillator methodsFor: 'controlling' stamp: 'len 3/Apr/2026 21:06:39'!
+!Oscillator methodsFor: 'controlling' stamp: 'len 4/Apr/2026 20:06:12'!
 update
-	| targetFrequency |
+	| targetIncrement |
 	super update.
-	targetFrequency := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
-	frequency ifNil: [frequency := targetFrequency].
-	frequencyIncrement := targetFrequency - frequency / self class blockSize! !
+	targetIncrement := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
+	increment ifNil: [increment := targetIncrement].
+	incrementRatio := ((targetIncrement / increment) ln / self class blockSize) exp! !
 
 !Oscillator methodsFor: 'initialization' stamp: 'len 8/Feb/2026 13:44:51'!
 initialize
 	super initialize.
 	self reset! !
 
-!Oscillator methodsFor: 'processing' stamp: 'len 3/Apr/2026 21:09:01'!
+!Oscillator methodsFor: 'processing' stamp: 'len 4/Apr/2026 20:03:40'!
 next
 	| answer |
 	answer := self peek.
-	(phase := phase + (frequency := frequency + frequencyIncrement)) >= 1.0 ifTrue: [phase := phase - phase truncated].
+	(phase := phase + (increment := increment * incrementRatio)) >= 1.0 ifTrue: [phase := phase - phase truncated].
 	^ answer! !
 
 !Oscillator methodsFor: 'processing' stamp: 'len 3/Dec/2025 14:21:52'!
 peek
 	^ self subclassResponsibility! !
 
-!Oscillator methodsFor: 'processing' stamp: 'len 3/Apr/2026 21:08:49'!
+!Oscillator methodsFor: 'processing' stamp: 'len 4/Apr/2026 20:03:48'!
 read: aBuffer AM: envelopeBuffer FM: modulatorBuffer feedback: feedbackAmount
 	1 to: aBuffer size do: [:i|
 		| value |
 		value := self peek * (envelopeBuffer at: i).
 		aBuffer at: i put: value.
-		phase := phase + (modulatorBuffer at: i) + (value * feedbackAmount) + (frequency := frequency + frequencyIncrement).
+		phase := phase + (modulatorBuffer at: i) + (value * feedbackAmount) + (increment := increment * incrementRatio).
 		phase >= 1.0 ifTrue: [phase := phase - phase truncated]]! !
 
-!Oscillator methodsFor: 'processing' stamp: 'len 3/Apr/2026 21:08:31'!
+!Oscillator methodsFor: 'processing' stamp: 'len 4/Apr/2026 20:03:52'!
 read: aBuffer AM: envelopeBuffer PM: modulatorBuffer feedback: feedbackAmount
 	| lastValue |
 	lastValue := 0.0.
@@ -4531,27 +4531,27 @@ read: aBuffer AM: envelopeBuffer PM: modulatorBuffer feedback: feedbackAmount
 		phase >= 1.0 ifTrue: [phase := phase - phase truncated].
 		lastValue := self peek * (envelopeBuffer at: i).
 		aBuffer at: i put: lastValue.
-		phase := oldPhase + (frequency := frequency + frequencyIncrement).
+		phase := oldPhase + (increment := increment * incrementRatio).
 		phase >= 1.0 ifTrue: [phase := phase - phase truncated]]! !
 
 !Oscillator methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:09:21'!
 read: aBuffer FM: modulatorBuffer
 	self read: aBuffer FM: modulatorBuffer feedback: 0.0! !
 
-!Oscillator methodsFor: 'processing' stamp: 'len 3/Apr/2026 21:09:09'!
+!Oscillator methodsFor: 'processing' stamp: 'len 4/Apr/2026 20:03:59'!
 read: aBuffer FM: modulatorBuffer feedback: feedbackAmount
 	1 to: aBuffer size do: [:i|
 		| value |
 		value := self peek.
 		aBuffer at: i put: value.
-		phase := phase + (modulatorBuffer at: i) + (value * feedbackAmount) + (frequency := frequency + frequencyIncrement).
+		phase := phase + (modulatorBuffer at: i) + (value * feedbackAmount) + (increment := increment * incrementRatio).
 		phase >= 1.0 ifTrue: [phase := phase - phase truncated]]! !
 
 !Oscillator methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:09:33'!
 read: aBuffer PM: modulatorBuffer
 	self read: aBuffer PM: modulatorBuffer feedback: 0.0! !
 
-!Oscillator methodsFor: 'processing' stamp: 'len 3/Apr/2026 21:09:17'!
+!Oscillator methodsFor: 'processing' stamp: 'len 4/Apr/2026 20:04:06'!
 read: aBuffer PM: modulatorBuffer feedback: feedbackAmount
 	| lastValue |
 	lastValue := 0.0.
@@ -4562,7 +4562,7 @@ read: aBuffer PM: modulatorBuffer feedback: feedbackAmount
 		phase >= 1.0 ifTrue: [phase := phase - phase truncated].
 		lastValue := self peek.
 		aBuffer at: i put: lastValue.
-		phase := oldPhase + (frequency := frequency + frequencyIncrement).
+		phase := oldPhase + (increment := increment * incrementRatio).
 		phase >= 1.0 ifTrue: [phase := phase - phase truncated]]! !
 
 !Oscillator methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:14:59'!
@@ -4635,9 +4635,9 @@ initializeControls
 	super initializeControls.
 	(self addControl: #width min: 0.0 max: 1.0 value: 0.5) printer: [:x| (x * 100.0) rounded printString, '%']! !
 
-!Pulse methodsFor: 'processing' stamp: 'len 15/Jan/2026 19:08:04'!
+!Pulse methodsFor: 'processing' stamp: 'len 4/Apr/2026 19:33:19'!
 peek
-	^ (phase pulse: frequency width: width) * 0.577 "normalize amplitude to match perceived loudness with other oscillators"! !
+	^ (phase pulse: increment width: width) * 0.577 "normalize amplitude to match perceived loudness with other oscillators"! !
 
 !Pulse methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:10:05'!
 read: aBuffer PWM: modulatorBuffer
@@ -4689,10 +4689,10 @@ initializeControls
 	super initializeControls.
 	self addControl: #shape min: 0.0 max: 1.0 value: 1.0! !
 
-!Saw methodsFor: 'processing' stamp: 'len 17/Jan/2026 16:40:42'!
+!Saw methodsFor: 'processing' stamp: 'len 4/Apr/2026 19:33:19'!
 peek
-	shape = 1.0 ifTrue: [^ phase saw: frequency].
-	^ phase triangle: frequency skew: shape! !
+	shape = 1.0 ifTrue: [^ phase saw: increment].
+	^ phase triangle: increment skew: shape! !
 
 !Saw methodsFor: 'ui' stamp: 'len 2/Feb/2026 16:09:58'!
 patchable
@@ -4728,17 +4728,16 @@ initializeControls
 peek
 	^ (((phase * Float twoPi) sin * warp + phase) * Float twoPi) sin! !
 
-!Sine methodsFor: 'processing' stamp: 'len 3/Apr/2026 21:10:07'!
+!Sine methodsFor: 'processing' stamp: 'len 4/Apr/2026 20:05:03'!
 read: aBuffer
-	| α f fInc |
+	| α f |
 	warp = 0.0 ifFalse: [^ super read: aBuffer].
 	"This is about 3x the speed of the original method that calls #next."
 	α := phase * Float twoPi.
-	f := frequency * Float twoPi.
-	fInc := frequencyIncrement * Float twoPi.
+	f := increment * Float twoPi.
 	1 to: aBuffer size do: [:i|
 		aBuffer at: i put: α sin.
-		α := α + (f := f + fInc)].
+		α := α + (f := f * incrementRatio)].
 	phase := α / Float twoPi.
 	phase := phase - phase truncated! !
 
@@ -4772,15 +4771,15 @@ initializeControls
 	super initializeControls.
 	self addControl: #shape min: 0.0 max: 1.0 value: 0.0! !
 
-!TriSawPulse methodsFor: 'processing' stamp: 'len 16/Jan/2026 15:39:26'!
+!TriSawPulse methodsFor: 'processing' stamp: 'len 4/Apr/2026 19:33:19'!
 peek
 	"Answer a mix of two waves, depending on the shape parameter.
 	Normalize the amplitude of the pulse wave to match perceived loudness with the other wave shapes."
-	shape = 0.0 ifTrue: [^ phase triangle: frequency].
-	shape < 0.25 ifTrue: [^ (phase triangle: frequency) * (0.25 - shape) + ((phase saw: frequency) * shape) / 0.25].
-	shape = 0.25 ifTrue: [^ phase saw: frequency].
-	shape < 0.5 ifTrue: [^ (phase saw: frequency) * (0.5 - shape) + ((phase pulse: frequency width: shape - 0.25 * 2) * 0.577 * (shape - 0.25)) / 0.25].
-	^ (phase pulse: frequency width: shape) * 0.577! !
+	shape = 0.0 ifTrue: [^ phase triangle: increment].
+	shape < 0.25 ifTrue: [^ (phase triangle: increment) * (0.25 - shape) + ((phase saw: increment) * shape) / 0.25].
+	shape = 0.25 ifTrue: [^ phase saw: increment].
+	shape < 0.5 ifTrue: [^ (phase saw: increment) * (0.5 - shape) + ((phase pulse: increment width: shape - 0.25 * 2) * 0.577 * (shape - 0.25)) / 0.25].
+	^ (phase pulse: increment width: shape) * 0.577! !
 
 !TriSawPulse methodsFor: 'ui' stamp: 'len 2/Feb/2026 16:10:07'!
 patchable
@@ -4818,9 +4817,9 @@ initializeControls
 	super initializeControls.
 	self addControl: #shape min: 0.0 max: 1.0 value: 0.0! !
 
-!Triangle methodsFor: 'processing' stamp: 'len 17/Jan/2026 15:16:30'!
+!Triangle methodsFor: 'processing' stamp: 'len 4/Apr/2026 19:33:19'!
 peek
-	^ (phase triangle: frequency) * (1.0 - shape) + ((phase * Float twoPi) sin * shape)! !
+	^ (phase triangle: increment) * (1.0 - shape) + ((phase * Float twoPi) sin * shape)! !
 
 !Triangle methodsFor: 'ui' stamp: 'len 2/Feb/2026 16:10:11'!
 patchable
@@ -4862,14 +4861,14 @@ reset
 	super reset.
 	ticksToUpdate := 0! !
 
-!Wavetable methodsFor: 'controlling' stamp: 'len 3/Apr/2026 20:16:53'!
+!Wavetable methodsFor: 'controlling' stamp: 'len 4/Apr/2026 19:33:19'!
 update
 	| maxHarmonic p i f start |
 	super update.
 	position := self get: #position.
 	(ticksToUpdate := ticksToUpdate - 1) >= 0 ifTrue: [^ self].
 	ticksToUpdate := 7. "update only once every 7 ticks, ~ 50 Hz"
-	maxHarmonic := (1.0 / frequency) truncated min: frameSize.
+	maxHarmonic := (1.0 / increment) truncated min: frameSize.
 	p := position * (self frameCount - 1).
 	i := p truncated.
 	f := p - i.
@@ -4918,7 +4917,7 @@ initializeControls
 	self addControl: #parity min: -1.0 max: 1.0 value: 0.0.
 	self addControl: #drive min: 0.0 max: 1.0 value: 0.0"! !
 
-!Wavetable methodsFor: 'initialization' stamp: 'len 2/Apr/2026 15:52:18'!
+!Wavetable methodsFor: 'initialization' stamp: 'len 4/Apr/2026 19:33:19'!
 table: aBuffer frameSize: anInteger
 	aBuffer size \\ anInteger = 0 ifFalse: [^ self error: 'unexpected table size'].
 	table := aBuffer.
@@ -4927,20 +4926,20 @@ table: aBuffer frameSize: anInteger
 	aux := Float32Array new: frameSize.
 	position := 0.0.
 	phase := 0.0.
-	frequency := 1.0 / anInteger.
+	increment := 1.0 / anInteger.
 	self computeSpectum! !
 
 !Wavetable methodsFor: 'processing' stamp: 'len 1/Apr/2026 21:36:11'!
 peek
 	^ fft realData atWrapCubic: phase * frameSize! !
 
-!Wavetable methodsFor: 'processing' stamp: 'len 3/Apr/2026 21:10:30'!
+!Wavetable methodsFor: 'processing' stamp: 'len 4/Apr/2026 20:05:13'!
 read: aBuffer
 	| frame |
 	frame := fft realData.
 	1 to: aBuffer size do: [:i|
 		aBuffer at: i put: (frame atWrapCubic: phase * frameSize).
-		(phase := phase + (frequency := frequency + frequencyIncrement)) >= 1.0 ifTrue: [phase := phase - phase truncated]]! !
+		(phase := phase + (increment := increment * incrementRatio)) >= 1.0 ifTrue: [phase := phase - phase truncated]]! !
 
 !Wavetable methodsFor: 'serialization' stamp: 'len 29/Mar/2026 15:35:39'!
 asJsonWithBuffers: aList
@@ -5129,104 +5128,104 @@ reset
 	super reset.
 	phases atAllPut: 0.0! !
 
-!Supersaw methodsFor: 'controlling' stamp: 'len 3/Apr/2026 21:49:40'!
+!Supersaw methodsFor: 'controlling' stamp: 'len 4/Apr/2026 20:08:36'!
 update
-	| targetFrequency detune detune2 detune3 mix normalization |
+	| targetIncrement detune detune2 detune3 mix normalization |
 	super update.
-	targetFrequency := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
-	frequency ifNil: [frequency := targetFrequency].
-	frequencyIncrement := targetFrequency - frequency / self class blockSize.
+	targetIncrement := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
+	increment ifNil: [increment := targetIncrement].
+	incrementRatio := ((targetIncrement / increment) ln / self class blockSize) exp.
 	detune := self get: #detune.
 	"detune := DetuneCurveLUT at: (detune*1023.0 + 1.0) truncated."
 	mix := detune. "should use separate control #mix, but for now we just tie it to #detune"
 	detune := detune / self class sampleRate.
 	detune2 := detune * 0.5826491486398412 "0.66 raisedTo: 1.3".
 	detune3 := detune * 0.23662908360881574 "0.33 raisedTo: 1.3".
-	frequencies
-		at: 1 put: (frequency - detune) abs;
-		at: 2 put: (frequency - detune2) abs;
-		at: 3 put: (frequency - detune3) abs;
-		at: 4 put: frequency;
-		at: 5 put: frequency + detune3;
-		at: 6 put: frequency + detune2;
-		at: 7 put: frequency + detune.
+	increments
+		at: 1 put: (increment - detune) abs;
+		at: 2 put: (increment - detune2) abs;
+		at: 3 put: (increment - detune3) abs;
+		at: 4 put: increment;
+		at: 5 put: increment + detune3;
+		at: 6 put: increment + detune2;
+		at: 7 put: increment + detune.
 	centerGain := -0.55366 * mix + 0.99785.
 	sideGain := (-0.73764 * mix + 1.2841) * mix + 0.044372.
 	normalization := 1.0 / 7.0. "/ (sideGain * 6.0 + centerGain)".
 	centerGain := centerGain * normalization.
 	sideGain := sideGain * normalization! !
 
-!Supersaw methodsFor: 'controlling' stamp: 'len 5/Jan/2026 15:29:43'!
+!Supersaw methodsFor: 'controlling' stamp: 'len 4/Apr/2026 19:34:35'!
 update2
 	| detune detune2 detune3 |
 	super update.
-	frequency := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
+	increment := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
 	detune := (self get: #detune) / self class sampleRate.
 	detune2 := detune * 0.5826491486398412 "0.66 raisedTo: 1.3".
 	detune3 := detune * 0.23662908360881574 "0.33 raisedTo: 1.3".
-	frequencies
-		at: 1 put: (frequency - detune) abs;
-		at: 2 put: (frequency - detune2) abs;
-		at: 3 put: (frequency - detune3) abs;
-		at: 4 put: frequency;
-		at: 5 put: frequency + detune3;
-		at: 6 put: frequency + detune2;
-		at: 7 put: frequency + detune! !
+	increments
+		at: 1 put: (increment - detune) abs;
+		at: 2 put: (increment - detune2) abs;
+		at: 3 put: (increment - detune3) abs;
+		at: 4 put: increment;
+		at: 5 put: increment + detune3;
+		at: 6 put: increment + detune2;
+		at: 7 put: increment + detune! !
 
-!Supersaw methodsFor: 'controlling' stamp: 'len 5/Jan/2026 17:23:16'!
+!Supersaw methodsFor: 'controlling' stamp: 'len 4/Apr/2026 19:34:35'!
 update3
 	| detune mix normalization |
 	super update.
-	frequency := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
+	increment := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
 	detune := self get: #detune.
 	"detune := DetuneCurveLUT at: (detune*1023.0 + 1.0) truncated."
 	mix := detune. "should use separate control #mix, but for now we just tie it to #detune"
 	detune := detune / self class sampleRate.
-	frequencies
-		at: 1 put: (frequency - (0.11002313*detune)) abs;
-		at: 2 put: (frequency - (0.06288439*detune)) abs;
-		at: 3 put: (frequency - (0.01952356*detune)) abs;
-		at: 4 put: frequency;
-		at: 5 put: frequency + (0.01991221*detune);
-		at: 6 put: frequency + (0.06216538*detune);
-		at: 7 put: frequency + (0.10745242*detune).
+	increments
+		at: 1 put: (increment - (0.11002313*detune)) abs;
+		at: 2 put: (increment - (0.06288439*detune)) abs;
+		at: 3 put: (increment - (0.01952356*detune)) abs;
+		at: 4 put: increment;
+		at: 5 put: increment + (0.01991221*detune);
+		at: 6 put: increment + (0.06216538*detune);
+		at: 7 put: increment + (0.10745242*detune).
 	centerGain := -0.55366 * mix + 0.99785.
 	sideGain := (-0.73764 * mix + 1.2841) * mix + 0.044372.
 	normalization := 1.0 / 7.0. "/ (sideGain * 6.0 + centerGain)".
 	centerGain := centerGain * normalization.
 	sideGain := sideGain * normalization! !
 
-!Supersaw methodsFor: 'controlling' stamp: 'len 5/Jan/2026 17:24:07'!
+!Supersaw methodsFor: 'controlling' stamp: 'len 4/Apr/2026 19:34:35'!
 update4
 	| detune detune2 detune3 mix normalization |
 	super update.
-	frequency := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
+	increment := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
 	detune := self get: #detune.
 	"detune := DetuneCurveLUT at: (detune*1023.0 + 1.0) truncated."
 	mix := detune. "should use separate control #mix, but for now we just tie it to #detune"
 	detune := detune / self class sampleRate.
 	detune2 := detune * 0.5826491486398412 "0.66 raisedTo: 1.3".
 	detune3 := detune * 0.23662908360881574 "0.33 raisedTo: 1.3".
-	frequencies
-		at: 1 put: (frequency - detune) abs;
-		at: 2 put: (frequency - detune2) abs;
-		at: 3 put: (frequency - detune3) abs;
-		at: 4 put: frequency;
-		at: 5 put: frequency + detune3;
-		at: 6 put: frequency + detune2;
-		at: 7 put: frequency + detune.
+	increments
+		at: 1 put: (increment - detune) abs;
+		at: 2 put: (increment - detune2) abs;
+		at: 3 put: (increment - detune3) abs;
+		at: 4 put: increment;
+		at: 5 put: increment + detune3;
+		at: 6 put: increment + detune2;
+		at: 7 put: increment + detune.
 	centerGain := -0.55366 * mix + 0.99785.
 	sideGain := (-0.73764 * mix + 1.2841) * mix + 0.044372.
 	normalization := 1.0 / 7.0. "/ (sideGain * 6.0 + centerGain)".
 	centerGain := centerGain * normalization.
 	sideGain := sideGain * normalization! !
 
-!Supersaw methodsFor: 'initialization' stamp: 'len 5/Jan/2026 16:45:38'!
+!Supersaw methodsFor: 'initialization' stamp: 'len 4/Apr/2026 19:34:35'!
 initialize
 	super initialize.
 	phases := Float32Array new: 7.
-	frequency := 0.01.
-	frequencies := (Float32Array new: 7) atAllPut: frequency.
+	increment := 0.01.
+	increments := (Float32Array new: 7) atAllPut: increment.
 	centerGain := sideGain := 1.0 / 7.0! !
 
 !Supersaw methodsFor: 'initialization' stamp: 'len 29/Jan/2026 18:57:13'!
@@ -5234,22 +5233,22 @@ initializeControls
 	super initializeControls.
 	self addControl: #detune min: 0.0 max: 1.0 value: 0.001! !
 
-!Supersaw methodsFor: 'processing' stamp: 'len 3/Apr/2026 21:41:13'!
+!Supersaw methodsFor: 'processing' stamp: 'len 4/Apr/2026 20:08:17'!
 next
 	| answer |
 	answer := self peek.
-	frequencyIncrement = 0.0 ifFalse:
-		[frequency := frequency + frequencyIncrement.
-		frequencies += frequencyIncrement].
-	phases += frequencies.
+	incrementRatio = 0.0 ifFalse:
+		[increment := increment * incrementRatio.
+		increments += incrementRatio].
+	phases += increments.
 	1 to: 7 do: [:i| | t | (t := phases at: i) >= 1.0 ifTrue: [phases at: i put: t - t truncated]].
 	^ answer! !
 
-!Supersaw methodsFor: 'processing' stamp: 'len 5/Jan/2026 17:07:23'!
+!Supersaw methodsFor: 'processing' stamp: 'len 4/Apr/2026 19:34:35'!
 peek
 	| answer |
 	answer := 0.0.
-	1 to: 7 do: [:i| answer := ((phases at: i) saw: (frequencies at: i)) * (i = 4 ifTrue: [centerGain] ifFalse: [sideGain]) + answer].
+	1 to: 7 do: [:i| answer := ((phases at: i) saw: (increments at: i)) * (i = 4 ifTrue: [centerGain] ifFalse: [sideGain]) + answer].
 	^ answer! !
 
 !Supersaw methodsFor: 'ui' stamp: 'len 2/Feb/2026 16:10:21'!
@@ -6011,7 +6010,7 @@ setOffset: aNumber
 setSpeed: aNumber
 	self set: #speed to: aNumber! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 3/Apr/2026 21:18:59'!
+!Sample methodsFor: 'controlling' stamp: 'len 4/Apr/2026 20:09:27'!
 update
 	| targetIncrement |
 	super update.
@@ -6020,7 +6019,7 @@ update
 	warp := self get: #warp.
 	warp ifFalse: [targetIncrement := targetIncrement * speed abs].
 	increment ifNil: [increment := targetIncrement].
-	incrementIncrement := targetIncrement - increment / self class blockSize! !
+	incrementRatio := ((targetIncrement / increment) ln / self class blockSize) exp! !
 
 !Sample methodsFor: 'copying' stamp: 'len 18/Mar/2026 19:18:00'!
 copy
@@ -6062,7 +6061,7 @@ mixTailInto: aBuffer
 					^ self]]].
 	tailPosition := nil! !
 
-!Sample methodsFor: 'processing' stamp: 'len 3/Apr/2026 21:19:55'!
+!Sample methodsFor: 'processing' stamp: 'len 4/Apr/2026 20:09:11'!
 read: aBuffer
 	| end |
 	position ifNil: [aBuffer atAllPut: 0.0. ^ self].
@@ -6075,7 +6074,7 @@ read: aBuffer
 		ifTrue: "forward:"
 			[1 to: aBuffer size do: [:i|
 				aBuffer at: i put: (buffer atLinear: position).
-				((position := position + (increment := increment + incrementIncrement)) >= loopEnd and: [released not]) ifTrue:
+				((position := position + (increment := increment * incrementRatio)) >= loopEnd and: [released not]) ifTrue:
 					[position := position - loopLength + 1.0].
 				position < end ifFalse:
 					[released := true.
@@ -6086,7 +6085,7 @@ read: aBuffer
 			loopStart := loopEnd - loopLength + 1.0.
 			1 to: aBuffer size do: [:i|
 				aBuffer at: i put: (buffer atLinear: position).
-				((position := position - (increment := increment + incrementIncrement)) <= loopStart and: [released not]) ifTrue:
+				((position := position - (increment := increment * incrementRatio)) <= loopStart and: [released not]) ifTrue:
 					[position := position + loopLength - 1.0].
 				position >= 1.0 ifFalse:
 					[released := true.
@@ -6155,7 +6154,7 @@ waveform
 		canvas line: x @ y to: x @ (h // 2) width: 1 color: Color black].
 	^ answer! !
 
-!Sample methodsFor: 'private' stamp: 'len 3/Apr/2026 21:16:39'!
+!Sample methodsFor: 'private' stamp: 'len 4/Apr/2026 20:09:17'!
 buffer: aFloatArray baseRate: aNumber
 	buffer := aFloatArray.
 	baseRate := aNumber.
@@ -6163,17 +6162,16 @@ buffer: aFloatArray baseRate: aNumber
 	loopEnd := buffer size.
 	loopLength := 0.
 	increment := 1.0.
-	incrementIncrement := 0.0.
+	incrementRatio := 1.0.
 	self reset! !
 
 !Sample methodsFor: 'private' stamp: 'len 17/Feb/2026 19:03:05'!
 normalizeAmplitude
 	buffer /= (buffer max abs max: buffer min abs)! !
 
-!Sample methodsFor: 'private' stamp: 'len 17/Feb/2026 19:02:20'!
+!Sample methodsFor: 'private' stamp: 'len 4/Apr/2026 19:37:35'!
 removeDCOffset
-	buffer -= (buffer sum / buffer size).
-! !
+	buffer -= buffer mean! !
 
 !Sample methodsFor: 'private' stamp: 'len 10/Feb/2026 17:54:56'!
 trimSilence
@@ -9153,7 +9151,7 @@ initialize
 	image := Form extent: 128 @ 128 depth: 32.
 	image fillBlack! !
 
-!Vectorscope methodsFor: 'processing' stamp: 'len 3/Apr/2026 19:48:53'!
+!Vectorscope methodsFor: 'processing' stamp: 'len 4/Apr/2026 18:58:36'!
 tick
 	| h i x0 y0 x y c |
 	(inputX isNil or: [inputY isNil]) ifTrue: [^ self].
@@ -14588,20 +14586,12 @@ isNavigation
 	"Answer true if the receiver is a navigation key event: arrow left/up/down/right, page up/down, or home/end."
 	^ #[1 4 11 12 28 29 30 31] includes: keyValue! !
 
-!Morph methodsFor: '*signals' stamp: 'len 9/Feb/2026 20:50:05'!
-asJsonWithBuffers: bufferList
-	^ OrderedDictionary new! !
-
 !Morph methodsFor: '*signals' stamp: 'len 4/Mar/2026 14:54:49'!
 bench
 	| canvas form |
 	form := self morphExtent ifNil: [Display] ifNotNil: [:aPoint| Form extent: aPoint depth: Display depth].
 	canvas := VectorCanvas onForm: form.
 	^ [self drawOn: canvas] bench! !
-
-!Morph methodsFor: '*signals' stamp: 'len 9/Feb/2026 20:50:43'!
-readFromJson: json buffers: bufferList
-	^ self! !
 
 !Morph methodsFor: '*signals' stamp: 'len 4/Mar/2026 14:54:58'!
 timeProfile

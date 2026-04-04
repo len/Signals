@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 28 March 2026 at 7:41:56 pm'!
+'From Cuis7.7 [latest update: #7797] on 4 April 2026 at 6:59:14 pm'!
 'Description Minimal audio I/O support.'!
-!provides: 'Audio' 1 3!
+!provides: 'Audio' 1 4!
 !requires: 'FFI' 1 59 nil!
 SystemOrganization addCategory: #Audio!
 
@@ -127,10 +127,10 @@ canStartPlayer
 isPlaying: aSound
 	^ ActiveSounds includes: aSound! !
 
-!AudioPlayer class methodsFor: 'playing' stamp: 'len 28/Nov/2025 16:22:00'!
+!AudioPlayer class methodsFor: 'playing' stamp: 'len 4/Apr/2026 18:58:15'!
 startPlaying: aSound
 	"Start playing the given sound."
-	PlayerProcess ifNil:
+	(PlayerProcess isNil or: [PlayerProcess isTerminated]) ifTrue:
 		[self canStartPlayer ifFalse: [^ self].
 		^ self startUpWithSound: aSound].
 	PlayerSemaphore critical:
@@ -157,13 +157,16 @@ waitUntilDonePlaying: aSound
 		whileTrue: [(Delay forMilliseconds: 100) wait]
 ! !
 
-!AudioPlayer class methodsFor: 'initialization' stamp: 'len 10/Mar/2026 15:06:34'!
+!AudioPlayer class methodsFor: 'initialization' stamp: 'len 4/Apr/2026 18:55:46'!
 initialize
-	"AudioPlayer shutDown; initialize; startUp"
+	"
+	AudioPlayer shutDown; initialize; startUp
+	"
 	SampleRate := 44100.
 	BufferSize := 2048. "512." "10 msecs"
 	self assert: BufferSize \\ self blockSize = 0. "make sure it's a multiple of the block size"
-	Stereo := true! !
+	Stereo := true.
+	Smalltalk addToStartUpList: self! !
 
 !AudioPlayer class methodsFor: 'initialization' stamp: 'len 6/Dec/2025 15:34:42'!
 useBufferSize: anInteger
@@ -273,30 +276,6 @@ playLoop
 		ActiveSounds do: [:snd|
 			(snd playSampleCount: count into: Buffer startingAt: 1) = count
 				ifFalse: [finishedSounds := finishedSounds copyWith: snd]].
-		self primSoundPlaySamples: count from: Buffer startingAt: 1].
-		finishedSounds notEmpty ifTrue:
-			[ActiveSounds := ActiveSounds reject: [:snd| finishedSounds includes: snd].
-			finishedSounds := #()]] repeat! !
-
-!AudioPlayer class methodsFor: 'player process' stamp: 'len 10/Mar/2026 15:05:46'!
-playLoop2
-	"The audio player process loop."
-
-	| bytesPerSlice blockSize count finishedSounds random |
-	bytesPerSlice := Stereo ifTrue: [4] ifFalse: [2].
-	blockSize := self blockSize.
-	finishedSounds := #().
-	random := Random new.
-	[[(count := self primSoundAvailableBytes // bytesPerSlice) >= blockSize]
-		whileFalse: [ReadyForBuffer wait].
-	count := count min: Buffer stereoSampleCount.
-	count := count // blockSize * blockSize. "make it a multiple of the frame size"
-	PlayerSemaphore critical:
-		[Buffer primFill: 0.
-"		ActiveSounds do: [:snd|
-			(snd playSampleCount: count into: Buffer startingAt: 1) = count
-				ifFalse: [finishedSounds := finishedSounds copyWith: snd]]."
-		1 to: count do: [:i| Buffer at: i put: (random next - 0.5 * 10000.0) asInteger].
 		self primSoundPlaySamples: count from: Buffer startingAt: 1].
 		finishedSounds notEmpty ifTrue:
 			[ActiveSounds := ActiveSounds reject: [:snd| finishedSounds includes: snd].

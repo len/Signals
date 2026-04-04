@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 3 April 2026 at 4:55:35 pm'!
+'From Cuis7.7 [latest update: #7797] on 4 April 2026 at 6:59:54 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 13!
+!provides: 'Tracker' 1 14!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -185,9 +185,9 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $m ifTrue: [model toggleTrackMask. ^ true].
 	^ false! !
 
-!TrackerWindow methodsFor: 'events' stamp: 'len 9/Mar/2026 22:25:11'!
+!TrackerWindow methodsFor: 'events' stamp: 'len 4/Apr/2026 18:43:45'!
 keyStroke: anEvent
-	anEvent isSpace ifTrue: [model isPlaying ifTrue: [model stop] ifFalse: [model loop: anEvent secondaryModifierPressed; play]. ^ true].
+	anEvent isSpace ifTrue: [model isPlaying ifTrue: [model stop] ifFalse: [model loop: anEvent secondaryModifierPressed not; play]. ^ true].
 	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
 		[anEvent wasHandled: true.
 		^ self].
@@ -721,12 +721,12 @@ handleInputKey: anEvent
 		^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 9/Mar/2026 22:28:05'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 4/Apr/2026 18:44:07'!
 handleKeyStroke: anEvent
 	(anEvent secondaryModifierPressed and: [self handleOptionHotkey: anEvent]) ifTrue: [^ true].
 	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue: [^ true].
 	(anEvent shiftPressed and: [anEvent isArrow]) ifTrue: [self handleSelectionKey: anEvent. ^ true].
-	anEvent isReturnKey ifTrue: [tracker stop; loop: anEvent secondaryModifierPressed. self playSelection. ^ true].
+	anEvent isReturnKey ifTrue: [tracker stop; loop: anEvent secondaryModifierPressed not. self playSelection. ^ true].
 	anEvent isNavigation ifTrue: [self handleNavigationKey: anEvent. ^ true].
 	anEvent keyCharacter = $\ ifTrue:
 		[anEvent wasHandled: true.
@@ -1805,7 +1805,7 @@ setCursorTrack: anInteger
 	cursorTrack := anInteger.
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'initialization' stamp: 'len 14/Mar/2026 18:25:01'!
+!Tracker methodsFor: 'initialization' stamp: 'len 4/Apr/2026 18:43:15'!
 initialize
 	instruments := Dictionary new.
 	tracks := #().
@@ -1819,7 +1819,7 @@ initialize
 	cursorTrack := 1.
 	playheadPattern := 1.
 	playheadLine := 0.
-	followPlayhead := false.
+	followPlayhead := true.
 	loop := false.
 	playStartPattern := 1.
 	playStartLine := 1.

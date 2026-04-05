@@ -58,6 +58,7 @@ Trackers are heavily keyboard-oriented. The following hotkeys are the most commo
 
 ### Keyboard mapping to input notes
 You can use the computer keyboard to input notes in the tracker or trigger notes in realtime in the instrument editor while the tracker is playing:
+
 ![Keyboard Mapping](keyboard_mapping.jpg)
 
 ### Citing Signals

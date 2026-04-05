@@ -57,7 +57,7 @@ Trackers are heavily keyboard-oriented. The following hotkeys are the most commo
 * Cmd-+/- increase/decrease pattern editor font size
 
 ### Keyboard mapping to input notes
-You can use the computer keyboard to input notes in the tracker or trigger notes in realtime in the instrument editor while the tracker is playing:
+You can use the computer keyboard to input notes in the tracker or trigger notes in realtime in the instrument editor while the tracker is playing. Transpose one octave up with Cmd-] and down with Cmd-[.
 
 ![Keyboard Mapping](keyboard_mapping.jpg)
 

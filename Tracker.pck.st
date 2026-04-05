@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 4 April 2026 at 6:59:54 pm'!
+'From Cuis7.7 [latest update: #7797] on 5 April 2026 at 5:28:36 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 14!
+!provides: 'Tracker' 1 15!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -1370,7 +1370,7 @@ readFrom: aStream
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 
-!Instrument methodsFor: 'serialization' stamp: 'len 18/Feb/2026 17:28:37'!
+!Instrument methodsFor: 'serialization' stamp: 'len 4/Apr/2026 19:15:11'!
 readFromJson: json buffers: bufferList
 	| patchables |
 	patchables := (json at: #modules) collect: [:each|
@@ -2201,6 +2201,24 @@ toggleTrackSolo: trackIndex
 !Tracker methodsFor: 'ui' stamp: 'len 11/Feb/2026 19:10:42'!
 open
 	^ TrackerWindow open: self! !
+
+!Tracker class methodsFor: 'as yet unclassified' stamp: 'len 5/Apr/2026 17:24:41'!
+fileReaderServicesForFileEntry: filename suffix: suffix
+	suffix = 'song' ifTrue: [^ {self serviceLoadSong}].
+	^ #()! !
+
+!Tracker class methodsFor: 'as yet unclassified' stamp: 'len 5/Apr/2026 17:27:05'!
+openFromFile: aFileEntry
+	^ (aFileEntry readStreamDo: [:s| self new readFrom: s binary]) open! !
+
+!Tracker class methodsFor: 'as yet unclassified' stamp: 'len 5/Apr/2026 17:28:24'!
+serviceLoadSong
+	^ (SimpleServiceEntry
+		provider: self
+		label: 'open in tracker'
+		selector: #openFromFile:
+		description:'open in tracker'
+		buttonLabel: 'open in tracker') argumentGetter: [:fileList| fileList selectedFileEntry]! !
 
 !Trigger methodsFor: 'accessing' stamp: 'len 1/Mar/2026 14:23:29'!
 at: position put: value

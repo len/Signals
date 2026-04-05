@@ -8,7 +8,7 @@ Signals is a lively environment for real-time musical synthesis. It includes:
 The following are some of the features of Signals:
 * samples and multisamples
 * antialiased oscillators (with PolyBLEP/PolyBLAP)
-- antialiased wavetables (bandlimited on-the-fly)
+* antialiased wavetables (bandlimited on-the-fly)
 * LFOs and many types of envelopes
 * digital filters based on biquads and SVF
 * virtual analog filters
@@ -16,9 +16,11 @@ The following are some of the features of Signals:
 * effects (reverbs, delays, flanger, phaser, chorus, etc)
 * visualizations (oscilloscope, spectrogram, spectrum analizer, vectorscope)
 * modules to mix and pan, stereo widening, compressor, limiter, EQ, etc
+* internal oversampling when needed (typically in modules with nonlinearities that are more suceptible to aliasing)
 * all control parameters are modulatable by design
 * multiple approaches to control by modulation modules (envelopes, LFOs) or by tracker sequencing
 * audio routing through buses (send effects, etc)
+* portamento and legato support
 * all code in pure Smalltalk, and available all the time for browsing or modification while running (lively environment)
 
 ### Smalltalk
@@ -31,7 +33,6 @@ Some free samples and multisamples are included in the samples/ directory. The m
 
 ### Hotkeys
 Trackers are heavily keyboard-oriented. The following hotkeys are the most commonly used (in PC, Command and Option are Control and Alt):
-Pattern editor:
 * Space play sequence from cursor line and loop it (don't loop with Opt), or stop if currently playing
 * Enter play trigger or selection and loop it (don't loop with Opt)
 * \ toggle track mute (Cmd-\ toggle track solo)
@@ -54,6 +55,10 @@ Pattern editor:
 * Cmd-i and Cmd-e import and export an instrument
 * Cmd-j toggle the lower pane (the pattern editor and sequencer)
 * Cmd-+/- increase/decrease pattern editor font size
+
+### Keyboard mapping to input notes
+You can use the computer keyboard to input notes in the tracker or trigger notes in realtime in the instrument editor while the tracker is playing:
+![Keyboard Mapping](keyboard_mapping.jpg)
 
 ### Citing Signals
 If you use Signals in a non-trivial part of your research please consider citing it as follows:

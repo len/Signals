@@ -29,10 +29,13 @@ The system is based on Smalltalk-80, specifically [Cuis Smalltalk](https://githu
 As many systems based on Smalltalk, it comes complete with an environment for interactive programming, blurring the distinction between user and programmer (or musician and programmer in this case). It contains a complete development environment that allows you to browse classes, inspect objects, debug, and change anything 'live' while it is running.
 
 ### Samples
-Some free samples and multisamples are included in the samples/ directory. The multisamples are mostly adapted from public domain sound fonts.
+Some free samples and multisamples are included in the samples/ directory (it's a git submodule). The multisamples are mostly adapted from public domain sound fonts.
 
-### Hotkeys
-Trackers are heavily keyboard-oriented. The following hotkeys are the most commonly used (in PC, Command and Option are Control and Alt):
+### Hotkeys and keyboard mapping
+Trackers are heavily keyboard-oriented. The following hotkeys are the most commonly used (in PC, Command and Option are Control and Alt).
+
+Pattern editor:
+
 * Space play sequence from cursor line and loop it (don't loop with Opt), or stop if currently playing
 * Enter play trigger or selection and loop it (don't loop with Opt)
 * \ toggle track mute (Cmd-\ toggle track solo)
@@ -56,7 +59,15 @@ Trackers are heavily keyboard-oriented. The following hotkeys are the most commo
 * Cmd-j toggle the lower pane (the pattern editor and sequencer)
 * Cmd-+/- increase/decrease pattern editor font size
 
-### Keyboard mapping to input notes
+Instrument editor:
+
+* Esc open menu to add new modules to the patch
+* Mouse-drag panning
+* Cmd-mouse-scroll zoom
+* Backspace delete module or wire under the mouse
+* Mouse-drag from a module output pin to another module input pin to add a wire
+* ` to center and zoom the patch to make it fit the available space
+
 You can use the computer keyboard to input notes in the tracker or trigger notes in realtime in the instrument editor while the tracker is playing. Transpose one octave up with Cmd-] and down with Cmd-[.
 
 ![Keyboard Mapping](keyboard_mapping.jpg)

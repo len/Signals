@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 5 April 2026 at 5:09:48 pm'!
+'From Cuis7.7 [latest update: #7797] on 9 April 2026 at 7:53:06 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 521!
+!provides: 'Signals' 1 522!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -2498,7 +2498,7 @@ printer: aSymbol
 options
 	^ options! !
 
-!Choice methodsFor: 'private' stamp: 'len 8/Mar/2026 15:51:42'!
+!Choice methodsFor: 'private' stamp: 'len 6/Apr/2026 02:15:36'!
 positionFromValue: anObject
 	^ (options indexOf: anObject) - 1.0 / (options size - 1)! !
 
@@ -2510,9 +2510,9 @@ setOptions: anArray value: defaultValue
 	modulation := 0.0.
 	default := defaultValue! !
 
-!Choice methodsFor: 'private' stamp: 'len 8/Mar/2026 15:52:22'!
+!Choice methodsFor: 'private' stamp: 'len 6/Apr/2026 02:16:43'!
 valueFromPosition: aNumber
-	^ options at: (aNumber * (options size - 1)) truncated + 1! !
+	^ options at: (aNumber * (options size - 1) + 1.0) truncated! !
 
 !Choice class methodsFor: 'instance creation' stamp: 'len 18/Mar/2026 18:40:34'!
 options: anArray value: defaultValue
@@ -2582,10 +2582,11 @@ positionFromValue: aNumber
 	v := v min: max max: min.
 	^ self curveInverseAt: v! !
 
-!Knob methodsFor: 'private' stamp: 'len 8/Mar/2026 15:16:22'!
-setMin: _min max: _max curve: aSymbol value: defaultValue
-	min := _min.
-	max := _max.
+!Knob methodsFor: 'private' stamp: 'len 5/Apr/2026 19:01:21'!
+setMin: minValue max: maxValue curve: aSymbol value: defaultValue
+	self assert: (defaultValue between: minValue and: maxValue).
+	min := minValue.
+	max := maxValue.
 	curve := aSymbol.
 	lastValue := defaultValue.
 	base := self positionFromValue: defaultValue.
@@ -2705,11 +2706,6 @@ addVolumeControl: aSymbol value: defaultValue
 !Module methodsFor: 'controls and modulations' stamp: 'len 3/Mar/2026 19:31:44'!
 adjust: aSymbol by: aValue
 	controls at: aSymbol ifPresent: [:aControl| aControl adjustBy: aValue]! !
-
-!Module methodsFor: 'controls and modulations' stamp: 'len 25/Jan/2026 22:25:45'!
-at: aSymbol
-	self flag: #deprecated.
-	^ self get: aSymbol! !
 
 !Module methodsFor: 'controls and modulations' stamp: 'len 25/Nov/2025 18:46:00'!
 controls
@@ -4511,7 +4507,7 @@ patchable
 reset
 	phase := 0.0! !
 
-!Oscillator methodsFor: 'controlling' stamp: 'len 4/Apr/2026 20:06:12'!
+!Oscillator methodsFor: 'controlling' stamp: 'len 5/Apr/2026 19:14:57'!
 update
 	| targetIncrement |
 	super update.
@@ -5018,6 +5014,11 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
+!Wavetable class methodsFor: 'class initialization' stamp: 'len 9/Apr/2026 19:47:33'!
+initialize
+	super initialize.
+	self initializeLibrary! !
+
 !Wavetable class methodsFor: 'generated' stamp: 'len 31/Mar/2026 18:02:37'!
 add_saw_exp
 	^ self harmonicSum: [:k :θ| (k * θ * Float twoPi) sin / k]! !
@@ -5101,6 +5102,25 @@ fromFileEntry: fileEntry frameSize: frameSize
 	table := reader channels = 2 ifTrue: [reader leftSamples + reader rightSamples] ifFalse: [reader leftSamples].
 	^ self new table: table frameSize: frameSize! !
 
+!Wavetable class methodsFor: 'library' stamp: 'len 9/Apr/2026 19:47:54'!
+initializeLibrary
+	"
+	Wavetable loadLibrary
+	"
+	Library := OrderedDictionary new.
+	'Generating wavetables...' print.
+"	(self class organization listAtCategoryNamed: 'generated') do: [:each|"
+	#(add_saw_exp add_square_exp add_triangle_soft sine_to_saw spectral_tilt "pulse_pw_full") do: [:each|
+		| label |
+		label := each asPlainString.
+		('    ∙ ', label) print.
+		Library at: label put: ((self perform: each) label: label)].
+	Library at: 'FM 1:1' put: ((self fm_ratio: 1) label: 'FM 1:1').
+	Library at: 'FM 1:2' put: ((self fm_ratio: 2) label: 'FM 1:2').
+	Library at: 'FM 1:3' put: ((self fm_ratio: 3) label: 'FM 1:3').
+"	self load: self wavetablesDirectory // 'Saxophone.wav'.
+	self load: self wavetablesDirectory // 'Rhodes.wav'"! !
+
 !Wavetable class methodsFor: 'library' stamp: 'len 4/Mar/2026 18:49:49'!
 library
 	^ Library! !
@@ -5112,24 +5132,6 @@ load: fileEntry
 !Wavetable class methodsFor: 'library' stamp: 'len 29/Mar/2026 15:50:43'!
 load: fileEntry label: aString frameSize: waveSize
 	^ (Library at: aString put: (self fromFileEntry: fileEntry frameSize: waveSize)) label: aString! !
-
-!Wavetable class methodsFor: 'library' stamp: 'len 31/Mar/2026 18:06:40'!
-loadLibrary
-	"
-	Wavetable loadLibrary
-	"
-	Library := OrderedDictionary new.
-"	(self class organization listAtCategoryNamed: 'generated') do: [:each|"
-	#(add_saw_exp add_square_exp add_triangle_soft sine_to_saw spectral_tilt pulse_pw_full) do: [:each|
-		| label |
-		label := each asPlainString.
-		label print.
-		Library at: label put: ((self perform: each) label: label)].
-	Library at: 'FM 1:1' put: ((self fm_ratio: 1) label: 'FM 1:1').
-	Library at: 'FM 1:2' put: ((self fm_ratio: 2) label: 'FM 1:2').
-	Library at: 'FM 1:3' put: ((self fm_ratio: 3) label: 'FM 1:3').
-"	self load: self wavetablesDirectory // 'Saxophone.wav'.
-	self load: self wavetablesDirectory // 'Rhodes.wav'"! !
 
 !Wavetable class methodsFor: 'library' stamp: 'len 27/Mar/2026 22:22:18'!
 loadMW1Wavetables
@@ -5165,10 +5167,6 @@ serviceLoadWavetable
 		selector: #load:
 		description:'load the wavetable to the wavetables library'
 		buttonLabel: 'load wavetable') argumentGetter: [:fileList| fileList selectedFileEntry]! !
-
-!Wavetable class methodsFor: 'library' stamp: 'len 27/Mar/2026 22:25:07'!
-wavetablesDirectory
-	^ Sample samplesDirectory / 'wavetables'! !
 
 !Supersaw methodsFor: 'controlling' stamp: 'len 1/Dec/2025 15:32:00'!
 reset
@@ -5664,11 +5662,11 @@ readFromJson: json buffers: aList
 	label := json at: #label.
 	label isEmpty ifTrue: [label := nil]! !
 
-!Multisample methodsFor: 'ui' stamp: 'len 28/Mar/2026 20:32:51'!
+!Multisample methodsFor: 'ui' stamp: 'len 6/Apr/2026 19:12:43'!
 panel
 	^ super panel
 		addTextualControl: (controls at: #speed);
-		addToggle: (controls at: #warp) label: 'Warp';
+"		addToggle: (controls at: #warp) label: 'Warp';"
 		addToggle: (controls at: #legato) label: 'Legato'! !
 
 !Multisample methodsFor: 'ui' stamp: 'len 15/Feb/2026 20:42:04'!
@@ -5681,6 +5679,25 @@ patchable
 		addControlInput: #tune label: 'Pitch';
 		addAudioOutput: #setOutput:.
 	^ answer! !
+
+!Multisample class methodsFor: 'class initialization' stamp: 'len 9/Apr/2026 19:46:11'!
+initialize
+	super initialize.
+	self initializeLibrary! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 19:46:37'!
+initializeLibrary
+	"
+	Multisample initializeLibrary
+	"
+	
+	Library := OrderedDictionary new.
+	'Loading multisamples...' print.
+	#(loadJRhodes3D loadLoFiRhodes loadDancePiano loadVibraphone loadBookerT loadBookerTFast "loadFarfisa" loadTrumpet loadFlute loadSquireBass loadPickedBass loadSlapBass loadPopBass loadFingerBass loadDoubleBass loadSixStringSteelGuitar loadTwoToneHouseOrgan loadStringEnsemble loadChoirAah loadChoirOuh) do: [:each|
+		| multisample |
+		multisample := self perform: each.
+		('    ∙ ', multisample label) print.
+		Library at: multisample label put: multisample]! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 3/Dec/2025 02:12:00'!
 library
@@ -5838,18 +5855,6 @@ loadJRhodes3D
 	keymap := samples collect: [:each| each associations sorted reversed collect: #value].
 	^ self new label: 'Rhodes'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 28/Mar/2026 02:23:18'!
-loadLibrary
-	"
-	Multisample loadLibrary
-	"
-	
-	Library := OrderedDictionary new.
-	#(loadJRhodes3D loadLoFiRhodes loadDancePiano loadVibraphone loadBookerT loadBookerTFast loadFarfisa loadTrumpet loadFlute loadSquireBass loadPickedBass loadSlapBass loadPopBass loadFingerBass loadDoubleBass loadSixStringSteelGuitar loadTwoToneHouseOrgan loadStringEnsemble loadChoirAah loadChoirOuh) do: [:each|
-		| multisample |
-		multisample := self perform: each.
-		Library at: multisample label put: multisample]! !
-
 !Multisample class methodsFor: 'library' stamp: 'len 17/Feb/2026 17:15:48'!
 loadLoFiRhodes
 	| keymap |
@@ -5978,9 +5983,9 @@ loadVibraphone
 			keymap at: midiKey put: {Sample buffer: buffer sampleRate: reader sampleRate}].
 	^ self new label: 'Vibraphone'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 16/Feb/2026 23:45:19'!
+!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 15:03:49'!
 multisamplesDirectory
-	^ Sample samplesDirectory / 'multisamples'! !
+	^ self package packageDirectory / 'data' / 'multisamples'! !
 
 !Sample methodsFor: 'accessing' stamp: 'len 2/Jan/2026 14:42:45'!
 baseRate
@@ -6170,11 +6175,11 @@ readFromJson: json buffers: aList
 display
 	^ SampleWaveformMorph new sample: self! !
 
-!Sample methodsFor: 'ui' stamp: 'len 25/Mar/2026 19:19:24'!
+!Sample methodsFor: 'ui' stamp: 'len 6/Apr/2026 19:12:48'!
 panel
 	^ super panel
 		addTextualControl: (controls at: #speed);
-		addToggle: (controls at: #warp) label: 'Warp';
+"		addToggle: (controls at: #warp) label: 'Warp';"
 		addToggle: (controls at: #legato) label: 'Legato'! !
 
 !Sample methodsFor: 'ui' stamp: 'len 5/Apr/2026 16:57:28'!
@@ -6233,48 +6238,10 @@ trimSilence
 	(i := buffer findFirst: [:x| x abs > 0.00316]) > 0 ifTrue: [buffer := buffer copyFrom: i to: buffer size].
 	(i := buffer findLast: [:x| x abs > 0.00316]) > 0 ifTrue: [buffer := buffer copyFrom: 1 to: i]! !
 
-!Sample class methodsFor: 'library' stamp: 'len 19/Feb/2026 17:25:27'!
-fileReaderServicesForFileEntry: filename suffix: suffix
-	suffix = 'wav' ifTrue: [^ {self serviceLoadSample}].
-	^ #()! !
-
-!Sample class methodsFor: 'library' stamp: 'len 3/Dec/2025 02:10:00'!
-library
-	^ Library! !
-
-!Sample class methodsFor: 'library' stamp: 'len 19/Feb/2026 17:23:37'!
-load: fileEntry
-	^ self load: fileEntry label: (fileEntry name allButLast: 4)! !
-
-!Sample class methodsFor: 'library' stamp: 'len 19/Feb/2026 17:21:23'!
-load: fileEntry label: aString
-	^ (Library at: aString put: (self fromFileEntry: fileEntry)) label: aString! !
-
-!Sample class methodsFor: 'library' stamp: 'len 19/Feb/2026 21:14:41'!
-loadLibrary
-	"
-	Sample loadLibrary
-	"
-	
-	Library := OrderedDictionary new.
-	(self load: self samplesDirectory / 'Breaks' / 'Classic 2' // 'winstons-amenbrother-137.2bpm.wav') normalizeAmplitude.
-	(self load: self samplesDirectory / 'Pad' // 'pad2.wav') normalizeAmplitude; trimSilence.
-	(self load: self samplesDirectory / 'Pad' // 'pad3.wav') normalizeAmplitude; trimSilence.
-	(self load: self samplesDirectory / 'Pad' // 'pad4.wav') normalizeAmplitude; trimSilence.
-	(self load: self samplesDirectory / 'Pad' // 'pad5.wav') normalizeAmplitude; trimSilence! !
-
-!Sample class methodsFor: 'library' stamp: 'len 15/Feb/2026 15:41:08'!
-samplesDirectory
-	^ self package packageDirectory / 'samples'! !
-
-!Sample class methodsFor: 'library' stamp: 'len 19/Feb/2026 17:23:45'!
-serviceLoadSample
-	^ (SimpleServiceEntry
-		provider: self
-		label: 'load sample to library'
-		selector: #load:
-		description:'load the sample to the samples library'
-		buttonLabel: 'load sample') argumentGetter: [:fileList| fileList selectedFileEntry]! !
+!Sample class methodsFor: 'class initialization' stamp: 'len 9/Apr/2026 19:45:01'!
+initialize
+	super initialize.
+	self initializeLibrary! !
 
 !Sample class methodsFor: 'instance creation' stamp: 'len 2/Jan/2026 16:58:08'!
 buffer: aFloatArray
@@ -6306,6 +6273,49 @@ fromFileEntry: fileEntry
 	reader loopStart ifNotNil: [answer loopStart: reader loopStart loopEnd: reader loopEnd].
 	answer removeDCOffset.
 	^ answer! !
+
+!Sample class methodsFor: 'library' stamp: 'len 19/Feb/2026 17:25:27'!
+fileReaderServicesForFileEntry: filename suffix: suffix
+	suffix = 'wav' ifTrue: [^ {self serviceLoadSample}].
+	^ #()! !
+
+!Sample class methodsFor: 'library' stamp: 'len 9/Apr/2026 19:45:40'!
+initializeLibrary
+	"
+	Sample initializeLibrary
+	"
+	
+	Library := OrderedDictionary new.
+"	(self load: self samplesDirectory / 'Breaks' / 'Classic 2' // 'winstons-amenbrother-137.2bpm.wav') normalizeAmplitude.
+	(self load: self samplesDirectory / 'Pad' // 'pad2.wav') normalizeAmplitude; trimSilence.
+	(self load: self samplesDirectory / 'Pad' // 'pad3.wav') normalizeAmplitude; trimSilence.
+	(self load: self samplesDirectory / 'Pad' // 'pad4.wav') normalizeAmplitude; trimSilence.
+	(self load: self samplesDirectory / 'Pad' // 'pad5.wav') normalizeAmplitude; trimSilence"! !
+
+!Sample class methodsFor: 'library' stamp: 'len 3/Dec/2025 02:10:00'!
+library
+	^ Library! !
+
+!Sample class methodsFor: 'library' stamp: 'len 19/Feb/2026 17:23:37'!
+load: fileEntry
+	^ self load: fileEntry label: (fileEntry name allButLast: 4)! !
+
+!Sample class methodsFor: 'library' stamp: 'len 19/Feb/2026 17:21:23'!
+load: fileEntry label: aString
+	^ (Library at: aString put: (self fromFileEntry: fileEntry)) label: aString! !
+
+!Sample class methodsFor: 'library' stamp: 'len 9/Apr/2026 15:00:48'!
+samplesDirectory
+	^ self package packageDirectory / 'data' / 'samples'! !
+
+!Sample class methodsFor: 'library' stamp: 'len 19/Feb/2026 17:23:45'!
+serviceLoadSample
+	^ (SimpleServiceEntry
+		provider: self
+		label: 'load sample to library'
+		selector: #load:
+		description:'load the sample to the samples library'
+		buttonLabel: 'load sample') argumentGetter: [:fileList| fileList selectedFileEntry]! !
 
 !ColoredNoise methodsFor: 'controlling' stamp: 'len 1/Feb/2026 17:53:42'!
 reset
@@ -6490,12 +6500,6 @@ setInput: aBuffer
 !Transform methodsFor: 'wiring' stamp: 'len 18/Nov/2025 17:26:00'!
 setOutput: aBuffer
 	output := aBuffer! !
-
-!Transform methodsFor: 'private' stamp: 'len 12/Feb/2026 14:43:59'!
-internalSampleRate
-	"This is how many times the >>value: method is called per processed sample.
-	By default there's no oversampling."
-	^ self class sampleRate! !
 
 !Limiter methodsFor: 'controlling' stamp: 'len 10/Feb/2026 14:38:00'!
 update
@@ -8360,15 +8364,14 @@ initialize
 	random := Random seed: seed.
 	self reset! !
 
-!LFO methodsFor: 'initialization' stamp: 'len 18/Mar/2026 20:08:48'!
+!LFO methodsFor: 'initialization' stamp: 'len 6/Apr/2026 20:48:01'!
 initializeControls
 	super initializeControls.
 	self addSpeedControl: #speed value: 0.1.
-	self addControl: #offset min: 0.0 max: 0.999 value: 0.0.
+	(self addControl: #offset min: 0.0 max: 0.999 value: 0.0) printer: [:x| (x * 2 printStringFractionDigits: 2), ' π'].
 	self addChoiceControl: #mode options: #(free trig hold) value: #free.
 	self addChoiceControl: #shape options: #(sine square rise fall random) value: #sine.
-	self addToggleControl: #bipolar value: true.
-	self addToggleControl: #sync value: false! !
+	self addToggleControl: #bipolar value: true! !
 
 !LFO methodsFor: 'processing' stamp: 'len 22/Jan/2026 16:07:51'!
 next
@@ -8411,11 +8414,12 @@ display
 	self when: #output: send: #addSample: to: answer.
 	^ answer! !
 
-!LFO methodsFor: 'ui' stamp: 'len 18/Mar/2026 19:16:05'!
+!LFO methodsFor: 'ui' stamp: 'len 6/Apr/2026 20:45:47'!
 panel
 	^ ControlPanel new
+		addTextualControl: (controls at: #speed);
+		addTextualControl: (controls at: #offset);
 		addChoice: (controls at: #mode);
-		addToggle: (controls at: #sync) label: '♩';
 		addToggle: (controls at: #bipolar) label: '±';
 		addChoice: (controls at: #shape)! !
 
@@ -9653,6 +9657,10 @@ drawOn: aCanvas
 		fillRectangle: rect color: color cornerRadius: 8.0;
 		frameRectangle: rect borderWidth: borderWidth  color: borderColor cornerRadius: 8.0! !
 
+!RoundedLinearLayoutMorph methodsFor: 'as yet unclassified' stamp: 'len 9/Apr/2026 19:29:01'!
+adoptWidgetsColor: paneColor
+	^ self! !
+
 !PluggableChoiceMorph methodsFor: 'accessing' stamp: 'len 19/Jan/2026 18:12:04'!
 color: aColor
 	color := aColor! !
@@ -9755,9 +9763,9 @@ defaultColor
 defaultExtent
 	^ 24 @ 24! !
 
-!PluggableChoiceMorph methodsFor: 'initialization' stamp: 'len 19/Jan/2026 18:30:18'!
+!PluggableChoiceMorph methodsFor: 'initialization' stamp: 'len 6/Apr/2026 21:01:17'!
 defaultFontSize
-	^ 14! !
+	^ (FontFamily defaultPointSize * 0.8) truncated! !
 
 !PluggableChoiceMorph methodsFor: 'initialization' stamp: 'len 22/Jan/2026 14:44:04'!
 initialize
@@ -9869,9 +9877,9 @@ defaultColor
 defaultExtent
 	^ 24 @ 24! !
 
-!PluggableToggleMorph methodsFor: 'initialization' stamp: 'len 20/Jan/2026 18:35:12'!
+!PluggableToggleMorph methodsFor: 'initialization' stamp: 'len 6/Apr/2026 21:01:23'!
 defaultFontSize
-	^ 14! !
+	^ (FontFamily defaultPointSize * 0.8) truncated! !
 
 !PluggableToggleMorph methodsFor: 'initialization' stamp: 'len 21/Jan/2026 23:30:32'!
 initialize
@@ -10418,13 +10426,13 @@ inactiveColor
 	self flag: #fixme.
 	^ Color veryLightGray! !
 
-!ChoiceControlMorph methodsFor: 'actions' stamp: 'len 18/Mar/2026 18:50:11'!
+!ChoiceControlMorph methodsFor: 'actions' stamp: 'len 6/Apr/2026 02:17:54'!
 moveDown
-	control adjustBy: 1.0 / control options size! !
+	control adjustBy: 1.0 / (control options size - 1)! !
 
-!ChoiceControlMorph methodsFor: 'actions' stamp: 'len 18/Mar/2026 18:50:31'!
+!ChoiceControlMorph methodsFor: 'actions' stamp: 'len 6/Apr/2026 02:18:02'!
 moveUp
-	control adjustBy: -1.0 / control options size! !
+	control adjustBy: -1.0 / (control options size - 1)! !
 
 !ChoiceControlMorph methodsFor: 'dependency mechanism' stamp: 'len 18/Mar/2026 18:46:40'!
 update: aSymbol
@@ -10498,9 +10506,9 @@ defaultColor
 defaultExtent
 	^ 24 @ 24! !
 
-!ChoiceControlMorph methodsFor: 'initialization' stamp: 'len 18/Mar/2026 18:46:40'!
+!ChoiceControlMorph methodsFor: 'initialization' stamp: 'len 6/Apr/2026 21:01:27'!
 defaultFontSize
-	^ 14! !
+	^ (FontFamily defaultPointSize * 0.8) truncated! !
 
 !ChoiceControlMorph methodsFor: 'initialization' stamp: 'len 18/Mar/2026 19:22:47'!
 initialize
@@ -10522,13 +10530,13 @@ control: aControl
 defaultColor
 	^ Color white! !
 
-!ControlMorph methodsFor: 'accessing' stamp: 'len 24/Nov/2025 19:17:00'!
+!ControlMorph methodsFor: 'accessing' stamp: 'len 6/Apr/2026 21:01:30'!
 defaultFontSize
-	^ 14! !
+	^ (FontFamily defaultPointSize * 0.8) truncated! !
 
-!ControlMorph methodsFor: 'accessing' stamp: 'len 13/Feb/2026 15:57:17'!
+!ControlMorph methodsFor: 'accessing' stamp: 'len 6/Apr/2026 21:02:57'!
 defaultLabelFontSize
-	^ 10! !
+	^ (FontFamily defaultPointSize * 0.6) truncated! !
 
 !ControlMorph methodsFor: 'accessing' stamp: 'len 19/Nov/2025 19:08:00'!
 inactiveColor
@@ -10871,33 +10879,37 @@ table: aBuffer frameSize: anInteger
 	currentPosition := control value.
 	self redrawNeeded! !
 
-!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 2/Apr/2026 18:28:46'!
+!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 6/Apr/2026 15:48:31'!
 drawFlatOn: aCanvas
-	| L N w h  alphaColor strokeWidth waveIndex |
+	| L N w h  alphaColor waveIndex stepL stepN |
 	(L := table size / frameSize) > 0 ifFalse: [^ self].
 	N := frameSize.
 	waveIndex := (currentPosition * (L - 1) + 1) asInteger.
 	w := self morphWidth - 4.0.
 	h := self morphHeight - 4.0.
 	alphaColor := (color mixed: 0.25 with: Color white) alpha: 0.05.
+	"Don't draw all, it's enough to draw 64 frames with 64 samples each:"
+	stepL := L // 64.
+	stepN := N // 64.
 	"Draw back-to-front so later (closer) waves paint over earlier ones."
 	L to: 1 by: -1 do: [:i|
-		| waveColor |
-		i = waveIndex ifTrue: [waveColor := color. strokeWidth := 1.5] ifFalse: [waveColor := alphaColor. strokeWidth := 1].
-		aCanvas strokeWidth: strokeWidth color: waveColor do:
-			[| x y baseline |
-			x := 2.0.
-			baseline := (1.0 -  (i asFloat / L)) / 2.0.
-			y := ((1.0 - (table at: i - 1 * frameSize + 1)) / 4.0 + baseline) * h + 2.0.
-			aCanvas moveTo: x @ y.
-			1+16 to: N by: 16 do: [:j|
-				x := (j - 1.0) / (N - 1) * w + 2.0.
-				y := ((1.0 - (table at: i - 1 * frameSize + j)) / 4.0 + baseline) * h + 2.0.
-				aCanvas lineTo:  x @ y]]]! !
+		| waveColor strokeWidth |
+		(i = waveIndex or: [i \\ stepL = 0]) ifTrue:
+			[i = waveIndex ifTrue: [waveColor := color. strokeWidth := 1.5] ifFalse: [waveColor := alphaColor. strokeWidth := 1].
+			aCanvas strokeWidth: strokeWidth color: waveColor do:
+				[| x y baseline |
+				x := 2.0.
+				baseline := (1.0 -  (i asFloat / L)) / 2.0.
+				y := ((1.0 - (table at: i - 1 * frameSize + 1)) / 4.0 + baseline) * h + 2.0.
+				aCanvas moveTo: x @ y.
+				1+stepN to: N by: stepN do: [:j|
+					x := (j - 1.0) / (N - 1) * w + 2.0.
+					y := ((1.0 - (table at: i - 1 * frameSize + j)) / 4.0 + baseline) * h + 2.0.
+					aCanvas lineTo:  x @ y]]]]! !
 
-!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 2/Apr/2026 18:30:21'!
+!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 6/Apr/2026 15:43:32'!
 drawIsometricOn: aCanvas
-	| L N projection w h  alphaColor strokeWidth waveIndex Sx Sy Sa cx cy |
+	| L N projection w h  alphaColor waveIndex Sx Sy Sa cx cy stepL stepN |
 	(L := table size / frameSize) > 0 ifFalse: [^ self].
 	N := frameSize.
 	waveIndex := (currentPosition * (L - 1) + 1) asInteger.
@@ -10919,15 +10931,23 @@ drawIsometricOn: aCanvas
 		screenY := cy + ((xNorm + zNorm) * Sy) - (amp * Sa).
 		screenX @ screenY].
 
+	"Don't draw all, it's enough to draw 64 frames with 64 samples each:"
+	stepL := L // 64.
+	stepN := N // 64.
 	"Draw back-to-front so later (closer) waves paint over earlier ones."
 	L to: 1 by: -1 do: [:i|
-		| waveColor |
-		i = waveIndex ifTrue: [waveColor := color. strokeWidth := 1.5] ifFalse: [waveColor := alphaColor. strokeWidth := 1].
-		aCanvas strokeWidth: strokeWidth color: waveColor do:
-			[aCanvas moveTo: (projection value: 1 value: (table at: i - 1 * frameSize + 1) value: i).
-			1+16 to: N by: 16 do: [:j| aCanvas lineTo: (projection value: j value: (table at: i - 1 * frameSize + j) value: i)]]]! !
+		i = waveIndex
+			ifTrue:
+				[aCanvas strokeWidth: 1.5 color: color do:
+					[aCanvas moveTo: (projection value: 1 value: (table at: i - 1 * frameSize + 1) value: i).
+					1+stepN to: N by: stepN do: [:j| aCanvas lineTo: (projection value: j value: (table at: i - 1 * frameSize + j) value: i)]]]
+			ifFalse:
+				[i \\ stepL = 0 ifTrue:
+					[aCanvas strokeWidth: 1.0 color: alphaColor do:
+						[aCanvas moveTo: (projection value: 1 value: (table at: i - 1 * frameSize + 1) value: i).
+						1+stepN to: N by: stepN do: [:j| aCanvas lineTo: (projection value: j value: (table at: i - 1 * frameSize + j) value: i)]]]]]! !
 
-!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 2/Apr/2026 18:29:30'!
+!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 6/Apr/2026 15:49:26'!
 drawOn: aCanvas
 	self drawIsometricOn: aCanvas! !
 
@@ -11160,9 +11180,9 @@ requiresVectorCanvas
 defaultExtent
 	^ 24 @ 24! !
 
-!ToggleControlMorph methodsFor: 'initialization' stamp: 'len 18/Mar/2026 19:11:13'!
+!ToggleControlMorph methodsFor: 'initialization' stamp: 'len 6/Apr/2026 21:01:32'!
 defaultFontSize
-	^ 14! !
+	^ (FontFamily defaultPointSize * 0.8) truncated! !
 
 !ToggleControlMorph methodsFor: 'initialization' stamp: 'len 18/Mar/2026 19:21:43'!
 initialize
@@ -12754,6 +12774,13 @@ wantsSteps
 !PatchMorph methodsFor: 'testing' stamp: 'len 9/Nov/2025 15:32:00'!
 honorsLayerOrder
 	^ true! !
+
+!PatchMorph methodsFor: 'private' stamp: 'len 9/Apr/2026 15:16:06'!
+fitTo: aRectangle
+	| bounds |
+	bounds := self fullBoundsInOwner.
+	self translateBy: aRectangle center - bounds center.
+	self scaleBy: ((aRectangle width / bounds width asFloat min: aRectangle height / bounds height asFloat) min: 1.0) around: aRectangle center! !
 
 !PatchMorph methodsFor: 'private' stamp: 'len 4/Jan/2026 15:40:13'!
 modules
@@ -14695,5 +14722,8 @@ timeProfile
 	form := self morphExtent ifNil: [Display] ifNotNil: [:aPoint| Form extent: aPoint depth: Display depth].
 	canvas := VectorCanvas onForm: form.
 	^ [100 timesRepeat: [self drawOn: canvas]] timeProfile! !
+Wavetable initialize!
 Supersaw initialize!
+Multisample initialize!
+Sample initialize!
 Spectrogram initialize!

@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 5 April 2026 at 5:28:36 pm'!
+'From Cuis7.7 [latest update: #7797] on 9 April 2026 at 7:53:10 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 15!
+!provides: 'Tracker' 1 16!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -38,7 +38,7 @@ MultitrackMeterMorph class
 
 !classDefinition: #PatternEditorMorph category: #'Tracker-Morphic'!
 BoxMorph subclass: #PatternEditorMorph
-	instanceVariableNames: 'tracker cursorPosition font labelFont labelMonoFont centerKey editStep showCursor pauseBlinking clipboard selectionLineStart selectionTrackStart'
+	instanceVariableNames: 'tracker cursorPosition font labelFont labelMonoFont editStep showCursor pauseBlinking clipboard selectionLineStart selectionTrackStart'
 	classVariableNames: 'FXColors'
 	poolDictionaries: ''
 	category: 'Tracker-Morphic'!
@@ -138,19 +138,27 @@ Commands:
 ∙ Yxx set the probability of playing the trigger (0 = never, FF = always)
 !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 18/Feb/2026 17:48:03'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 9/Apr/2026 18:38:32'!
+fitAllPatchesToInstrumentEditorBounds
+	| bounds |
+	layoutMorph layoutSubmorphs.
+	bounds := instrumentEditor localBounds insetBy: 8.
+	model instruments do: [:each| each patch fitTo: bounds]! !
+
+!TrackerWindow methodsFor: 'actions' stamp: 'len 9/Apr/2026 15:35:47'!
 openProject
 	self request: 'Project name' initialAnswer: '' do: [:name|
-		(self class package packageDirectory / 'library' // (name, '.song')) readStreamDo: [:s| model readFrom: s binary].
+		(self class package packageDirectory / 'data' / 'projects' // (name, '.song')) readStreamDo: [:s| model readFrom: s binary].
 		model label: name.
 		self setLabel: name.
+		self fitAllPatchesToInstrumentEditorBounds.
 		model triggerEvent: #cursorChanged]! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 18/Feb/2026 17:46:40'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 9/Apr/2026 15:02:54'!
 saveProject
 	self request: 'Project name' initialAnswer: (model label ifNil: '') do: [:newName|
 		model label: newName.
-		(self class package packageDirectory / 'library' // (newName, '.song')) writeStreamDo: [:s| model writeOn: s].
+		(self class package packageDirectory / 'data' / 'projects' // (newName, '.song')) writeStreamDo: [:s| model writeOn: s].
 		self setLabel: newName]! !
 
 !TrackerWindow methodsFor: 'actions' stamp: 'len 7/Jan/2026 14:25:54'!
@@ -193,7 +201,7 @@ keyStroke: anEvent
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 20/Feb/2026 22:52:02'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 9/Apr/2026 15:39:20'!
 buildMorphicWindow
 	| lowerLeftPane sequencerScroller patternEditorScroller bar |
 	instrumentEditor := InstrumentEditorMorph new setTracker: model.
@@ -234,22 +242,28 @@ clipboardPaste
 	patch := self patch ifNil: [^ self].
 	patch addMorph: clipboard copy patchable position: ((patch internalizeFromWorld: self activeHand morphPosition))! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Feb/2026 22:49:40'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 9/Apr/2026 15:03:03'!
 exportInstrument
 	| instrument |
 	instrument := tracker selectedInstrument ifNil: [^ self].
 	self request: 'Instrument name' initialAnswer: (instrument label ifNil: ['']) do: [:newName|
 		instrument label: newName.
-		(self class package packageDirectory / 'library' // (newName, '.patch')) writeStreamDo: [:s| instrument writeOn: s].
+		(self class package packageDirectory / 'data' / 'projects' // (newName, '.patch')) writeStreamDo: [:s| instrument writeOn: s].
 		self triggerEvent: #instrumentLabelChanged]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Feb/2026 22:49:59'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 9/Apr/2026 18:36:15'!
+fitPatchToBounds
+	self patch ifNotNil: [:aMorph| aMorph fitTo: (self localBounds insetBy: 8)]! !
+
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 9/Apr/2026 15:34:46'!
 importInstrument
 	| instrument |
 	instrument := tracker selectedInstrument ifNil: [^ self].
 	self request: 'Instrument name' initialAnswer: (instrument label ifNil: ['']) do: [:newName|
+		instrument label: nil.
+		(self class package packageDirectory / 'data' / 'projects' // (newName, '.patch')) readStreamDo: [:s| instrument readFrom: s binary].
 		instrument label: newName.
-		(self class package packageDirectory / 'library' // (newName, '.patch')) readStreamDo: [:s| instrument readFrom: s binary].
+		self fitPatchToBounds.
 		self triggerEvent: #instrumentLabelChanged]! !
 
 !InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Feb/2026 22:50:13'!
@@ -258,23 +272,24 @@ renameInstrument
 	instrument := tracker selectedInstrument ifNil: [^ self].
 	self request: 'Instrument name' initialAnswer: (instrument label ifNil: ['']) do: [:newName| instrument label: newName. self triggerEvent: #instrumentLabelChanged]! !
 
-!InstrumentEditorMorph methodsFor: 'drawing' stamp: 'len 20/Feb/2026 22:55:16'!
+!InstrumentEditorMorph methodsFor: 'drawing' stamp: 'len 6/Apr/2026 19:01:18'!
 drawOn: aCanvas
-"	aCanvas fillRectangle: self localBounds color: tracker selectedTrack backgroundColor"! !
+"	self patch ifNotNil: [aCanvas frameRectangle: self patch fullBoundsInOwner borderWidth: 2 color: Color white]. "! !
 
-!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 15/Mar/2026 18:55:03'!
+!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 6/Apr/2026 20:55:41'!
 handleCommandHotkey: anEvent
 	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
 	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
 	^ false! !
 
-!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 24/Mar/2026 01:22:06'!
+!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 9/Apr/2026 15:35:00'!
 keyStroke: anEvent
 	| c i |
 	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
 		[anEvent wasHandled: true.
 		^ self].
+	anEvent keyCharacter = $` ifTrue: [anEvent wasHandled: true. self fitPatchToBounds. ^ self].
 	anEvent keyCharacter = $\ ifTrue:
 		[anEvent wasHandled: true.
 		tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument track ifNotNil: [:aTrack|
@@ -807,7 +822,7 @@ minimumExtent
 	n := tracker tracks size.
 	^ (font widthOf: $X) * (n * (self tracksWidthInCharacters + 0.5) + 4.5) @ (font lineSpacing * 16)! !
 
-!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 11/Mar/2026 15:05:33'!
+!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 9/Apr/2026 15:22:54'!
 initialize
 	super initialize.
 "	font := FontFamily familyName: 'impulseBig' pointSize: 18."
@@ -815,7 +830,6 @@ initialize
 "	font := FontFamily familyName: 'Commodore 64 Angled' pointSize: 14."
 	labelFont := FontFamily defaultFamilyPointSize: 15.
 	labelMonoFont := font.
-	centerKey := 60. "C4"
 	editStep := 1.
 	showCursor := true.
 	pauseBlinking := false! !
@@ -890,12 +904,15 @@ updateTracks
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 9/Mar/2026 17:33:34'!
+!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 9/Apr/2026 15:27:57'!
 initialize
 	"
 	self initialize
 	"
 	super initialize.
+	"Load the monospaced font we need for the pattern editor:"
+	(FontFamily availableFamilies includesKey: 'JetBrains Mono NL') ifFalse:
+		[TrueTypeFontFamily readAllTrueTypeFontsIn: DirectoryEntry trueTypeFontsDirectory / 'JetBrainsMono'].
 	FXColors := Array new: 256 withAll: self unsetColor.
 	"Controls:"
 	'0123456789' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 80)].
@@ -1370,7 +1387,7 @@ readFrom: aStream
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 
-!Instrument methodsFor: 'serialization' stamp: 'len 4/Apr/2026 19:15:11'!
+!Instrument methodsFor: 'serialization' stamp: 'len 9/Apr/2026 19:26:11'!
 readFromJson: json buffers: bufferList
 	| patchables |
 	patchables := (json at: #modules) collect: [:each|
@@ -1384,6 +1401,7 @@ readFromJson: json buffers: bufferList
 		output := (patchables at: (each at: #source)) outputs detect: [:one| one selector = (each at: #output)].
 		input := (patchables at: (each at: #target)) inputs detect: [:one| one selector = (each at: #input)].
 		output addConnectionTo: input].
+	self assert: (patchables allSatisfy: [:each| each body color = PatchMorph panelColor]).
 	label := json at: #label! !
 
 !Instrument methodsFor: 'serialization' stamp: 'len 5/Feb/2026 17:57:19'!
@@ -1805,7 +1823,7 @@ setCursorTrack: anInteger
 	cursorTrack := anInteger.
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'initialization' stamp: 'len 4/Apr/2026 18:43:15'!
+!Tracker methodsFor: 'initialization' stamp: 'len 6/Apr/2026 15:51:40'!
 initialize
 	instruments := Dictionary new.
 	tracks := #().
@@ -1830,7 +1848,8 @@ initialize
 	random := Random new.
 
 	self insertTrack: 1.
-	self insertPattern: 1! !
+	self insertPattern: 1.
+	self selectedPattern track: 1 at: 1 position: 2 put: 1 "set instrument to 1"! !
 
 !Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026 16:20:33'!
 deletePattern
@@ -2198,25 +2217,32 @@ toggleTrackSolo: trackIndex
 	anyTrackSoloed := tracks anySatisfy: [:any| any soloed].
 	self triggerEvent: #tracksChanged! !
 
-!Tracker methodsFor: 'ui' stamp: 'len 11/Feb/2026 19:10:42'!
+!Tracker methodsFor: 'ui' stamp: 'len 9/Apr/2026 18:50:20'!
 open
-	^ TrackerWindow open: self! !
+	^ TrackerWindow open: self label: label! !
 
 !Tracker class methodsFor: 'as yet unclassified' stamp: 'len 5/Apr/2026 17:24:41'!
 fileReaderServicesForFileEntry: filename suffix: suffix
 	suffix = 'song' ifTrue: [^ {self serviceLoadSong}].
 	^ #()! !
 
-!Tracker class methodsFor: 'as yet unclassified' stamp: 'len 5/Apr/2026 17:27:05'!
-openFromFile: aFileEntry
-	^ (aFileEntry readStreamDo: [:s| self new readFrom: s binary]) open! !
+!Tracker class methodsFor: 'as yet unclassified' stamp: 'len 9/Apr/2026 18:47:00'!
+fromFileEntry: aFileEntry
+	| answer |
+	answer := aFileEntry readStreamDo: [:s| self new readFrom: s binary].
+	(aFileEntry name endsWith: '.song') ifTrue: [answer label: (aFileEntry name allButLast: 5)].
+	^ answer! !
 
-!Tracker class methodsFor: 'as yet unclassified' stamp: 'len 5/Apr/2026 17:28:24'!
+!Tracker class methodsFor: 'as yet unclassified' stamp: 'len 9/Apr/2026 19:22:28'!
+openFromFileEntry: aFileEntry
+	^​ (self fromFileEntry: aFileEntry) open fitAllPatchesToInstrumentEditorBounds! !
+
+!Tracker class methodsFor: 'as yet unclassified' stamp: 'len 9/Apr/2026 18:48:19'!
 serviceLoadSong
 	^ (SimpleServiceEntry
 		provider: self
 		label: 'open in tracker'
-		selector: #openFromFile:
+		selector: #openFromFileEntry:
 		description:'open in tracker'
 		buttonLabel: 'open in tracker') argumentGetter: [:fileList| fileList selectedFileEntry]! !
 

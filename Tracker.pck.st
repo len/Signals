@@ -1,10 +1,21 @@
-'From Cuis7.7 [latest update: #7797] on 9 April 2026 at 7:53:10 pm'!
+'From Cuis7.7 [latest update: #7872] on 11 April 2026 at 12:51:24 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 16!
+!provides: 'Tracker' 1 19!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
+SystemOrganization addCategory: #'Tracker-Theme'!
 
+
+!classDefinition: #DarkerTheme category: #'Tracker-Theme'!
+Theme subclass: #DarkerTheme
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Tracker-Theme'!
+!classDefinition: 'DarkerTheme class' category: #'Tracker-Theme'!
+DarkerTheme class
+	instanceVariableNames: ''!
 
 !classDefinition: #TrackerWindow category: #'Tracker-Morphic'!
 SystemWindow subclass: #TrackerWindow
@@ -138,6 +149,389 @@ Commands:
 ∙ Yxx set the probability of playing the trigger (0 = never, FF = always)
 !
 
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+acceptButton
+	^ self successColor! !
+
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+background
+	^ Color black! !
+
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+buttonColorFrom: paneColor
+	^ paneColor adjustSaturation: -0.03 brightness: -0.1! !
+
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+buttonLabel
+	^ Color black! !
+
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+cancelButton
+	^ self errorColor! !
+
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+errorColor
+	^ Color lightRed! !
+
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+failureColor
+	^ Color yellow duller! !
+
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+focusIndicator
+	^ self textHighlight lighter! !
+
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+listMultiHighlightFocused: aBoolean
+	^ (self listHighlightFocused: aBoolean) 
+		adjustSaturation: 0.0 brightness: 0.15! !
+
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+paneBackgroundFrom: aColor
+"	^ aColor adjustSaturation: 0 brightness: -0.7"
+	^ aColor alphaMixed: 0.14 with: Color black! !
+
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+scrollbarButtonColor
+	^Color black! !
+
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+scrollbarColor
+	^ Color black! !
+
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+scrollbarSliderShadowColor
+	^Color black! !
+
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+shout
+	"
+	SHTextStylerST80 releaseClassCachedState
+	"
+	| green yellow pink blue lilac |
+	"fav:"
+	yellow := '#F6FA70'.
+	blue := '#80DAFF'.
+"	blue := '#62CDFF'."
+	green := '#B4FF9F'.
+	pink := '#FF8AAE'.
+"	orange := '#FFCBA3'."
+	lilac := '#ACBCFF'.
+	"classic:"
+"	yellow := '#FFFE82'.
+	blue := '#9ED6FF'.
+	green := '#ADFFD3'.
+	purple := '#FF709C'."
+	"fluo:"
+"	green := '#A3F307'.
+	yellow := '#e2f9e2'.
+	purple := '#f50b86'.
+	blue := '#05f9e2'."
+	"neon:"
+"	yellow := '#F6FA70'.
+	blue := '#0079FF'.
+	green := '#00DFA2'.
+	purple := '#FF0060'."
+
+	^ {
+		#selector  				-> nil.
+		#defaults 				-> #white.
+		#undefined 				-> #white. "#(lightRed lighter lighter lighter lighter)."
+		#comment 				-> #(lightGray lighter).
+		#literals 				-> blue.
+		#pseudoVariables 		-> pink. "and bold"
+		#messages 				-> #(white).
+		#incompleteMessages	-> #(white).
+		#arguments 				-> yellow.
+		#instVar 				-> lilac.
+		#tempBar 				-> #(white darker).
+"		#tempVars				-> '#F0FFC4'."
+"		#tempVars				-> '#ADFFD3'."
+		#tempVars				-> green.
+"		#blockTemps				-> '#5CFFA7'."
+		#blockTemps				-> green.
+"		#block 					-> #(white)."
+		#blockLevelZero		-> #(white).
+		#blockLevelOne 		-> #(red muchLighter).
+		#blockLevelTwo 		-> #(yellow muchLighter).
+		#blockLevelThree 		-> #(green muchLighter).
+		#blockLevelFour 		-> #(blue muchLighter).
+		#blockLevelFive 		-> #(white darker).
+		#blockLevelSix 		-> #(white darker).
+		#blockLevelSeven 		-> #(white darker).
+		#methodTags 			-> #(lightGray lighter). "#(hotPink)"
+	}
+	
+"
+		SHTextStylerST80 initialize
+" 
+! !
+
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+successColor
+	^ Color lightGreen duller! !
+
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+text
+	^ Color white! !
+
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+textAutoHighlight
+	self flag: #fixme. "this needs to change SHTextStylerST80>>#privateConvert to call it."
+	^ (Color colorFrom: '#FF005C') alpha: 0.5
+"	^ (Color colorFrom: '#ff2f8e') alpha: 0.5"
+"	^ (Color colorFrom: '#F0FF42') alpha: 0.3"! !
+
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+textCursor
+	^ Color white! !
+
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+textHighlight
+	^ Color gray "Color r: 0.2 g: 0.35 b: 0.45"! !
+
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+unfocusedTextHighlightFrom: aColor
+	^aColor adjustSaturation: 0.0 brightness: -0.08! !
+
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+windowLabel
+	^ `Color gray: 0.2`! !
+
+!DarkerTheme methodsFor: 'icons' stamp: 'len 11/Apr/2026 12:42:14'!
+closeIcon
+	^ self cancelIcon! !
+
+!DarkerTheme methodsFor: 'initialization' stamp: 'len 11/Apr/2026 12:42:56'!
+initialize
+	super initialize.
+"
+	TTFontReader smalltalkAssignmentArrowGlyphCodePoint: 16r2B05.
+	TTFontReader smalltalkReturnArrowGlyphCodePoint: 16r2B06.
+	TrueTypeFontFamily readAllTrueTypeFontsIn: DirectoryEntry trueTypeFontsDirectory / 'DejaVu' / 'DejaVuSans'.
+	
+	TrueTypeFontFamily readAllTrueTypeFontsIn: DirectoryEntry trueTypeFontsDirectory / 'JetBrainsMono'.
+	TrueTypeFontFamily readAllTrueTypeFontsIn: DirectoryEntry trueTypeFontsDirectory / 'Commodore 64'.
+
+	PreferenceSet setDefaultFont: 'DejaVu Sans'.
+	PreferenceSet defaultFontSize: 18.
+"
+	Preferences
+		at: #focusFollowsMouse put: true;
+		at: #showAssignmentAsLeftArrow put: true;
+		at: #biggerCursors put: false;
+		at: #dismissAllOnOptionClose put: true;
+		at: #subPixelRenderColorFonts put: true;
+		at: #italicsInShout put: true;
+		at: #shoutInWorkspaces put: true;
+		at: #optionalButtons put: false;
+		at: #showAnnotations put: true;
+		at: #usePreDebugWindow put: false.
+
+	PreferenceSet defaultFontSize: 18.
+
+	SHTextStylerST80 initialize! !
+
+!DarkerTheme methodsFor: 'menu colors' stamp: 'len 11/Apr/2026 12:42:14'!
+menu
+	^ Color darkGray darker darker! !
+
+!DarkerTheme methodsFor: 'menu colors' stamp: 'len 11/Apr/2026 12:42:14'!
+menuText
+	^ Color white! !
+
+!DarkerTheme methodsFor: 'menu colors' stamp: 'len 11/Apr/2026 12:42:14'!
+menuTitleBar
+	^ self menu darker! !
+
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+buttonBorderWidth
+	^ 1! !
+
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+buttonPaneHeight
+	"Answer the user's preferred default height for button panes."
+
+	^(Preferences at: #standardButtonFont) lineSpacing * 10 // 8! !
+
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+embossedButtonLabels
+	^ false! !
+
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+embossedTitles
+	^ false! !
+
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+fullScreenDeskMargin
+	^ 0! !
+
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+layoutAdjusterThickness
+	^ 2! !
+
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+roundButtons
+	^ true! !
+
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+roundWindowCorners
+	^ true! !
+
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+roundedButtonRadius
+	^ 4! !
+
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+roundedWindowRadius
+	^6! !
+
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+scrollbarShowButtons
+	^ false! !
+
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+scrollbarThickness
+	^ 16! !
+
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+useTaskbar
+	^false! !
+
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+useUniformColors
+	^false! !
+
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+windowBorderWidth
+	^ 6! !
+
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+browser
+	^ `(Color fromHexString: '#00FFAB') duller`
+"	^ Color lightGreen duller"! !
+
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+changeList
+	^ Color lightCyan duller! !
+
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+changeSorter
+	^ Color lightCyan duller! !
+
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+debugger
+	^ Color lightRed darker! !
+
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+defaultButtonColor
+	^ self defaultWindowColor lighter lighter! !
+
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+defaultWindowColor
+	^ `Color hue: 212 chroma: 0.015 luminance: 0.35`! !
+
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+fileContentsBrowser
+	^ Color tan! !
+
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+fileList
+	^ Color lightMagenta duller! !
+
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+messageNames
+	^ Color lightBlue duller! !
+
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+messageSet
+	^ Color lightBlue duller! !
+
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+packageList
+	^ Color tan! !
+
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+testRunner
+	^ Color blue quiteWhiter duller! !
+
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+transcript
+	^ Color lightOrange! !
+
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+versionsBrowser
+	^ Color pink whiter duller! !
+
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+workspace
+	^ Color lightYellow duller! !
+
+!DarkerTheme methodsFor: 'widget colors' stamp: 'len 11/Apr/2026 12:42:14'!
+textPane
+	^ Color black! !
+
+!DarkerTheme methodsFor: 'private - shout mappings' stamp: 'len 11/Apr/2026 12:42:14'!
+generateShoutConfig
+
+	| styles colors |
+	styles := OrderedCollection new.
+	colors := self shout as: Dictionary.
+
+	{
+		{self undefined. colors at: #undefined}.
+		{self defaults . colors at: #defaults}.
+		{self pseudoVariables . colors at: #pseudoVariables. #bold}.
+		{self literals . colors at: #literals}.
+		{self instVar . colors at: #instVar}.
+		{self messages . colors at: #messages}.
+		{self blockLevelZero . colors at: #blockLevelZero}.
+		{self blockLevelOne . colors at: #blockLevelOne}.
+		{self blockLevelTwo . colors at: #blockLevelTwo}.
+		{self blockLevelThree . colors at: #blockLevelThree}.
+		{self blockLevelFour . colors at: #blockLevelFour}.
+		{self blockLevelFive . colors at: #blockLevelFive}.
+		{self blockLevelSix . colors at: #blockLevelSix}.
+		{self blockLevelSeven . colors at: #blockLevelSeven}.
+		{self tempBar . colors at: #tempBar}.
+		{self methodTags . colors at: #methodTags . #bold}.
+		{self globals . colors at: #defaults . #bold}.
+		{self incompleteMessages . colors at: #incompleteMessages . #underlined}.
+		{self argumentTypes . colors at: #arguments . self italic}.
+		{self symbols . colors at: #messages . #bold}.
+		{self pattern . colors at: #selector . #bold}.
+		{self ansiAssignment . nil . #bold}.
+		{self assignment . nil . #bold}.
+		{self return . nil . #bold}.
+		{self tempVars . colors at: #tempVars . self italic}.
+		{self blockTemps . colors at: #blockTemps . self italic}
+	} do: [ :style |
+		styles addAll:
+			(style first
+				collect: [ :category | | elements |
+					elements _ style asOrderedCollection.
+					elements at: 1 put: category.
+					Array withAll: elements ])].
+
+	"Miscellaneous remainder after factoring out commonality:"
+	styles addAll: {
+		{#unfinishedString . colors at: #undefined . #normal}.
+		{#undefinedIdentifier . colors at: #undefined .#bold}.
+		{#unfinishedComment . colors at: #undefined . self italic}.
+		{#comment . colors at: #comment . self italic}.
+		{#string . colors at: #literals . #normal}.
+		{#literal . nil . self italic}.
+		{#incompleteIdentifier . colors at: #incompleteMessages . {#italic. #underlined}}.
+		{#classVar . colors at: #instVar . #bold}.
+	}.
+
+	^ styles! !
+
+!DarkerTheme class methodsFor: 'as yet unclassified' stamp: 'len 11/Apr/2026 12:49:05'!
+initialize
+	super initialize.
+	self beCurrent! !
+
 !TrackerWindow methodsFor: 'actions' stamp: 'len 9/Apr/2026 18:38:32'!
 fitAllPatchesToInstrumentEditorBounds
 	| bounds |
@@ -201,7 +595,7 @@ keyStroke: anEvent
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 9/Apr/2026 15:39:20'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 10/Apr/2026 00:07:17'!
 buildMorphicWindow
 	| lowerLeftPane sequencerScroller patternEditorScroller bar |
 	instrumentEditor := InstrumentEditorMorph new setTracker: model.
@@ -210,8 +604,8 @@ buildMorphicWindow
 	patternEditor := PatternEditorMorph new setTracker: model.
 	instrumentEditor when: #instrumentLabelChanged send: #redrawNeeded to: patternEditor. "to redraw instrument label in the track header"
 	bar := TrackerBarMorph new setTracker: model.
-	lowerPane := LinearLayoutMorph newRow.
-	lowerLeftPane := LinearLayoutMorph newColumn.
+	lowerPane := LinearLayoutMorph newRow color: Color transparent.
+	lowerLeftPane := LinearLayoutMorph newColumn color: Color transparent.
 	sequencerScroller := ScrollerMorph new vertical: true; scrollable: sequencer.
 	patternEditorScroller := ScrollerMorph new horizontal: true; scrollable: patternEditor.
 	lowerLeftPane
@@ -224,6 +618,19 @@ buildMorphicWindow
 		addMorph: bar fixedHeight: 24;
 		addMorph: instrumentEditor proportionalHeight: 0.38;
 		addMorph: lowerPane proportionalHeight: 1.0 - 0.38! !
+
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 9/Apr/2026 23:59:23'!
+defaultColor
+	^ Color black! !
+
+!TrackerWindow methodsFor: 'panes' stamp: 'len 10/Apr/2026 00:03:05'!
+widgetsColor: aColor
+	^ self! !
+
+!TrackerWindow methodsFor: 'as yet unclassified' stamp: 'len 11/Apr/2026 12:51:09'!
+delete
+	model stop.
+	super delete! !
 
 !InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Jan/2026 16:24:19'!
 clipboardCopy
@@ -2356,4 +2763,5 @@ isNoteOn
 !Trigger methodsFor: 'transformations' stamp: 'len 24/Feb/2026 01:25:15'!
 transposeBy: semitones
 	self isNoteOn ifTrue: [note := note + semitones min: 127 max: 0]! !
+DarkerTheme initialize!
 PatternEditorMorph initialize!

@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7797] on 4 April 2026 at 6:59:14 pm'!
+'From Cuis7.7 [latest update: #7870] on 10 April 2026 at 12:13:59 am'!
 'Description Minimal audio I/O support.'!
-!provides: 'Audio' 1 4!
+!provides: 'Audio' 1 5!
 !requires: 'FFI' 1 59 nil!
 SystemOrganization addCategory: #Audio!
 
@@ -123,9 +123,9 @@ canStartPlayer
 	^ true
 ! !
 
-!AudioPlayer class methodsFor: 'playing' stamp: 'len 27/Nov/2025 02:08:00'!
+!AudioPlayer class methodsFor: 'playing' stamp: 'len 9/Apr/2026 23:55:55'!
 isPlaying: aSound
-	^ ActiveSounds includes: aSound! !
+	^ (ActiveSounds ifNil: [^ false]) includes: aSound! !
 
 !AudioPlayer class methodsFor: 'playing' stamp: 'len 4/Apr/2026 18:58:15'!
 startPlaying: aSound

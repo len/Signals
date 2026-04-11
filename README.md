@@ -10,7 +10,7 @@ Signals is a lively environment for real-time musical synthesis. It includes:
 The following are some of the features of Signals:
 * samples and multisamples
 * antialiased oscillators (with PolyBLEP/PolyBLAP)
-* antialiased wavetables (bandlimited on-the-fly)
+* antialiased wavetables (bandlimited on-the-fly via inverse FFT)
 * LFOs and many types of envelopes
 * digital filters based on biquads and SVF
 * virtual analog filters
@@ -47,8 +47,8 @@ Finally, open a FileList, go to Signals/data/projects/ and choose any of the exa
 On the screenshot above you can see an open tracker window. At the top there is the "instrument editor" that contains a patch of modules connected by wires (an instrument, or possibly an effect or other kind of audio processing patch). Each module morph contains controls that can be changed with mouse scroll or the arrow keys (with shift pressed to do fine adjustments). The instrument editor is fully zoomable, you can zoom in/out with Cmd-mouse-scroll and pan by mouse-dragging the background.
 
 At the bottom left there is the sequencer or arranger, that contains the list of patterns to be played and a mask for each track (enabled or disabled). And at the bottom right there is the "pattern editor" that shows the current pattern and allows you to edit the triggers (notes or effect commands, like a typical tracker). Each track contains the following columns: instrument number, note, velocity, fx1 and fx2. The following are the fx commands currently implemented:
-* Cxy set velocity to x (0.0 to 1.0) after (y+1)/16 of a line
-* Rxx retrigger every (xx+1)/256 of a line
+* Cxy set velocity to x (0.0 to 1.0) after (y+1)/16th of a line
+* Rxx retrigger every (xx+1)/256th of a line
 * Gxx glide to note at speed xx in 1/16th of a line
 * Lxx set instrument volume level to xx (0.0 to 1.0)
 * Pxx set instrument pan (00 = left, 80 = center, FF = right)
@@ -58,10 +58,10 @@ At the bottom left there is the sequencer or arranger, that contains the list of
 * +xx / -xx adjust velocity up/down
 * Sxx set sample offset
 * <xx / >xx set speed to xx and play backwards / forward
-* 0xx to 9xx set control input (0 = 0, 7F = 1.0, 80 = -1)
+* 0xx to 9xx set control input (00 = 0.0, 7F = 1.0, 80 = -1.0)
 * Fxx set BPM to xx
-* Qxx delay trigger by xx/256 of a line
-* Yxx set the probability of playing the trigger (0 = never, FF = always)
+* Qxx delay trigger by xx/256th of a line
+* Yxx set the probability of playing the trigger (00 = never, FF = always)
 
 ### Hotkeys and keyboard mapping
 Trackers are heavily keyboard-oriented. The following hotkeys are the most commonly used (in PC, Command and Option are Control and Alt).

@@ -46,11 +46,11 @@ Finally, open a FileList, go to Signals/data/projects/ and choose any of the exa
 
 On the screenshot above you can see an open tracker window. At the top there is the "instrument editor" that contains a patch of modules connected by wires (an instrument, or possibly an effect or other kind of audio processing patch). Each module morph contains controls (like knobs, sliders, a wave, etc) that can be changed with mouse scroll or the arrow keys (with shift pressed to do fine adjustments). The instrument editor is fully zoomable, you can zoom in/out with Cmd-mouse-scroll and pan by mouse-dragging the background. The instrument editor shows the patch for the instrument at current cursor position in the pattern editor below it; you have to move the cursor to see the different patches, or enter a new instrument number to create a new empty patch.
 
-At the bottom left there is the sequencer or arranger, that contains the list of patterns to be played and a mask for each track (enabled or disabled). And at the bottom right there is the "pattern editor" that shows the current pattern and allows you to edit the triggers (notes or effect commands, like a typical tracker). Each track contains the following columns: instrument number, note, velocity, fx1 and fx2. The following are the fx commands currently implemented:
-* Cxy set velocity to x (0.0 to 1.0) after (y+1)/16th of a line
+At the bottom left there is the "sequencer" or "arranger", that contains the list of patterns to be played. And at the bottom right the "pattern editor" that shows the current pattern and allows you to edit the triggers (notes and effect commands, like a typical tracker). Each track contains the following columns: instrument number, note, velocity, fx1 and fx2. The following are the fx commands currently implemented:
+* Cxy set velocity to x (0 = 0.0, F = 1.0) after (y+1)/16th of a line
 * Rxx retrigger every (xx+1)/256th of a line
 * Gxx glide to note at speed xx in 1/16th of a line
-* Lxx set instrument volume level to xx (0.0 to 1.0)
+* Lxx set instrument volume level to xx (00 = 0.0, FF = 1.0)
 * Pxx set instrument pan (00 = left, 80 = center, FF = right)
 * Ixx / Oxx adjust volume level up/down
 * Jxx / Kxx adjust pan left/right

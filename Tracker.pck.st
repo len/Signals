@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 11 April 2026 at 12:51:24 pm'!
+'From Cuis7.7 [latest update: #7872] on 11 April 2026 at 7:13:28 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 19!
+!provides: 'Tracker' 1 20!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -128,12 +128,12 @@ Trigger class
 	instanceVariableNames: ''!
 
 
-!Trigger commentStamp: '<historical>' prior: 0!
+!Trigger commentStamp: 'len 11/Apr/2026 18:17:22' prior: 0!
 A trigger is a cell in a pattern. It can contain any of the following (optional) parameters: an instrument number, a note to play, a velocity value, and two effect commands.
 
 Commands:
-∙ Cxy set velocity to x (0.0 to 1.0) after (y+1)/16 of a line
-∙ Rxx retrigger every (xx+1)/256 of a line
+∙ Cxy set velocity to x (0.0 to 1.0) after (y+1)/16th of a line
+∙ Rxx retrigger every (xx+1)/256th of a line
 ∙ Gxx glide to note at speed xx in 1/16th of a line
 ∙ Lxx set instrument volume level to xx (0.0 to 1.0)
 ∙ Pxx set instrument pan (00 = left, 80 = center, FF = right)
@@ -143,10 +143,10 @@ Commands:
 ∙ +xx / -xx adjust velocity up/down
 ∙ Sxx set sample offset
 ∙ <xx / >xx set speed to xx and play backwards / forward
-∙ 0xx to 9xx set control input (0 = 0, 7F = 1.0, 80 = -1)
+∙ 0xx to 9xx set control input (00 = 0.0, 7F = 1.0, 80 = -1.0)
 ∙ Fxx set BPM to xx
-∙ Qxx delay trigger by xx/256 of a line
-∙ Yxx set the probability of playing the trigger (0 = never, FF = always)
+∙ Qxx delay trigger by xx/256th of a line
+∙ Yxx set the probability of playing the trigger (00 = never, FF = always)
 !
 
 !DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!

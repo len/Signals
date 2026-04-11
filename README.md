@@ -4,6 +4,8 @@ Signals is a lively environment for real-time musical synthesis. It includes:
 * a dataflow-oriented visual programming environment for building synthesizers and effects;
 * a tracker for sequencing synthesizers and effects
 
+![Signals Tracker](screenshot.png)
+
 ### Features
 The following are some of the features of Signals:
 * samples and multisamples
@@ -28,8 +30,17 @@ The system is based on Smalltalk-80, specifically [Cuis Smalltalk](https://githu
 
 As many systems based on Smalltalk, it comes complete with an environment for interactive programming, blurring the distinction between user and programmer (or musician and programmer in this case). It contains a complete development environment that allows you to browse classes, inspect objects, debug, and change anything 'live' while it is running.
 
+### Installing
+Clone the git repo with --recurse-submodules in order to clone the data/ submodule:
+
+git clone --recurse-submodules https://github.com/len/Signals
+
+Then open a latest Cuis image, and load the package Tracker.pck.st. It will install some samples and multisamples, and it will load the JetBrains monospaced font included with Cuis.
+
+Finally, open a FileList, go to Signals/data/projects/ and choose any of the examples. You can load it from the menu with 'open in tracker'.
+
 ### Samples
-Some free samples and multisamples are included in the samples/ directory (it's a git submodule). The multisamples are mostly adapted from public domain sound fonts.
+Some free samples and multisamples are included in the data/ submodule. The multisamples are taken from public domain sound fonts.
 
 ### Hotkeys and keyboard mapping
 Trackers are heavily keyboard-oriented. The following hotkeys are the most commonly used (in PC, Command and Option are Control and Alt).

@@ -16,9 +16,9 @@ The following are some of the features of Signals:
 * virtual analog filters
 * wave shapers (decimator, overdrive, tape/tube saturation, wavefolder, etc)
 * effects (reverbs, delays, flanger, phaser, chorus, etc)
-* visualizations (oscilloscope, spectrogram, spectrum analizer, vectorscope)
+* visualizations (oscilloscope, spectrogram, spectrum analyzer, vectorscope)
 * modules to mix and pan, stereo widening, compressor, limiter, EQ, etc
-* internal oversampling when needed (typically in modules with nonlinearities that are more suceptible to aliasing)
+* internal oversampling when needed (typically in modules with nonlinearities that are more susceptible to aliasing)
 * all control parameters are modulatable by design
 * multiple approaches to control by modulation modules (envelopes, LFOs) or by tracker sequencing
 * audio routing through buses (send effects, etc)

@@ -30,17 +30,17 @@ The system is based on Smalltalk-80, specifically [Cuis Smalltalk](https://githu
 
 As many systems based on Smalltalk, it comes complete with an environment for interactive programming, blurring the distinction between user and programmer (or musician and programmer in this case). It contains a complete development environment that allows you to browse classes, inspect objects, debug, and change anything 'live' while it is running.
 
+### Samples
+Some free samples and multisamples are included in the data/ submodule. The multisamples are taken from public domain sound fonts.
+
 ### Installing
 Clone the git repo with --recurse-submodules in order to clone the data/ submodule:
 
 git clone --recurse-submodules https://github.com/len/Signals
 
-Then open a latest Cuis image, and load the package Tracker.pck.st. It will install some samples and multisamples, and it will load the JetBrains monospaced font included with Cuis.
+Then open a latest Cuis image, and load the package Tracker.pck.st. It will take one or two minutes to install some multisamples and generate some wavetables (it prints progress to the Transcript), and it will load the JetBrains monospaced font included with Cuis and set the theme to a new darker theme (you might need to close the opened windows if they don't update correctly).
 
-Finally, open a FileList, go to Signals/data/projects/ and choose any of the examples. You can load it from the menu with 'open in tracker'.
-
-### Samples
-Some free samples and multisamples are included in the data/ submodule. The multisamples are taken from public domain sound fonts.
+Finally, open a FileList, go to Signals/data/projects/ and choose any of the examples. You can load it from the menu with 'open in tracker'. Also from the FileList you can import samples in WAV format to the sample library to make them available from the instrument editor menu.
 
 ### Hotkeys and keyboard mapping
 Trackers are heavily keyboard-oriented. The following hotkeys are the most commonly used (in PC, Command and Option are Control and Alt).

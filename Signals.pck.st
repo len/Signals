@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 12 April 2026 at 4:15:34 am'!
+'From Cuis7.7 [latest update: #7872] on 12 April 2026 at 10:13:46 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 527!
+!provides: 'Signals' 1 528!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1802,7 +1802,7 @@ Internally, LR4 consists of two parallel paths, each a pair of cascaded 2nd-orde
 The only parameter is the crossover frequency, which sets the −6 dB point of each band. At the crossover frequency, LP and HP each contribute −6 dB, summing back to 0 dB.​​​​​​​​​​​​​​​​!
 
 !SVF commentStamp: '<historical>' prior: 0!
-This is a state variable filter with a 12 dB/oct slope (2 poles). It has outputs for low-pass, high-pass, band-pass and normalized band-pass modes. Based on stmlib/dsp/filter.h by Emilie Gillet.
+This is a state variable filter with a 12 dB/oct slope (2 poles). It has outputs for LP, HP, BP and BPN (normalized band-pass: BP / Q) modes. Based on stmlib/dsp/filter.h by Emilie Gillet.
 
 It implements the TPT (Topology-Preserving Transform) SVF, commonly called the Cytomic SVF or Simper SVF, from Andy Simper’s 2011 paper and Vadim Zavalishin’s "The Art of VA Filter Design".!
 
@@ -1876,7 +1876,7 @@ This is a monophonic simplified model of a transistor organ. It has the drawbars
 This is a VOSIM (VOcal SIMulation) oscillator based on the synthesis method developed by Kaegi and Tempelaars in the 1970s. The oscillator consists of two sine waves multiplied by and sync'ed to a carrier. Ported from plaits/dsp/oscillator/vosim_oscillator.h by Emilie Gillet.!
 
 !Multisample commentStamp: '<historical>' prior: 0!
-A multisample is the basis of a rompler (from "ROM" and "sampler"). It generates sounds from a set of recordings of an instrument playing different notes at different velocities. Given a MIDI key and velocity value, it chooses the sample closest to the desired key and velocity and repitches it by playing it faster or slower.
+A multisample is the basis of a rompler (from "ROM" and "sampler"). It generates sounds from a set of recordings of an instrument playing different notes at different velocities. Given a MIDI note and velocity value, it chooses the sample closest to the desired note and velocity and repitches it by playing it faster or slower.
 !
 
 !Sample commentStamp: 'len 9/Apr/2026 23:16:22' prior: 0!
@@ -2041,8 +2041,7 @@ Internally, the signal is converted to Mid and Side as:
 	• Mid  = (A + B) * 0.5
 	• Side = (A − B) * 0.5
 
-The −6 dB (* 0.5) normalization preserves headroom symmetry and predictable gain
-behavior when collapsing to mono or increasing width.
+The −6 dB (* 0.5) normalization preserves headroom symmetry and predictable gain behavior when collapsing to mono or increasing width.
 
 Balance controls the relative energy between Mid and Side:
 	• Positive values emphasize the Mid (center)
@@ -2746,18 +2745,18 @@ panel2
 		addSmallKnob: (controls at: #knee) label: 'Knee';
 		addSmallKnob: (controls at: #makeup) label: 'Makeup'! !
 
-!Compressor methodsFor: 'ui' stamp: 'len 12/Apr/2026 03:58:14'!
+!Compressor methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:11:40'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen; addMorph: self panel.
 	answer flap addMorph: self panel2.
 	answer
-		addAudioInput: #setInputL: label: 'In L/M';
-		addAudioInput: #setInputR: label: 'In R';
+		addAudioInput: #setInputL: label: 'L/M';
+		addAudioInput: #setInputR: label: 'R';
 		addAudioInput: #setInputSC: label: 'SC';
-		addAudioOutput: #setOutputL: label: 'Out L/M';
-		addAudioOutput: #setOutputR: label: 'Out R'.
+		addAudioOutput: #setOutputL: label: 'L/M';
+		addAudioOutput: #setOutputR: label: 'R'.
 	^ answer! !
 
 !Compressor methodsFor: 'ui' stamp: 'len 12/Apr/2026 03:58:05'!
@@ -2860,18 +2859,18 @@ panel2
 		addSmallKnob: (controls at: #schpf) label: 'SC HPF';
 		addSmallKnob: (controls at: #knee) label: 'Knee'! !
 
-!Gate methodsFor: 'ui' stamp: 'len 12/Apr/2026 03:58:35'!
+!Gate methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:11:52'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen; addMorph: self panel.
 	answer flap addMorph: self panel2.
 	answer
-		addAudioInput: #setInputL: label: 'In L/M';
-		addAudioInput: #setInputR: label: 'In R';
+		addAudioInput: #setInputL: label: 'L/M';
+		addAudioInput: #setInputR: label: 'R';
 		addAudioInput: #setInputSC: label: 'SC';
-		addAudioOutput: #setOutputL: label: 'Out L/M';
-		addAudioOutput: #setOutputR: label: 'Out R'.
+		addAudioOutput: #setOutputL: label: 'L/M';
+		addAudioOutput: #setOutputR: label: 'R'.
 	^ answer! !
 
 !Gate methodsFor: 'ui' stamp: 'len 12/Apr/2026 03:58:27'!
@@ -3079,7 +3078,7 @@ patchable
 		addControlInput: #release;
 		yourself! !
 
-!AHD methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:39:31'!
+!AHD methodsFor: 'controlling' stamp: 'len 12/Apr/2026 18:49:36'!
 update
 	| rate |
 	super update.
@@ -3093,11 +3092,11 @@ initializeControls
 	self addTimeControl: #hold min: 0.001 max: 10.0 value: 1.0.
 	self addTimeControl: #decay min: 0.001 max: 2.0 value: 0.5! !
 
-!AHD methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:46:40'!
+!AHD methodsFor: 'processing' stamp: 'len 12/Apr/2026 18:49:54'!
 next
 	stage = #attack ifTrue:
 		["value := (1.0 - value) * factor + value." value := value + increment.
-		value >= 0.999 ifTrue: [value := 1.0. stage := #hold. holding := (hold * self class controlRate) asInteger].
+		value >= 0.999 ifTrue: [value := 1.0. stage := #hold. holding := hold truncated].
 		^ value * velocity].
 	stage = #hold ifTrue:
 		[(holding := holding - 1) > 0 ifFalse: [stage := #decay. factor := 0.001 "-60 dB" raisedTo: 1.0 / decay].
@@ -3304,12 +3303,12 @@ tick
 				outputL at: i put: in + ((lpfL value: mid + side) * wet).
 				outputR at: i put: in + ((lpfR value: mid - side) * wet)]]! !
 
-!Chorus methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:40:47'!
+!Chorus methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:12:39'!
 patchable
 	^ super patchable
 		addAudioInput: #setInput:;
-		addAudioOutput: #setOutputL: label: 'Out L/M';
-		addAudioOutput: #setOutputR: label: 'Out R';
+		addAudioOutput: #setOutputL: label: 'L/M';
+		addAudioOutput: #setOutputR: label: 'R';
 		yourself! !
 
 !Chorus methodsFor: 'wiring' stamp: 'len 26/Jan/2026 22:14:23'!
@@ -3421,12 +3420,12 @@ tick
 				outputL at: i put: in + ((lpfL value: outL) * wet).
 				outputR at: i put: in + ((lpfR value: outR) * wet)]]! !
 
-!Ensemble methodsFor: 'ui' stamp: 'len 26/Mar/2026 15:45:20'!
+!Ensemble methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:12:47'!
 patchable
 	^ super patchable
 		addAudioInput: #setInput:;
-		addAudioOutput: #setOutputL: label: 'Out L/M';
-		addAudioOutput: #setOutputR: label: 'Out R';
+		addAudioOutput: #setOutputL: label: 'L/M';
+		addAudioOutput: #setOutputR: label: 'R';
 		yourself! !
 
 !Ensemble methodsFor: 'wiring' stamp: 'len 26/Mar/2026 15:45:20'!
@@ -3550,16 +3549,16 @@ panel
 		addSmallKnob: (controls at: #mix) label: 'Mix'.
 	^ answer! !
 
-!StereoEcho methodsFor: 'ui' stamp: 'len 12/Mar/2026 18:04:40'!
+!StereoEcho methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:13:02'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
 	^ answer
-		addAudioInput: #setInputL: label: 'In L/M';
-		addAudioInput: #setInputR: label: 'In R';
-		addAudioOutput: #setOutputL: label: 'Out L';
-		addAudioOutput: #setOutputR: label: 'Out R';
+		addAudioInput: #setInputL: label: 'L/M';
+		addAudioInput: #setInputR: label: 'R';
+		addAudioOutput: #setOutputL: label: 'L';
+		addAudioOutput: #setOutputR: label: 'R';
 		addControlInput: #time;
 		addControlInput: #feedback;
 		yourself! !
@@ -3658,13 +3657,13 @@ panel
 		addKnob: (controls at: #width) label: 'Width';
 		addKnob: (controls at: #mix) label: 'Mix'! !
 
-!StereoReverb methodsFor: 'ui' stamp: 'len 9/Mar/2026 15:54:50'!
+!StereoReverb methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:13:13'!
 patchable
 	^ super patchable
-		addAudioInput: #setInputL: label: 'In L/M';
-		addAudioInput: #setInputR: label: 'In R';
-		addAudioOutput: #setOutputL: label: 'Out L/M';
-		addAudioOutput: #setOutputR: label: 'Out R';
+		addAudioInput: #setInputL: label: 'L/M';
+		addAudioInput: #setInputR: label: 'R';
+		addAudioOutput: #setOutputL: label: 'L/M';
+		addAudioOutput: #setOutputR: label: 'R';
 		yourself! !
 
 !StereoReverb methodsFor: 'wiring' stamp: 'len 7/Mar/2026 16:14:28'!
@@ -3738,12 +3737,12 @@ panel
 	^ ControlPanel new
 		addKnob: (controls at: #frequency)! !
 
-!Crossover methodsFor: 'ui' stamp: 'len 29/Mar/2026 03:32:39'!
+!Crossover methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:13:21'!
 patchable
 	^ super patchable
 		addAudioInput: #setInput:;
-		addAudioOutput: #setOutputLow: label: 'Out Low';
-		addAudioOutput: #setOutputHigh: label: 'Out High';
+		addAudioOutput: #setOutputLow: label: 'Low';
+		addAudioOutput: #setOutputHigh: label: 'High';
 		yourself! !
 
 !Crossover methodsFor: 'wiring' stamp: 'len 29/Mar/2026 03:29:00'!
@@ -3879,7 +3878,7 @@ tick
 		[meterRightValue := meterRightValue * 0.9 "dampen" max: (bus rightBuffer rms max: bus rightBuffer last abs).
 		outputR replaceWith: bus rightBuffer]! !
 
-!AudioIn methodsFor: 'ui' stamp: 'len 18/Mar/2026 20:13:48'!
+!AudioIn methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:13:32'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -3888,8 +3887,8 @@ patchable
 		addMorph: (RollingMeterMorph new meterBlock: [self meterValue]).
 	answer body addMorph: display.
 	answer
-		addAudioOutput: #setOutputL: label: 'Out L/M';
-		addAudioOutput: #setOutputR: label: 'Out R'.
+		addAudioOutput: #setOutputL: label: 'L/M';
+		addAudioOutput: #setOutputR: label: 'R'.
 	^ answer! !
 
 !AudioIn methodsFor: 'wiring' stamp: 'len 5/Mar/2026 15:19:40'!
@@ -3996,7 +3995,7 @@ panel
 		addHorizontalSlider: (controls at: #pan).
 	^ answer! !
 
-!AudioOut methodsFor: 'ui' stamp: 'len 18/Mar/2026 20:31:55'!
+!AudioOut methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:13:39'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -4005,8 +4004,8 @@ patchable
 		addMorph: (RollingMeterMorph new meterBlock: [self meterValue]).
 	answer body addMorph: display; addMorph: self panel.
 	answer
-		addAudioInput: #setInputL: label: 'In L/M';
-		addAudioInput: #setInputR: label: 'In R';
+		addAudioInput: #setInputL: label: 'L/M';
+		addAudioInput: #setInputR: label: 'R';
 		addControlInput: #level;
 		addControlInput: #pan.
 	^ answer! !
@@ -5590,13 +5589,13 @@ loadSquireBass
 			{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Squire Bass'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:14:24'!
+!Multisample class methodsFor: 'library' stamp: 'len 12/Apr/2026 22:13:21'!
 loadStringEnsemble
 	| keymap |
 	keymap := Dictionary new.
 	#('G2' 'C#3' 'E3' 'B3' 'C#4' 'G4' 'C#5' 'A#5' 'F#5' 'D6' 'E6' 'B6' 'E7' 'A7') withIndexDo: [:noteName :i|
 		| filename reader buffer |
-		filename := 'String Ensemble - String ', noteName, '.wav'.
+		filename := 'String ensemble - String ', noteName, '.wav'.
 		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'String Ensemble' // filename.
 		buffer := reader leftSamples.
 		keymap at: noteName nameToSemitones put:
@@ -7512,17 +7511,17 @@ tick
 panel
 	^ ControlPanel new addKnob: (controls at: #balance)! !
 
-!Balance methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:36:03'!
+!Balance methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:14:50'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
 	answer
-		addAudioInput: #setInputA: label: 'In A';
-		addAudioInput: #setInputB: label: 'In B';
+		addAudioInput: #setInputA: label: 'A';
+		addAudioInput: #setInputB: label: 'B';
 		addControlInput: #balance;
-		addAudioOutput: #setOutputL: label: 'Out L';
-		addAudioOutput: #setOutputR: label: 'Out R'.
+		addAudioOutput: #setOutputL: label: 'L';
+		addAudioOutput: #setOutputR: label: 'R'.
 	^ answer! !
 
 !Balance methodsFor: 'wiring' stamp: 'len 2/Feb/2026 03:10:35'!
@@ -7571,14 +7570,14 @@ tick
 panel
 	^ ControlPanel new addKnob: (controls at: #mix)! !
 
-!Crossfader methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:44:08'!
+!Crossfader methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:14:58'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
 	answer
-		addAudioInput: #setInputA: label: 'In A';
-		addAudioInput: #setInputB: label: 'In B';
+		addAudioInput: #setInputA: label: 'A';
+		addAudioInput: #setInputB: label: 'B';
 		addControlInput: #mix;
 		addAudioOutput: #setOutput:.
 	^ answer! !
@@ -7624,7 +7623,7 @@ panel
 		addKnob: (controls at: #gainA);
 		addKnob: (controls at: #gainB)! !
 
-!Mixer methodsFor: 'ui' stamp: 'len 10/Feb/2026 20:19:33'!
+!Mixer methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:15:08'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -7632,8 +7631,8 @@ patchable
 		addMorph: (KnobControlMorph control: (controls at: #gainA));
 		addMorph: (KnobControlMorph control: (controls at: #gainB)).
 	answer
-		addAudioInput: #setInputA: label: 'In A';
-		addAudioInput: #setInputB: label: 'In B';
+		addAudioInput: #setInputA: label: 'A';
+		addAudioInput: #setInputB: label: 'B';
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
@@ -7679,7 +7678,7 @@ panel
 		addKnob: (controls at: #gainC);
 		addKnob: (controls at: #gainD)! !
 
-!Mixer4 methodsFor: 'ui' stamp: 'len 10/Feb/2026 20:16:55'!
+!Mixer4 methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:15:20'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -7689,10 +7688,10 @@ patchable
 		addMorph: (KnobControlMorph control: (controls at: #gainC));
 		addMorph: (KnobControlMorph control: (controls at: #gainD)).
 	answer
-		addAudioInput: #setInputA: label: 'In A';
-		addAudioInput: #setInputB: label: 'In B';
-		addAudioInput: #setInputC: label: 'In C';
-		addAudioInput: #setInputD: label: 'In D';
+		addAudioInput: #setInputA: label: 'A';
+		addAudioInput: #setInputB: label: 'B';
+		addAudioInput: #setInputC: label: 'C';
+		addAudioInput: #setInputD: label: 'D';
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
@@ -7734,7 +7733,7 @@ tick
 panel
 	^ ControlPanel new addKnob: (controls at: #pan)! !
 
-!Pan methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:44:23'!
+!Pan methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:15:27'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -7742,8 +7741,8 @@ patchable
 	answer
 		addAudioInput: #setInput:;
 		addControlInput: #pan;
-		addAudioOutput: #setOutputL: label: 'Out L';
-		addAudioOutput: #setOutputR: label: 'Out R'.
+		addAudioOutput: #setOutputL: label: 'L';
+		addAudioOutput: #setOutputR: label: 'R'.
 	^ answer! !
 
 !Pan methodsFor: 'wiring' stamp: 'len 2/Feb/2026 03:11:04'!
@@ -7785,18 +7784,18 @@ tick
 	outputL += aux.
 	outputR -= aux! !
 
-!StereoMatrix methodsFor: 'ui' stamp: 'len 2/Feb/2026 04:09:58'!
+!StereoMatrix methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:15:41'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
 	answer
-		addAudioInput: #setInputA: label: 'In A';
-		addAudioInput: #setInputB: label: 'In B';
+		addAudioInput: #setInputA: label: 'A';
+		addAudioInput: #setInputB: label: 'B';
 "		addControlInput: #modulateWidth: label: 'WIdth';
 		addControlInput: #modulateBalance: label: 'Balance';"
-		addAudioOutput: #setOutputL: label: 'Out L';
-		addAudioOutput: #setOutputR: label: 'Out R'.
+		addAudioOutput: #setOutputL: label: 'L';
+		addAudioOutput: #setOutputR: label: 'R'.
 	^ answer! !
 
 !StereoMatrix methodsFor: 'wiring' stamp: 'len 27/Jan/2026 01:49:43'!
@@ -8018,11 +8017,11 @@ initialize
 	random := Random seed: seed.
 	self reset! !
 
-!LFO methodsFor: 'initialization' stamp: 'len 6/Apr/2026 20:48:01'!
+!LFO methodsFor: 'initialization' stamp: 'len 12/Apr/2026 18:29:08'!
 initializeControls
 	super initializeControls.
 	self addSpeedControl: #speed value: 0.1.
-	(self addControl: #offset min: 0.0 max: 0.999 value: 0.0) printer: [:x| (x * 2 printStringFractionDigits: 2), ' π'].
+	(self addControl: #offset min: 0.0 max: 0.999 value: 0.0) printer: [:x| (x*360) truncated printString, '°'].
 	self addChoiceControl: #mode options: #(free trig hold) value: #free.
 	self addChoiceControl: #shape options: #(sine square rise fall random) value: #sine.
 	self addToggleControl: #bipolar value: true! !
@@ -9046,12 +9045,14 @@ tick
 		y := (((y0 min: 0.999 max: -0.999) + 1.0) * h) truncated.
 		image pixelValueAt: x @ y put: c]! !
 
-!Vectorscope methodsFor: 'ui' stamp: 'len 12/Apr/2026 04:06:10'!
+!Vectorscope methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:16:45'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
-	answer addAudioInput: #setInputX: label: 'X'; addAudioInput: #setInputY: label: 'Y'.
+	answer
+		addAudioInput: #setInputX: label: 'X';
+		addAudioInput: #setInputY: label: 'Y'.
 	^ answer! !
 
 !Vectorscope methodsFor: 'ui' stamp: 'len 12/Apr/2026 04:06:05'!

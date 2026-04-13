@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 12 April 2026 at 10:13:46 pm'!
+'From Cuis7.7 [latest update: #7872] on 13 April 2026 at 7:55:10 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 528!
+!provides: 'Signals' 1 529!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -5266,10 +5266,11 @@ setSpeed: aNumber
 setVelocity: aNumber
 	velocity := aNumber! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 24/Mar/2026 18:10:12'!
+!Multisample methodsFor: 'controlling' stamp: 'len 13/Apr/2026 17:13:09'!
 update
 	super update.
-	sample ifNotNil: [sample setNote: note; update]! !
+	sample ifNotNil: [sample setNote: note; update].
+	tailSample ifNotNil: [tailSample update]! !
 
 !Multisample methodsFor: 'copying' stamp: 'len 15/Feb/2026 21:02:02'!
 copy
@@ -7769,13 +7770,14 @@ initializeControls
 	self addControl: #balance min: -1.0 max: 1.0 value: 0.0
 ! !
 
-!StereoMatrix methodsFor: 'processing' stamp: 'len 12/Mar/2026 16:45:10'!
+!StereoMatrix methodsFor: 'processing' stamp: 'len 13/Apr/2026 19:38:25'!
 tick
 	| width balance |
 	(inputA isNil or: [inputB isNil]) ifTrue:
 		[outputL ifNotNil: [outputL atAllPut: 0.0].
 		outputR ifNotNil: [outputR atAllPut: 0.0].
 		^ self].
+	(outputL isNil or: [outputR isNil]) ifTrue: [^ self].
 	width := self get: #width.
 	balance := self get: #balance.
 	outputL replaceWith: inputA; += inputB; *= ((1.0 + balance) * 0.5).

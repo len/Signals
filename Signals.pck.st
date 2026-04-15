@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 13 April 2026 at 7:55:10 pm'!
+'From Cuis7.7 [latest update: #7872] on 16 April 2026 at 2:09:08 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 529!
+!provides: 'Signals' 1 530!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -4167,7 +4167,7 @@ patchable
 reset
 	phase := 0.0! !
 
-!Oscillator methodsFor: 'controlling' stamp: 'len 5/Apr/2026 19:14:57'!
+!Oscillator methodsFor: 'controlling' stamp: 'len 16/Apr/2026 02:02:58'!
 update
 	| targetIncrement |
 	super update.
@@ -4416,7 +4416,7 @@ initializeControls
 peek
 	^ (((phase * Float twoPi) sin * warp + phase) * Float twoPi) sin! !
 
-!Sine methodsFor: 'processing' stamp: 'len 4/Apr/2026 20:05:03'!
+!Sine methodsFor: 'processing' stamp: 'len 16/Apr/2026 02:01:40'!
 read: aBuffer
 	| α f |
 	warp = 0.0 ifFalse: [^ super read: aBuffer].
@@ -4427,7 +4427,8 @@ read: aBuffer
 		aBuffer at: i put: α sin.
 		α := α + (f := f * incrementRatio)].
 	phase := α / Float twoPi.
-	phase := phase - phase truncated! !
+	phase := phase - phase truncated.
+	increment := f / Float twoPi! !
 
 !Sine methodsFor: 'ui' stamp: 'len 12/Apr/2026 04:00:21'!
 patchable
@@ -5701,9 +5702,9 @@ rate: aNumber
 gateOff
 	released := true! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 28/Mar/2026 21:37:54'!
+!Sample methodsFor: 'controlling' stamp: 'len 15/Apr/2026 21:50:24'!
 gateOn
-	(self isUnreleased and: [self get: #legato]) ifTrue: [^ self].
+	(self isUnreleased and: [self get: #legato]) ifTrue: [increment := nil. ^ self].
 	tailPosition := position.
 	position := (buffer size - 1) * offset + 1.0.
 	(self get: #speed) < 0.0 ifTrue: [position := buffer size - position + 1].
@@ -5726,7 +5727,7 @@ setOffset: aNumber
 setSpeed: aNumber
 	self set: #speed to: aNumber! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 9/Apr/2026 23:06:18'!
+!Sample methodsFor: 'controlling' stamp: 'len 15/Apr/2026 21:52:10'!
 update
 	| targetIncrement |
 	super update.
@@ -7601,18 +7602,18 @@ initializeControls
 	self addVolumeControl: #gainA value: 0.6;
 		addVolumeControl: #gainB value: 0.6! !
 
-!Mixer methodsFor: 'processing' stamp: 'len 12/Mar/2026 16:43:14'!
+!Mixer methodsFor: 'processing' stamp: 'len 16/Apr/2026 01:48:15'!
 tick
 	| gainA gainB |
 	output ifNil: [^ self].
 	gainA := self get: #gainA.
 	gainB := self get: #gainB.
-	gainB = 0.0 ifTrue:
-		[gainA = 0.0 ifTrue: [output atAllPut: 0.0. ^ self].
+	(gainB = 0.0 or: [inputB isNil]) ifTrue:
+		[(gainA = 0.0 or: [inputA isNil]) ifTrue: [output atAllPut: 0.0. ^ self].
 		output replaceWith: inputA.
 		gainA = 1.0 ifFalse: [output *= gainA].
 		^ self].
-	gainA = 0.0 ifTrue:
+	(gainA = 0.0 or: [inputA isNil]) ifTrue:
 		[output replaceWith: inputB.
 		gainB = 1.0 ifFalse: [output *= gainB].
 		^ self].

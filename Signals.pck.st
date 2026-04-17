@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 16 April 2026 at 2:09:08 am'!
+'From Cuis7.7 [latest update: #7872] on 17 April 2026 at 8:31:28 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 530!
+!provides: 'Signals' 1 531!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -3933,9 +3933,9 @@ adjustLevelBy: aNumber
 adjustPanBy: aNumber
 	self adjust: #pan by: aNumber! !
 
-!AudioOut methodsFor: 'controlling' stamp: 'len 18/Jan/2026 02:32:16'!
+!AudioOut methodsFor: 'controlling' stamp: 'len 17/Apr/2026 19:30:58'!
 setLevel: aNumber
-	self set: #level to: aNumber! !
+	(controls at: #level) basePosition: aNumber! !
 
 !AudioOut methodsFor: 'controlling' stamp: 'len 18/Jan/2026 02:32:25'!
 setPan: aNumber
@@ -5347,7 +5347,7 @@ initialize
 	super initialize.
 	self initializeLibrary! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 19:46:37'!
+!Multisample class methodsFor: 'library' stamp: 'len 17/Apr/2026 00:59:21'!
 initializeLibrary
 	"
 	Multisample initializeLibrary
@@ -5355,7 +5355,7 @@ initializeLibrary
 	
 	Library := OrderedDictionary new.
 	'Loading multisamples...' print.
-	#(loadJRhodes3D loadLoFiRhodes loadDancePiano loadVibraphone loadBookerT loadBookerTFast "loadFarfisa" loadTrumpet loadFlute loadSquireBass loadPickedBass loadSlapBass loadPopBass loadFingerBass loadDoubleBass loadSixStringSteelGuitar loadTwoToneHouseOrgan loadStringEnsemble loadChoirAah loadChoirOuh) do: [:each|
+	#(loadJRhodes3D loadLoFiRhodes loadDancePiano loadVibraphone loadBookerT loadBookerTFast "loadFarfisa" loadTrumpet loadFlute loadSquireBass loadPickedBass loadSlapBass loadPopBass loadFingerBass loadDoubleBass loadSixStringSteelGuitar loadTwoToneHouseOrgan loadStringEnsemble loadChoirAah loadChoirOuh loadTrombone) do: [:each|
 		| multisample |
 		multisample := self perform: each.
 		('    ∙ ', multisample label) print.
@@ -5517,13 +5517,13 @@ loadJRhodes3D
 	keymap := samples collect: [:each| each associations sorted reversed collect: #value].
 	^ self new label: 'Rhodes'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:14:24'!
+!Multisample class methodsFor: 'library' stamp: 'len 17/Apr/2026 00:50:53'!
 loadLoFiRhodes
 	| keymap |
 	keymap := Dictionary new.
 	((self multisamplesDirectory / 'LoFi Rhodes') files select: [:each| each name endsWith: '.wav']) do: [:each|
 		| reader midiKey buffer |
-		midiKey := (each name findTokens: '.') first asNumber.
+		midiKey := (each name findTokens: '.') first asNumber - 12.
 		reader := WAVFileReader new readFromFileEntry: each.
 		"If stereo, sum channels:"
 		buffer := reader channels = 2 ifTrue: [reader leftSamples + reader rightSamples] ifFalse: [reader leftSamples].
@@ -5603,6 +5603,19 @@ loadStringEnsemble
 		keymap at: noteName nameToSemitones put:
 			{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'String Ensemble'; keymap: keymap! !
+
+!Multisample class methodsFor: 'library' stamp: 'len 17/Apr/2026 00:59:09'!
+loadTrombone
+	| keymap |
+	keymap := Dictionary new.
+	#(60 64 68 72 74 78 80 82 84) withIndexDo: [:midiKey :i|
+		| filename reader buffer |
+		filename := 'Trombone - TBR TB 0', midiKey printString, '.wav'.
+		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'MCO' // filename.
+		buffer := reader leftSamples.
+		keymap at: midiKey put:
+			{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
+	^ self new label: 'Trombone'; keymap: keymap! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:14:24'!
 loadTrumpet

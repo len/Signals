@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 19 April 2026 at 5:14:45 pm'!
+'From Cuis7.7 [latest update: #7872] on 19 April 2026 at 7:39:10 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 532!
+!provides: 'Signals' 1 533!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -11641,10 +11641,6 @@ minimumExtent
 	scrollable ifNil: [^ 1 @ 1].
 	^ (horizontal ifTrue: [1] ifFalse: [scrollable minimumExtent x]) @ (vertical ifTrue: [1] ifFalse: [scrollable minimumExtent y])! !
 
-!ScrollerMorph methodsFor: 'geometry' stamp: 'len 7/Jan/2026 02:22:54'!
-someSubmorphPositionOrExtentChanged
-	self ensureMinimumExtent! !
-
 !ScrollerMorph methodsFor: 'geometry testing' stamp: 'len 28/Dec/2025 22:33:15'!
 clipsSubmorphs
 	^ true! !
@@ -11674,6 +11670,11 @@ scrollable: aMorph
 vertical: aBoolean
 	vertical := aBoolean! !
 
+!ScrollerMorph methodsFor: 'layout' stamp: 'len 19/Apr/2026 19:28:22'!
+someSubmorphPositionOrExtentChanged
+	self ensureMinimumExtent.
+	self redrawNeeded! !
+
 !ScrollerMorph methodsFor: 'scrolling' stamp: 'len 29/Dec/2025 15:50:04'!
 scrollBy: aPoint
 	scrollable ifNil: [^ self].
@@ -11699,6 +11700,24 @@ wantsSteps
 !ZoomerMorph methodsFor: 'drawing' stamp: 'len 10/Jan/2026 15:31:30'!
 drawOn: aCanvas
 "	aCanvas fillRectangle: self localBounds color: Color black"! !
+
+!ZoomerMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 19:37:31'!
+postDrawOn: aCanvas
+	"Draw indicative scrollbars if needed, only when the scrollable has keyboard focus."
+	| zoomable zoomableBounds viewport thickness color x1 x2 y1 y2 |
+	zoomable := submorphs lastIfEmpty: [^ false].
+	zoomableBounds := zoomable fullBoundsInOwner insetBy: 1.
+	viewport := self localBounds.
+	(viewport containsRect: zoomableBounds) ifTrue: [^ false].
+	thickness := 4.
+	color := Color white alpha: 0.6.
+	x1 := viewport left - zoomableBounds left / zoomableBounds width asFloat * extent x max: 0.0.
+	x2 := extent x - (zoomableBounds right - viewport right / zoomableBounds width asFloat * extent x) min: extent x.
+	aCanvas fillRectangle: (x1 @ (extent y - thickness) corner: x2 @ extent y) color: color.
+	y1 := viewport top - zoomableBounds top / zoomableBounds height asFloat * extent y max: 0.0.
+	y2 := extent y - (zoomableBounds bottom - viewport bottom / zoomableBounds height asFloat * extent y) min: extent y.
+	aCanvas fillRectangle: (extent x - thickness @ y1 corner: extent x @ y2) color: color.
+	^ true! !
 
 !ZoomerMorph methodsFor: 'event handling testing' stamp: 'len 9/Feb/2026 21:01:23'!
 allowsSubmorphDrag
@@ -11740,6 +11759,11 @@ clipsSubmorphs
 defaultExtent
 	^ 720 @ 512
 "	^ 1024 + 512 @ 1024"! !
+
+!ZoomerMorph methodsFor: 'layout' stamp: 'len 19/Apr/2026 19:26:08'!
+someSubmorphPositionOrExtentChanged
+	self ensureMinimumExtent.
+	self redrawNeeded! !
 
 !ZoomerMorph methodsFor: 'stepping' stamp: 'len 15/Nov/2025 15:03:00'!
 wantsSteps
@@ -12821,8 +12845,9 @@ fullIncludesPixel: aPoint
 includesPixel: aPoint
 	^ submorphs noneSatisfy: [:m| m fullIncludesPixel: aPoint]! !
 
-!PatchMorph methodsFor: 'layout' stamp: 'len 5/Jan/2026 22:27:47'!
+!PatchMorph methodsFor: 'layout' stamp: 'len 19/Apr/2026 19:25:45'!
 someSubmorphPositionOrExtentChanged
+	super someSubmorphPositionOrExtentChanged.
 	self submorphsDo: [:each| (each isMemberOf: WireMorph) ifTrue: [each update]].
 	self scheduleRecompute! !
 

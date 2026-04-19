@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 17 April 2026 at 8:31:28 pm'!
+'From Cuis7.7 [latest update: #7872] on 19 April 2026 at 5:14:45 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 531!
+!provides: 'Signals' 1 532!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -537,7 +537,7 @@ PitchShifter class
 
 !classDefinition: #Reverb category: #'Signals-FX'!
 Transform subclass: #Reverb
-	instanceVariableNames: 'predelayLine predelayTap combs allpasses mix'
+	instanceVariableNames: 'predelayLine predelayTap combs allpasses wet dry'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
@@ -547,7 +547,7 @@ Reverb class
 
 !classDefinition: #TapeEcho category: #'Signals-FX'!
 Transform subclass: #TapeEcho
-	instanceVariableNames: 'delayLine tap1 tap2 tap3 level1 level2 level3 feedback mix lpf hpf lsf hsf'
+	instanceVariableNames: 'delayLine tap1 tap2 tap3 level1 level2 level3 feedback mix wet dry lpf hpf lsf hsf'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
@@ -1293,6 +1293,16 @@ BoxMorph subclass: #ZoomerMorph
 	category: 'Signals-Morphic-Support'!
 !classDefinition: 'ZoomerMorph class' category: #'Signals-Morphic-Support'!
 ZoomerMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #MiniscopeMorph category: #'Signals-Morphic-Widgets'!
+BoxMorph subclass: #MiniscopeMorph
+	instanceVariableNames: 'bufferL bufferR colorL colorR aux'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Widgets'!
+!classDefinition: 'MiniscopeMorph class' category: #'Signals-Morphic-Widgets'!
+MiniscopeMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #OscilloscopeMorph category: #'Signals-Morphic-Widgets'!
@@ -2631,9 +2641,9 @@ tick
 				output at: i put: (input at: i) * gain]].
 	inputRM ifNotNil: [output *= inputRM]! !
 
-!Amp methodsFor: 'ui' stamp: 'len 27/Jan/2026 14:56:14'!
+!Amp methodsFor: 'ui' stamp: 'len 19/Apr/2026 04:52:01'!
 panel
-	^ ControlPanel new addVerticalSlider: (controls at: #gain)! !
+	^ ControlPanel new addKnob: (controls at: #gain)! !
 
 !Amp methodsFor: 'ui' stamp: 'len 10/Mar/2026 14:28:10'!
 patchable
@@ -3504,14 +3514,15 @@ initializeControls
 	self addVolumeControl: #treble min: 0.4 max: 2.5 value: 1.0. "-8 dB to 8 dB"
 	self addDryWetControl: #mix value: 0.5! !
 
-!StereoEcho methodsFor: 'processing' stamp: 'len 25/Mar/2026 16:01:53'!
+!StereoEcho methodsFor: 'processing' stamp: 'len 18/Apr/2026 19:40:20'!
 tick
-	| feedback wet dry width gain1 gain2 |
+	| feedback θ wet dry width gain1 gain2 |
 	outputL ifNil: [^ self].
 	inputL ifNil: [outputL atAllPut: 0.0. outputR ifNotNil: [outputR atAllPut: 0.0]. ^ self].
 	feedback := self get: #feedback.
-	wet := self get: #mix.
-	dry := 1.0 - wet.
+	θ := (self get: #mix) * Float pi / 2.0. "equal-power wet/dry mix"
+	wet := θ sin.
+	dry := θ cos.
 	width := self get: #width.
 	gain2 := width <= 0 ifTrue: [width * -0.5] ifFalse: [width].
 	gain1 := 1.0 - gain2.
@@ -3618,15 +3629,16 @@ initializeControls
 	self addControl: #width min: 0.0 max: 1.0 value: 1.0.
 	self addDryWetControl: #mix value: 0.5! !
 
-!StereoReverb methodsFor: 'processing' stamp: 'len 27/Mar/2026 17:36:23'!
+!StereoReverb methodsFor: 'processing' stamp: 'len 18/Apr/2026 19:37:03'!
 tick
-	| width width2 wet dry |
+	| width width2 θ wet dry |
 	outputL ifNil: [^ self].
 	inputL ifNil: [outputL atAllPut: 0.0. outputR ifNotNil: [outputR atAllPut: 0.0]. ^ self].
 	width := (self get: #width) / 2.0 + 0.5. "0 -> 0.5, 1 -> 1.0"
 	width2 := 1.0 - width. "0 -> 0.5, 1 -> 0.0"
-	wet := self get: #mix.
-	dry := 1.0 - wet.
+	θ := (self get: #mix) * Float pi / 2.0. "equal-power wet/dry mix"
+	wet := θ sin.
+	dry := θ cos.
 	1 to: inputL size do: [:i|
 		| inL inR delayed outL outR |
 		inL := inputL at: i.
@@ -3878,30 +3890,40 @@ tick
 		[meterRightValue := meterRightValue * 0.9 "dampen" max: (bus rightBuffer rms max: bus rightBuffer last abs).
 		outputR replaceWith: bus rightBuffer]! !
 
-!AudioIn methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:13:32'!
+!AudioIn methodsFor: 'ui' stamp: 'len 19/Apr/2026 04:48:06'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
 	display := ControlPanel new gap: 0;
 		addMorph: (ChoiceControlMorph new color: PatchMorph waveformColor; control: (controls at: #port));
-		addMorph: (RollingMeterMorph new meterBlock: [self meterValue]).
+		addMorph: self scope.
 	answer body addMorph: display.
 	answer
 		addAudioOutput: #setOutputL: label: 'L/M';
 		addAudioOutput: #setOutputR: label: 'R'.
 	^ answer! !
 
+!AudioIn methodsFor: 'ui' stamp: 'len 19/Apr/2026 14:47:24'!
+scope
+	| answer |
+	answer := MiniscopeMorph new bufferL: outputL; bufferR: outputR.
+	self when: #outputLChanged: send: #bufferL: to: answer.
+	self when: #outputRChanged: send: #bufferR: to: answer.
+	^ answer! !
+
 !AudioIn methodsFor: 'wiring' stamp: 'len 5/Mar/2026 15:19:40'!
 setBuses: aDictionary
 	buses := aDictionary! !
 
-!AudioIn methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:10:50'!
+!AudioIn methodsFor: 'wiring' stamp: 'len 19/Apr/2026 04:49:18'!
 setOutputL: aBuffer
-	outputL := aBuffer! !
+	outputL := aBuffer.
+	self triggerEvent: #outputLChanged: with: outputL! !
 
-!AudioIn methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:10:28'!
+!AudioIn methodsFor: 'wiring' stamp: 'len 19/Apr/2026 04:49:09'!
 setOutputR: aBuffer
-	outputR := aBuffer! !
+	outputR := aBuffer.
+	self triggerEvent: #outputRChanged: with: outputR! !
 
 !AudioOut methodsFor: 'accessing' stamp: 'len 5/Mar/2026 18:13:52'!
 enabled: aBoolean
@@ -3966,7 +3988,7 @@ initializeControls
 	self addVolumeControl: #level min: 0.001 "-60 dB" max: 4.0 value: 0.5.
 	(self addControl: #pan min: -1.0 max: 1.0 value: 0.0) printer: [:x| x abs < 0.01 ifTrue: ['Center'] ifFalse: [(x abs * 100.0) rounded printString, '% ', (x < 0.0 ifTrue: ['L'] ifFalse: ['R'])]]! !
 
-!AudioOut methodsFor: 'processing' stamp: 'len 18/Mar/2026 20:18:39'!
+!AudioOut methodsFor: 'processing' stamp: 'len 19/Apr/2026 14:51:14'!
 tick
 	| bus |
 	inputL ifNil: [^ self].
@@ -3995,13 +4017,13 @@ panel
 		addHorizontalSlider: (controls at: #pan).
 	^ answer! !
 
-!AudioOut methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:13:39'!
+!AudioOut methodsFor: 'ui' stamp: 'len 19/Apr/2026 03:19:48'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
 	display := ControlPanel new gap: 0;
 		addMorph: (ChoiceControlMorph new color: PatchMorph waveformColor; control: (controls at: #port));
-		addMorph: (RollingMeterMorph new meterBlock: [self meterValue]).
+		addMorph: self scope.
 	answer body addMorph: display; addMorph: self panel.
 	answer
 		addAudioInput: #setInputL: label: 'L/M';
@@ -4010,17 +4032,27 @@ patchable
 		addControlInput: #pan.
 	^ answer! !
 
+!AudioOut methodsFor: 'ui' stamp: 'len 19/Apr/2026 14:47:29'!
+scope
+	| answer |
+	answer := MiniscopeMorph new bufferL: inputL; bufferR: inputR.
+	self when: #inputLChanged: send: #bufferL: to: answer.
+	self when: #inputRChanged: send: #bufferR: to: answer.
+	^ answer! !
+
 !AudioOut methodsFor: 'wiring' stamp: 'len 5/Mar/2026 15:29:06'!
 setBuses: aDictionary
 	buses := aDictionary! !
 
-!AudioOut methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:06:40'!
+!AudioOut methodsFor: 'wiring' stamp: 'len 19/Apr/2026 03:21:11'!
 setInputL: aBuffer
-	inputL := aBuffer! !
+	inputL := aBuffer.
+	self triggerEvent: #inputLChanged: with: inputL! !
 
-!AudioOut methodsFor: 'wiring' stamp: 'len 2/Feb/2026 04:06:33'!
+!AudioOut methodsFor: 'wiring' stamp: 'len 19/Apr/2026 04:39:29'!
 setInputR: aBuffer
-	inputR := aBuffer! !
+	inputR := aBuffer.
+	self triggerEvent: #inputRChanged: with: inputR! !
 
 !ControlIn methodsFor: 'accessing' stamp: 'len 18/Mar/2026 20:28:43'!
 port
@@ -6461,15 +6493,17 @@ reset
 	combs do: [:each| each reset].
 	allpasses do: [:each| each reset]! !
 
-!Reverb methodsFor: 'controlling' stamp: 'len 9/Mar/2026 16:48:24'!
+!Reverb methodsFor: 'controlling' stamp: 'len 18/Apr/2026 19:39:00'!
 update
-	| feedback damp |
+	| feedback damp θ |
 	super update.
 	predelayTap setDelayIncrement: ((self get: #predelay) * self class sampleRate - predelayTap delay) / self class blockSize.
 	feedback := self get: #feedback.
 	damp := self get: #damp.
 	combs do: [:each| each undenormalize; feedback: feedback; damp: damp].
-	mix := self get: #mix! !
+	θ := (self get: #mix) * Float pi / 2.0. "equal-power wet/dry mix"
+	wet := θ sin.
+	dry := θ cos! !
 
 !Reverb methodsFor: 'initialization' stamp: 'len 25/Mar/2026 15:55:27'!
 initialize
@@ -6487,7 +6521,7 @@ initializeControls
 	self addControl: #damp min: 0.0 max: 1.0 value: 0.5.
 	self addDryWetControl: #mix value: 0.5! !
 
-!Reverb methodsFor: 'processing' stamp: 'len 27/Mar/2026 17:37:07'!
+!Reverb methodsFor: 'processing' stamp: 'len 18/Apr/2026 19:38:29'!
 value: in
 	| delayed out |
 	predelayLine write: in.
@@ -6495,7 +6529,7 @@ value: in
 	out := 0.0.
 	combs do: [:each| out := (each value: delayed) + out].
 	allpasses do: [:each| out := each value: out].
-	^ out * mix + (in * (1.0 - mix))! !
+	^ out * wet + (in * dry)! !
 
 !Reverb methodsFor: 'ui' stamp: 'len 9/Mar/2026 16:47:32'!
 panel
@@ -6516,9 +6550,9 @@ reset
 	lsf reset.
 	hsf reset! !
 
-!TapeEcho methodsFor: 'controlling' stamp: 'len 9/Mar/2026 16:44:19'!
+!TapeEcho methodsFor: 'controlling' stamp: 'len 18/Apr/2026 19:42:40'!
 update
-	| delay1 delay2 delay3 thirtyMsecs |
+	| delay1 delay2 delay3 thirtyMsecs θ |
 	super update.
 	thirtyMsecs := self class sampleRate * 0.03.
 	delay1 := (self get: #time) * self class sampleRate.
@@ -6531,7 +6565,9 @@ update
 	level2 := self get: #'2'.
 	level3 := self get: #'3'.
 	feedback := self get: #feedback.
-	mix := self get: #mix.
+	θ := (self get: #mix) * Float pi / 2.0. "equal-power wet/dry mix"
+	wet := θ sin.
+	dry := θ cos.
 	lpf undenormalize.
 	hpf undenormalize.
 	lsf undenormalize; ls: 120.0 / self class sampleRate Q: 0.707 gain: (self get: #bass). "120 Hz"
@@ -6561,7 +6597,7 @@ initializeControls
 	self addVolumeControl: #treble min: 0.4 max: 2.5 value: 1.0. "-8 dB to 8 dB"
 	self addDryWetControl: #mix value: 0.5! !
 
-!TapeEcho methodsFor: 'processing' stamp: 'len 3/Mar/2026 17:18:55'!
+!TapeEcho methodsFor: 'processing' stamp: 'len 18/Apr/2026 19:42:59'!
 value: in
 	| echos x |
 	echos := 0.0.
@@ -6572,7 +6608,7 @@ value: in
 	x := ((echos * feedback + in) * 1.5) tanh. "saturation"
 	x := lpf value: x - (hpf value: x). "lpf and hpf one-poles for bandwidth loss when writing to the tape"
 	delayLine write: x.
-	^ in * (1.0 - mix) + (echos * mix)! !
+	^ in * dry + (echos * wet)! !
 
 !TapeEcho methodsFor: 'ui' stamp: 'len 3/Mar/2026 16:39:40'!
 panel
@@ -8320,14 +8356,19 @@ tick
 	[i <= input size] whileTrue: [delayLine write: ((input at: i) min: 1.0 max: -1.0). i := i + 8]. "assume the block size is divisible by 8"
 	self triggerEvent: #changed! !
 
-!Oscilloscope methodsFor: 'ui' stamp: 'len 3/Apr/2026 00:29:06'!
+!Oscilloscope methodsFor: 'ui' stamp: 'len 19/Apr/2026 04:50:22'!
 patchable
-	| answer display |
+	| answer |
 	answer := PatchableMorph new model: self.
-	display := OscilloscopeMorph new buffer: delayLine buffer.
-	self when: #changed send: #redrawNeeded to: display.
-	answer body addMorph: display.
+	answer body addMorph: self screen.
 	answer addAudioInput: #setInput:.
+	^ answer! !
+
+!Oscilloscope methodsFor: 'ui' stamp: 'len 19/Apr/2026 04:50:13'!
+screen
+	| answer |
+	answer := OscilloscopeMorph new buffer: delayLine buffer.
+	self when: #changed send: #redrawNeeded to: answer.
 	^ answer! !
 
 !Oscilloscope methodsFor: 'wiring' stamp: 'len 3/Apr/2026 00:17:56'!
@@ -11535,6 +11576,28 @@ startStepping
 drawOn: aCanvas
 "	aCanvas fillRectangle: self localBounds color: Color black"! !
 
+!ScrollerMorph methodsFor: 'drawing' stamp: 'len 18/Apr/2026 21:32:00'!
+postDrawOn: aCanvas
+	"Draw indicative scrollbars if needed, only when the scrollable has keyboard focus."
+	| scrollableBounds viewport thickness color |
+	(scrollable ifNil: [^ false]) hasKeyboardFocus ifFalse: [^ false].
+	scrollableBounds := scrollable fullBoundsInOwner insetBy: 1.
+	viewport := self localBounds.
+	(viewport containsRect: scrollableBounds) ifTrue: [^ false].
+	thickness := 4.
+	color := Color white alpha: 0.6.
+	horizontal ifTrue:
+		[| x1 x2|
+		x1 := viewport left - scrollableBounds left / scrollableBounds width asFloat * extent x max: 0.0.
+		x2 := x1 + (viewport width / scrollableBounds width asFloat * extent x) min: extent x.
+		aCanvas fillRectangle: (x1 @ (extent y - thickness) corner: x2 @ extent y) color: color].
+	vertical ifTrue:
+		[| y1 y2|
+		y1 := viewport top - scrollableBounds top / scrollableBounds height asFloat * extent y max: 0.0.
+		y2 := y1 + (viewport height / scrollableBounds height asFloat * extent y) min: extent y.
+		aCanvas fillRectangle: (extent x - thickness @ y1 corner: extent x @ y2) color: color].
+	^ true! !
+
 !ScrollerMorph methodsFor: 'event handling testing' stamp: 'len 28/Dec/2025 22:33:15'!
 handlesMouseScroll: aMouseScrollEvent
 	^ true! !
@@ -11616,6 +11679,19 @@ scrollBy: aPoint
 	scrollable ifNil: [^ self].
 	scrollable morphPosition: ((scrollable morphPosition + aPoint max: self morphExtent - scrollable morphExtent) min: 0 @ 0)! !
 
+!ScrollerMorph methodsFor: 'scrolling' stamp: 'len 18/Apr/2026 18:08:29'!
+scrollToMakeVisible: aRectangle
+	| deltaX deltaY |
+	deltaX := 0.
+	deltaY := 0.
+	horizontal ifTrue:
+		[aRectangle right > extent x ifTrue: [deltaX := extent x - aRectangle right].
+		aRectangle left < 0 ifTrue: [deltaX := aRectangle left negated]].
+	vertical ifTrue:
+		[aRectangle bottom > extent y ifTrue: [deltaY := extent y - aRectangle bottom].
+		aRectangle top < 0 ifTrue: [deltaY := aRectangle top negated]].
+	self scrollBy: deltaX @ deltaY! !
+
 !ScrollerMorph methodsFor: 'stepping' stamp: 'len 28/Dec/2025 22:33:15'!
 wantsSteps
 	^ true! !
@@ -11669,6 +11745,73 @@ defaultExtent
 wantsSteps
 	^ true! !
 
+!MiniscopeMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 17:03:36'!
+drawFrame: aBuffer on: aCanvas color: color
+	| step x y h |
+	step := self morphWidth / aBuffer size asFloat * 4.0.
+	aux replaceWith:​ aBuffer.
+	h := self morphHeight / 2.0.
+	x := 0.
+	y := 1.0 - ((aux at: 1) min: 1.0 max: -1.0) * h.
+	aCanvas strokeWidth: 1.5 color: color do:
+		[aCanvas moveTo: x@y.
+		5 to: aux size by: 4 do: [:i|
+			x := x + 1.0.
+			y := 1.0 - ((aux at: i) min: 1.0 max: -1.0) * h.
+			aCanvas lineTo: x@y]]! !
+
+!MiniscopeMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 04:27:54'!
+drawOn: aCanvas
+	bufferL ifNotNil: [:aBuffer| self drawFrame: aBuffer on: aCanvas color: colorL].
+	bufferR ifNotNil: [:aBuffer| self drawFrame: aBuffer on: aCanvas color: colorR]! !
+
+!MiniscopeMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 04:23:53'!
+requiresVectorCanvas
+	^ true! !
+
+!MiniscopeMorph methodsFor: 'initialization' stamp: 'len 19/Apr/2026 04:24:42'!
+bufferL: aBuffer
+	bufferL := aBuffer.
+	self redrawNeeded! !
+
+!MiniscopeMorph methodsFor: 'initialization' stamp: 'len 19/Apr/2026 04:24:45'!
+bufferR: aBuffer
+	bufferR := aBuffer.
+	self redrawNeeded! !
+
+!MiniscopeMorph methodsFor: 'initialization' stamp: 'len 19/Apr/2026 04:25:06'!
+colorL: aColor
+	colorL := aColor.
+	self redrawNeeded! !
+
+!MiniscopeMorph methodsFor: 'initialization' stamp: 'len 19/Apr/2026 04:26:11'!
+colorR: aColor
+	colorR := aColor.
+	self redrawNeeded! !
+
+!MiniscopeMorph methodsFor: 'initialization' stamp: 'len 19/Apr/2026 04:38:00'!
+defaultExtent
+	^`32@32`! !
+
+!MiniscopeMorph methodsFor: 'initialization' stamp: 'len 19/Apr/2026 04:42:25'!
+initialize
+	super initialize.
+	colorL := PatchMorph waveformColor.
+	colorR := PatchMorph waveformColor2.
+	aux := Float32Array new: Module blockSize! !
+
+!MiniscopeMorph methodsFor: 'stepping' stamp: 'len 19/Apr/2026 14:51:56'!
+step
+	self redrawNeeded! !
+
+!MiniscopeMorph methodsFor: 'stepping' stamp: 'len 19/Apr/2026 14:54:04'!
+stepTime
+	^ 100! !
+
+!MiniscopeMorph methodsFor: 'stepping' stamp: 'len 19/Apr/2026 14:54:21'!
+wantsSteps
+	^ true! !
+
 !OscilloscopeMorph methodsFor: 'drawing' stamp: 'len 3/Apr/2026 00:31:41'!
 drawOn: aCanvas
 	| step buf x y h |
@@ -11688,9 +11831,10 @@ drawOn: aCanvas
 requiresVectorCanvas
 	^ true! !
 
-!OscilloscopeMorph methodsFor: 'initialization' stamp: 'len 3/Apr/2026 00:27:10'!
+!OscilloscopeMorph methodsFor: 'initialization' stamp: 'len 19/Apr/2026 03:21:58'!
 buffer: aBuffer
-	buffer := aBuffer! !
+	buffer := aBuffer.
+	self redrawNeeded! !
 
 !OscilloscopeMorph methodsFor: 'initialization' stamp: 'len 21/Sep/2025 15:07:00'!
 color: aColor

@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 11 April 2026 at 7:13:28 pm'!
+'From Cuis7.7 [latest update: #7872] on 19 April 2026 at 5:15:39 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 20!
+!provides: 'Tracker' 1 21!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -595,13 +595,14 @@ keyStroke: anEvent
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 10/Apr/2026 00:07:17'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 19/Apr/2026 02:53:42'!
 buildMorphicWindow
 	| lowerLeftPane sequencerScroller patternEditorScroller bar |
 	instrumentEditor := InstrumentEditorMorph new setTracker: model.
 	meter := MultitrackMeterMorph new setTracker: model.
 	sequencer := SequencerMorph new setTracker: model.
 	patternEditor := PatternEditorMorph new setTracker: model.
+	model when: #cursorChanged send: #ensureCursorVisible to: self.
 	instrumentEditor when: #instrumentLabelChanged send: #redrawNeeded to: patternEditor. "to redraw instrument label in the track header"
 	bar := TrackerBarMorph new setTracker: model.
 	lowerPane := LinearLayoutMorph newRow color: Color transparent.
@@ -632,6 +633,11 @@ delete
 	model stop.
 	super delete! !
 
+!TrackerWindow methodsFor: 'as yet unclassified' stamp: 'len 19/Apr/2026 16:54:47'!
+ensureCursorVisible
+	patternEditor owner scrollToMakeVisible: (patternEditor externalizeBoundingRectOf: patternEditor activeBounds).
+	sequencer owner scrollToMakeVisible: (sequencer externalizeBoundingRectOf: sequencer activeBounds)! !
+
 !InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Jan/2026 16:24:19'!
 clipboardCopy
 	(self activeHand keyboardFocus ifNil: [^ self])
@@ -648,6 +654,12 @@ clipboardPaste
 	clipboard ifNil: [^ self].
 	patch := self patch ifNil: [^ self].
 	patch addMorph: clipboard copy patchable position: ((patch internalizeFromWorld: self activeHand morphPosition))! !
+
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 18/Apr/2026 18:16:49'!
+duplicateInstrument
+	| instrument |
+	instrument := tracker selectedInstrument ifNil: [^ self].
+	self request: 'Duplicate to instrument number' initialAnswer: '' do: [:destinationInstrumentNumber| ]! !
 
 !InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 9/Apr/2026 15:03:03'!
 exportInstrument
@@ -683,11 +695,12 @@ renameInstrument
 drawOn: aCanvas
 "	self patch ifNotNil: [aCanvas frameRectangle: self patch fullBoundsInOwner borderWidth: 2 color: Color white]. "! !
 
-!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 6/Apr/2026 20:55:41'!
+!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 13/Apr/2026 15:33:09'!
 handleCommandHotkey: anEvent
 	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
 	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
+	anEvent keyCharacter = $d ifTrue: [self duplicateInstrument. ^ true].
 	^ false! !
 
 !InstrumentEditorMorph methodsFor: 'events' stamp: 'len 9/Apr/2026 15:35:00'!
@@ -858,46 +871,46 @@ clipboardPaste
 				ifTrue: [pattern track: k0 + k at: i0 + i put: trigger copy]]].
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Mar/2026 19:14:42'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 19/Apr/2026 02:54:19'!
 moveCursorColumnLeft
 	cursorPosition <= 2
 		ifTrue:
 			[tracker cursorTrack = 1 ifTrue: [^ self].
-			tracker moveCursorTrackLeft.
-			cursorPosition := self tracksMaxPosition - 2]
+			cursorPosition := self tracksMaxPosition - 2.
+			tracker moveCursorTrackLeft]
 		ifFalse:
 			[cursorPosition := #(1 1 1 3 3 4 4 4 6 6 6) at: cursorPosition].
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Mar/2026 19:14:19'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 19/Apr/2026 02:54:27'!
 moveCursorColumnRight
 	cursorPosition >= (self tracksMaxPosition - 2)
 		ifTrue:
 			[tracker cursorTrack = tracker tracks size ifTrue: [^ self].
-			tracker moveCursorTrackRight.
-			cursorPosition := 1]
+			cursorPosition := 1.
+			tracker moveCursorTrackRight]
 		ifFalse:
 			[cursorPosition := #(3 3 4 6 6 9 9 9) at: cursorPosition].
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 1/Jan/2026 16:37:27'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 19/Apr/2026 02:54:40'!
 moveCursorLeft
 	cursorPosition = 1
 		ifTrue:
 			[tracker cursorTrack = 1 ifTrue: [^ self].
-			tracker moveCursorTrackLeft.
-			cursorPosition := self tracksMaxPosition]
+			cursorPosition := self tracksMaxPosition.
+			tracker moveCursorTrackLeft]
 		ifFalse:
 			[cursorPosition := cursorPosition - 1].
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 1/Jan/2026 16:37:49'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 19/Apr/2026 02:54:45'!
 moveCursorRight
 	cursorPosition = self tracksMaxPosition
 		ifTrue:
 			[tracker cursorTrack = tracker tracks size ifTrue: [^ self].
-			tracker moveCursorTrackRight.
-			cursorPosition := 1]
+			cursorPosition := 1.
+			tracker moveCursorTrackRight]
 		ifFalse:
 			[cursorPosition := cursorPosition + 1].
 	self redrawNeeded! !
@@ -941,6 +954,17 @@ setPatternLPB
 setPatternLength
 	tracker isPlaying ifTrue: [^ self].
 	self request: 'Pattern length' initialAnswer: tracker selectedPattern length printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| tracker setSelectedPatternLength: s asNumber. self redrawNeeded]! !
+
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 16:56:46'!
+activeBounds
+	"Answer a subrectangle of the bounds of the receiver that should preferably be kept visible inside a scroller.
+	We use the bounds of the currently selected trigger, so when we move the cursor the current trigger is kept visible."
+	| lineSpacing charWidth x y |
+	lineSpacing := font lineSpacing.
+	charWidth := font widthOf: $X.
+	y := self morphHeight / 2.0.
+	x := (self tracksWidthInCharacters + 0.5) * (tracker cursorTrack - 1) + 2.5.
+	^​ x * charWidth @ y extent: self tracksWidthInCharacters * charWidth @ lineSpacing! !
 
 !PatternEditorMorph methodsFor: 'drawing' stamp: 'len 1/Mar/2026 14:29:42'!
 drawCursorOn: aCanvas
@@ -1100,7 +1124,7 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 16/Mar/2026 21:41:10'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 19/Apr/2026 02:54:10'!
 handleInputKey: anEvent
 	| c i |
 	anEvent isBackspace ifTrue:
@@ -1377,6 +1401,14 @@ clipboardPaste
 clipboardPasteNew
 	selectionStart := nil.
 	clipboard ifNotNil: [tracker insertSequence: (clipboard collect: [:each| each key copy -> each value])]! !
+
+!SequencerMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 16:56:56'!
+activeBounds
+	"Answer a subrectangle of the bounds of the receiver that should preferably be kept visible inside a scroller."
+	| blockHeight charWidth |
+	charWidth := font widthOf: $X.
+	blockHeight := charWidth * 3.
+	^ 0 @ ((tracker cursorPattern - 1) * blockHeight) extent: self morphWidth @ blockHeight! !
 
 !SequencerMorph methodsFor: 'drawing' stamp: 'len 24/Feb/2026 17:51:21'!
 drawOn: aCanvas
@@ -2355,7 +2387,7 @@ isPlaying
 loop: aBoolean
 	loop := aBoolean! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 9/Mar/2026 19:48:47'!
+!Tracker methodsFor: 'playing' stamp: 'len 18/Apr/2026 17:47:14'!
 play
 	self isPlaying ifTrue: [^ self].
 	playStartPattern := 1.
@@ -2367,6 +2399,7 @@ play
 	playheadLine := cursorLine - 1.
 	ticksToLine := 0.
 	buses keys do: [:each| each = 0 ifFalse: [buses removeKey: each]]. "remove all buses except the master"
+	Smalltalk garbageCollect. "just in case, to make a GC less likely during playback"
 	AudioPlayer startPlaying: self.
 	self triggerEvent: #playheadChanged.
 	self triggerEvent: #playingStatusChanged! !

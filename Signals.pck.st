@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 19 April 2026 at 7:39:10 pm'!
+'From Cuis7.7 [latest update: #7872] on 20 April 2026 at 4:36:04 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 533!
+!provides: 'Signals' 1 534!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -10292,27 +10292,32 @@ update: anObject
 	super update: anObject.
 	currentShape := control value! !
 
-!VariableWaveControlMorph methodsFor: 'drawing' stamp: 'len 1/Mar/2026 14:58:22'!
+!VariableWaveControlMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 23:14:46'!
 drawOn: aCanvas
-	| step stepX t x y h steps |
+	| step stepX t x y h steps shape |
 	steps := 64.
 	step := 1.0 / (steps + 1).
 	stepX := self morphWidth - 8.0 * step.
 	h := self morphHeight - 6.0 / 2.0.
+	shape := currentShape.
 	t := 0.0.
-	y := 1.0 - (self waveAt: t) * h + 3.0.
+	y := 1.0 - (self waveAt: t shape: shape) * h + 3.0.
 	x := 4.0.
 	aCanvas strokeWidth: 2 color: color do:
 		[aCanvas moveTo: x @ y.
 		steps timesRepeat:
 			[t := t + step.
-			y := 1.0 - (self waveAt: t \\ 1.0) * h + 3.0.
+			y := 1.0 - (self waveAt: t \\ 1.0 shape: shape) * h + 3.0.
 			x := x + stepX.
 			aCanvas lineTo: x @ y]]! !
 
-!VariableWaveControlMorph methodsFor: 'drawing' stamp: 'len 16/Jan/2026 22:11:46'!
-waveAt: aNumber
-	^ wave value: aNumber value: currentShape! !
+!VariableWaveControlMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 23:13:46'!
+waveAt: phase
+	^ self waveAt: phase shape: currentShape! !
+
+!VariableWaveControlMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 23:13:16'!
+waveAt: phase shape: shape
+	^ wave value: phase value: shape! !
 
 !VariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:21:22'!
 defaultExtent
@@ -11220,18 +11225,14 @@ adjustXBy: aNumber
 balloonText
 	^ self name! !
 
-!PinMorph methodsFor: 'accessing' stamp: 'len 25/Jan/2026 17:30:40'!
+!PinMorph methodsFor: 'accessing' stamp: 'len 19/Apr/2026 22:56:21'!
 borderWidth
-	^ focused ifTrue: [4.0] ifFalse: [2.0]! !
+	^ focused ifTrue: [3.0] ifFalse: [1.0]! !
 
 !PinMorph methodsFor: 'accessing' stamp: 'len 17/Nov/2025 19:26:00'!
 color: aColor
 	color := aColor.
 	self redrawNeeded! !
-
-!PinMorph methodsFor: 'accessing' stamp: 'len 23/Nov/2025 16:21:00'!
-defaultColor
-	^ Color white! !
 
 !PinMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 21:29:09'!
 level: aNumber
@@ -11320,6 +11321,10 @@ mouseLeave: anEvent
 !PinMorph methodsFor: 'geometry testing' stamp: 'len 9/Nov/2025 16:33:00'!
 requiresVectorCanvas
 	^ true! !
+
+!PinMorph methodsFor: 'initialization' stamp: 'len 19/Apr/2026 23:08:11'!
+defaultColor
+	^ Color gray: 0.95! !
 
 !PinMorph methodsFor: 'initialization' stamp: 'len 2/Apr/2026 19:32:07'!
 defaultExtent
@@ -11576,26 +11581,30 @@ startStepping
 drawOn: aCanvas
 "	aCanvas fillRectangle: self localBounds color: Color black"! !
 
-!ScrollerMorph methodsFor: 'drawing' stamp: 'len 18/Apr/2026 21:32:00'!
+!ScrollerMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 22:36:58'!
 postDrawOn: aCanvas
 	"Draw indicative scrollbars if needed, only when the scrollable has keyboard focus."
-	| scrollableBounds viewport thickness color |
+	| scrollableBounds viewport thickness color maxHeight maxWidth maxX maxY |
 	(scrollable ifNil: [^ false]) hasKeyboardFocus ifFalse: [^ false].
 	scrollableBounds := scrollable fullBoundsInOwner insetBy: 1.
 	viewport := self localBounds.
 	(viewport containsRect: scrollableBounds) ifTrue: [^ false].
-	thickness := 4.
-	color := Color white alpha: 0.6.
+	thickness := 4.0.
+	color := Color white alpha: 0.4.
+	maxWidth := extent x - 8.0.
+	maxHeight := extent y - 8.0.
+	maxX := extent x - 4.0.
+	maxY := extent y - 4.0.
 	horizontal ifTrue:
-		[| x1 x2|
-		x1 := viewport left - scrollableBounds left / scrollableBounds width asFloat * extent x max: 0.0.
-		x2 := x1 + (viewport width / scrollableBounds width asFloat * extent x) min: extent x.
-		aCanvas fillRectangle: (x1 @ (extent y - thickness) corner: x2 @ extent y) color: color].
+		[| x1 x2 |
+		x1 := (viewport left - scrollableBounds left / scrollableBounds width asFloat * maxWidth max: 0.0) + 4.0.
+		x2 := extent x - (scrollableBounds right - viewport right / scrollableBounds width asFloat * maxWidth) min: maxX - thickness.
+		aCanvas fillRectangle: (x1 @ (maxY - thickness) corner: x2 @ maxY) color: color].
 	vertical ifTrue:
-		[| y1 y2|
-		y1 := viewport top - scrollableBounds top / scrollableBounds height asFloat * extent y max: 0.0.
-		y2 := y1 + (viewport height / scrollableBounds height asFloat * extent y) min: extent y.
-		aCanvas fillRectangle: (extent x - thickness @ y1 corner: extent x @ y2) color: color].
+		[| y1 y2 |
+		y1 := (viewport top - scrollableBounds top / scrollableBounds height asFloat * maxHeight max: 0.0) + 4.0.
+		y2 := extent y - (scrollableBounds bottom - viewport bottom / scrollableBounds height asFloat * maxHeight) min: maxY - thickness.
+		aCanvas fillRectangle: (maxX - thickness @ y1 corner: maxX @ y2) color: color].
 	^ true! !
 
 !ScrollerMorph methodsFor: 'event handling testing' stamp: 'len 28/Dec/2025 22:33:15'!
@@ -11701,22 +11710,26 @@ wantsSteps
 drawOn: aCanvas
 "	aCanvas fillRectangle: self localBounds color: Color black"! !
 
-!ZoomerMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 19:37:31'!
+!ZoomerMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 22:37:11'!
 postDrawOn: aCanvas
-	"Draw indicative scrollbars if needed, only when the scrollable has keyboard focus."
-	| zoomable zoomableBounds viewport thickness color x1 x2 y1 y2 |
+	"Draw indicative scrollbars if needed."
+	| zoomable zoomableBounds viewport thickness color x1 x2 y1 y2 maxHeight maxWidth maxX maxY |
 	zoomable := submorphs lastIfEmpty: [^ false].
 	zoomableBounds := zoomable fullBoundsInOwner insetBy: 1.
 	viewport := self localBounds.
 	(viewport containsRect: zoomableBounds) ifTrue: [^ false].
 	thickness := 4.
-	color := Color white alpha: 0.6.
-	x1 := viewport left - zoomableBounds left / zoomableBounds width asFloat * extent x max: 0.0.
-	x2 := extent x - (zoomableBounds right - viewport right / zoomableBounds width asFloat * extent x) min: extent x.
-	aCanvas fillRectangle: (x1 @ (extent y - thickness) corner: x2 @ extent y) color: color.
-	y1 := viewport top - zoomableBounds top / zoomableBounds height asFloat * extent y max: 0.0.
-	y2 := extent y - (zoomableBounds bottom - viewport bottom / zoomableBounds height asFloat * extent y) min: extent y.
-	aCanvas fillRectangle: (extent x - thickness @ y1 corner: extent x @ y2) color: color.
+	color := Color white alpha: 0.4.
+	maxWidth := extent x - 8.0.
+	maxHeight := extent y - 8.0.
+	maxX := extent x - 4.0.
+	maxY := extent y - 4.0.
+	x1 := (viewport left - zoomableBounds left / zoomableBounds width asFloat * maxWidth max: 0.0) + 4.0.
+	x2 := extent x - (zoomableBounds right - viewport right / zoomableBounds width asFloat * maxWidth) min: maxX - thickness.
+	aCanvas fillRectangle: (x1 @ (maxY - thickness) corner: x2 @ maxY) color: color.
+	y1 := (viewport top - zoomableBounds top / zoomableBounds height asFloat * maxHeight max: 0.0) + 4.0.
+	y2 := extent y - (zoomableBounds bottom - viewport bottom / zoomableBounds height asFloat * maxHeight) min: maxY - thickness.
+	aCanvas fillRectangle: (maxX - thickness @ y1 corner: maxX @ y2) color: color.
 	^ true! !
 
 !ZoomerMorph methodsFor: 'event handling testing' stamp: 'len 9/Feb/2026 21:01:23'!
@@ -11817,11 +11830,11 @@ colorR: aColor
 defaultExtent
 	^`32@32`! !
 
-!MiniscopeMorph methodsFor: 'initialization' stamp: 'len 19/Apr/2026 04:42:25'!
+!MiniscopeMorph methodsFor: 'initialization' stamp: 'len 19/Apr/2026 21:31:17'!
 initialize
 	super initialize.
-	colorL := PatchMorph waveformColor.
-	colorR := PatchMorph waveformColor2.
+	colorL := PatchMorph waveformColor alpha: 0.7.
+	colorR := PatchMorph waveformColor2 alpha: 0.7.
 	aux := Float32Array new: Module blockSize! !
 
 !MiniscopeMorph methodsFor: 'stepping' stamp: 'len 19/Apr/2026 14:51:56'!
@@ -12918,7 +12931,7 @@ wantsSteps
 honorsLayerOrder
 	^ true! !
 
-!PatchMorph methodsFor: 'private' stamp: 'len 9/Apr/2026 15:16:06'!
+!PatchMorph methodsFor: 'private' stamp: 'len 20/Apr/2026 16:29:00'!
 fitTo: aRectangle
 	| bounds |
 	bounds := self fullBoundsInOwner.
@@ -13221,7 +13234,7 @@ keyStroke: aKeyboardEvent
 keyboardFocusChange: aBoolean
 	self redrawNeeded! !
 
-!WireMorph methodsFor: 'initialization' stamp: 'len 14/Nov/2025 18:27:00'!
+!WireMorph methodsFor: 'initialization' stamp: 'len 19/Apr/2026 23:07:35'!
 initialize
 	super initialize.
 	color := Color white! !

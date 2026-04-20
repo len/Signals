@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 20 April 2026 at 4:36:04 pm'!
+'From Cuis7.7 [latest update: #7872] on 20 April 2026 at 9:34:38 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 534!
+!provides: 'Signals' 1 535!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -2235,6 +2235,14 @@ baseValue
 baseValue: anObject
 	self basePosition: (self positionFromValue: anObject)! !
 
+!Control methodsFor: 'accessing' stamp: 'len 20/Apr/2026 18:31:21'!
+coarseStep
+	^ self subclassResponsibility! !
+
+!Control methodsFor: 'accessing' stamp: 'len 20/Apr/2026 18:31:30'!
+fineStep
+	^ self coarseStep! !
+
 !Control methodsFor: 'control and modulation' stamp: 'len 8/Mar/2026 15:22:58'!
 apply
 	| newValue |
@@ -2303,9 +2311,17 @@ printedBaseValueWithLabel
 printer: aSymbol
 	printer := aSymbol! !
 
+!Choice methodsFor: 'accessing' stamp: 'len 20/Apr/2026 18:29:11'!
+coarseStep
+	^ 1.0 / (options size - 1)! !
+
 !Choice methodsFor: 'accessing' stamp: 'len 18/Mar/2026 18:50:08'!
 options
 	^ options! !
+
+!Choice methodsFor: 'printing' stamp: 'len 20/Apr/2026 18:35:06'!
+printedBaseValue
+	^ printer ifNil: [self baseValue printString] ifNotNil: [printer value: self baseValue]! !
 
 !Choice methodsFor: 'private' stamp: 'len 6/Apr/2026 02:15:36'!
 positionFromValue: anObject
@@ -2413,6 +2429,14 @@ min: min max: max curve: aSymbol value: defaultValue
 !Knob class methodsFor: 'instance creation' stamp: 'len 8/Mar/2026 15:16:22'!
 min: min max: max value: defaultValue
 	^ self min: min max: max curve: #linear value: defaultValue! !
+
+!Toggle methodsFor: 'accessing' stamp: 'len 20/Apr/2026 18:31:05'!
+coarseStep
+	^ 0.5! !
+
+!Toggle methodsFor: 'printing' stamp: 'len 20/Apr/2026 18:35:32'!
+printedBaseValue
+	^ printer ifNil: [self baseValue printString] ifNotNil: [printer value: self baseValue]! !
 
 !Toggle methodsFor: 'private' stamp: 'len 8/Mar/2026 15:50:11'!
 positionFromValue: aBoolean
@@ -4223,48 +4247,8 @@ next
 peek
 	^ self subclassResponsibility! !
 
-!Oscillator methodsFor: 'processing' stamp: 'len 4/Apr/2026 20:03:48'!
-read: aBuffer AM: envelopeBuffer FM: modulatorBuffer feedback: feedbackAmount
-	1 to: aBuffer size do: [:i|
-		| value |
-		value := self peek * (envelopeBuffer at: i).
-		aBuffer at: i put: value.
-		phase := phase + (modulatorBuffer at: i) + (value * feedbackAmount) + (increment := increment * incrementRatio).
-		phase >= 1.0 ifTrue: [phase := phase - phase truncated]]! !
-
-!Oscillator methodsFor: 'processing' stamp: 'len 4/Apr/2026 20:03:52'!
-read: aBuffer AM: envelopeBuffer PM: modulatorBuffer feedback: feedbackAmount
-	| lastValue |
-	lastValue := 0.0.
-	1 to: aBuffer size do: [:i|
-		| oldPhase |
-		oldPhase := phase.
-		phase := phase + (modulatorBuffer at: i) + (lastValue * feedbackAmount).
-		phase >= 1.0 ifTrue: [phase := phase - phase truncated].
-		lastValue := self peek * (envelopeBuffer at: i).
-		aBuffer at: i put: lastValue.
-		phase := oldPhase + (increment := increment * incrementRatio).
-		phase >= 1.0 ifTrue: [phase := phase - phase truncated]]! !
-
-!Oscillator methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:09:21'!
-read: aBuffer FM: modulatorBuffer
-	self read: aBuffer FM: modulatorBuffer feedback: 0.0! !
-
-!Oscillator methodsFor: 'processing' stamp: 'len 4/Apr/2026 20:03:59'!
+!Oscillator methodsFor: 'processing' stamp: 'len 20/Apr/2026 18:21:40'!
 read: aBuffer FM: modulatorBuffer feedback: feedbackAmount
-	1 to: aBuffer size do: [:i|
-		| value |
-		value := self peek.
-		aBuffer at: i put: value.
-		phase := phase + (modulatorBuffer at: i) + (value * feedbackAmount) + (increment := increment * incrementRatio).
-		phase >= 1.0 ifTrue: [phase := phase - phase truncated]]! !
-
-!Oscillator methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:09:33'!
-read: aBuffer PM: modulatorBuffer
-	self read: aBuffer PM: modulatorBuffer feedback: 0.0! !
-
-!Oscillator methodsFor: 'processing' stamp: 'len 4/Apr/2026 20:04:06'!
-read: aBuffer PM: modulatorBuffer feedback: feedbackAmount
 	| lastValue |
 	lastValue := 0.0.
 	1 to: aBuffer size do: [:i|
@@ -4277,10 +4261,10 @@ read: aBuffer PM: modulatorBuffer feedback: feedbackAmount
 		phase := oldPhase + (increment := increment * incrementRatio).
 		phase >= 1.0 ifTrue: [phase := phase - phase truncated]]! !
 
-!Oscillator methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:14:59'!
+!Oscillator methodsFor: 'processing' stamp: 'len 20/Apr/2026 18:20:32'!
 tick
 	output ifNil: [^ self].
-	inputFM ifNotNil: [^ self read: output PM: inputFM].
+	inputFM ifNotNil: [^ self read: output FM: inputFM feedback: 0.0].
 	self read: output! !
 
 !Oscillator methodsFor: 'ui' stamp: 'len 2/Feb/2026 16:09:33'!
@@ -4302,19 +4286,38 @@ setInputFM: aBuffer
 wave: anInteger
 	wave := anInteger! !
 
-!OPN methodsFor: 'initialization' stamp: 'len 20/Nov/2025 16:57:00'!
-initialize
-	super initialize.
-	wave := 1! !
+!OPN methodsFor: 'controlling' stamp: 'len 20/Apr/2026 18:25:15'!
+update
+	super update.
+	wave := self get: #wave! !
+
+!OPN methodsFor: 'initialization' stamp: 'len 20/Apr/2026 18:24:16'!
+initializeControls
+	super initializeControls.
+	self addChoiceControl: #wave options: #(1 2 3 4 5 6 7 8) value: 1! !
 
 !OPN methodsFor: 'processing' stamp: 'len 20/Nov/2025 16:57:00'!
 peek
 	^ self wave: wave at: phase! !
 
-!OPN methodsFor: 'ui' stamp: 'len 27/Feb/2026 00:49:34'!
-panel
-	^ super panel
-		addMorph: (PluggableChoiceMorph new options: #(1 2 3 4 5 6 7 8); model: self; getter: #wave; setter: #wave:)! !
+!OPN methodsFor: 'ui' stamp: 'len 20/Apr/2026 18:27:43'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self screen.
+	answer flap addMorph: self panel.
+	answer
+		addControlInput: #tune label: 'Pitch';
+		addControlInput: #wave;
+		addAudioInput: #setInputFM: label: 'FM';
+		addAudioOutput: #setOutput:.
+	^ answer! !
+
+!OPN methodsFor: 'ui' stamp: 'len 20/Apr/2026 18:27:02'!
+screen
+	^​ VariableWaveControlMorph new
+		control: (controls at: #wave);
+		waveBlock: [:x :s| self wave: s at: x]! !
 
 !OPN methodsFor: 'private' stamp: 'len 29/Sep/2025 19:37:00'!
 wave: s at: t
@@ -4332,10 +4335,11 @@ wave: s at: t
 	t > 0.5 ifTrue: [^ 0.0].
 	^ self wave: s - 4 at: t * 2.0! !
 
-!Pulse methodsFor: 'controlling' stamp: 'len 22/Nov/2025 22:49:00'!
+!Pulse methodsFor: 'controlling' stamp: 'len 20/Apr/2026 18:13:19'!
 update
 	super update.
-	width := self get: #width! !
+	"clamp the duty cycle to 0.02 - 0.98 to avoid getting too close to 0, otherwise the rising and falling PolyBLEP corrections can interact badly:"
+	width := (self get: #width) min: 0.98 max: 0.02! !
 
 !Pulse methodsFor: 'initialization' stamp: 'len 28/Sep/2025 16:30:00'!
 initialize
@@ -4351,12 +4355,12 @@ initializeControls
 peek
 	^ (phase pulse: increment width: width) * 0.577 "normalize amplitude to match perceived loudness with other oscillators"! !
 
-!Pulse methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:10:05'!
+!Pulse methodsFor: 'processing' stamp: 'len 20/Apr/2026 18:14:57'!
 read: aBuffer PWM: modulatorBuffer
 	| base |
 	base := width.
 	1 to: aBuffer size do: [:i|
-		width := (modulatorBuffer at: i) + base min: 1.0 max: 0.0.
+		width := (modulatorBuffer at: i) + base min: 0.98 max: 0.02.
 		aBuffer at: i put: self next].
 	width := base! !
 

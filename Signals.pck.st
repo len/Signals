@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 20 April 2026 at 9:34:38 pm'!
+'From Cuis7.7 [latest update: #7872] on 20 April 2026 at 11:36:44 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 535!
+!provides: 'Signals' 1 536!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -203,6 +203,16 @@ Module subclass: #StereoReverb
 	category: 'Signals-FX'!
 !classDefinition: 'StereoReverb class' category: #'Signals-FX'!
 StereoReverb class
+	instanceVariableNames: ''!
+
+!classDefinition: #TapeDrift category: #'Signals-FX'!
+Module subclass: #TapeDrift
+	instanceVariableNames: 'inputL inputR outputL outputR delayLineL tapL delayLineR tapR wowPhase flutterPhase'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-FX'!
+!classDefinition: 'TapeDrift class' category: #'Signals-FX'!
+TapeDrift class
 	instanceVariableNames: ''!
 
 !classDefinition: #Crossover category: #'Signals-Filters'!
@@ -1801,6 +1811,9 @@ This is a stereo echo effect with feedback and ping pong mode.!
 
 !StereoReverb commentStamp: '<historical>' prior: 0!
 This is a reverb effect based on Freeverb. It consists of 8 damped combs (lowpass feedback comb filters) in parallel followed by 4 Schroeder allpasses in series.!
+
+!TapeDrift commentStamp: '<historical>' prior: 0!
+This effect emulates the wow and flutter of tape.!
 
 !Crossover commentStamp: '<historical>' prior: 0!
 This is a Linkwitz-Riley 4th-order (LR4) crossover filter.
@@ -3715,6 +3728,93 @@ setOutputL: aBuffer
 	outputL := aBuffer! !
 
 !StereoReverb methodsFor: 'wiring' stamp: 'len 7/Mar/2026 16:15:05'!
+setOutputR: aBuffer
+	outputR := aBuffer! !
+
+!TapeDrift methodsFor: 'controlling' stamp: 'len 20/Apr/2026 22:24:22'!
+reset
+	delayLineL reset.
+	tapL reset.
+	delayLineR reset.
+	tapR reset.
+	wowPhase := flutterPhase := 0.0! !
+
+!TapeDrift methodsFor: 'controlling' stamp: 'len 20/Apr/2026 23:27:25'!
+update
+	| twoPi delay increment |
+	super update.
+	twoPi := Float twoPi.
+	delay := (wowPhase sin + 1.0 * (self get: #wowDepth) + (flutterPhase sin + 1.0 * (self get: #flutterDepth))) * self class sampleRate.
+	tapL setDelayIncrement: (delay - tapL delay) / self class blockSize.
+	tapR setDelayIncrement: (delay - tapR delay) / self class blockSize.
+	increment := (self get: #wowRate) / self class controlRate * twoPi.
+	(wowPhase := wowPhase + increment) > twoPi ifTrue: [wowPhase := wowPhase - twoPi].
+	increment := (self get: #flutterRate) / self class controlRate * twoPi.
+	(flutterPhase := flutterPhase + increment) > twoPi ifTrue: [flutterPhase := flutterPhase - twoPi]! !
+
+!TapeDrift methodsFor: 'initialization' stamp: 'len 20/Apr/2026 22:24:04'!
+initialize
+	super initialize.
+	delayLineL := DelayLine new: (self class sampleRate * 0.040) ceiling. "40 ms"
+	tapL := DelayTapC on: delayLineL.
+	delayLineR := DelayLine new: (self class sampleRate * 0.040) ceiling.
+	tapR := DelayTapC on: delayLineR.
+	wowPhase := flutterPhase := 0.0! !
+
+!TapeDrift methodsFor: 'initialization' stamp: 'len 20/Apr/2026 23:36:29'!
+initializeControls
+	super initializeControls.
+	self addTimeControl: #wowDepth min: 0.00001 "0.01 ms" max: 0.015 "15 ms" value: 0.002 "2 ms". "0 to ±30 cents at 0.5 Hz"
+	self addFrequencyControl: #wowRate min: 0.1 "Hz" max: 3.0 "Hz" value: 0.5 "Hz".
+	self addTimeControl: #flutterDepth min: 0.00001 "0.01 ms" max: 0.003 "3 ms" value: 0.0002 "0.2 ms".
+	self addFrequencyControl: #flutterRate min: 4.0 "Hz" max: 20.0 "Hz" value: 8.0 "Hz".
+	self addControl: #jitter min: 0.0 max: 1.0 value: 0.5! !
+
+!TapeDrift methodsFor: 'processing' stamp: 'len 20/Apr/2026 22:14:52'!
+tick
+	(inputL notNil and: [outputL notNil]) ifTrue:
+		[1 to: inputL size do: [:i|
+			delayLineL write: (inputL at: i).
+			outputL at: i put: tapL read]].
+	(inputR notNil and: [outputR notNil]) ifTrue:
+		[1 to: inputR size do: [:i|
+			delayLineR write: (inputR at: i).
+			outputR at: i put: tapR read]]! !
+
+!TapeDrift methodsFor: 'ui' stamp: 'len 20/Apr/2026 21:57:46'!
+panel
+	^ ControlPanel new
+		addKnob: (controls at: #wowRate);
+		addKnob: (controls at: #wowDepth);
+		addKnob: (controls at: #flutterRate);
+		addKnob: (controls at: #flutterDepth);
+		addKnob: (controls at: #jitter)! !
+
+!TapeDrift methodsFor: 'ui' stamp: 'len 20/Apr/2026 22:03:55'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self panel.
+	^ answer
+		addAudioInput: #setInputL: label: 'L/M';
+		addAudioInput: #setInputR: label: 'R';
+		addAudioOutput: #setOutputL: label: 'L/M';
+		addAudioOutput: #setOutputR: label: 'R';
+		yourself! !
+
+!TapeDrift methodsFor: 'wiring' stamp: 'len 20/Apr/2026 22:01:34'!
+setInputL: aBuffer
+	inputL := aBuffer! !
+
+!TapeDrift methodsFor: 'wiring' stamp: 'len 20/Apr/2026 22:01:38'!
+setInputR: aBuffer
+	inputR := aBuffer! !
+
+!TapeDrift methodsFor: 'wiring' stamp: 'len 20/Apr/2026 22:01:52'!
+setOutputL: aBuffer
+	outputL := aBuffer! !
+
+!TapeDrift methodsFor: 'wiring' stamp: 'len 20/Apr/2026 22:01:56'!
 setOutputR: aBuffer
 	outputR := aBuffer! !
 

@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 19 April 2026 at 5:15:39 pm'!
+'From Cuis7.7 [latest update: #7872] on 20 April 2026 at 4:35:43 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 21!
+!provides: 'Tracker' 1 22!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -655,11 +655,11 @@ clipboardPaste
 	patch := self patch ifNil: [^ self].
 	patch addMorph: clipboard copy patchable position: ((patch internalizeFromWorld: self activeHand morphPosition))! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 18/Apr/2026 18:16:49'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 19/Apr/2026 22:52:50'!
 duplicateInstrument
 	| instrument |
 	instrument := tracker selectedInstrument ifNil: [^ self].
-	self request: 'Duplicate to instrument number' initialAnswer: '' do: [:destinationInstrumentNumber| ]! !
+	self request: 'Duplicate to instrument number' initialAnswer: '' verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| tracker instruments at: s asNumber put: instrument copy]! !
 
 !InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 9/Apr/2026 15:03:03'!
 exportInstrument
@@ -674,7 +674,7 @@ exportInstrument
 fitPatchToBounds
 	self patch ifNotNil: [:aMorph| aMorph fitTo: (self localBounds insetBy: 8)]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 9/Apr/2026 15:34:46'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Apr/2026 16:32:20'!
 importInstrument
 	| instrument |
 	instrument := tracker selectedInstrument ifNil: [^ self].
@@ -1633,6 +1633,12 @@ setOwnerTrack: aTrack
 track
 	^ track! !
 
+!Instrument methodsFor: 'copying' stamp: 'len 19/Apr/2026 22:49:45'!
+copy
+	| buffers |
+	buffers := OrderedCollection new.
+	^ self class new readFromJson: (self asJsonWithBuffers: buffers) buffers: buffers! !
+
 !Instrument methodsFor: 'initialization' stamp: 'len 24/Mar/2026 01:54:35'!
 initialize
 	controlValues := Float32Array new: 10.
@@ -1826,7 +1832,7 @@ readFrom: aStream
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 
-!Instrument methodsFor: 'serialization' stamp: 'len 9/Apr/2026 19:26:11'!
+!Instrument methodsFor: 'serialization' stamp: 'len 20/Apr/2026 16:32:16'!
 readFromJson: json buffers: bufferList
 	| patchables |
 	patchables := (json at: #modules) collect: [:each|
@@ -1840,7 +1846,7 @@ readFromJson: json buffers: bufferList
 		output := (patchables at: (each at: #source)) outputs detect: [:one| one selector = (each at: #output)].
 		input := (patchables at: (each at: #target)) inputs detect: [:one| one selector = (each at: #input)].
 		output addConnectionTo: input].
-	self assert: (patchables allSatisfy: [:each| each body color = PatchMorph panelColor]).
+	patch redrawNeeded.
 	label := json at: #label! !
 
 !Instrument methodsFor: 'serialization' stamp: 'len 5/Feb/2026 17:57:19'!

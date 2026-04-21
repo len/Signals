@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 20 April 2026 at 11:36:44 pm'!
+'From Cuis7.7 [latest update: #7872] on 21 April 2026 at 3:08:18 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 536!
+!provides: 'Signals' 1 537!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -207,7 +207,7 @@ StereoReverb class
 
 !classDefinition: #TapeDrift category: #'Signals-FX'!
 Module subclass: #TapeDrift
-	instanceVariableNames: 'inputL inputR outputL outputR delayLineL tapL delayLineR tapR wowPhase flutterPhase'
+	instanceVariableNames: 'inputL inputR outputL outputR delayLineL tapL delayLineR tapR wowPhase flutterPhase random wowNoiseLPF flutterNoiseLPF1 flutterNoiseLPF2'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
@@ -3731,44 +3731,62 @@ setOutputL: aBuffer
 setOutputR: aBuffer
 	outputR := aBuffer! !
 
-!TapeDrift methodsFor: 'controlling' stamp: 'len 20/Apr/2026 22:24:22'!
+!TapeDrift methodsFor: 'controlling' stamp: 'len 21/Apr/2026 01:25:08'!
 reset
 	delayLineL reset.
 	tapL reset.
 	delayLineR reset.
 	tapR reset.
-	wowPhase := flutterPhase := 0.0! !
+	wowPhase := flutterPhase := 0.0.
+	wowNoiseLPF reset.
+	flutterNoiseLPF1 reset.
+	flutterNoiseLPF2 reset! !
 
-!TapeDrift methodsFor: 'controlling' stamp: 'len 20/Apr/2026 23:27:25'!
+!TapeDrift methodsFor: 'controlling' stamp: 'len 21/Apr/2026 15:01:20'!
 update
-	| twoPi delay increment |
+	| twoPi delay wowFreq flutterFreq instability flutterNoise kFlutter kWow noise wowNoise |
 	super update.
+	wowFreq := (self get: #wowRate) / self class controlRate.
+	flutterFreq := (self get: #flutterRate) / self class controlRate.
+	wowNoiseLPF frequency: wowFreq.
+	flutterNoiseLPF1 frequency: flutterFreq * 1.5.
+	flutterNoiseLPF2 frequency: flutterFreq * 0.15.
+	noise := random next * 2.0 - 1.0.
+	wowNoise := (wowNoiseLPF value: noise) * ((2.0 - wowNoiseLPF alpha) / wowNoiseLPF alpha) sqrt.
+	noise := random next * 2.0 - 1.0.
+	flutterNoise := ((flutterNoiseLPF1 value: noise) - (flutterNoiseLPF2 value: noise)) * ((2.0 - flutterNoiseLPF1 alpha) / flutterNoiseLPF1 alpha) sqrt * 0.7.
+	instability := self get: #instability.
+	kWow := (instability raisedTo: 1.5) * 0.45 + 0.05.
+	kFlutter := (instability raisedTo: 1.2) * 0.11 + 0.01.
 	twoPi := Float twoPi.
-	delay := (wowPhase sin + 1.0 * (self get: #wowDepth) + (flutterPhase sin + 1.0 * (self get: #flutterDepth))) * self class sampleRate.
+	wowPhase := wowFreq * twoPi * (wowNoise * kWow + 1.0) + wowPhase \\ twoPi.
+	flutterPhase := flutterFreq * twoPi * (flutterNoise * kFlutter + 1.0) + flutterPhase \\ twoPi.
+	delay := (wowPhase sin * (self get: #wowDepth) + (flutterPhase sin * (self get: #flutterDepth)) + 0.02 "20 ms") * self class sampleRate.
 	tapL setDelayIncrement: (delay - tapL delay) / self class blockSize.
 	tapR setDelayIncrement: (delay - tapR delay) / self class blockSize.
-	increment := (self get: #wowRate) / self class controlRate * twoPi.
-	(wowPhase := wowPhase + increment) > twoPi ifTrue: [wowPhase := wowPhase - twoPi].
-	increment := (self get: #flutterRate) / self class controlRate * twoPi.
-	(flutterPhase := flutterPhase + increment) > twoPi ifTrue: [flutterPhase := flutterPhase - twoPi]! !
+! !
 
-!TapeDrift methodsFor: 'initialization' stamp: 'len 20/Apr/2026 22:24:04'!
+!TapeDrift methodsFor: 'initialization' stamp: 'len 21/Apr/2026 14:49:02'!
 initialize
 	super initialize.
-	delayLineL := DelayLine new: (self class sampleRate * 0.040) ceiling. "40 ms"
+	delayLineL := DelayLine new: (self class sampleRate * 0.1) ceiling. "100 ms maximum delay"
 	tapL := DelayTapC on: delayLineL.
-	delayLineR := DelayLine new: (self class sampleRate * 0.040) ceiling.
+	delayLineR := DelayLine new: (self class sampleRate * 0.1) ceiling.
 	tapR := DelayTapC on: delayLineR.
-	wowPhase := flutterPhase := 0.0! !
+	wowPhase := flutterPhase := 0.0.
+	random := Random new.
+	wowNoiseLPF := OnePole new.
+	flutterNoiseLPF1 := OnePole new.
+	flutterNoiseLPF2 := OnePole new! !
 
-!TapeDrift methodsFor: 'initialization' stamp: 'len 20/Apr/2026 23:36:29'!
+!TapeDrift methodsFor: 'initialization' stamp: 'len 21/Apr/2026 01:43:22'!
 initializeControls
 	super initializeControls.
+	self addFrequencyControl: #wowRate min: 0.05 "Hz" max: 2.0 "Hz" value: 0.25 "Hz".
 	self addTimeControl: #wowDepth min: 0.00001 "0.01 ms" max: 0.015 "15 ms" value: 0.002 "2 ms". "0 to ±30 cents at 0.5 Hz"
-	self addFrequencyControl: #wowRate min: 0.1 "Hz" max: 3.0 "Hz" value: 0.5 "Hz".
-	self addTimeControl: #flutterDepth min: 0.00001 "0.01 ms" max: 0.003 "3 ms" value: 0.0002 "0.2 ms".
-	self addFrequencyControl: #flutterRate min: 4.0 "Hz" max: 20.0 "Hz" value: 8.0 "Hz".
-	self addControl: #jitter min: 0.0 max: 1.0 value: 0.5! !
+	self addFrequencyControl: #flutterRate min: 3.0 "Hz" max: 15.0 "Hz" value: 6.0 "Hz".
+	self addTimeControl: #flutterDepth min: 0.00001 "0.01 ms" max: 0.001 "1 ms" value: 0.0001 "0.1 ms".
+	self addControl: #instability min: 0.0 max: 1.0 value: 0.5! !
 
 !TapeDrift methodsFor: 'processing' stamp: 'len 20/Apr/2026 22:14:52'!
 tick
@@ -3781,14 +3799,14 @@ tick
 			delayLineR write: (inputR at: i).
 			outputR at: i put: tapR read]]! !
 
-!TapeDrift methodsFor: 'ui' stamp: 'len 20/Apr/2026 21:57:46'!
+!TapeDrift methodsFor: 'ui' stamp: 'len 21/Apr/2026 01:43:29'!
 panel
 	^ ControlPanel new
 		addKnob: (controls at: #wowRate);
 		addKnob: (controls at: #wowDepth);
 		addKnob: (controls at: #flutterRate);
 		addKnob: (controls at: #flutterDepth);
-		addKnob: (controls at: #jitter)! !
+		addKnob: (controls at: #instability)! !
 
 !TapeDrift methodsFor: 'ui' stamp: 'len 20/Apr/2026 22:03:55'!
 patchable
@@ -13218,13 +13236,13 @@ mouseLeave: anEvent
 	title visible: false.
 	flap visible: false! !
 
-!PatchableMorph methodsFor: 'initialization' stamp: 'len 10/Apr/2026 00:10:14'!
+!PatchableMorph methodsFor: 'initialization' stamp: 'len 21/Apr/2026 01:38:13'!
 initialize
 	| container |
 	super initialize.
 	container := LinearLayoutMorph newRow gap: 1; color: Color transparent.
 	inputsArea := LinearLayoutMorph newColumn padding: 0@0; gap: 2; color: Color transparent.
-	outputsArea := LinearLayoutMorph newColumn padding: 0@0; gap: 12; color: Color transparent.
+	outputsArea := LinearLayoutMorph newColumn padding: 0@0; gap: 2; color: Color transparent.
 	body := RoundedLinearLayoutMorph newColumn gap: 10; padding: 4 @ 4; borderWidth: 1; borderColor: Color lightGray; color: PatchMorph panelColor.
 	container addMorph: inputsArea; addMorph: body; addMorph: outputsArea.
 	self addMorph: container.
@@ -14123,9 +14141,21 @@ value: in
 	position := position \\ buffer size.
 	^ out! !
 
+!OnePole methodsFor: 'accessing' stamp: 'len 21/Apr/2026 15:00:58'!
+alpha
+	^ 1.0 - pole! !
+
+!OnePole methodsFor: 'accessing' stamp: 'len 21/Apr/2026 15:05:50'!
+alpha: aNumber
+	pole := 1.0 - aNumber! !
+
 !OnePole methodsFor: 'accessing' stamp: 'len 19/Mar/2026 16:59:30'!
 frequency: normalizedFrequency
 	pole := (Float pi * normalizedFrequency * -2.0) exp! !
+
+!OnePole methodsFor: 'accessing' stamp: 'len 21/Apr/2026 15:05:27'!
+pole
+	^ pole! !
 
 !OnePole methodsFor: 'accessing' stamp: 'len 19/Mar/2026 16:59:45'!
 pole: aNumber

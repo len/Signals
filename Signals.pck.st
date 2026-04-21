@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 21 April 2026 at 3:08:18 pm'!
+'From Cuis7.7 [latest update: #7872] on 21 April 2026 at 3:28:03 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 537!
+!provides: 'Signals' 1 538!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -13323,16 +13323,25 @@ target: aMorph
 targetPoint
 	^ self internalizeFromWorld: (target externalizeToWorld: target connectionPoint)! !
 
-!WireMorph methodsFor: 'drawing' stamp: 'len 30/Nov/2025 11:25:00'!
+!WireMorph methodsFor: 'drawing' stamp: 'len 21/Apr/2026 15:17:49'!
 drawOn: aCanvas
 	| s t δ |
 	s := self sourcePoint.
 	t := self targetPoint.
 	δ := 50 @ 0.
-	aCanvas strokeWidth: self wireWidth * 2.5 color: (Color black alpha: 0.5) do:
-		[aCanvas moveTo: s; cubicBezierTo: t control1: s+δ control2: t-δ].
-	aCanvas strokeWidth: self wireWidth color: color do:
-		[aCanvas moveTo: s; cubicBezierTo: t control1: s+δ control2: t-δ].
+	(target patchableOwner morphPosition x < source patchableOwner morphPosition x)
+		ifTrue:
+			[aCanvas strokeWidth: self wireWidth * 2.5 color: (Color black alpha: 0.5) dashedStrokeBits: 2r1110000000 do:
+				[aCanvas moveTo: s; cubicBezierTo: t control1: s+δ control2: t-δ].
+			aCanvas strokeWidth: self wireWidth color: color dashedStrokeBits: 2r1110000000 do:
+				[aCanvas moveTo: s; cubicBezierTo: t control1: s+δ control2: t-δ]]
+		ifFalse:
+			[aCanvas strokeWidth: self wireWidth * 2.5 color: (Color black alpha: 0.5) do:
+				[aCanvas moveTo: s; cubicBezierTo: t control1: s+δ control2: t-δ].
+			aCanvas strokeWidth: self wireWidth color: color do:
+				[aCanvas moveTo: s; cubicBezierTo: t control1: s+δ control2: t-δ]]
+
+
 "	aCanvas strokeWidth: self wireWidth color: color do:
 		[aCanvas moveTo: s; lineTo: t]"
 "	aCanvas strokeWidth: 1 color: color fillColor: color do: [aCanvas circleCenter: t - (0.5@0.5) radius: 2]"! !

@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 21 April 2026 at 3:28:03 pm'!
+'From Cuis7.7 [latest update: #7872] on 22 April 2026 at 11:47:30 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 538!
+!provides: 'Signals' 1 539!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -285,24 +285,24 @@ Generator subclass: #TunedGenerator
 TunedGenerator class
 	instanceVariableNames: ''!
 
+!classDefinition: #Operator category: #'Signals-Oscillators'!
+TunedGenerator subclass: #Operator
+	instanceVariableNames: 'phase increment incrementRatio inputPM level'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Oscillators'!
+!classDefinition: 'Operator class' category: #'Signals-Oscillators'!
+Operator class
+	instanceVariableNames: ''!
+
 !classDefinition: #Oscillator category: #'Signals-Oscillators'!
 TunedGenerator subclass: #Oscillator
-	instanceVariableNames: 'phase increment incrementRatio inputFM'
+	instanceVariableNames: 'phase increment incrementRatio'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Oscillators'!
 !classDefinition: 'Oscillator class' category: #'Signals-Oscillators'!
 Oscillator class
-	instanceVariableNames: ''!
-
-!classDefinition: #OPN category: #'Signals-Oscillators'!
-Oscillator subclass: #OPN
-	instanceVariableNames: 'wave'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Oscillators'!
-!classDefinition: 'OPN class' category: #'Signals-Oscillators'!
-OPN class
 	instanceVariableNames: ''!
 
 !classDefinition: #Pulse category: #'Signals-Oscillators'!
@@ -335,16 +335,6 @@ Oscillator subclass: #Sine
 Sine class
 	instanceVariableNames: ''!
 
-!classDefinition: #TriSawPulse category: #'Signals-Oscillators'!
-Oscillator subclass: #TriSawPulse
-	instanceVariableNames: 'shape'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Oscillators'!
-!classDefinition: 'TriSawPulse class' category: #'Signals-Oscillators'!
-TriSawPulse class
-	instanceVariableNames: ''!
-
 !classDefinition: #Triangle category: #'Signals-Oscillators'!
 Oscillator subclass: #Triangle
 	instanceVariableNames: 'shape'
@@ -355,14 +345,24 @@ Oscillator subclass: #Triangle
 Triangle class
 	instanceVariableNames: ''!
 
-!classDefinition: #Wavetable category: #'Signals-Samples'!
-Oscillator subclass: #Wavetable
-	instanceVariableNames: 'table frameSize position fft spectrumReal spectrumImaginary aux ticksToUpdate label'
-	classVariableNames: 'Library'
+!classDefinition: #OPN category: 'Signals-Trash'!
+Oscillator subclass: #OPN
+	instanceVariableNames: 'wave'
+	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Samples'!
-!classDefinition: 'Wavetable class' category: #'Signals-Samples'!
-Wavetable class
+	category: 'Signals-Trash'!
+!classDefinition: 'OPN class' category: 'Signals-Trash'!
+OPN class
+	instanceVariableNames: ''!
+
+!classDefinition: #TriSawPulse category: 'Signals-Trash'!
+Oscillator subclass: #TriSawPulse
+	instanceVariableNames: 'shape'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Trash'!
+!classDefinition: 'TriSawPulse class' category: 'Signals-Trash'!
+TriSawPulse class
 	instanceVariableNames: ''!
 
 !classDefinition: #Supersaw category: #'Signals-Oscillators'!
@@ -423,6 +423,16 @@ TunedGenerator subclass: #Sample
 	category: 'Signals-Samples'!
 !classDefinition: 'Sample class' category: #'Signals-Samples'!
 Sample class
+	instanceVariableNames: ''!
+
+!classDefinition: #Wavetable category: #'Signals-Samples'!
+TunedGenerator subclass: #Wavetable
+	instanceVariableNames: 'phase increment incrementRatio table frameSize position fft spectrumReal spectrumImaginary aux ticksToUpdate label'
+	classVariableNames: 'Library'
+	poolDictionaries: ''
+	category: 'Signals-Samples'!
+!classDefinition: 'Wavetable class' category: #'Signals-Samples'!
+Wavetable class
 	instanceVariableNames: ''!
 
 !classDefinition: #ColoredNoise category: #'Signals-Noise'!
@@ -1844,11 +1854,11 @@ A signal generator produces a stream of samples for a mono audio signal. It is s
 !TunedGenerator commentStamp: '<historical>' prior: 0!
 A tuned generator is a signal generator with pitch, such as an oscillator. See subclasses.!
 
-!Oscillator commentStamp: '<historical>' prior: 0!
-Abstract superclass for simple oscillators that can be defined by a single phase value that is incremented at each sampling step.!
+!Operator commentStamp: '<historical>' prior: 0!
+An operator for classic FM synthesis (as in the Yamaha DX7, technically phase modulation). Essentially, an operator is a sine oscillator with an amp, that can be phase-modulated at audio rate from a modulator input and feedback.!
 
-!OPN commentStamp: '<historical>' prior: 0!
-This oscillator emulates the oscillators of the Yamaha sound chips YM2414 (used in the TX81Z and DX11 synthesizers) and YM2612 (used in the Sega Mega Drive game console). It has a choice of 8 waveforms.!
+!Oscillator commentStamp: '<historical>' prior: 0!
+Abstract superclass for simple oscillators that can be defined by a single phase variable that is incremented at each sampling step.!
 
 !Pulse commentStamp: '<historical>' prior: 0!
 This is a virtual analog oscillator. It generates a pulse wave applying PolyBLEP to prevent aliasing. This oscillator supports audio-rate pulse width modulation (PWM).
@@ -1859,30 +1869,24 @@ Pulse waves with duty cycles other than 50% have both odd and even harmonics. Sp
 
 Pulse waves with a 50% duty cycle sound hollow, like a clarinet, while narrower pulses (smaller duty cycles) sound more nasal, resembling an oboe.!
 
-!Saw commentStamp: '<historical>' prior: 0!
+!Saw commentStamp: 'len 22/Apr/2026 16:29:30' prior: 0!
 This is a virtual analog oscillator. It generates a variable-slope saw that morphs between falling saw, triangle and rising saw, applying PolyBLEP and PolyBLAMP to prevent aliasing.
 
-A sawtooth wave contains a both even and odd harmonics (2f, 3f, 4f, ...) of the fundamental frequency (f). The amplitude of each harmonic is inversely proportional to its harmonic number (e.g., the 3rd harmonic 3f is 1/3 the amplitude of the fundamental), creating a gradual, harmonic-rich decay.!
+A sawtooth wave contains both even and odd harmonics (2f, 3f, 4f, ...) of the fundamental frequency (f). The amplitude of each harmonic is inversely proportional to its harmonic number (e.g., the 3rd harmonic 3f is 1/3 the amplitude of the fundamental), creating a gradual, harmonic-rich decay.!
 
 !Sine commentStamp: '<historical>' prior: 0!
 This is a sine wave oscillator with variable warping produced by self-phase modulation. At zero warp, it's a sine. As the warp parameter moves from 0 to 1, integer harmonics (both odd and even) are added up to about the 6th harmonic.!
-
-!TriSawPulse commentStamp: '<historical>' prior: 0!
-This is a virtual analog oscillator that can morph between triangle, saw and pulse waves. It uses PolyBLEP and PolyBLAMP to prevent aliasing.!
 
 !Triangle commentStamp: '<historical>' prior: 0!
 This is a virtual analog triangle oscillator that uses PolyBLAMP for antialiasing. It morphs from a pure triangle to a sine wave.
 
 A triangle wave consists of only odd harmonics (f, 3f, 5f, 7f, ...) of the fundamental frequency, similar to a square wave, but its harmonic amplitudes decrease much faster, proportional to the inverse square of the harmonic number (1/n²). This results in a brighter tone than a sine wave but mellower than a square wave, with 12 dB per octave roll-off.!
 
-!Wavetable commentStamp: '<historical>' prior: 0!
-Antialiased wavetable oscillator using spectral resynthesis.
+!OPN commentStamp: '<historical>' prior: 0!
+This oscillator emulates the oscillators of the Yamaha sound chips YM2414 (used in the TX81Z and DX11 synthesizers) and YM2612 (used in the Sega Mega Drive game console). It has a choice of 8 waveforms.!
 
-The oscillator is initialized from a multi-frame wavetable (e.g., 256 frames × 2048 samples). Each frame is transformed to the frequency domain via FFT and stored as a complex spectrum.
-
-When the table position or pitch change, a bandlimited frame is synthesized on-the-fly by interpolating between neighboring spectra and discarding all frequency bins above the Nyquist limit for the current playback frequency. The resulting spectrum is transformed back to the time domain using an inverse FFT.
-
-Audio samples are then generated by phase-based interpolation within this bandlimited frame.!
+!TriSawPulse commentStamp: '<historical>' prior: 0!
+This is a virtual analog oscillator that can morph between triangle, saw and pulse waves. It uses PolyBLEP and PolyBLAMP to prevent aliasing.!
 
 !Supersaw commentStamp: '<historical>' prior: 0!
 Emulation of the Roland JP-8000 and JP-8080 supersaw oscillator based on Adam Szabo's thesis [1]. It consists of 7 detuned saws. It is not a perfect emulation, e.g. it uses antialiased PolyBLEP saws, instead of oversampling a digital saw and applying a high pass filter as the original.
@@ -1904,6 +1908,15 @@ A multisample is the basis of a rompler (from "ROM" and "sampler"). It generates
 
 !Sample commentStamp: 'len 9/Apr/2026 23:16:22' prior: 0!
 A sample is a recorded signal. It has a buffer of recorded samples, a playback rate, and optional loop points. Samples can be played at different rates to produce different pitches.!
+
+!Wavetable commentStamp: '<historical>' prior: 0!
+Antialiased wavetable oscillator using spectral resynthesis.
+
+The oscillator is initialized from a multi-frame wavetable (e.g., 256 frames × 2048 samples). Each frame is transformed to the frequency domain via FFT and stored as a complex spectrum.
+
+When the table position or pitch change, a bandlimited frame is synthesized on-the-fly by interpolating between neighboring spectra and discarding all frequency bins above the Nyquist limit for the current playback frequency. The resulting spectrum is transformed back to the time domain using an inverse FFT.
+
+Audio samples are then generated by phase-based interpolation within this bandlimited frame.!
 
 !ColoredNoise commentStamp: '<historical>' prior: 0!
 A colored noise generator. The color parameter blends between different noise sources: centered at 0.0 it generates white noise, at -0.5 pink noise, at -1.0 brown noise, and at 1.0 blue noise.!
@@ -4337,6 +4350,85 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
+!Operator methodsFor: 'controlling' stamp: 'len 22/Apr/2026 23:17:43'!
+reset
+	phase := 0.0! !
+
+!Operator methodsFor: 'controlling' stamp: 'len 22/Apr/2026 20:58:52'!
+update
+	| targetIncrement |
+	super update.
+	targetIncrement := ((self get: #tune) + note) semitonesToHertz * (self get: #ratio) / self class sampleRate.
+	increment ifNil: [increment := targetIncrement].
+	incrementRatio := ((targetIncrement / increment) ln / self class blockSize) exp! !
+
+!Operator methodsFor: 'initialization' stamp: 'len 22/Apr/2026 22:32:04'!
+initialize
+	super initialize.
+	self reset.
+	level := 1.0! !
+
+!Operator methodsFor: 'initialization' stamp: 'len 22/Apr/2026 22:30:32'!
+initializeControls
+	super initializeControls.
+	(self addControl: #ratio min: 0.25 max: 16.0 value: 1.0) printer: [:x| '×', (x printStringFractionDigits: 2)].
+	(self addControl: #level min: 0.0 max: 1.0 value: 1.0) printer: [:x| '±', (x printStringFractionDigits: 2)].
+	(self addControl: #feedback min: 0.0 max: 1.0 value: 0.0) printer: [:x| (x * 100.0) rounded printString, '%']! !
+
+!Operator methodsFor: 'processing' stamp: 'len 22/Apr/2026 23:29:29'!
+tick
+	| feedback twoPi levelIncrement lastOutput |
+	output ifNil: [^ self].
+	feedback := self get: #feedback.
+	twoPi := Float twoPi.
+	levelIncrement := (self get: #level) - level / self class blockSize.
+	(level = 0.0 and: [levelIncrement = 0.0]) ifTrue:
+		[increment := increment * (incrementRatio raisedTo: output size).
+		output atAllPut: 0.0.
+		^ self].
+	lastOutput := output last.
+	1 to: output size do: [:i|
+		| mod |
+		mod := lastOutput * feedback.
+		inputPM ifNotNil: [mod := mod + (inputPM at: i)].
+		level := level + levelIncrement.
+		lastOutput := output at: i put: ((phase + mod) * twoPi) sin * level.
+		phase := phase + (increment := increment * incrementRatio)].
+	phase := phase - phase truncated! !
+
+!Operator methodsFor: 'ui' stamp: 'len 22/Apr/2026 22:31:48'!
+panel
+	^​ super panel
+		addTextualControl: (controls at: #ratio);
+		addTextualControl: (controls at: #level);
+		addTextualControl: (controls at: #feedback)! !
+
+!Operator methodsFor: 'ui' stamp: 'len 22/Apr/2026 23:37:56'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self screen.
+	answer flap addMorph: self panel.
+	answer
+		addAudioInput: #setInputPM: label: 'FM';
+		addControlInput: #tune label: 'Pitch';
+		addControlInput: #ratio;
+		addControlInput: #level;
+		addControlInput: #feedback;
+		addAudioOutput: #setOutput:.
+	^ answer! !
+
+!Operator methodsFor: 'ui' stamp: 'len 22/Apr/2026 23:37:44'!
+screen
+	^​ XYVariableWaveControlMorph new
+		controlX: (controls at: #ratio);
+		controlY: (controls at: #level);
+		waveBlock: [:x :r :g| (x * r * Float twoPi) sin * g]! !
+
+!Operator methodsFor: 'wiring' stamp: 'len 22/Apr/2026 16:18:01'!
+setInputPM: aBuffer
+	inputPM := aBuffer! !
+
 !Oscillator methodsFor: 'controlling' stamp: 'len 24/Sep/2025 02:26:00'!
 reset
 	phase := 0.0! !
@@ -4354,104 +4446,19 @@ initialize
 	super initialize.
 	self reset! !
 
-!Oscillator methodsFor: 'processing' stamp: 'len 4/Apr/2026 20:03:40'!
-next
-	| answer |
-	answer := self peek.
-	(phase := phase + (increment := increment * incrementRatio)) >= 1.0 ifTrue: [phase := phase - phase truncated].
-	^ answer! !
+!Oscillator methodsFor: 'processing' stamp: 'len 21/Apr/2026 18:49:59'!
+advance
+	(phase := phase + (increment := increment * incrementRatio)) >= 1.0 ifTrue: [phase := phase - phase truncated]! !
 
-!Oscillator methodsFor: 'processing' stamp: 'len 3/Dec/2025 14:21:52'!
-peek
-	^ self subclassResponsibility! !
-
-!Oscillator methodsFor: 'processing' stamp: 'len 20/Apr/2026 18:21:40'!
-read: aBuffer FM: modulatorBuffer feedback: feedbackAmount
-	| lastValue |
-	lastValue := 0.0.
-	1 to: aBuffer size do: [:i|
-		| oldPhase |
-		oldPhase := phase.
-		phase := phase + (modulatorBuffer at: i) + (lastValue * feedbackAmount).
-		phase >= 1.0 ifTrue: [phase := phase - phase truncated].
-		lastValue := self peek.
-		aBuffer at: i put: lastValue.
-		phase := oldPhase + (increment := increment * incrementRatio).
-		phase >= 1.0 ifTrue: [phase := phase - phase truncated]]! !
-
-!Oscillator methodsFor: 'processing' stamp: 'len 20/Apr/2026 18:20:32'!
-tick
-	output ifNil: [^ self].
-	inputFM ifNotNil: [^ self read: output FM: inputFM feedback: 0.0].
-	self read: output! !
-
-!Oscillator methodsFor: 'ui' stamp: 'len 2/Feb/2026 16:09:33'!
+!Oscillator methodsFor: 'ui' stamp: 'len 22/Apr/2026 18:31:09'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
 	answer
 		addControlInput: #tune label: 'Pitch';
-		addAudioInput: #setInputFM: label: 'FM';
 		addAudioOutput: #setOutput:.
 	^ answer! !
-
-!Oscillator methodsFor: 'wiring' stamp: 'len 13/Jan/2026 13:13:04'!
-setInputFM: aBuffer
-	inputFM := aBuffer! !
-
-!OPN methodsFor: 'accessing' stamp: 'len 20/Nov/2025 16:57:00'!
-wave: anInteger
-	wave := anInteger! !
-
-!OPN methodsFor: 'controlling' stamp: 'len 20/Apr/2026 18:25:15'!
-update
-	super update.
-	wave := self get: #wave! !
-
-!OPN methodsFor: 'initialization' stamp: 'len 20/Apr/2026 18:24:16'!
-initializeControls
-	super initializeControls.
-	self addChoiceControl: #wave options: #(1 2 3 4 5 6 7 8) value: 1! !
-
-!OPN methodsFor: 'processing' stamp: 'len 20/Nov/2025 16:57:00'!
-peek
-	^ self wave: wave at: phase! !
-
-!OPN methodsFor: 'ui' stamp: 'len 20/Apr/2026 18:27:43'!
-patchable
-	| answer |
-	answer := PatchableMorph new model: self.
-	answer body addMorph: self screen.
-	answer flap addMorph: self panel.
-	answer
-		addControlInput: #tune label: 'Pitch';
-		addControlInput: #wave;
-		addAudioInput: #setInputFM: label: 'FM';
-		addAudioOutput: #setOutput:.
-	^ answer! !
-
-!OPN methodsFor: 'ui' stamp: 'len 20/Apr/2026 18:27:02'!
-screen
-	^​ VariableWaveControlMorph new
-		control: (controls at: #wave);
-		waveBlock: [:x :s| self wave: s at: x]! !
-
-!OPN methodsFor: 'private' stamp: 'len 29/Sep/2025 19:37:00'!
-wave: s at: t
-	s <= 1 ifTrue: [^ (t * Float twoPi) sin].
-	s <= 2 ifTrue:
-		[t < 0.25 ifTrue: [^ (t - 0.25 * Float twoPi) sin + 1.0].
-		t < 0.5 ifTrue: [^ (t + 0.25 * Float twoPi) sin + 1.0].
-		t < 0.75 ifTrue: [^ (t - 0.25 * Float twoPi) sin - 1.0].
-		^ (t + 0.25 * Float twoPi) sin - 1.0].
-	s <= 3 ifTrue: [^ t < 0.5 ifTrue: [(t * Float twoPi) sin] ifFalse: [0.0]].
-	s <= 4 ifTrue:
-		[t < 0.25 ifTrue: [^ (t - 0.25 * Float twoPi) sin + 1.0].
-		t < 0.5 ifTrue: [^ (t + 0.25 * Float twoPi) sin + 1.0].
-		^ 0.0].
-	t > 0.5 ifTrue: [^ 0.0].
-	^ self wave: s - 4 at: t * 2.0! !
 
 !Pulse methodsFor: 'controlling' stamp: 'len 20/Apr/2026 18:13:19'!
 update
@@ -4469,8 +4476,9 @@ initializeControls
 	super initializeControls.
 	(self addControl: #width min: 0.0 max: 1.0 value: 0.5) printer: [:x| (x * 100.0) rounded printString, '%']! !
 
-!Pulse methodsFor: 'processing' stamp: 'len 4/Apr/2026 19:33:19'!
-peek
+!Pulse methodsFor: 'processing' stamp: 'len 21/Apr/2026 19:00:30'!
+next
+	self advance.
 	^ (phase pulse: increment width: width) * 0.577 "normalize amplitude to match perceived loudness with other oscillators"! !
 
 !Pulse methodsFor: 'processing' stamp: 'len 20/Apr/2026 18:14:57'!
@@ -4482,13 +4490,13 @@ read: aBuffer PWM: modulatorBuffer
 		aBuffer at: i put: self next].
 	width := base! !
 
-!Pulse methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:15:08'!
+!Pulse methodsFor: 'processing' stamp: 'len 21/Apr/2026 18:57:46'!
 tick
 	output ifNil: [^ self].
-	inputPWM ifNotNil: [self assert: inputFM isNil. ^ self read: output PWM: inputPWM].
+	inputPWM ifNotNil: [^ self read: output PWM: inputPWM].
 	self read: output! !
 
-!Pulse methodsFor: 'ui' stamp: 'len 12/Apr/2026 03:59:55'!
+!Pulse methodsFor: 'ui' stamp: 'len 22/Apr/2026 18:31:14'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -4498,7 +4506,6 @@ patchable
 		addControlInput: #tune label: 'Pitch';
 		addControlInput: #width;
 		addAudioInput: #setInputPWM: label: 'PWM';
-		addAudioInput: #setInputFM: label: 'FM';
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
@@ -4527,12 +4534,13 @@ initializeControls
 	super initializeControls.
 	self addControl: #shape min: 0.0 max: 1.0 value: 1.0! !
 
-!Saw methodsFor: 'processing' stamp: 'len 4/Apr/2026 19:33:19'!
-peek
+!Saw methodsFor: 'processing' stamp: 'len 21/Apr/2026 19:01:41'!
+next
+	self advance.
 	shape = 1.0 ifTrue: [^ phase saw: increment].
 	^ phase triangle: increment skew: shape! !
 
-!Saw methodsFor: 'ui' stamp: 'len 12/Apr/2026 04:00:08'!
+!Saw methodsFor: 'ui' stamp: 'len 22/Apr/2026 18:31:18'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -4541,7 +4549,6 @@ patchable
 	answer
 		addControlInput: #tune label: 'Pitch';
 		addControlInput: #shape;
-		addAudioInput: #setInputFM: label: 'FM';
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
@@ -4566,25 +4573,30 @@ initializeControls
 	super initializeControls.
 	self addControl: #warp min: 0.0 max: 1.0 value: 0.0! !
 
-!Sine methodsFor: 'processing' stamp: 'len 17/Jan/2026 19:24:43'!
-peek
-	^ (((phase * Float twoPi) sin * warp + phase) * Float twoPi) sin! !
+!Sine methodsFor: 'processing' stamp: 'len 22/Apr/2026 05:15:11'!
+next
+	| twoPi |
+	self advance.
+	twoPi := Float twoPi.
+	warp = 0.0 ifTrue: [^ (self * twoPi) sin].
+	^ (((phase * twoPi) sin * warp + phase) * twoPi) sin! !
 
-!Sine methodsFor: 'processing' stamp: 'len 16/Apr/2026 02:01:40'!
+!Sine methodsFor: 'processing' stamp: 'len 22/Apr/2026 05:07:16'!
 read: aBuffer
-	| α f |
+	| twoPi α f |
 	warp = 0.0 ifFalse: [^ super read: aBuffer].
 	"This is about 3x the speed of the original method that calls #next."
-	α := phase * Float twoPi.
-	f := increment * Float twoPi.
+	twoPi := Float twoPi.
+	α := phase * twoPi.
+	f := increment * twoPi.
 	1 to: aBuffer size do: [:i|
 		aBuffer at: i put: α sin.
 		α := α + (f := f * incrementRatio)].
-	phase := α / Float twoPi.
+	phase := α / twoPi.
 	phase := phase - phase truncated.
-	increment := f / Float twoPi! !
+	increment := f / twoPi! !
 
-!Sine methodsFor: 'ui' stamp: 'len 12/Apr/2026 04:00:21'!
+!Sine methodsFor: 'ui' stamp: 'len 22/Apr/2026 18:31:29'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -4593,7 +4605,6 @@ patchable
 	answer
 		addControlInput: #tune label: 'Pitch';
 		addControlInput: #warp;
-		addAudioInput: #setInputFM: label: 'FM';
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
@@ -4602,56 +4613,6 @@ screen
 	^​ VariableWaveControlMorph new
 		control: (controls at: #warp);
 		waveBlock: [:x :s| (((x * Float twoPi) sin * s + x) * Float twoPi) sin]! !
-
-!TriSawPulse methodsFor: 'controlling' stamp: 'len 16/Jan/2026 14:18:49'!
-update
-	super update.
-	shape := self get: #shape! !
-
-!TriSawPulse methodsFor: 'initialization' stamp: 'len 16/Jan/2026 14:18:23'!
-initialize
-	super initialize.
-	shape := 0.0! !
-
-!TriSawPulse methodsFor: 'initialization' stamp: 'len 16/Jan/2026 14:17:32'!
-initializeControls
-	super initializeControls.
-	self addControl: #shape min: 0.0 max: 1.0 value: 0.0! !
-
-!TriSawPulse methodsFor: 'processing' stamp: 'len 4/Apr/2026 19:33:19'!
-peek
-	"Answer a mix of two waves, depending on the shape parameter.
-	Normalize the amplitude of the pulse wave to match perceived loudness with the other wave shapes."
-	shape = 0.0 ifTrue: [^ phase triangle: increment].
-	shape < 0.25 ifTrue: [^ (phase triangle: increment) * (0.25 - shape) + ((phase saw: increment) * shape) / 0.25].
-	shape = 0.25 ifTrue: [^ phase saw: increment].
-	shape < 0.5 ifTrue: [^ (phase saw: increment) * (0.5 - shape) + ((phase pulse: increment width: shape - 0.25 * 2) * 0.577 * (shape - 0.25)) / 0.25].
-	^ (phase pulse: increment width: shape) * 0.577! !
-
-!TriSawPulse methodsFor: 'ui' stamp: 'len 12/Apr/2026 04:00:34'!
-patchable
-	| answer |
-	answer := PatchableMorph new model: self.
-	answer body addMorph: self screen.
-	answer flap addMorph: self panel.
-	answer
-		addControlInput: #tune label: 'Pitch';
-		addControlInput: #shape;
-		addAudioInput: #setInputFM: label: 'FM';
-		addAudioOutput: #setOutput:.
-	^ answer! !
-
-!TriSawPulse methodsFor: 'ui' stamp: 'len 12/Apr/2026 04:00:29'!
-screen
-	^​ VariableWaveControlMorph new
-		control: (controls at: #shape);
-		waveBlock: [:x :s|
-			s < 0.25
-				ifTrue: [x triangle * (0.25 - s) + (x saw * s) / 0.25]
-				ifFalse:
-					[s < 0.5
-						ifTrue: [x saw * (0.5 - s) + ((x pulseWidth: s - 0.25 * 2) * (s - 0.25)) / 0.25]
-						ifFalse: [x pulseWidth: s]]]! !
 
 !Triangle methodsFor: 'controlling' stamp: 'len 17/Jan/2026 03:39:47'!
 update
@@ -4668,11 +4629,13 @@ initializeControls
 	super initializeControls.
 	self addControl: #shape min: 0.0 max: 1.0 value: 0.0! !
 
-!Triangle methodsFor: 'processing' stamp: 'len 4/Apr/2026 19:33:19'!
-peek
+!Triangle methodsFor: 'processing' stamp: 'len 21/Apr/2026 19:03:36'!
+next
+	self advance.
+	shape = 0.0 ifTrue: [^ phase triangle: increment].
 	^ (phase triangle: increment) * (1.0 - shape) + ((phase * Float twoPi) sin * shape)! !
 
-!Triangle methodsFor: 'ui' stamp: 'len 12/Apr/2026 04:00:45'!
+!Triangle methodsFor: 'ui' stamp: 'len 22/Apr/2026 18:31:33'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -4681,7 +4644,6 @@ patchable
 	answer
 		addControlInput: #tune label: 'Pitch';
 		addControlInput: #shape;
-		addAudioInput: #setInputFM: label: 'FM';
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
@@ -4691,297 +4653,108 @@ screen
 		control: (controls at: #shape);
 		waveBlock: [:x :s| x triangle * (1.0 - s) + ((x * Float twoPi) sin * s)]! !
 
-!Wavetable methodsFor: 'accessing' stamp: 'len 29/Mar/2026 15:29:29'!
-frameCount
-	^ table size // frameSize! !
+!OPN methodsFor: 'accessing' stamp: 'len 20/Nov/2025 16:57:00'!
+wave: anInteger
+	wave := anInteger! !
 
-!Wavetable methodsFor: 'accessing' stamp: 'len 29/Mar/2026 15:29:14'!
-frameSize
-	^ frameSize! !
-
-!Wavetable methodsFor: 'accessing' stamp: 'len 4/Mar/2026 18:18:00'!
-label
-	^ label! !
-
-!Wavetable methodsFor: 'accessing' stamp: 'len 4/Mar/2026 18:17:56'!
-label: aString
-	label := aString! !
-
-!Wavetable methodsFor: 'accessing' stamp: 'len 29/Mar/2026 15:29:39'!
-table
-	^ table! !
-
-!Wavetable methodsFor: 'controlling' stamp: 'len 2/Apr/2026 15:47:10'!
-reset
-	super reset.
-	ticksToUpdate := 0! !
-
-!Wavetable methodsFor: 'controlling' stamp: 'len 4/Apr/2026 19:33:19'!
+!OPN methodsFor: 'controlling' stamp: 'len 20/Apr/2026 18:25:15'!
 update
-	| maxHarmonic p i f start |
 	super update.
-	position := self get: #position.
-	(ticksToUpdate := ticksToUpdate - 1) >= 0 ifTrue: [^ self].
-	ticksToUpdate := 7. "update only once every 7 ticks, ~ 50 Hz"
-	maxHarmonic := (1.0 / increment) truncated min: frameSize.
-	p := position * (self frameCount - 1).
-	i := p truncated.
-	f := p - i.
-	start := i * frameSize + 1.
-	fft reset.
-	fft realData replaceFrom: 1 to: maxHarmonic with: spectrumReal startingAt: start.
-	fft imagData replaceFrom: 1 to: maxHarmonic with: spectrumImaginary startingAt: start.
-	f = 0.0 ifFalse:
-		[start := start + frameSize.
-		aux atAllPut: 0.0.
-		aux replaceFrom: 1 to: maxHarmonic with: spectrumReal startingAt: start.
-		aux *= f.
-		fft realData *= (1.0 - f); += aux.
-		aux replaceFrom: 1 to: maxHarmonic with: spectrumImaginary startingAt: start.
-		aux *= f.
-		fft imagData *= (1.0 - f); += aux].
-	fft transformInverse.
-	fft realData *= 2.0 "why?!!"! !
+	wave := self get: #wave! !
 
-!Wavetable methodsFor: 'copying' stamp: 'len 29/Mar/2026 15:32:22'!
-copy
-	^ self class new
-		settings: self settings;
-		table: table frameSize: frameSize;
-		label: label! !
-
-!Wavetable methodsFor: 'initialization' stamp: 'len 2/Apr/2026 18:43:13'!
-computeSpectum
-	spectrumReal := Float32Array new: table size.
-	spectrumImaginary := Float32Array new: table size.
-	0 to: table size // frameSize - 1 do: [:i|
-		| start end |
-		start := i * frameSize + 1.
-		end := start + frameSize - 1.
-		fft realData replaceFrom: 1 to: frameSize with: table startingAt: start.
-		fft imagData atAllPut: 0.0.
-		fft transformForward.
-		spectrumReal replaceFrom: start to: end with: fft realData.
-		spectrumImaginary replaceFrom: start to: end with: fft imagData]! !
-
-!Wavetable methodsFor: 'initialization' stamp: 'len 2/Apr/2026 18:02:10'!
+!OPN methodsFor: 'initialization' stamp: 'len 20/Apr/2026 18:24:16'!
 initializeControls
 	super initializeControls.
-	self addControl: #position min: 0.0 max: 1.0 value: 0.0.
-"	self addControl: #brightness min: 0.0 max: 1.0 value: 0.0.
-	self addControl: #parity min: -1.0 max: 1.0 value: 0.0.
-	self addControl: #drive min: 0.0 max: 1.0 value: 0.0"! !
+	self addChoiceControl: #wave options: #(1 2 3 4 5 6 7 8) value: 1! !
 
-!Wavetable methodsFor: 'initialization' stamp: 'len 4/Apr/2026 19:33:19'!
-table: aBuffer frameSize: anInteger
-	aBuffer size \\ anInteger = 0 ifFalse: [^ self error: 'unexpected table size'].
-	table := aBuffer.
-	frameSize := anInteger.
-	fft := FFT new: frameSize.
-	aux := Float32Array new: frameSize.
-	position := 0.0.
-	phase := 0.0.
-	increment := 1.0 / anInteger.
-	self computeSpectum! !
+!OPN methodsFor: 'processing' stamp: 'len 21/Apr/2026 18:54:33'!
+next
+	self advance.
+	^ self wave: wave at: phase! !
 
-!Wavetable methodsFor: 'processing' stamp: 'len 1/Apr/2026 21:36:11'!
-peek
-	^ fft realData atWrapCubic: phase * frameSize! !
-
-!Wavetable methodsFor: 'processing' stamp: 'len 4/Apr/2026 20:05:13'!
-read: aBuffer
-	| frame |
-	frame := fft realData.
-	1 to: aBuffer size do: [:i|
-		aBuffer at: i put: (frame atWrapCubic: phase * frameSize).
-		(phase := phase + (increment := increment * incrementRatio)) >= 1.0 ifTrue: [phase := phase - phase truncated]]! !
-
-!Wavetable methodsFor: 'serialization' stamp: 'len 29/Mar/2026 15:35:39'!
-asJsonWithBuffers: aList
-	^ (super asJsonWithBuffers: aList)
-		at: #label put: (label ifNil: ['']);
-		at: #table put: (aList indexOf: table ifAbsent: [aList add: table. aList size]);
-		at: #frameSize put: frameSize;
-		yourself! !
-
-!Wavetable methodsFor: 'serialization' stamp: 'len 2/Apr/2026 19:25:53'!
-readFromJson: json buffers: aList
-	super readFromJson: json buffers: aList.
-	self table: (aList at: (json at: #table)) frameSize: (json at: #frameSize).
-	label := json at: #label ifAbsent: [''].
-	label isEmpty ifTrue: [label := nil]! !
-
-!Wavetable methodsFor: 'ui' stamp: 'len 12/Apr/2026 04:01:02'!
+!OPN methodsFor: 'ui' stamp: 'len 22/Apr/2026 18:31:38'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
-	label ifNotNil: [answer setTitle: label].
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
 	answer
 		addControlInput: #tune label: 'Pitch';
-		addControlInput: #position;
-		addAudioInput: #setInputFM: label: 'FM';
+		addControlInput: #wave;
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!Wavetable methodsFor: 'ui' stamp: 'len 12/Apr/2026 04:00:57'!
+!OPN methodsFor: 'ui' stamp: 'len 20/Apr/2026 18:27:02'!
 screen
-	^ WavetableControlMorph new control: (controls at: #position); table: table frameSize: frameSize! !
+	^​ VariableWaveControlMorph new
+		control: (controls at: #wave);
+		waveBlock: [:x :s| self wave: s at: x]! !
 
-!Wavetable class methodsFor: 'class initialization' stamp: 'len 9/Apr/2026 19:47:33'!
+!OPN methodsFor: 'private' stamp: 'len 29/Sep/2025 19:37:00'!
+wave: s at: t
+	s <= 1 ifTrue: [^ (t * Float twoPi) sin].
+	s <= 2 ifTrue:
+		[t < 0.25 ifTrue: [^ (t - 0.25 * Float twoPi) sin + 1.0].
+		t < 0.5 ifTrue: [^ (t + 0.25 * Float twoPi) sin + 1.0].
+		t < 0.75 ifTrue: [^ (t - 0.25 * Float twoPi) sin - 1.0].
+		^ (t + 0.25 * Float twoPi) sin - 1.0].
+	s <= 3 ifTrue: [^ t < 0.5 ifTrue: [(t * Float twoPi) sin] ifFalse: [0.0]].
+	s <= 4 ifTrue:
+		[t < 0.25 ifTrue: [^ (t - 0.25 * Float twoPi) sin + 1.0].
+		t < 0.5 ifTrue: [^ (t + 0.25 * Float twoPi) sin + 1.0].
+		^ 0.0].
+	t > 0.5 ifTrue: [^ 0.0].
+	^ self wave: s - 4 at: t * 2.0! !
+
+!TriSawPulse methodsFor: 'controlling' stamp: 'len 16/Jan/2026 14:18:49'!
+update
+	super update.
+	shape := self get: #shape! !
+
+!TriSawPulse methodsFor: 'initialization' stamp: 'len 16/Jan/2026 14:18:23'!
 initialize
 	super initialize.
-	self initializeLibrary! !
+	shape := 0.0! !
 
-!Wavetable class methodsFor: 'generated' stamp: 'len 31/Mar/2026 18:02:37'!
-add_saw_exp
-	^ self harmonicSum: [:k :θ| (k * θ * Float twoPi) sin / k]! !
+!TriSawPulse methodsFor: 'initialization' stamp: 'len 16/Jan/2026 14:17:32'!
+initializeControls
+	super initializeControls.
+	self addControl: #shape min: 0.0 max: 1.0 value: 0.0! !
 
-!Wavetable class methodsFor: 'generated' stamp: 'len 31/Mar/2026 18:02:37'!
-add_square_exp
-	^ self harmonicSum: [:k :θ| k odd ifTrue: [(k * θ * Float twoPi) sin / k] ifFalse: [0.0]]! !
+!TriSawPulse methodsFor: 'processing' stamp: 'len 21/Apr/2026 19:03:09'!
+next.
+	"Answer a mix of two waves, depending on the shape parameter.
+	Normalize the amplitude of the pulse wave to match perceived loudness with the other wave shapes."
+	self advance.
+	shape = 0.0 ifTrue: [^ phase triangle: increment].
+	shape < 0.25 ifTrue: [^ (phase triangle: increment) * (0.25 - shape) + ((phase saw: increment) * shape) / 0.25].
+	shape = 0.25 ifTrue: [^ phase saw: increment].
+	shape < 0.5 ifTrue: [^ (phase saw: increment) * (0.5 - shape) + ((phase pulse: increment width: shape - 0.25 * 2) * 0.577 * (shape - 0.25)) / 0.25].
+	^ (phase pulse: increment width: shape) * 0.577! !
 
-!Wavetable class methodsFor: 'generated' stamp: 'len 31/Mar/2026 18:02:37'!
-add_triangle_soft
-	^ self harmonicSum: [:k :θ| k odd ifTrue: [(k * θ * Float twoPi) sin * (-1 raisedTo: k-1 / 2) / (k raisedTo: 1.7)] ifFalse: [0.0]]! !
+!TriSawPulse methodsFor: 'ui' stamp: 'len 22/Apr/2026 18:31:42'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self screen.
+	answer flap addMorph: self panel.
+	answer
+		addControlInput: #tune label: 'Pitch';
+		addControlInput: #shape;
+		addAudioOutput: #setOutput:.
+	^ answer! !
 
-!Wavetable class methodsFor: 'generated' stamp: 'len 30/Mar/2026 15:50:57'!
-fm_ratio: ratio
-	^ self generate: [:f :θ :N|
-		| index |
-		index := f * 10.0.
-		((θ * Float twoPi * ratio) sin * index + (θ * Float twoPi)) sin]! !
-
-!Wavetable class methodsFor: 'generated' stamp: 'len 30/Mar/2026 15:40:36'!
-pulse_pw_full
-	^ self generate: [:f :θ :N|
-		| phase duty |
-		phase := θ * Float twoPi.
-		duty := (0.5 to: 0.02 at: f) * Float pi.
-		(1 to: N // 2) sum: [:k| (k * phase) sin * (k * duty) sin * 2.0 / k]]! !
-
-!Wavetable class methodsFor: 'generated' stamp: 'len 31/Mar/2026 18:02:37'!
-sine_to_saw
-	^ self harmonicSum: [:k :θ| (k * θ * Float twoPi) sin * (-1 raisedTo: k+1) / k]! !
-
-!Wavetable class methodsFor: 'generated' stamp: 'len 30/Mar/2026 15:43:40'!
-spectral_tilt
-	"Bright saw -> dark saw."
-	^ self generate: [:f :θ :N|
-		| phase rolloff |
-		phase := θ * Float twoPi.
-		rolloff := f * 4.0.
-		(1 to: N // 2) sum: [:k| (k * phase) sin * (-1 raisedTo: k+1) * (1.0 / k raisedTo: 1.0 + rolloff)]]! !
-
-!Wavetable class methodsFor: 'instance creation' stamp: 'len 29/Mar/2026 21:53:43'!
-generate: aBlock
-	^ self generate: aBlock frameSize: 1024 frameCount: 128! !
-
-!Wavetable class methodsFor: 'instance creation' stamp: 'len 1/Apr/2026 03:47:42'!
-generate: aBlock frameSize: N frameCount: L
-	"Generate a wavetable from the given block.
-	The block has three arguments:
-		- the frame position witht he wavetable 0.0 ≤ f ≤ 1.0;
-		- the phase within the frame 0.0 ≤ θ < 1.0;
-		- the number of samples per frame N."
-	| table frame k |
-	table := Float32Array new: N * L.
-	frame := Float32Array new: N.
-	k := 1.
-	1 to: L do: [:i|
-		1 to: N do: [:j| frame at: j put: (aBlock value: i - 1.0 / (L - 1) value: (j - 1.0) / (N - 1.0) value: N)].
-		frame -= frame mean. "remove DC offset"
-		frame *= (1.0 / frame peak). "normalize peak to 1.0"
-		table replaceFrom: k to: k + N - 1 with: frame.
-		k := k + N].
-	^ self new table: table frameSize: N! !
-
-!Wavetable class methodsFor: 'instance creation' stamp: 'len 31/Mar/2026 18:02:37'!
-harmonicSum: aBlock
-	^ self generate: [:f :θ :N|
-		| kmax tail |
-		kmax := 1 to: N // 2 atExp: f.
-		tail := kmax - (kmax := kmax truncated).
-		((1 to: kmax) sum: [:k| aBlock value: k value: θ]) + ((aBlock value: kmax+1 value: θ) * tail)]! !
-
-!Wavetable class methodsFor: 'library' stamp: 'len 27/Mar/2026 22:11:44'!
-fileReaderServicesForFileEntry: filename suffix: suffix
-	suffix = 'wav' ifTrue: [^ {self serviceLoadWavetable}].
-	^ #()! !
-
-!Wavetable class methodsFor: 'library' stamp: 'len 29/Mar/2026 15:49:24'!
-fromFileEntry: fileEntry frameSize: frameSize
-	| reader table |
-	reader := WAVFileReader new readFromFileEntry: fileEntry.
-	table := reader channels = 2 ifTrue: [reader leftSamples + reader rightSamples] ifFalse: [reader leftSamples].
-	^ self new table: table frameSize: frameSize! !
-
-!Wavetable class methodsFor: 'library' stamp: 'len 9/Apr/2026 19:47:54'!
-initializeLibrary
-	"
-	Wavetable loadLibrary
-	"
-	Library := OrderedDictionary new.
-	'Generating wavetables...' print.
-"	(self class organization listAtCategoryNamed: 'generated') do: [:each|"
-	#(add_saw_exp add_square_exp add_triangle_soft sine_to_saw spectral_tilt "pulse_pw_full") do: [:each|
-		| label |
-		label := each asPlainString.
-		('    ∙ ', label) print.
-		Library at: label put: ((self perform: each) label: label)].
-	Library at: 'FM 1:1' put: ((self fm_ratio: 1) label: 'FM 1:1').
-	Library at: 'FM 1:2' put: ((self fm_ratio: 2) label: 'FM 1:2').
-	Library at: 'FM 1:3' put: ((self fm_ratio: 3) label: 'FM 1:3').
-"	self load: self wavetablesDirectory // 'Saxophone.wav'.
-	self load: self wavetablesDirectory // 'Rhodes.wav'"! !
-
-!Wavetable class methodsFor: 'library' stamp: 'len 4/Mar/2026 18:49:49'!
-library
-	^ Library! !
-
-!Wavetable class methodsFor: 'library' stamp: 'len 29/Mar/2026 15:50:43'!
-load: fileEntry
-	^ self load: fileEntry label: (fileEntry name allButLast: 4) frameSize: 2048! !
-
-!Wavetable class methodsFor: 'library' stamp: 'len 29/Mar/2026 15:50:43'!
-load: fileEntry label: aString frameSize: waveSize
-	^ (Library at: aString put: (self fromFileEntry: fileEntry frameSize: waveSize)) label: aString! !
-
-!Wavetable class methodsFor: 'library' stamp: 'len 27/Mar/2026 22:22:18'!
-loadMW1Wavetables
-	| bank |
-	self flag: #deprecated.
-	bank := ((Sample samplesDirectory / 'wavetables' / 'mw1_wavetables') files asSortedCollection: [:a :b| a name <= b name]) asArray allButFirst "skip the first one with just 3 waves" collect: [:each|
-		| label allTables table |
-		label := (each name findTokens: '-.') second.
-		allTables := (WAVFileReader new readFromFileEntry: each) leftSamples.
-		table := (1 to: allTables size / 128) collect: [:i| allTables copyFrom: i-1*128+1 to: i*128].
-		label -> table].
-	Library at: #MW1 put: (self new label: 'MW1'; bank: bank)! !
-
-!Wavetable class methodsFor: 'library' stamp: 'len 27/Mar/2026 22:22:24'!
-loadPPGWavetables
-	| bytes bank |
-	self flag: #deprecated.
-	"32 wavetables, with 64 waves each, and 256 signed bytes per wave:"
-	bytes := (Sample samplesDirectory / 'wavetables' // 'ppg.bin') binaryContents.
-	bank := (0 to: 31) collect: [:i|
-		| table |
-		table := Float32Array new: 256 * 64.
-		1 to: table size do: [:j| table at: j put: (bytes at: i * 256 * 64 + j) - 128 / 128.0].
-		table := (1 to: table size / 256) collect: [:k| table copyFrom: k-1*256+1 to: k*256].
-		i printString -> table].
-	Library at: #PPG put: (self new label: 'PPG'; bank: bank)! !
-
-!Wavetable class methodsFor: 'library' stamp: 'len 27/Mar/2026 22:11:23'!
-serviceLoadWavetable
-	^ (SimpleServiceEntry
-		provider: self
-		label: 'load wavetable to library'
-		selector: #load:
-		description:'load the wavetable to the wavetables library'
-		buttonLabel: 'load wavetable') argumentGetter: [:fileList| fileList selectedFileEntry]! !
+!TriSawPulse methodsFor: 'ui' stamp: 'len 12/Apr/2026 04:00:29'!
+screen
+	^​ VariableWaveControlMorph new
+		control: (controls at: #shape);
+		waveBlock: [:x :s|
+			s < 0.25
+				ifTrue: [x triangle * (0.25 - s) + (x saw * s) / 0.25]
+				ifFalse:
+					[s < 0.5
+						ifTrue: [x saw * (0.5 - s) + ((x pulseWidth: s - 0.25 * 2) * (s - 0.25)) / 0.25]
+						ifFalse: [x pulseWidth: s]]]! !
 
 !Supersaw methodsFor: 'controlling' stamp: 'len 1/Dec/2025 15:32:00'!
 reset
@@ -5093,22 +4866,16 @@ initializeControls
 	super initializeControls.
 	self addControl: #detune min: 0.0 max: 1.0 value: 0.001! !
 
-!Supersaw methodsFor: 'processing' stamp: 'len 4/Apr/2026 21:06:00'!
+!Supersaw methodsFor: 'processing' stamp: 'len 21/Apr/2026 18:52:50'!
 next
 	| answer |
-	answer := self peek.
+	answer := 0.0.
+	1 to: 7 do: [:i| answer := ((phases at: i) saw: (increments at: i)) * (i = 4 ifTrue: [centerGain] ifFalse: [sideGain]) + answer].
 	incrementRatio = 1.0 ifFalse:
 		[increment := increment * incrementRatio.
 		increments *= incrementRatio].
 	phases += increments.
 	1 to: 7 do: [:i| | t | (t := phases at: i) >= 1.0 ifTrue: [phases at: i put: t - t truncated]].
-	^ answer! !
-
-!Supersaw methodsFor: 'processing' stamp: 'len 4/Apr/2026 19:34:35'!
-peek
-	| answer |
-	answer := 0.0.
-	1 to: 7 do: [:i| answer := ((phases at: i) saw: (increments at: i)) * (i = 4 ifTrue: [centerGain] ifFalse: [sideGain]) + answer].
 	^ answer! !
 
 !Supersaw methodsFor: 'ui' stamp: 'len 12/Apr/2026 04:01:16'!
@@ -6139,6 +5906,309 @@ serviceLoadSample
 		description:'load the sample to the samples library'
 		buttonLabel: 'load sample') argumentGetter: [:fileList| fileList selectedFileEntry]! !
 
+!Wavetable methodsFor: 'accessing' stamp: 'len 29/Mar/2026 15:29:29'!
+frameCount
+	^ table size // frameSize! !
+
+!Wavetable methodsFor: 'accessing' stamp: 'len 29/Mar/2026 15:29:14'!
+frameSize
+	^ frameSize! !
+
+!Wavetable methodsFor: 'accessing' stamp: 'len 4/Mar/2026 18:18:00'!
+label
+	^ label! !
+
+!Wavetable methodsFor: 'accessing' stamp: 'len 4/Mar/2026 18:17:56'!
+label: aString
+	label := aString! !
+
+!Wavetable methodsFor: 'accessing' stamp: 'len 29/Mar/2026 15:29:39'!
+table
+	^ table! !
+
+!Wavetable methodsFor: 'controlling' stamp: 'len 21/Apr/2026 18:19:11'!
+reset
+	super reset.
+	phase := 0.0.
+	ticksToUpdate := 0! !
+
+!Wavetable methodsFor: 'controlling' stamp: 'len 21/Apr/2026 18:21:27'!
+update
+	| targetIncrement maxHarmonic p i f start |
+	super update.
+	targetIncrement := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
+	increment ifNil: [increment := targetIncrement].
+	incrementRatio := ((targetIncrement / increment) ln / self class blockSize) exp.
+	position := self get: #position.
+	(ticksToUpdate := ticksToUpdate - 1) >= 0 ifTrue: [^ self].
+	ticksToUpdate := 7. "update only once every 7 ticks, ~ 50 Hz"
+	maxHarmonic := (1.0 / increment) truncated min: frameSize.
+	p := position * (self frameCount - 1).
+	i := p truncated.
+	f := p - i.
+	start := i * frameSize + 1.
+	fft reset.
+	fft realData replaceFrom: 1 to: maxHarmonic with: spectrumReal startingAt: start.
+	fft imagData replaceFrom: 1 to: maxHarmonic with: spectrumImaginary startingAt: start.
+	f = 0.0 ifFalse:
+		[start := start + frameSize.
+		aux atAllPut: 0.0.
+		aux replaceFrom: 1 to: maxHarmonic with: spectrumReal startingAt: start.
+		aux *= f.
+		fft realData *= (1.0 - f); += aux.
+		aux replaceFrom: 1 to: maxHarmonic with: spectrumImaginary startingAt: start.
+		aux *= f.
+		fft imagData *= (1.0 - f); += aux].
+	fft transformInverse.
+	fft realData *= 2.0 "why?!!"! !
+
+!Wavetable methodsFor: 'copying' stamp: 'len 29/Mar/2026 15:32:22'!
+copy
+	^ self class new
+		settings: self settings;
+		table: table frameSize: frameSize;
+		label: label! !
+
+!Wavetable methodsFor: 'initialization' stamp: 'len 2/Apr/2026 18:43:13'!
+computeSpectum
+	spectrumReal := Float32Array new: table size.
+	spectrumImaginary := Float32Array new: table size.
+	0 to: table size // frameSize - 1 do: [:i|
+		| start end |
+		start := i * frameSize + 1.
+		end := start + frameSize - 1.
+		fft realData replaceFrom: 1 to: frameSize with: table startingAt: start.
+		fft imagData atAllPut: 0.0.
+		fft transformForward.
+		spectrumReal replaceFrom: start to: end with: fft realData.
+		spectrumImaginary replaceFrom: start to: end with: fft imagData]! !
+
+!Wavetable methodsFor: 'initialization' stamp: 'len 21/Apr/2026 18:18:51'!
+initialize
+	super initialize.
+	self reset! !
+
+!Wavetable methodsFor: 'initialization' stamp: 'len 2/Apr/2026 18:02:10'!
+initializeControls
+	super initializeControls.
+	self addControl: #position min: 0.0 max: 1.0 value: 0.0.
+"	self addControl: #brightness min: 0.0 max: 1.0 value: 0.0.
+	self addControl: #parity min: -1.0 max: 1.0 value: 0.0.
+	self addControl: #drive min: 0.0 max: 1.0 value: 0.0"! !
+
+!Wavetable methodsFor: 'initialization' stamp: 'len 4/Apr/2026 19:33:19'!
+table: aBuffer frameSize: anInteger
+	aBuffer size \\ anInteger = 0 ifFalse: [^ self error: 'unexpected table size'].
+	table := aBuffer.
+	frameSize := anInteger.
+	fft := FFT new: frameSize.
+	aux := Float32Array new: frameSize.
+	position := 0.0.
+	phase := 0.0.
+	increment := 1.0 / anInteger.
+	self computeSpectum! !
+
+!Wavetable methodsFor: 'processing' stamp: 'len 21/Apr/2026 18:25:14'!
+next
+	| answer |
+	answer := fft realData atWrapCubic: phase * frameSize.
+	(phase := phase + (increment := increment * incrementRatio)) >= 1.0 ifTrue: [phase := phase - phase truncated].
+	^ answer! !
+
+!Wavetable methodsFor: 'processing' stamp: 'len 4/Apr/2026 20:05:13'!
+read: aBuffer
+	| frame |
+	frame := fft realData.
+	1 to: aBuffer size do: [:i|
+		aBuffer at: i put: (frame atWrapCubic: phase * frameSize).
+		(phase := phase + (increment := increment * incrementRatio)) >= 1.0 ifTrue: [phase := phase - phase truncated]]! !
+
+!Wavetable methodsFor: 'serialization' stamp: 'len 29/Mar/2026 15:35:39'!
+asJsonWithBuffers: aList
+	^ (super asJsonWithBuffers: aList)
+		at: #label put: (label ifNil: ['']);
+		at: #table put: (aList indexOf: table ifAbsent: [aList add: table. aList size]);
+		at: #frameSize put: frameSize;
+		yourself! !
+
+!Wavetable methodsFor: 'serialization' stamp: 'len 2/Apr/2026 19:25:53'!
+readFromJson: json buffers: aList
+	super readFromJson: json buffers: aList.
+	self table: (aList at: (json at: #table)) frameSize: (json at: #frameSize).
+	label := json at: #label ifAbsent: [''].
+	label isEmpty ifTrue: [label := nil]! !
+
+!Wavetable methodsFor: 'ui' stamp: 'len 21/Apr/2026 20:20:56'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	label ifNotNil: [answer setTitle: label].
+	answer body addMorph: self screen.
+	answer flap addMorph: self panel.
+	answer
+		addControlInput: #tune label: 'Pitch';
+		addControlInput: #position;
+		addAudioOutput: #setOutput:.
+	^ answer! !
+
+!Wavetable methodsFor: 'ui' stamp: 'len 12/Apr/2026 04:00:57'!
+screen
+	^ WavetableControlMorph new control: (controls at: #position); table: table frameSize: frameSize! !
+
+!Wavetable class methodsFor: 'class initialization' stamp: 'len 9/Apr/2026 19:47:33'!
+initialize
+	super initialize.
+	self initializeLibrary! !
+
+!Wavetable class methodsFor: 'generated' stamp: 'len 31/Mar/2026 18:02:37'!
+add_saw_exp
+	^ self harmonicSum: [:k :θ| (k * θ * Float twoPi) sin / k]! !
+
+!Wavetable class methodsFor: 'generated' stamp: 'len 31/Mar/2026 18:02:37'!
+add_square_exp
+	^ self harmonicSum: [:k :θ| k odd ifTrue: [(k * θ * Float twoPi) sin / k] ifFalse: [0.0]]! !
+
+!Wavetable class methodsFor: 'generated' stamp: 'len 31/Mar/2026 18:02:37'!
+add_triangle_soft
+	^ self harmonicSum: [:k :θ| k odd ifTrue: [(k * θ * Float twoPi) sin * (-1 raisedTo: k-1 / 2) / (k raisedTo: 1.7)] ifFalse: [0.0]]! !
+
+!Wavetable class methodsFor: 'generated' stamp: 'len 30/Mar/2026 15:50:57'!
+fm_ratio: ratio
+	^ self generate: [:f :θ :N|
+		| index |
+		index := f * 10.0.
+		((θ * Float twoPi * ratio) sin * index + (θ * Float twoPi)) sin]! !
+
+!Wavetable class methodsFor: 'generated' stamp: 'len 30/Mar/2026 15:40:36'!
+pulse_pw_full
+	^ self generate: [:f :θ :N|
+		| phase duty |
+		phase := θ * Float twoPi.
+		duty := (0.5 to: 0.02 at: f) * Float pi.
+		(1 to: N // 2) sum: [:k| (k * phase) sin * (k * duty) sin * 2.0 / k]]! !
+
+!Wavetable class methodsFor: 'generated' stamp: 'len 31/Mar/2026 18:02:37'!
+sine_to_saw
+	^ self harmonicSum: [:k :θ| (k * θ * Float twoPi) sin * (-1 raisedTo: k+1) / k]! !
+
+!Wavetable class methodsFor: 'generated' stamp: 'len 30/Mar/2026 15:43:40'!
+spectral_tilt
+	"Bright saw -> dark saw."
+	^ self generate: [:f :θ :N|
+		| phase rolloff |
+		phase := θ * Float twoPi.
+		rolloff := f * 4.0.
+		(1 to: N // 2) sum: [:k| (k * phase) sin * (-1 raisedTo: k+1) * (1.0 / k raisedTo: 1.0 + rolloff)]]! !
+
+!Wavetable class methodsFor: 'instance creation' stamp: 'len 29/Mar/2026 21:53:43'!
+generate: aBlock
+	^ self generate: aBlock frameSize: 1024 frameCount: 128! !
+
+!Wavetable class methodsFor: 'instance creation' stamp: 'len 1/Apr/2026 03:47:42'!
+generate: aBlock frameSize: N frameCount: L
+	"Generate a wavetable from the given block.
+	The block has three arguments:
+		- the frame position witht he wavetable 0.0 ≤ f ≤ 1.0;
+		- the phase within the frame 0.0 ≤ θ < 1.0;
+		- the number of samples per frame N."
+	| table frame k |
+	table := Float32Array new: N * L.
+	frame := Float32Array new: N.
+	k := 1.
+	1 to: L do: [:i|
+		1 to: N do: [:j| frame at: j put: (aBlock value: i - 1.0 / (L - 1) value: (j - 1.0) / (N - 1.0) value: N)].
+		frame -= frame mean. "remove DC offset"
+		frame *= (1.0 / frame peak). "normalize peak to 1.0"
+		table replaceFrom: k to: k + N - 1 with: frame.
+		k := k + N].
+	^ self new table: table frameSize: N! !
+
+!Wavetable class methodsFor: 'instance creation' stamp: 'len 31/Mar/2026 18:02:37'!
+harmonicSum: aBlock
+	^ self generate: [:f :θ :N|
+		| kmax tail |
+		kmax := 1 to: N // 2 atExp: f.
+		tail := kmax - (kmax := kmax truncated).
+		((1 to: kmax) sum: [:k| aBlock value: k value: θ]) + ((aBlock value: kmax+1 value: θ) * tail)]! !
+
+!Wavetable class methodsFor: 'library' stamp: 'len 27/Mar/2026 22:11:44'!
+fileReaderServicesForFileEntry: filename suffix: suffix
+	suffix = 'wav' ifTrue: [^ {self serviceLoadWavetable}].
+	^ #()! !
+
+!Wavetable class methodsFor: 'library' stamp: 'len 29/Mar/2026 15:49:24'!
+fromFileEntry: fileEntry frameSize: frameSize
+	| reader table |
+	reader := WAVFileReader new readFromFileEntry: fileEntry.
+	table := reader channels = 2 ifTrue: [reader leftSamples + reader rightSamples] ifFalse: [reader leftSamples].
+	^ self new table: table frameSize: frameSize! !
+
+!Wavetable class methodsFor: 'library' stamp: 'len 9/Apr/2026 19:47:54'!
+initializeLibrary
+	"
+	Wavetable loadLibrary
+	"
+	Library := OrderedDictionary new.
+	'Generating wavetables...' print.
+"	(self class organization listAtCategoryNamed: 'generated') do: [:each|"
+	#(add_saw_exp add_square_exp add_triangle_soft sine_to_saw spectral_tilt "pulse_pw_full") do: [:each|
+		| label |
+		label := each asPlainString.
+		('    ∙ ', label) print.
+		Library at: label put: ((self perform: each) label: label)].
+	Library at: 'FM 1:1' put: ((self fm_ratio: 1) label: 'FM 1:1').
+	Library at: 'FM 1:2' put: ((self fm_ratio: 2) label: 'FM 1:2').
+	Library at: 'FM 1:3' put: ((self fm_ratio: 3) label: 'FM 1:3').
+"	self load: self wavetablesDirectory // 'Saxophone.wav'.
+	self load: self wavetablesDirectory // 'Rhodes.wav'"! !
+
+!Wavetable class methodsFor: 'library' stamp: 'len 4/Mar/2026 18:49:49'!
+library
+	^ Library! !
+
+!Wavetable class methodsFor: 'library' stamp: 'len 29/Mar/2026 15:50:43'!
+load: fileEntry
+	^ self load: fileEntry label: (fileEntry name allButLast: 4) frameSize: 2048! !
+
+!Wavetable class methodsFor: 'library' stamp: 'len 29/Mar/2026 15:50:43'!
+load: fileEntry label: aString frameSize: waveSize
+	^ (Library at: aString put: (self fromFileEntry: fileEntry frameSize: waveSize)) label: aString! !
+
+!Wavetable class methodsFor: 'library' stamp: 'len 27/Mar/2026 22:22:18'!
+loadMW1Wavetables
+	| bank |
+	self flag: #deprecated.
+	bank := ((Sample samplesDirectory / 'wavetables' / 'mw1_wavetables') files asSortedCollection: [:a :b| a name <= b name]) asArray allButFirst "skip the first one with just 3 waves" collect: [:each|
+		| label allTables table |
+		label := (each name findTokens: '-.') second.
+		allTables := (WAVFileReader new readFromFileEntry: each) leftSamples.
+		table := (1 to: allTables size / 128) collect: [:i| allTables copyFrom: i-1*128+1 to: i*128].
+		label -> table].
+	Library at: #MW1 put: (self new label: 'MW1'; bank: bank)! !
+
+!Wavetable class methodsFor: 'library' stamp: 'len 27/Mar/2026 22:22:24'!
+loadPPGWavetables
+	| bytes bank |
+	self flag: #deprecated.
+	"32 wavetables, with 64 waves each, and 256 signed bytes per wave:"
+	bytes := (Sample samplesDirectory / 'wavetables' // 'ppg.bin') binaryContents.
+	bank := (0 to: 31) collect: [:i|
+		| table |
+		table := Float32Array new: 256 * 64.
+		1 to: table size do: [:j| table at: j put: (bytes at: i * 256 * 64 + j) - 128 / 128.0].
+		table := (1 to: table size / 256) collect: [:k| table copyFrom: k-1*256+1 to: k*256].
+		i printString -> table].
+	Library at: #PPG put: (self new label: 'PPG'; bank: bank)! !
+
+!Wavetable class methodsFor: 'library' stamp: 'len 27/Mar/2026 22:11:23'!
+serviceLoadWavetable
+	^ (SimpleServiceEntry
+		provider: self
+		label: 'load wavetable to library'
+		selector: #load:
+		description:'load the wavetable to the wavetables library'
+		buttonLabel: 'load wavetable') argumentGetter: [:fileList| fileList selectedFileEntry]! !
+
 !ColoredNoise methodsFor: 'controlling' stamp: 'len 1/Feb/2026 17:53:42'!
 reset
 	x1 := y1 := s1 := s2 := s3 := 0.0! !
@@ -6177,10 +6247,10 @@ nextBlue
 	x1 := x0.
 	^ y1! !
 
-!ColoredNoise methodsFor: 'processing' stamp: 'len 1/Feb/2026 03:45:18'!
+!ColoredNoise methodsFor: 'processing' stamp: 'len 21/Apr/2026 20:24:40'!
 nextBrown
 	x1 := self nextWhite.
-	^ y1 := (y1 * 0.99 + x1)! !
+	^ y1 := y1 * 0.99 + x1! !
 
 !ColoredNoise methodsFor: 'processing' stamp: 'len 1/Feb/2026 14:44:20'!
 nextPink
@@ -10463,12 +10533,12 @@ initialize
 	image fillColor: PatchMorph panelColor.
 ! !
 
-!SymmetricWaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 15/Feb/2026 15:23:14'!
+!SymmetricWaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 21/Apr/2026 20:29:30'!
 drawLevel: aNumber
 	| x0 δ |
 	x0 := image width * 0.5.
 	δ := aNumber * x0.
-	image fill: (x0 - δ @ 0 extent: δ * 2.0 @ image height) fillColor: (PatchMorph waveformColor alpha: aNumber).
+	image fill: (x0 - δ @ 0 extent: δ * 2.0 @ image height) fillColor: (PatchMorph waveformColor alpha: aNumber * 0.15).
 	image fill: (x0 + δ @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor.
 	image fill: (x0 - δ @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor! !
 
@@ -14622,11 +14692,11 @@ secondsPrintString
 	self abs < 1.0 ifTrue: [^ (self * 1000.0) asInteger printString, ' ms'].
 	^ (self printStringFractionDigits: 1), ' s'! !
 
-!Number methodsFor: '*signals' stamp: 'len 14/Jan/2026 17:04:15'!
+!Number methodsFor: '*signals' stamp: 'len 22/Apr/2026 21:17:12'!
 semitonesOffsetPrintString
 	self > 0.001 ifTrue: [^ '+', (self printStringFractionDigits: 2), ' st'].
 	self < -0.001 ifTrue: [^ '-', (self abs printStringFractionDigits: 2), ' st'].
-	^ '0.00 st'! !
+	^ '+0.00 st'! !
 
 !Number methodsFor: '*signals' stamp: 'len 22/Oct/2025 15:23:00'!
 semitonesToHertz
@@ -14709,11 +14779,14 @@ parabolic: dt
 	The parabolic wave is the result of integrating a sawtooth wave. It has a distinctive mellow character, somewhere between a sine and a triangle wave, but with richer harmonic series that rools off at 12 dB/oct (compared to 6 dB/oct for a saw)."
 	^ ((4.0 * (self - 0.5) squared) + (8.0 * dt * (self blamp: dt)) - 0.5) * 1.95! !
 
-!Float methodsFor: '*signals' stamp: 'len 16/Jan/2026 18:46:01'!
+!Float methodsFor: '*signals' stamp: 'len 21/Apr/2026 18:43:51'!
 pulse: dt width: width
 	"Answer a PolyBLEP antialiased pulse wave.
 	Note: the #blep: method already has a baked-in scaling factor of 2, which corresponds to the jump between -1 and 1."
-	^ (self < width ifTrue: [1.0] ifFalse: [-1.0]) + (self blep: dt) - (self - width + 1.0 \\ 1.0 blep: dt)! !
+	| fallingPhase |
+	fallingPhase := self - width + 1.0.
+	fallingPhase := fallingPhase - fallingPhase truncated.
+	^ (self < width ifTrue: [1.0] ifFalse: [-1.0]) + (self blep: dt) - (fallingPhase blep: dt)! !
 
 !Float methodsFor: '*signals' stamp: 'len 22/Jan/2026 04:22:11'!
 pulseWidth: width
@@ -14945,8 +15018,8 @@ timeProfile
 	form := self morphExtent ifNil: [Display] ifNotNil: [:aPoint| Form extent: aPoint depth: Display depth].
 	canvas := VectorCanvas onForm: form.
 	^ [100 timesRepeat: [self drawOn: canvas]] timeProfile! !
-Wavetable initialize!
 Supersaw initialize!
 Multisample initialize!
 Sample initialize!
+Wavetable initialize!
 Spectrogram initialize!

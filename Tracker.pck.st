@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 20 April 2026 at 4:35:43 pm'!
+'From Cuis7.7 [latest update: #7872] on 26 April 2026 at 1:42:17 am'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 22!
+!provides: 'Tracker' 1 23!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -1715,10 +1715,10 @@ noteOn: midiKey glide: glide
 			note := midiKey].
 	self setNote: note; gateOn! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 24/Mar/2026 01:45:36'!
+!Instrument methodsFor: 'playing' stamp: 'len 24/Apr/2026 02:06:30'!
 playTrigger
-	trigger isNoteOn ifTrue: [self setVelocity: 0.5; setOffset: 0.0; setSpeed: 1.0].
-	trigger velocity ifNotNil: [:vel| self setVelocity: vel / 255.0].
+	trigger isNoteOn ifTrue: [self setVelocity: 1.0; setOffset: 0.0; setSpeed: 1.0].
+	trigger velocity ifNotNil: [:vel| self setVelocity: (vel / 255.0) squared].
 	trigger fx1 ifNotNil: [:fx| self handleFX: fx].
 	trigger fx2 ifNotNil: [:fx| self handleFX: fx].
 	trigger isNoteOn ifTrue: [self noteOn: trigger note glide: trigger glide] ifFalse: [trigger isNoteOff ifTrue: [self noteOff]].

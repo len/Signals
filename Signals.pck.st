@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 25 April 2026 at 12:24:40 am'!
+'From Cuis7.7 [latest update: #7872] on 26 April 2026 at 1:40:42 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 540!
+!provides: 'Signals' 1 541!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -887,7 +887,7 @@ KeyTracker class
 
 !classDefinition: #LFO category: #'Signals-Modulation'!
 Module subclass: #LFO
-	instanceVariableNames: 'shape bipolar depth offset mode phase increment heldValue seed random randomValue'
+	instanceVariableNames: 'shape bipolar depth offset mode phase increment heldValue seed random randomValue fade fadeRatio'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Modulation'!
@@ -1065,6 +1065,16 @@ BoxMorph subclass: #ControlMorph
 ControlMorph class
 	instanceVariableNames: ''!
 
+!classDefinition: #FadeControlMorph category: #'Signals-Morphic-Controls'!
+ControlMorph subclass: #FadeControlMorph
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'FadeControlMorph class' category: #'Signals-Morphic-Controls'!
+FadeControlMorph class
+	instanceVariableNames: ''!
+
 !classDefinition: #KnobControlMorph category: #'Signals-Morphic-Controls'!
 ControlMorph subclass: #KnobControlMorph
 	instanceVariableNames: ''
@@ -1073,6 +1083,16 @@ ControlMorph subclass: #KnobControlMorph
 	category: 'Signals-Morphic-Controls'!
 !classDefinition: 'KnobControlMorph class' category: #'Signals-Morphic-Controls'!
 KnobControlMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #PhaseOffsetControlMorph category: #'Signals-Morphic-Controls'!
+ControlMorph subclass: #PhaseOffsetControlMorph
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'PhaseOffsetControlMorph class' category: #'Signals-Morphic-Controls'!
+PhaseOffsetControlMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #SliderControlMorph category: #'Signals-Morphic-Controls'!
@@ -1127,7 +1147,7 @@ SymmetricWaveshaperControlMorph class
 
 !classDefinition: #WavetableControlMorph category: #'Signals-Morphic-Controls'!
 ControlMorph subclass: #WavetableControlMorph
-	instanceVariableNames: 'table frameSize currentPosition'
+	instanceVariableNames: 'table frameSize currentPosition drawMode'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Controls'!
@@ -1203,6 +1223,16 @@ XYControlMorph subclass: #LFOShapeOffsetControlMorph
 	category: 'Signals-Morphic-Controls'!
 !classDefinition: 'LFOShapeOffsetControlMorph class' category: #'Signals-Morphic-Controls'!
 LFOShapeOffsetControlMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #StereoMatrixControlMorph category: #'Signals-Morphic-Controls'!
+XYControlMorph subclass: #StereoMatrixControlMorph
+	instanceVariableNames: 'midColor sideColor'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'StereoMatrixControlMorph class' category: #'Signals-Morphic-Controls'!
+StereoMatrixControlMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #WaveshaperControlMorph category: #'Signals-Morphic-Controls'!
@@ -7280,18 +7310,18 @@ panel
 		addKnob: (controls at: #postgain) label: 'Output';
 		addKnob: (controls at: #mix) label: 'Mix'! !
 
-!Waveshaper methodsFor: 'ui' stamp: 'len 14/Feb/2026 00:45:19'!
+!Waveshaper methodsFor: 'ui' stamp: 'len 26/Apr/2026 00:22:43'!
 patchable
-	| answer display inputPin |
+	| answer screen inputPin |
 	answer := PatchableMorph new model: self.
-	display := WaveshaperControlMorph new
+	screen := WaveshaperControlMorph new
 		shape: (controls at: #pregain);
 		bias: (controls at: #bias);
 		waveBlock: [:t :g| (self apply: (t * 2.0 - 1.0) * g)].
-	answer body addMorph: display.
+	answer body addMorph: screen.
 	answer flap addMorph: self panel.
 	inputPin := answer addAudioInput: #setInput:.
-	inputPin when: #level: send: #drawLevel: to: display.
+	inputPin when: #level: send: #drawLevel: to: screen.
 	^ answer
 		addControlInput: #pregain;
 		addAudioOutput: #setOutput:;
@@ -7619,21 +7649,21 @@ panel
 		addKnob: (controls at: #tone) label: 'Tone';
 		addKnob: (controls at: #postgain) label: 'Output'! !
 
-!TapeSaturator methodsFor: 'ui' stamp: 'len 13/Feb/2026 19:40:56'!
+!TapeSaturator methodsFor: 'ui' stamp: 'len 26/Apr/2026 00:23:02'!
 patchable
-	| answer display inputPin |
+	| answer screen inputPin |
 	answer := PatchableMorph new model: self.
-	display := WaveshaperControlMorph new
+	screen := WaveshaperControlMorph new
 		shape: (controls at: #drive);
 		bias: (controls at: #bias);
 		waveBlock: [:x :g|
 			| nlg |
 			nlg := (g + 1.0 log: 2.0) * 0.5 + 1.5.
 			(((x * 2.0 - 1.0) * g) * nlg) tanh].
-	answer body addMorph: display.
+	answer body addMorph: screen.
 	answer flap addMorph: self panel.
 	inputPin := answer addAudioInput: #setInput:.
-	inputPin when: #level: send: #drawLevel: to: display.
+	inputPin when: #level: send: #drawLevel: to: screen.
 	^ answer
 		addControlInput: #drive;
 		addAudioOutput: #setOutput:;
@@ -8045,11 +8075,11 @@ tick
 	outputL += aux.
 	outputR -= aux! !
 
-!StereoMatrix methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:15:41'!
+!StereoMatrix methodsFor: 'ui' stamp: 'len 26/Apr/2026 00:24:28'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
-	answer body addMorph: self panel.
+	answer body addMorph: self screen.
 	answer
 		addAudioInput: #setInputA: label: 'A';
 		addAudioInput: #setInputB: label: 'B';
@@ -8058,6 +8088,10 @@ patchable
 		addAudioOutput: #setOutputL: label: 'L';
 		addAudioOutput: #setOutputR: label: 'R'.
 	^ answer! !
+
+!StereoMatrix methodsFor: 'ui' stamp: 'len 26/Apr/2026 00:24:20'!
+screen
+	^ StereoMatrixControlMorph new width: (controls at: #width); balance: (controls at: #balance)! !
 
 !StereoMatrix methodsFor: 'wiring' stamp: 'len 27/Jan/2026 01:49:43'!
 setInputA: aBuffer
@@ -8280,25 +8314,25 @@ initialize
 	random := Random seed: seed.
 	self reset! !
 
-!LFO methodsFor: 'initialization' stamp: 'len 24/Apr/2026 15:32:21'!
+!LFO methodsFor: 'initialization' stamp: 'len 26/Apr/2026 01:30:59'!
 initializeControls
 	super initializeControls.
 	self addSpeedControl: #speed value: 0.1.
-	(self addControl: #offset min: 0.0 max: 0.999 value: 0.0) printer: [:x| (x*360) truncated printString, '°'].
+	(self addControl: #offset min: 0.0 max: 0.999 value: 0.0) label: 'Phase Offset'; printer: [:x| (x*360) truncated printString, '°'].
 	self addToggleControl: #bipolar value: true.
-	self addControl: #depth min: 0.0 max: 1.0 value: 1.0.
+	self addControl: #depth min: -1.0 max: 1.0 value: 1.0.
 	self addChoiceControl: #mode options: #(Free Reset Hold) value: #Free.
-	self addChoiceControl: #shape options: #(Sine Triangle Square Rise Fall Random) value: #Sine! !
+	self addChoiceControl: #shape options: #(Sine Triangle Square Rise Fall Random) value: #Sine.
+"	self addControl: #fade min: -1.0 max: 1.0 value: 0.0"! !
 
-!LFO methodsFor: 'processing' stamp: 'len 24/Apr/2026 15:30:21'!
+!LFO methodsFor: 'processing' stamp: 'len 25/Apr/2026 21:39:48'!
 next
 	| value |
-	heldValue ifNotNil: [^ heldValue * depth].
-	value := self peek.
+	value := heldValue ifNil: [self peek].
 	shape = #Random
 		ifTrue:
 			[phase := phase + increment.
-			phase > 1.0 ifTrue: [phase := phase \\ 1.0. randomValue := random next]]
+			(phase >= 1.0 or: [phase < 0.0]) ifTrue: [phase := phase \\ 1.0. randomValue := random next]]
 		ifFalse:
 			[phase := phase + increment \\ 1.0].
 	mode = #Hold ifTrue: [heldValue := value].
@@ -8326,12 +8360,13 @@ peek
 tick
 	self triggerEvent: #output: with: self next! !
 
-!LFO methodsFor: 'ui' stamp: 'len 24/Apr/2026 15:48:16'!
+!LFO methodsFor: 'ui' stamp: 'len 26/Apr/2026 01:30:29'!
 panel
 	^ ControlPanel new
 		addMorph: (LFOShapeOffsetControlMorph new lfo: self);
+"		addMorph: (PhaseOffsetControlMorph new control: (controls at: #offset));"
 		addTextualControl: (controls at: #speed);
-		addTextualControl: (controls at: #offset);
+"		addMorph: (FadeControlMorph new control: (controls at: #fade));"
 		addMorph:
 			(LinearLayoutMorph newRow
 				color: Color transparent;
@@ -10330,11 +10365,26 @@ adjustControlBy: aNumber
 control: aControl
 	^ self new control: aControl! !
 
+!FadeControlMorph methodsFor: 'initialization' stamp: 'len 25/Apr/2026 15:45:47'!
+defaultExtent
+	^ `24 @ 24`! !
+
+!FadeControlMorph methodsFor: 'drawing' stamp: 'len 25/Apr/2026 17:57:31'!
+drawOn: aCanvas
+	| v center radius zeroPosition endPosition startPosition |
+	v := control basePosition + control modulation min: 1.0 max: 0.0.
+	center := self morphExtent / 2.0.
+	radius := center - 3.0.
+	zeroPosition := center + (0 @ radius y).
+	startPosition := (zeroPosition - center rotatedBy: Float pi * v) + center.
+	endPosition := (startPosition - center rotatedBy: Float pi) + center.
+	aCanvas strokeWidth: 2.0 color: color do: [aCanvas moveTo: 0 @ startPosition y; lineTo: startPosition; lineTo: endPosition; lineTo: self morphWidth @ endPosition y]! !
+
 !KnobControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:20:51'!
 defaultExtent
 	^ `36 @ 36`! !
 
-!KnobControlMorph methodsFor: 'drawing' stamp: 'len 14/Jan/2026 16:58:20'!
+!KnobControlMorph methodsFor: 'drawing' stamp: 'len 25/Apr/2026 15:33:53'!
 drawOn: aCanvas
 	| v vMod center radius zeroPosition dialPosition |
 "	self hasKeyboardFocus ifTrue: [self drawFocusIndicatorOn: aCanvas]."
@@ -10343,11 +10393,11 @@ drawOn: aCanvas
 	center := self morphExtent / 2.0.
 	radius := center - 1.
 	zeroPosition := (0 @ radius y rotatedBy: Float pi * 0.2) + center.
-	dialPosition := (zeroPosition - center / 2 rotatedBy: Float pi * 1.6 * v) + center.
+	dialPosition := (zeroPosition - center / 2.0 rotatedBy: Float pi * 1.6 * v) + center.
 	"draw the dial on the base value:"
 	aCanvas strokeWidth: 3.0 color: self inactiveColor do:
 		[aCanvas
-			arcCenter: center radius: radius rotationAngle: Float pi / 2 start: Float pi * 1.8 sweep: Float pi * -1.6;
+			arcCenter: center radius: radius rotationAngle: Float pi / 2.0 start: Float pi * 1.8 sweep: Float pi * -1.6;
 			moveTo: dialPosition;
 			lineTo: center].
 	"and here show the modulated value, not the base value:"
@@ -10355,6 +10405,21 @@ drawOn: aCanvas
 		[control isBipolar
 			ifTrue: [aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: Float pi sweep: Float pi * 1.6 * (vMod - 0.5)]
 			ifFalse: [aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: Float pi * 0.2 sweep: Float pi * 1.6 * vMod]]! !
+
+!PhaseOffsetControlMorph methodsFor: 'initialization' stamp: 'len 25/Apr/2026 15:37:01'!
+defaultExtent
+	^ `24 @ 24`! !
+
+!PhaseOffsetControlMorph methodsFor: 'drawing' stamp: 'len 25/Apr/2026 15:39:48'!
+drawOn: aCanvas
+	| v center radius |
+	v := control basePosition + control modulation min: 1.0 max: 0.0.
+	center := self morphExtent / 2.0.
+	radius := center - 1.
+	aCanvas strokeWidth: 1.0 color: color do:
+		[aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: 0.0 sweep: Float twoPi].
+	aCanvas strokeWidth: 3.0 color: color do:
+		[aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: 0.0 sweep: Float twoPi * v]! !
 
 !SliderControlMorph methodsFor: 'drawing' stamp: 'len 13/Feb/2026 19:59:57'!
 drawHorizontalOn: aCanvas
@@ -10591,11 +10656,12 @@ wantsSteps
 defaultExtent
 	^ `160 @ 96`! !
 
-!WavetableControlMorph methodsFor: 'initialization' stamp: 'len 29/Mar/2026 16:35:44'!
+!WavetableControlMorph methodsFor: 'initialization' stamp: 'len 25/Apr/2026 00:36:27'!
 initialize
 	super initialize.
 	currentPosition := 0.0.
-	color := PatchMorph waveformColor! !
+	color := PatchMorph waveformColor.
+	drawMode := #isometric! !
 
 !WavetableControlMorph methodsFor: 'initialization' stamp: 'len 29/Mar/2026 16:36:03'!
 table: aBuffer frameSize: anInteger
@@ -10672,14 +10738,22 @@ drawIsometricOn: aCanvas
 						[aCanvas moveTo: (projection value: 1 value: (table at: i - 1 * frameSize + 1) value: i).
 						1+stepN to: N by: stepN do: [:j| aCanvas lineTo: (projection value: j value: (table at: i - 1 * frameSize + j) value: i)]]]]]! !
 
-!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 6/Apr/2026 15:49:26'!
+!WavetableControlMorph methodsFor: 'drawing' stamp: 'len 25/Apr/2026 00:36:54'!
 drawOn: aCanvas
-	self drawIsometricOn: aCanvas! !
+	drawMode = #isometric ifTrue: [^ self drawIsometricOn: aCanvas].
+	self drawFlatOn: aCanvas! !
 
 !WavetableControlMorph methodsFor: 'dependency mechanism' stamp: 'len 26/Mar/2026 23:30:44'!
 update: anObject
 	super update: anObject.
 	currentPosition := control value! !
+
+!WavetableControlMorph methodsFor: 'as yet unclassified' stamp: 'len 25/Apr/2026 00:45:04'!
+rotateDrawMode
+	| modes |
+	modes := #(isometric flat).
+	drawMode := modes atWrap: (modes indexOf: drawMode) + 1.
+	self redrawNeeded! !
 
 !DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Apr/2026 20:26:26'!
 adjust: control by: aNumber
@@ -10960,9 +11034,9 @@ mouseScroll: anEvent localPosition: localEventPosition
 	anEvent direction = #down ifTrue: [self adjustYBy: (anEvent shiftPressed ifTrue: [controlY fineStep] ifFalse: [controlY coarseStep]). ^ self].
 	anEvent direction = #up ifTrue: [self adjustYBy: (anEvent shiftPressed ifTrue: [controlY fineStep] ifFalse: [controlY coarseStep]) negated]! !
 
-!XYControlMorph methodsFor: 'halos and balloon help' stamp: 'len 1/Mar/2026 14:45:54'!
+!XYControlMorph methodsFor: 'halos and balloon help' stamp: 'len 26/Apr/2026 01:37:10'!
 balloonText
-	^ controlY printedBaseValueWithLabel, ', ', controlX printedBaseValueWithLabel! !
+	^ controlX printedBaseValueWithLabel, ', ', controlY printedBaseValueWithLabel! !
 
 !XYControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:21:44'!
 defaultExtent
@@ -11174,7 +11248,7 @@ lfo: anLFO
 	self controlX: (lfo controls at: #speed).
 	self controlY: (lfo controls at: #depth)! !
 
-!LFORollingWaveControlMorph methodsFor: 'drawing' stamp: 'len 24/Apr/2026 18:33:27'!
+!LFORollingWaveControlMorph methodsFor: 'drawing' stamp: 'len 25/Apr/2026 21:50:45'!
 drawOn: aCanvas
 	| step x y h pos delta y0 |
 	delta := 20.
@@ -11186,9 +11260,9 @@ drawOn: aCanvas
 	y0 := lfo bipolar ifTrue: [h / 2.0] ifFalse: [h].
 	aCanvas strokeWidth: 1.5 color: Color veryLightGray dashedStrokeBits: 2r1110000 do:
 		[aCanvas moveTo: 0 @ y0; lineTo: self morphWidth @ y0].
-	aCanvas strokeWidth: 2 color: color do:
+	aCanvas strokeWidth: 2.0 color: color do:
 		[aCanvas moveTo: x @ y.
-		0 to: samples size - delta - 5 by: 5 do: [:i|
+		5 - (pos \\ 5) to: samples size - delta - 5 by: 5 do: [:i|
 			x := x + step.
 			y := 1.0 - (samples at: pos + i \\ samples size + 1) * h.
 			aCanvas lineTo: x @ y]]! !
@@ -11201,18 +11275,18 @@ balloonText
 defaultExtent
 	^ `128 @ 64`! !
 
-!LFORollingWaveControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 14:50:22'!
+!LFORollingWaveControlMorph methodsFor: 'initialization' stamp: 'len 25/Apr/2026 18:00:43'!
 initialize
 	super initialize.
 	color := PatchMorph waveformColor3.
 	samples := Float32Array new: 64*5.
 	currentPosition := 1! !
 
-!LFORollingWaveControlMorph methodsFor: 'private' stamp: 'len 24/Apr/2026 18:29:33'!
+!LFORollingWaveControlMorph methodsFor: 'private' stamp: 'len 25/Apr/2026 21:51:43'!
 addSample: aNumber
 	| x |
 	currentPosition := currentPosition < samples size ifTrue: [currentPosition + 1] ifFalse: [1].
-	x := aNumber / ((lfo get: #depth) sqrt + 0.001).
+	x := aNumber / ((lfo get: #depth) abs sqrt + 0.01).
 	lfo bipolar ifTrue: [x := x * 0.5 + 0.5].
 	x := x min: 1.0 max: 0.0.
 	samples at: currentPosition put: x.
@@ -11230,7 +11304,7 @@ lfo: anLFO
 	self controlY: (lfo controls at: #shape).
 	self controlX: (lfo controls at: #offset)! !
 
-!LFOShapeOffsetControlMorph methodsFor: 'drawing' stamp: 'len 24/Apr/2026 15:41:30'!
+!LFOShapeOffsetControlMorph methodsFor: 'drawing' stamp: 'len 25/Apr/2026 19:47:12'!
 drawOn: aCanvas
 	| step stepX t₀ t x y h steps |
 	steps := 16.
@@ -11242,8 +11316,11 @@ drawOn: aCanvas
 		[t := currentPhase.
 		y := 1.0 - (lfo bipolar ifTrue: [lfo peek] ifFalse: [lfo peek * 2.0 - 1.0]) * h + 3.0.
 		x := 4.0 + (t - t₀ \\ 1.0 * stepX * steps).
-		aCanvas line: x @ y to: x @ y width: 6.0 color: Color white.
+		aCanvas line: x @ y to: x @ y width: 6.0 color: color.
 		^ self].
+	x := (self morphWidth - 8.0) * (1.0 - t₀ \\ 1.0) + 4.0.
+	aCanvas strokeWidth: 1.5 color: Color veryVeryLightGray dashedStrokeBits: 2r1000 do:
+		[aCanvas moveTo: x @ 3.0; lineTo: x @ (h * 2 + 3.0)].
 	t := t₀.
 	y := 1.0 - (self waveAt: t \\ 1.0) * h + 3.0.
 	x := 4.0.
@@ -11257,7 +11334,7 @@ drawOn: aCanvas
 	t := currentPhase.
 	y := 1.0 - (self waveAt: t) * h + 3.0.
 	x := 4.0 + (t - t₀ \\ 1.0 * stepX * steps).
-	aCanvas line: x @ y to: x @ y width: 6.0 color: Color white! !
+	aCanvas line: x @ y to: x @ y width: 6.0 color: PatchMorph waveformColor3! !
 
 !LFOShapeOffsetControlMorph methodsFor: 'drawing' stamp: 'len 24/Apr/2026 15:40:56'!
 waveAt: t
@@ -11278,10 +11355,10 @@ balloonText
 defaultExtent
 	^ `48 @ 24`! !
 
-!LFOShapeOffsetControlMorph methodsFor: 'initialization' stamp: 'len 23/Apr/2026 19:07:43'!
+!LFOShapeOffsetControlMorph methodsFor: 'initialization' stamp: 'len 25/Apr/2026 15:41:51'!
 initialize
 	super initialize.
-	color := PatchMorph waveformColor3.
+	color := Color white.
 	currentPhase := 0.0.
 	self lfo: LFO new! !
 
@@ -11290,9 +11367,9 @@ step
 	currentPhase := lfo phase.
 	self redrawNeeded! !
 
-!LFOShapeOffsetControlMorph methodsFor: 'stepping' stamp: 'len 23/Apr/2026 19:07:43'!
+!LFOShapeOffsetControlMorph methodsFor: 'stepping' stamp: 'len 25/Apr/2026 21:47:04'!
 stepTime
-	^ 100! !
+	^ 150! !
 
 !LFOShapeOffsetControlMorph methodsFor: 'stepping' stamp: 'len 23/Apr/2026 19:07:43'!
 wantsSteps
@@ -11305,6 +11382,39 @@ adjustXBy: aNumber
 !LFOShapeOffsetControlMorph methodsFor: 'private' stamp: 'len 24/Apr/2026 15:50:23'!
 adjustYBy: aNumber
 	super adjustYBy: aNumber * -1.0! !
+
+!StereoMatrixControlMorph methodsFor: 'as yet unclassified' stamp: 'len 26/Apr/2026 00:23:46'!
+balance: aControl
+	self controlY: aControl! !
+
+!StereoMatrixControlMorph methodsFor: 'as yet unclassified' stamp: 'len 26/Apr/2026 00:35:16'!
+defaultExtent
+	^ `48 @ 32`! !
+
+!StereoMatrixControlMorph methodsFor: 'as yet unclassified' stamp: 'len 26/Apr/2026 01:27:51'!
+drawOn: aCanvas
+"	width := controlX value.
+	balance := controlY value."
+	| width balance m0 s0 |
+	width := controlX value.
+	balance := controlY value.
+	m0 := extent x / 6.0.
+	s0 := extent x / 3.0.
+	m0 := extent x / 6.0 * width + m0.
+	s0 := extent x / -6.0 * width + s0.
+	aCanvas
+		fillRectangle: (m0 @ 0.0 extent: extent x / 2.0 @ extent y) color: (midColor alpha: 0.5 * balance + 0.5);
+		fillRectangle: (s0 @ 0.0 extent: extent x / 2.0 @ extent y) color: (sideColor alpha: 1.0 - (0.5 * balance + 0.5))! !
+
+!StereoMatrixControlMorph methodsFor: 'as yet unclassified' stamp: 'len 26/Apr/2026 01:23:56'!
+initialize
+	super initialize.
+	midColor := PatchMorph waveformColor.
+	sideColor := PatchMorph waveformColor2! !
+
+!StereoMatrixControlMorph methodsFor: 'as yet unclassified' stamp: 'len 26/Apr/2026 00:23:36'!
+width: aControl
+	self controlX: aControl! !
 
 !WaveshaperControlMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 14:25:23'!
 bias: aControl
@@ -12358,7 +12468,7 @@ color: aColor
 defaultExtent
 	^`128 @ 64`! !
 
-!RollingWaveMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Mar/2026 17:54:38'!
+!RollingWaveMorph methodsFor: 'as yet unclassified' stamp: 'len 25/Apr/2026 18:05:03'!
 drawOn: aCanvas
 	| step x y h pos delta |
 	delta := 20.
@@ -12370,7 +12480,7 @@ drawOn: aCanvas
 	y := 1.0 - (samples at: pos) * h + 3.0.
 	aCanvas strokeWidth: 2 color: color do:
 		[aCanvas moveTo: x @ y.
-		0 to: samples size - delta - 5 by: 5 do: [:i|
+		5 - (pos \\ 5) to: samples size - delta - 5 by: 5 do: [:i|
 			x := x + step.
 			y := 1.0 - (samples at: pos + i \\ samples size + 1) * h + 3.0.
 			aCanvas lineTo: x @ y]]! !
@@ -13433,7 +13543,7 @@ mouseLeave: anEvent
 	body borderColor: body defaultBorderColor.
 	self addAlarm: #hideFlapAndTitle after: 300 "wait 300 ms before actually hiding them"! !
 
-!PatchableMorph methodsFor: 'initialization' stamp: 'len 21/Apr/2026 01:38:13'!
+!PatchableMorph methodsFor: 'initialization' stamp: 'len 25/Apr/2026 15:43:59'!
 initialize
 	| container |
 	super initialize.
@@ -13445,7 +13555,7 @@ initialize
 	self addMorph: container.
 	self addMorph: (title := LabelMorph contents: '' fontSize: 12 emphasis: 1) position: 0 @ -24.
 	title color: Color white; visible: false.
-	flap := RoundedLinearLayoutMorph newColumn gap: 10; padding: 4 @ 8; "borderWidth: 0; borderColor: Color lightGray; color: PatchMorph panelColor" color: (Color darkGray alpha: 0.6).
+	flap := RoundedLinearLayoutMorph newColumn gap: 10; padding: 4 @ 8; "borderWidth: 0; borderColor: Color lightGray; color: PatchMorph panelColor" color: (Color darkGray alpha: 0.8).
 	self addMorph: flap.
 	flap visible: false! !
 

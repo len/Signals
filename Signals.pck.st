@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 26 April 2026 at 1:40:42 am'!
+'From Cuis7.7 [latest update: #7872] on 26 April 2026 at 3:52:54 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 541!
+!provides: 'Signals' 1 542!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -7254,11 +7254,11 @@ value: in
 	y := postlpf value: y * postgain.
 	^​ y - (dcblock value: y)! !
 
-!TubeSaturator methodsFor: 'ui' stamp: 'len 12/Feb/2026 05:36:32'!
+!TubeSaturator methodsFor: 'ui' stamp: 'len 26/Apr/2026 01:45:34'!
 panel
 	^​ ControlPanel new
-		addKnob: (controls at: #tone) label: 'Tone';
-		addKnob: (controls at: #postgain) label: 'Output'! !
+		addSmallKnob: (controls at: #tone) label: 'Tone';
+		addSmallKnob: (controls at: #postgain) label: 'Output'! !
 
 !TubeSaturator methodsFor: 'ui' stamp: 'len 13/Feb/2026 19:40:37'!
 patchable
@@ -7303,12 +7303,12 @@ apply: x
 value: in
 	^ in * dry + (((self apply: in * pregain + bias) - dc) * postgain)! !
 
-!Waveshaper methodsFor: 'ui' stamp: 'len 13/Feb/2026 19:47:24'!
+!Waveshaper methodsFor: 'ui' stamp: 'len 26/Apr/2026 01:46:07'!
 panel
 	^​ ControlPanel new
-"		addKnob: (controls at: #pregain) label: 'Input';"
-		addKnob: (controls at: #postgain) label: 'Output';
-		addKnob: (controls at: #mix) label: 'Mix'! !
+"		addSmallKnob: (controls at: #pregain) label: 'Input';"
+		addSmallKnob: (controls at: #postgain) label: 'Output';
+		addSmallKnob: (controls at: #mix) label: 'Mix'! !
 
 !Waveshaper methodsFor: 'ui' stamp: 'len 26/Apr/2026 00:22:43'!
 patchable
@@ -7642,12 +7642,12 @@ value: in
 	"post lowpass:"
 	^​ (postlpf value: y) * postgain! !
 
-!TapeSaturator methodsFor: 'ui' stamp: 'len 12/Feb/2026 14:16:11'!
+!TapeSaturator methodsFor: 'ui' stamp: 'len 26/Apr/2026 01:46:13'!
 panel
 	^​ ControlPanel new
-"		addKnob: (controls at: #bias) label: 'Bias';"
-		addKnob: (controls at: #tone) label: 'Tone';
-		addKnob: (controls at: #postgain) label: 'Output'! !
+"		addSmallKnob: (controls at: #bias) label: 'Bias';"
+		addSmallKnob: (controls at: #tone) label: 'Tone';
+		addSmallKnob: (controls at: #postgain) label: 'Output'! !
 
 !TapeSaturator methodsFor: 'ui' stamp: 'len 26/Apr/2026 00:23:02'!
 patchable

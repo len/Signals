@@ -94,11 +94,12 @@ Pattern editor:
 Instrument editor:
 
 * Esc open menu to add new modules to the patch
-* Mouse-drag panning
+* Mouse-drag background for panning
 * Cmd-mouse-scroll zoom
 * Backspace delete module or wire under the mouse
 * Mouse-drag from a module output pin to another module input pin to add a wire
 * ` to center and zoom the patch to make it fit the available space
+* Cmd-b and Cmd-i browse and inspect module under the mouse
 
 You can use the computer keyboard to input notes in the tracker or trigger notes in realtime in the instrument editor while the tracker is playing. Transpose one octave up with Cmd-] and down with Cmd-[.
 
@@ -112,6 +113,6 @@ If you use Signals in a non-trivial part of your research please consider citing
 	  author = "Luciano Notarfrancesco",
 	  title = "{The Smalltalk Signals Project}",
 	  year = 2025,
-	  url = "\url{https://github.com/len/signals}",
+	  url = "\url{https://github.com/len/Signals}",
 	}
 

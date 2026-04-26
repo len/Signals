@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 26 April 2026 at 1:42:17 am'!
+'From Cuis7.7 [latest update: #7872] on 26 April 2026 at 11:06:55 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 23!
+!provides: 'Tracker' 1 24!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -989,7 +989,7 @@ drawOn: aCanvas
 	self drawCursorOn: aCanvas.
 	self drawPatternOn: aCanvas! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 14/Mar/2026 18:33:11'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 26/Apr/2026 22:49:01'!
 drawPatternOn: aCanvas
 	| lineSpacing charWidth y unsetColor noteColor velocityColor pattern endLine middle startLine darkColor lightColor xLeft xRight beatColor trackWidth |
 	pattern := tracker selectedPattern.
@@ -1053,7 +1053,7 @@ drawPatternOn: aCanvas
 					ifNil: [aCanvas drawString: '···' at: x @ y font: font color: unsetColor]
 					ifNotNil: [:v| | cmd |
 						cmd := v bitShift: -8.
-						aCanvas drawString: (Character codePoint: cmd) asString, ((v bitAnd: 16rFF) printStringBase: 16 nDigits: 2) at: x @ y font: font color: (FXColors at: cmd)].
+						aCanvas drawString: (Character codePoint: cmd) asString, ((v bitAnd: 16rFF) printStringBase: 16 nDigits: 2) at: x @ y font: font color: (FXColors at: cmd ifAbsent: [unsetColor])].
 				x := charWidth * 3.5 + x]
 			emptyTriggersDo:
 				["aCanvas image: emptyTriggerImage at: x @ y.

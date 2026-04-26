@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 26 April 2026 at 3:52:54 pm'!
+'From Cuis7.7 [latest update: #7872] on 26 April 2026 at 11:06:52 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 542!
+!provides: 'Signals' 1 543!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -2425,6 +2425,10 @@ fineStep
 fineStep: aNumber
 	fineStep := aNumber! !
 
+!Knob methodsFor: 'control and modulation' stamp: 'len 26/Apr/2026 16:06:56'!
+modulateBy: aNumber
+	modulation := modulation + (self isBipolar ifTrue: [aNumber * 0.5] ifFalse: [aNumber])! !
+
 !Knob methodsFor: 'initialization' stamp: 'len 8/Mar/2026 15:23:30'!
 initialize
 	super initialize.
@@ -3023,12 +3027,10 @@ adjustVelocityBy: aNumber
 gateOff
 	^ self! !
 
-!EG methodsFor: 'controlling' stamp: 'len 24/Apr/2026 18:51:50'!
+!EG methodsFor: 'controlling' stamp: 'len 26/Apr/2026 22:57:15'!
 gateOn
 	self update.
 	stage := #attack.
-"	factor := 1.0 - (0.001 raisedTo: 1.0 / attack)"
-	increment := 1.0 / attack.
 	(self get: #reset) ifTrue: [value := 0.0]! !
 
 !EG methodsFor: 'controlling' stamp: 'len 30/Nov/2025 02:15:00'!
@@ -3040,10 +3042,12 @@ reset
 setVelocity: aNumber
 	velocity := aNumber! !
 
-!EG methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:38:54'!
+!EG methodsFor: 'controlling' stamp: 'len 26/Apr/2026 22:57:25'!
 update
 	super update.
-	attack := (self get: #attack) * self class controlRate
+	attack := (self get: #attack) * self class controlRate.
+"	factor := 1.0 - (0.001 raisedTo: 1.0 / attack)"
+	increment := 1.0 / attack.
 ! !
 
 !EG methodsFor: 'initialization' stamp: 'len 15/Jan/2026 19:14:09'!
@@ -8602,13 +8606,12 @@ initialize
 	super initialize.
 	delayLine := DelayLine new: 64! !
 
-!Oscilloscope methodsFor: 'processing' stamp: 'len 3/Apr/2026 00:36:32'!
+!Oscilloscope methodsFor: 'processing' stamp: 'len 26/Apr/2026 22:42:27'!
 tick
 	| i |
 	input ifNil: [^ self].
 	i := 1.
-	[i <= input size] whileTrue: [delayLine write: ((input at: i) min: 1.0 max: -1.0). i := i + 8]. "assume the block size is divisible by 8"
-	self triggerEvent: #changed! !
+	[i <= input size] whileTrue: [delayLine write: ((input at: i) min: 1.0 max: -1.0). i := i + 8]. "assume the block size is divisible by 8"! !
 
 !Oscilloscope methodsFor: 'ui' stamp: 'len 19/Apr/2026 04:50:22'!
 patchable
@@ -8618,12 +8621,9 @@ patchable
 	answer addAudioInput: #setInput:.
 	^ answer! !
 
-!Oscilloscope methodsFor: 'ui' stamp: 'len 19/Apr/2026 04:50:13'!
+!Oscilloscope methodsFor: 'ui' stamp: 'len 26/Apr/2026 22:42:13'!
 screen
-	| answer |
-	answer := OscilloscopeMorph new buffer: delayLine buffer.
-	self when: #changed send: #redrawNeeded to: answer.
-	^ answer! !
+	^ OscilloscopeMorph new buffer: delayLine buffer! !
 
 !Oscilloscope methodsFor: 'wiring' stamp: 'len 3/Apr/2026 00:17:56'!
 setInput: aBuffer
@@ -12309,6 +12309,18 @@ defaultExtent
 initialize
 	super initialize.
 	color := PatchMorph waveformColor! !
+
+!OscilloscopeMorph methodsFor: 'stepping' stamp: 'len 26/Apr/2026 22:40:50'!
+step
+	self redrawNeeded! !
+
+!OscilloscopeMorph methodsFor: 'stepping' stamp: 'len 26/Apr/2026 22:41:02'!
+stepTime
+	^ 100! !
+
+!OscilloscopeMorph methodsFor: 'stepping' stamp: 'len 26/Apr/2026 22:41:11'!
+wantsSteps
+	^ true! !
 
 !PhosphorDisplayMorph methodsFor: 'drawing' stamp: 'len 3/Feb/2026 00:23:19'!
 drawOn: aCanvas

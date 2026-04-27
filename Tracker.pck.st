@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 26 April 2026 at 11:06:55 pm'!
+'From Cuis7.7 [latest update: #7872] on 27 April 2026 at 11:00:37 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 24!
+!provides: 'Tracker' 1 25!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -1797,7 +1797,7 @@ tick
 	trigger ifNotNil: [self playTrigger].
 	currentModules do: [:each| each update; tick]! !
 
-!Instrument methodsFor: 'serialization' stamp: 'len 17/Feb/2026 19:39:10'!
+!Instrument methodsFor: 'serialization' stamp: 'len 27/Apr/2026 02:53:31'!
 asJsonWithBuffers: aList
 	| patchables wires patchablesJson wiresJson |
 	patchables := (patch submorphs select: [:m| m isKindOf: PatchableMorph]) sort: [:a :b| a morphPosition x <= b morphPosition x].
@@ -1810,12 +1810,15 @@ asJsonWithBuffers: aList
 			at: #module put: (each model asJsonWithBuffers: aList);
 			yourself].
 	wiresJson := wires collect: [:each|
-		OrderedDictionary new
+		| wireJson |
+		wireJson := OrderedDictionary new
 			at: #source put: (patchables indexOf: each source patchableOwner);
 			at: #output put: each source selector;
 			at: #target put: (patchables indexOf: each target patchableOwner);
 			at: #input put: each target selector;
-			yourself].
+			yourself.
+		each isControlWire ifTrue: [wireJson at: #depth put: (each source model modulations at: each target control)].
+		wireJson].
 	^ OrderedDictionary new
 		at: #modules put: patchablesJson;
 		at: #wires put: wiresJson;
@@ -1832,7 +1835,7 @@ readFrom: aStream
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 
-!Instrument methodsFor: 'serialization' stamp: 'len 20/Apr/2026 16:32:16'!
+!Instrument methodsFor: 'serialization' stamp: 'len 27/Apr/2026 02:59:09'!
 readFromJson: json buffers: bufferList
 	| patchables |
 	patchables := (json at: #modules) collect: [:each|
@@ -1845,7 +1848,8 @@ readFromJson: json buffers: bufferList
 		| output input |
 		output := (patchables at: (each at: #source)) outputs detect: [:one| one selector = (each at: #output)].
 		input := (patchables at: (each at: #target)) inputs detect: [:one| one selector = (each at: #input)].
-		output addConnectionTo: input].
+		output addConnectionTo: input.
+		each at: #depth ifPresent: [:depth| output model modulations at: input control put: depth]].
 	patch redrawNeeded.
 	label := json at: #label! !
 

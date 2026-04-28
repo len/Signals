@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 27 April 2026 at 11:00:33 pm'!
+'From Cuis7.7 [latest update: #7872] on 28 April 2026 at 5:58:38 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 544!
+!provides: 'Signals' 1 545!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1807,7 +1807,7 @@ WAVFileReader class
 
 
 !Control commentStamp: '<historical>' prior: 0!
-A control is a an abstraction of a knob or switch that changes a parameter.
+A control is a an abstraction of a knob or a switch that changes a parameter.
 
 Controls have a 'base value' typically set by the user in the UI, and a 'modulated value' that depends on external modulations (for example modulation from an LFO or an envelope, simulating the action of a hand moving the knob).!
 
@@ -1983,7 +1983,7 @@ State:
     - Sample counter until next impulse!
 
 !Modulator commentStamp: '<historical>' prior: 0!
-This is a generator of a control signal that can be used to modulate the controls of other modules.!
+This a generator of a control signal that can be used to modulate the controls of other modules. Modulators have one control output.!
 
 !EG commentStamp: '<historical>' prior: 0!
 Abstract superclass for envelope generators.!
@@ -2291,10 +2291,6 @@ Latency: This process introduces a fixed group delay of 6 samples at the base sa
 !STFT commentStamp: 'len 30/Mar/2026 18:12:16' prior: 0!
 This is the Short-Time Fourtier Transform (STFT).!
 
-!Control methodsFor: 'accessing' stamp: 'len 8/Mar/2026 15:21:46'!
-adjustBy: aNumber
-	self basePosition: base + aNumber! !
-
 !Control methodsFor: 'accessing' stamp: 'len 8/Mar/2026 15:21:59'!
 basePosition
 	"Answer the base value of the receiver mapped to a number between 0.0 and 1.0."
@@ -2314,13 +2310,25 @@ baseValue
 baseValue: anObject
 	self basePosition: (self positionFromValue: anObject)! !
 
-!Control methodsFor: 'accessing' stamp: 'len 20/Apr/2026 18:31:21'!
-coarseStep
+!Control methodsFor: 'control and modulation' stamp: 'len 8/Mar/2026 15:21:46'!
+adjustBy: aNumber
+	self basePosition: base + aNumber! !
+
+!Control methodsFor: 'control and modulation' stamp: 'len 28/Apr/2026 17:32:18'!
+adjustDown
 	^ self subclassResponsibility! !
 
-!Control methodsFor: 'accessing' stamp: 'len 20/Apr/2026 18:31:30'!
-fineStep
-	^ self coarseStep! !
+!Control methodsFor: 'control and modulation' stamp: 'len 28/Apr/2026 16:22:58'!
+adjustFineDown
+	^ self adjustDown! !
+
+!Control methodsFor: 'control and modulation' stamp: 'len 28/Apr/2026 16:23:04'!
+adjustFineUp
+	^ self adjustUp! !
+
+!Control methodsFor: 'control and modulation' stamp: 'len 28/Apr/2026 17:32:16'!
+adjustUp
+	^ self subclassResponsibility! !
 
 !Control methodsFor: 'control and modulation' stamp: 'len 8/Mar/2026 15:22:58'!
 apply
@@ -2398,6 +2406,14 @@ coarseStep
 options
 	^ options! !
 
+!Choice methodsFor: 'control and modulation' stamp: 'len 28/Apr/2026 16:24:53'!
+adjustDown
+	self baseValue: (options atPin: (options indexOf: self baseValue) + 1)! !
+
+!Choice methodsFor: 'control and modulation' stamp: 'len 28/Apr/2026 16:24:59'!
+adjustUp
+	self baseValue: (options atPin: (options indexOf: self baseValue) - 1)! !
+
 !Choice methodsFor: 'printing' stamp: 'len 20/Apr/2026 18:35:06'!
 printedBaseValue
 	^ printer ifNil: [self baseValue printString] ifNotNil: [printer value: self baseValue]! !
@@ -2437,6 +2453,22 @@ fineStep
 !Knob methodsFor: 'accessing' stamp: 'len 8/Mar/2026 15:16:22'!
 fineStep: aNumber
 	fineStep := aNumber! !
+
+!Knob methodsFor: 'control and modulation' stamp: 'len 28/Apr/2026 16:22:35'!
+adjustDown
+	self adjustBy: coarseStep negated! !
+
+!Knob methodsFor: 'control and modulation' stamp: 'len 28/Apr/2026 16:22:13'!
+adjustFineDown
+	self adjustBy: fineStep negated! !
+
+!Knob methodsFor: 'control and modulation' stamp: 'len 28/Apr/2026 16:22:21'!
+adjustFineUp
+	self adjustBy: fineStep! !
+
+!Knob methodsFor: 'control and modulation' stamp: 'len 28/Apr/2026 16:22:29'!
+adjustUp
+	self adjustBy: coarseStep! !
 
 !Knob methodsFor: 'control and modulation' stamp: 'len 26/Apr/2026 16:06:56'!
 modulateBy: aNumber
@@ -2517,6 +2549,14 @@ min: min max: max value: defaultValue
 coarseStep
 	^ 0.5! !
 
+!Toggle methodsFor: 'control and modulation' stamp: 'len 28/Apr/2026 16:19:39'!
+adjustDown
+	self baseValue: false! !
+
+!Toggle methodsFor: 'control and modulation' stamp: 'len 28/Apr/2026 16:19:35'!
+adjustUp
+	self baseValue: true! !
+
 !Toggle methodsFor: 'printing' stamp: 'len 20/Apr/2026 18:35:32'!
 printedBaseValue
 	^ printer ifNil: [self baseValue printString] ifNotNil: [printer value: self baseValue]! !
@@ -2554,10 +2594,6 @@ update
 	"Update the internal state of the module from the current modulated values of the controls.
 	Subclasses with internal state that depends on the controls should implement this method and call super."
 	controls do: [:each| each apply] "apply modulations to controls"! !
-
-!Module methodsFor: 'controls' stamp: 'len 3/Mar/2026 19:31:44'!
-adjust: aSymbol by: aValue
-	controls at: aSymbol ifPresent: [:aControl| aControl adjustBy: aValue]! !
 
 !Module methodsFor: 'controls' stamp: 'len 25/Nov/2025 18:46:00'!
 controls
@@ -3831,13 +3867,13 @@ meterValue
 port
 	^ self get: #port! !
 
-!AudioOut methodsFor: 'controlling' stamp: 'len 3/Mar/2026 19:23:02'!
+!AudioOut methodsFor: 'controlling' stamp: 'len 28/Apr/2026 17:31:11'!
 adjustLevelBy: aNumber
-	self adjust: #level by: aNumber! !
+	(controls at: #level) adjustBy: aNumber! !
 
-!AudioOut methodsFor: 'controlling' stamp: 'len 3/Mar/2026 19:23:17'!
+!AudioOut methodsFor: 'controlling' stamp: 'len 28/Apr/2026 17:30:57'!
 adjustPanBy: aNumber
-	self adjust: #pan by: aNumber! !
+	(controls at: #pan) adjustBy: aNumber! !
 
 !AudioOut methodsFor: 'controlling' stamp: 'len 17/Apr/2026 19:30:58'!
 setLevel: aNumber
@@ -10163,30 +10199,6 @@ initialize
 	font := FontFamily defaultFamilyPointSize: self defaultFontSize.
 	extent := self minimumExtent! !
 
-!ChoiceControlMorph methodsFor: 'accessing' stamp: 'len 18/Mar/2026 18:46:40'!
-color: aColor
-	color := aColor! !
-
-!ChoiceControlMorph methodsFor: 'accessing' stamp: 'len 18/Mar/2026 18:48:29'!
-control: aControl
-	control removeDependent: self.
-	control := aControl.
-	aControl addDependent: self.
-	extent := self minimumExtent! !
-
-!ChoiceControlMorph methodsFor: 'accessing' stamp: 'len 18/Mar/2026 18:46:40'!
-inactiveColor
-	self flag: #fixme.
-	^ Color veryLightGray! !
-
-!ChoiceControlMorph methodsFor: 'actions' stamp: 'len 6/Apr/2026 02:17:54'!
-moveDown
-	control adjustBy: 1.0 / (control options size - 1)! !
-
-!ChoiceControlMorph methodsFor: 'actions' stamp: 'len 6/Apr/2026 02:18:02'!
-moveUp
-	control adjustBy: -1.0 / (control options size - 1)! !
-
 !ChoiceControlMorph methodsFor: 'dependency mechanism' stamp: 'len 18/Mar/2026 18:46:40'!
 update: aSymbol
 	self redrawNeeded! !
@@ -10212,6 +10224,11 @@ drawOn: aCanvas
 		y := font ascent + 2.
 		aCanvas line: 3 @ y to: (font widthOfString: string) + 3 @ y width: 2 color: color]! !
 
+!ChoiceControlMorph methodsFor: 'drawing' stamp: 'len 18/Mar/2026 18:46:40'!
+inactiveColor
+	self flag: #fixme.
+	^ Color veryLightGray! !
+
 !ChoiceControlMorph methodsFor: 'event handling testing' stamp: 'len 18/Mar/2026 18:46:40'!
 handlesMouseDown: anEvent
 	^ true
@@ -10221,12 +10238,15 @@ handlesMouseDown: anEvent
 handlesMouseScroll: anEvent
 	^ anEvent anyModifierKeyPressed not! !
 
-!ChoiceControlMorph methodsFor: 'events' stamp: 'len 18/Mar/2026 18:46:40'!
+!ChoiceControlMorph methodsFor: 'events' stamp: 'len 28/Apr/2026 17:21:13'!
 keyStroke: anEvent
 	(anEvent isArrowUp or: [anEvent isArrowLeft]) ifTrue:
-		[anEvent wasHandled: true. ^ self moveUp].
+		[anEvent wasHandled: true.
+		control adjustUp.
+		^ self].
 	(anEvent isArrowDown or: [anEvent isArrowRight]) ifTrue:
-		[anEvent wasHandled: true. self moveDown]! !
+		[anEvent wasHandled: true.
+		control adjustDown]! !
 
 !ChoiceControlMorph methodsFor: 'events' stamp: 'len 18/Mar/2026 18:52:56'!
 mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
@@ -10235,9 +10255,9 @@ mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
 	control options do: [:each| menu add: each asString target: control action: #baseValue: argument: each].
 	menu invokeModal! !
 
-!ChoiceControlMorph methodsFor: 'events' stamp: 'len 18/Mar/2026 18:46:40'!
+!ChoiceControlMorph methodsFor: 'events' stamp: 'len 28/Apr/2026 17:21:53'!
 mouseScroll: aMouseEvent localPosition: localEventPosition
-	(aMouseEvent direction = #up or: [aMouseEvent direction = #right]) ifTrue: [self moveUp] ifFalse: [self moveDown]! !
+	(aMouseEvent direction = #down or: [aMouseEvent direction = #right]) ifTrue: [control adjustUp] ifFalse: [control adjustDown]! !
 
 !ChoiceControlMorph methodsFor: 'focus handling' stamp: 'len 18/Mar/2026 18:46:40'!
 keyboardFocusChange: aBoolean
@@ -10250,6 +10270,17 @@ minimumExtent
 !ChoiceControlMorph methodsFor: 'geometry' stamp: 'len 18/Mar/2026 18:46:40'!
 requiresVectorCanvas
 	^ true! !
+
+!ChoiceControlMorph methodsFor: 'initialization' stamp: 'len 18/Mar/2026 18:46:40'!
+color: aColor
+	color := aColor! !
+
+!ChoiceControlMorph methodsFor: 'initialization' stamp: 'len 18/Mar/2026 18:48:29'!
+control: aControl
+	control removeDependent: self.
+	control := aControl.
+	aControl addDependent: self.
+	extent := self minimumExtent! !
 
 !ChoiceControlMorph methodsFor: 'initialization' stamp: 'len 18/Mar/2026 18:46:40'!
 defaultColor
@@ -10269,32 +10300,6 @@ initialize
 	color := Color white.
 	font := FontFamily defaultFamilyPointSize: self defaultFontSize! !
 
-!ControlMorph methodsFor: 'accessing' stamp: 'len 30/Sep/2025 22:36:00'!
-color: aColor
-	color := aColor! !
-
-!ControlMorph methodsFor: 'accessing' stamp: 'len 1/Dec/2025 15:21:00'!
-control: aControl
-	control removeDependent: self.
-	control := aControl.
-	aControl addDependent: self! !
-
-!ControlMorph methodsFor: 'accessing' stamp: 'len 20/Nov/2025 21:51:00'!
-defaultColor
-	^ Color white! !
-
-!ControlMorph methodsFor: 'accessing' stamp: 'len 6/Apr/2026 21:01:30'!
-defaultFontSize
-	^ (FontFamily defaultPointSize * 0.8) truncated! !
-
-!ControlMorph methodsFor: 'accessing' stamp: 'len 6/Apr/2026 21:02:57'!
-defaultLabelFontSize
-	^ (FontFamily defaultPointSize * 0.6) truncated! !
-
-!ControlMorph methodsFor: 'accessing' stamp: 'len 19/Nov/2025 19:08:00'!
-inactiveColor
-	^ self hasKeyboardFocus ifTrue: [Color veryLightGray] ifFalse: [Color lightGray]! !
-
 !ControlMorph methodsFor: 'building' stamp: 'len 10/Apr/2026 00:12:03'!
 withLabel: aString
 	^ LinearLayoutMorph newColumn
@@ -10307,32 +10312,41 @@ withLabel: aString
 update: anObject
 	self redrawNeeded! !
 
+!ControlMorph methodsFor: 'drawing' stamp: 'len 19/Nov/2025 19:08:00'!
+inactiveColor
+	^ self hasKeyboardFocus ifTrue: [Color veryLightGray] ifFalse: [Color lightGray]! !
+
 !ControlMorph methodsFor: 'events' stamp: 'len 14/Jan/2026 12:25:53'!
 handlesMouseScroll: anEvent
 	^ anEvent anyModifierKeyPressed not! !
 
-!ControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:10:00'!
+!ControlMorph methodsFor: 'events' stamp: 'len 28/Apr/2026 16:47:37'!
 keyStroke: anEvent
 	anEvent isEsc ifTrue:
 		[anEvent wasHandled: true.
 		control resetToDefault.
-		self wantsBalloon ifTrue: [self showBalloon: control printedBaseValueWithLabel].
+		self wantsBalloon ifTrue: [self showBalloon].
 		^ self].
 	(anEvent isArrowUp or: [anEvent isArrowRight]) ifTrue:
 		[anEvent wasHandled: true.
-		self adjustControlBy: (anEvent shiftPressed ifTrue: [control fineStep] ifFalse: [control coarseStep]).
+		anEvent shiftPressed ifTrue: [control adjustFineUp] ifFalse: [control adjustUp].
+		self wantsBalloon ifTrue: [self showBalloon].
 		^ self].
 	(anEvent isArrowDown or: [anEvent isArrowLeft]) ifTrue:
 		[anEvent wasHandled: true.
-		self adjustControlBy: (anEvent shiftPressed ifTrue: [control fineStep] ifFalse: [control coarseStep]) negated.
+		anEvent shiftPressed ifTrue: [control adjustFineDown] ifFalse: [control adjustDown].
+		self wantsBalloon ifTrue: [self showBalloon].
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!ControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:10:08'!
+!ControlMorph methodsFor: 'events' stamp: 'len 28/Apr/2026 16:47:03'!
 mouseScroll: anEvent localPosition: localEventPosition
-	| step |
-	step := anEvent shiftPressed ifTrue: [control fineStep] ifFalse: [control coarseStep].
-	self adjustControlBy: ((anEvent direction = #up or: [anEvent direction = #right]) ifTrue: [step negated] ifFalse: [step])! !
+	(anEvent direction = #down or: [anEvent direction = #left])
+		ifTrue:
+			[anEvent shiftPressed ifTrue: [control adjustFineUp] ifFalse: [control adjustUp]]
+		ifFalse:
+			[anEvent shiftPressed ifTrue: [control adjustFineDown] ifFalse: [control adjustDown]].
+	self wantsBalloon ifTrue: [self showBalloon]! !
 
 !ControlMorph methodsFor: 'focus handling' stamp: 'len 19/Nov/2025 19:02:00'!
 keyboardFocusChange: aBoolean
@@ -10346,18 +10360,33 @@ requiresVectorCanvas
 balloonText
 	^ control printedBaseValueWithLabel! !
 
+!ControlMorph methodsFor: 'initialization' stamp: 'len 30/Sep/2025 22:36:00'!
+color: aColor
+	color := aColor! !
+
+!ControlMorph methodsFor: 'initialization' stamp: 'len 1/Dec/2025 15:21:00'!
+control: aControl
+	control removeDependent: self.
+	control := aControl.
+	aControl addDependent: self! !
+
+!ControlMorph methodsFor: 'initialization' stamp: 'len 20/Nov/2025 21:51:00'!
+defaultColor
+	^ Color white! !
+
+!ControlMorph methodsFor: 'initialization' stamp: 'len 6/Apr/2026 21:01:30'!
+defaultFontSize
+	^ (FontFamily defaultPointSize * 0.8) truncated! !
+
+!ControlMorph methodsFor: 'initialization' stamp: 'len 6/Apr/2026 21:02:57'!
+defaultLabelFontSize
+	^ (FontFamily defaultPointSize * 0.6) truncated! !
+
 !ControlMorph methodsFor: 'initialization' stamp: 'len 18/Mar/2026 18:06:10'!
 initialize
 	super initialize.
 	self control:​ Knob new.
 	color := self defaultColor! !
-
-!ControlMorph methodsFor: 'private' stamp: 'len 5/Mar/2026 02:13:50'!
-adjustControlBy: aNumber
-	control adjustBy: aNumber.
-	control apply.
-	self redrawNeeded.
-	self wantsBalloon ifTrue: [self showBalloon: control printedBaseValueWithLabel]! !
 
 !ControlMorph class methodsFor: 'instance creation' stamp: 'len 4/Nov/2025 15:49:00'!
 control: aControl
@@ -10753,13 +10782,6 @@ rotateDrawMode
 	drawMode := modes atWrap: (modes indexOf: drawMode) + 1.
 	self redrawNeeded! !
 
-!DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Apr/2026 20:26:26'!
-adjust: control by: aNumber
-	control adjustBy: aNumber.
-	control apply.
-	self redrawNeeded.
-	self wantsBalloon ifTrue: [self showBalloon: control printedBaseValueWithLabel]! !
-
 !DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Mar/2026 19:08:39'!
 balloonText
 	| answer |
@@ -10787,25 +10809,40 @@ defaultExtent
 handlesMouseScroll: anEvent
 	^ anEvent anyModifierKeyPressed not or: [anEvent secondaryModifierPressed]! !
 
-!DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Mar/2026 19:02:53'!
+!DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 28/Apr/2026 17:28:12'!
 keyStroke: anEvent
 	| control |
 	control := anEvent secondaryModifierPressed ifTrue: [control2] ifFalse: [control1].
 	control ifNil: [^ self].
 	anEvent isEsc ifTrue:
-		[anEvent wasHandled: true. control resetToDefault. ^ self].
+		[anEvent wasHandled: true.
+		control resetToDefault.
+		self wantsBalloon ifTrue: [self showBalloon: control printedBaseValueWithLabel].
+		^ self].
 	(anEvent isArrowUp or: [anEvent isArrowRight]) ifTrue:
-		[anEvent wasHandled: true. self adjust: control by: (anEvent shiftPressed ifTrue: [control fineStep] ifFalse: [control coarseStep]). ^ self].
+		[anEvent wasHandled: true.
+		anEvent shiftPressed ifTrue: [control adjustFineUp] ifFalse: [control adjustUp].
+		self wantsBalloon ifTrue: [self showBalloon: control printedBaseValueWithLabel].
+		^ self].
 	(anEvent isArrowDown or: [anEvent isArrowLeft]) ifTrue:
-		[anEvent wasHandled: true. self adjust: control by: (anEvent shiftPressed ifTrue: [control fineStep] ifFalse: [control coarseStep]) negated. ^ self]! !
+		[anEvent wasHandled: true.
+		anEvent shiftPressed ifTrue: [control adjustFineDown] ifFalse: [control adjustDown].
+		self wantsBalloon ifTrue: [self showBalloon: control printedBaseValueWithLabel].
+		^ self]! !
 
-!DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Mar/2026 19:07:53'!
+!DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 28/Apr/2026 17:29:40'!
 mouseScroll: anEvent localPosition: localEventPosition
 	| control |
 	control := anEvent secondaryModifierPressed ifTrue: [control2] ifFalse: [control1].
 	control ifNil: [^ self].
-	(anEvent direction = #left or: [anEvent direction = #down]) ifTrue: [self adjust: control by: (anEvent shiftPressed ifTrue: [control fineStep] ifFalse: [control coarseStep]). ^ self].
-	(anEvent direction = #right or: [anEvent direction = #up]) ifTrue: [self adjust: control by: (anEvent shiftPressed ifTrue: [control fineStep] ifFalse: [control coarseStep]) negated. ^ self]! !
+	(anEvent direction = #left or: [anEvent direction = #down]) ifTrue:
+		[anEvent shiftPressed ifTrue: [control adjustFineUp] ifFalse: [control adjustUp].
+		self wantsBalloon ifTrue: [self showBalloon: control printedBaseValueWithLabel].
+		^ self].
+	(anEvent direction = #right or: [anEvent direction = #up]) ifTrue:
+		[anEvent shiftPressed ifTrue: [control adjustFineDown] ifFalse: [control adjustDown].
+		self wantsBalloon ifTrue: [self showBalloon: control printedBaseValueWithLabel].
+		^ self]! !
 
 !DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Mar/2026 18:57:05'!
 requiresVectorCanvas
@@ -10878,33 +10915,6 @@ return: aControl
 threshold: aControl
 	self control1: aControl! !
 
-!ToggleControlMorph methodsFor: 'accessing' stamp: 'len 18/Mar/2026 19:11:13'!
-color: aColor
-	color := aColor! !
-
-!ToggleControlMorph methodsFor: 'accessing' stamp: 'len 18/Mar/2026 19:14:22'!
-control: aControl
-	control removeDependent: self.
-	control := aControl.
-	aControl addDependent: self! !
-
-!ToggleControlMorph methodsFor: 'accessing' stamp: 'len 18/Mar/2026 19:11:13'!
-inactiveColor
-	self flag: #fixme.
-	^ Color veryLightGray! !
-
-!ToggleControlMorph methodsFor: 'accessing' stamp: 'len 18/Mar/2026 19:11:13'!
-label: aString
-	label := aString! !
-
-!ToggleControlMorph methodsFor: 'actions' stamp: 'len 18/Mar/2026 19:12:15'!
-moveDown
-	control baseValue: false! !
-
-!ToggleControlMorph methodsFor: 'actions' stamp: 'len 18/Mar/2026 19:12:22'!
-moveUp
-	control baseValue: true! !
-
 !ToggleControlMorph methodsFor: 'dependency mechanism' stamp: 'len 18/Mar/2026 19:11:13'!
 update: aSymbol
 	self redrawNeeded! !
@@ -10937,6 +10947,11 @@ drawOn: aCanvas
 		y := font ascent + 2.
 		aCanvas line: 3 @ y to: (font widthOfString: label) + 3 @ y width: 2 color: labelColor]! !
 
+!ToggleControlMorph methodsFor: 'drawing' stamp: 'len 18/Mar/2026 19:11:13'!
+inactiveColor
+	self flag: #fixme.
+	^ Color veryLightGray! !
+
 !ToggleControlMorph methodsFor: 'event handling testing' stamp: 'len 18/Mar/2026 19:11:13'!
 handlesMouseDown: anEvent
 	^ true
@@ -10946,20 +10961,23 @@ handlesMouseDown: anEvent
 handlesMouseScroll: anEvent
 	^ anEvent anyModifierKeyPressed not! !
 
-!ToggleControlMorph methodsFor: 'events' stamp: 'len 18/Mar/2026 19:11:13'!
+!ToggleControlMorph methodsFor: 'events' stamp: 'len 28/Apr/2026 16:16:43'!
 keyStroke: anEvent
 	(anEvent isArrowUp or: [anEvent isArrowLeft]) ifTrue:
-		[anEvent wasHandled: true. ^ self moveUp].
+		[anEvent wasHandled: true.
+		control baseValue: true.
+		^ self].
 	(anEvent isArrowDown or: [anEvent isArrowRight]) ifTrue:
-		[anEvent wasHandled: true. self moveDown]! !
+		[anEvent wasHandled: true.
+		control baseValue: false]! !
 
 !ToggleControlMorph methodsFor: 'events' stamp: 'len 18/Mar/2026 19:13:16'!
 mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
 	control baseValue: control baseValue not! !
 
-!ToggleControlMorph methodsFor: 'events' stamp: 'len 18/Mar/2026 19:11:13'!
+!ToggleControlMorph methodsFor: 'events' stamp: 'len 28/Apr/2026 16:18:15'!
 mouseScroll: aMouseEvent localPosition: localEventPosition
-	(aMouseEvent direction = #up or: [aMouseEvent direction = #right]) ifTrue: [self moveUp] ifFalse: [self moveDown]! !
+	control baseValue: (aMouseEvent direction = #down or: [aMouseEvent direction = #left])! !
 
 !ToggleControlMorph methodsFor: 'focus handling' stamp: 'len 18/Mar/2026 19:11:13'!
 keyboardFocusChange: aBoolean
@@ -10972,6 +10990,16 @@ minimumExtent
 !ToggleControlMorph methodsFor: 'geometry' stamp: 'len 18/Mar/2026 19:11:13'!
 requiresVectorCanvas
 	^ true! !
+
+!ToggleControlMorph methodsFor: 'initialization' stamp: 'len 18/Mar/2026 19:11:13'!
+color: aColor
+	color := aColor! !
+
+!ToggleControlMorph methodsFor: 'initialization' stamp: 'len 18/Mar/2026 19:14:22'!
+control: aControl
+	control removeDependent: self.
+	control := aControl.
+	aControl addDependent: self! !
 
 !ToggleControlMorph methodsFor: 'initialization' stamp: 'len 18/Mar/2026 19:11:13'!
 defaultExtent
@@ -10988,17 +11016,9 @@ initialize
 	font := FontFamily defaultFamilyPointSize: self defaultFontSize.
 	extent := self minimumExtent! !
 
-!XYControlMorph methodsFor: 'accessing' stamp: 'len 6/Dec/2025 14:26:58'!
-controlX: aControl
-	controlX removeDependent: self.
-	controlX := aControl.
-	aControl addDependent: self! !
-
-!XYControlMorph methodsFor: 'accessing' stamp: 'len 6/Dec/2025 14:26:51'!
-controlY: aControl
-	controlY removeDependent: self.
-	controlY := aControl.
-	aControl addDependent: self! !
+!ToggleControlMorph methodsFor: 'initialization' stamp: 'len 18/Mar/2026 19:11:13'!
+label: aString
+	label := aString! !
 
 !XYControlMorph methodsFor: 'dependency mechanism' stamp: 'len 20/Jan/2026 15:18:05'!
 update: anObject
@@ -11012,59 +11032,84 @@ requiresVectorCanvas
 handlesMouseScroll: anEvent
 	^ anEvent anyModifierKeyPressed not! !
 
-!XYControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:04:28'!
+!XYControlMorph methodsFor: 'events' stamp: 'len 28/Apr/2026 17:40:41'!
 keyStroke: anEvent
 	anEvent isEsc ifTrue:
-		[anEvent wasHandled: true. controlX resetToDefault. controlY resetToDefault. ^ self].
-	anEvent isArrowUp ifTrue:
-		[anEvent wasHandled: true. self adjustYBy: (anEvent shiftPressed ifTrue: [controlY fineStep] ifFalse: [controlY coarseStep]). ^ self].
-	anEvent isArrowDown ifTrue:
-		[anEvent wasHandled: true. self adjustYBy: (anEvent shiftPressed ifTrue: [controlY fineStep] ifFalse: [controlY coarseStep]) negated. ^ self].
-	anEvent isArrowLeft ifTrue:
-		[anEvent wasHandled: true. self adjustXBy: (anEvent shiftPressed ifTrue: [controlX fineStep] ifFalse: [controlX coarseStep]) negated. ^ self].
-	anEvent isArrowRight ifTrue:
-		[anEvent wasHandled: true. self adjustXBy: (anEvent shiftPressed ifTrue: [controlX fineStep] ifFalse: [controlX coarseStep])]! !
+		[anEvent wasHandled: true.
+		controlX resetToDefault.
+		controlY resetToDefault.
+		self wantsBalloon ifTrue: [self showBalloon].
+		^ self].
+	(self invertsY ifTrue: [anEvent isArrowDown] ifFalse: [anEvent isArrowUp]) ifTrue:
+		[anEvent wasHandled: true.
+		(anEvent shiftPressed ifTrue: [controlY adjustFineUp] ifFalse: [controlY adjustUp]).
+		self wantsBalloon ifTrue: [self showBalloon: controlY printedBaseValueWithLabel].
+		^ self].
+	(self invertsY ifTrue: [anEvent isArrowUp] ifFalse: [anEvent isArrowDown]) ifTrue:
+		[anEvent wasHandled: true.
+		(anEvent shiftPressed ifTrue: [controlY adjustFineDown] ifFalse: [controlY adjustDown]).
+		self wantsBalloon ifTrue: [self showBalloon: controlY printedBaseValueWithLabel].
+		^ self].
+	(self invertsX ifTrue: [anEvent isArrowLeft] ifFalse: [anEvent isArrowRight]) ifTrue:
+		[anEvent wasHandled: true.
+		(anEvent shiftPressed ifTrue: [controlX adjustFineUp] ifFalse: [controlX adjustUp]).
+		self wantsBalloon ifTrue: [self showBalloon: controlX printedBaseValueWithLabel].
+		^ self].
+	(self invertsX ifTrue: [anEvent isArrowRight] ifFalse: [anEvent isArrowLeft]) ifTrue:
+		[anEvent wasHandled: true.
+		(anEvent shiftPressed ifTrue: [controlX adjustFineDown] ifFalse: [controlX adjustDown]).
+		self wantsBalloon ifTrue: [self showBalloon: controlX printedBaseValueWithLabel].
+		^ self]! !
 
-!XYControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026 19:04:13'!
+!XYControlMorph methodsFor: 'events' stamp: 'len 28/Apr/2026 17:44:41'!
 mouseScroll: anEvent localPosition: localEventPosition
-	anEvent direction = #left ifTrue: [self adjustXBy: (anEvent shiftPressed ifTrue: [controlX fineStep] ifFalse: [controlX coarseStep]). ^ self].
-	anEvent direction = #right ifTrue: [self adjustXBy: (anEvent shiftPressed ifTrue: [controlX fineStep] ifFalse: [controlX coarseStep]) negated. ^ self].
-	anEvent direction = #down ifTrue: [self adjustYBy: (anEvent shiftPressed ifTrue: [controlY fineStep] ifFalse: [controlY coarseStep]). ^ self].
-	anEvent direction = #up ifTrue: [self adjustYBy: (anEvent shiftPressed ifTrue: [controlY fineStep] ifFalse: [controlY coarseStep]) negated]! !
+	anEvent direction = (self invertsX ifTrue: [#left] ifFalse: [#right]) ifTrue:
+		[anEvent shiftPressed ifTrue: [controlX adjustFineDown] ifFalse: [controlX adjustDown].
+		self wantsBalloon ifTrue: [self showBalloon: controlX printedBaseValueWithLabel].
+		^ self].
+	anEvent direction = (self invertsX ifTrue: [#right] ifFalse: [#left]) ifTrue:
+		[anEvent shiftPressed ifTrue: [controlX adjustFineUp] ifFalse: [controlX adjustUp].
+		self wantsBalloon ifTrue: [self showBalloon: controlX printedBaseValueWithLabel].
+		^ self].
+	anEvent direction = (self invertsY ifTrue: [#down] ifFalse: [#up]) ifTrue:
+		[anEvent shiftPressed ifTrue: [controlY adjustFineDown] ifFalse: [controlY adjustDown].
+		self wantsBalloon ifTrue: [self showBalloon: controlY printedBaseValueWithLabel].
+		^ self].
+	anEvent direction = (self invertsY ifTrue: [#up] ifFalse: [#down]) ifTrue:
+		[anEvent shiftPressed ifTrue: [controlY adjustFineUp] ifFalse: [controlY adjustUp].
+		self wantsBalloon ifTrue: [self showBalloon: controlY printedBaseValueWithLabel].
+		^ self]
+! !
 
 !XYControlMorph methodsFor: 'halos and balloon help' stamp: 'len 26/Apr/2026 01:37:10'!
 balloonText
 	^ controlX printedBaseValueWithLabel, ', ', controlY printedBaseValueWithLabel! !
 
+!XYControlMorph methodsFor: 'initialization' stamp: 'len 6/Dec/2025 14:26:58'!
+controlX: aControl
+	controlX removeDependent: self.
+	controlX := aControl.
+	aControl addDependent: self! !
+
+!XYControlMorph methodsFor: 'initialization' stamp: 'len 6/Dec/2025 14:26:51'!
+controlY: aControl
+	controlY removeDependent: self.
+	controlY := aControl.
+	aControl addDependent: self! !
+
 !XYControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:21:44'!
 defaultExtent
 	^ `128 @ 64`! !
 
-!XYControlMorph methodsFor: 'private' stamp: 'len 23/Apr/2026 20:27:11'!
-adjustXBy: aNumber
-	controlX adjustBy: aNumber.
-	controlX apply.
-	self redrawNeeded.
-	self wantsBalloon ifTrue: [self showBalloon: controlX printedBaseValueWithLabel]! !
+!XYControlMorph methodsFor: 'private' stamp: 'len 28/Apr/2026 17:35:27'!
+invertsX
+	"Answer true if we invert the horizontal direction in this control."
+	^ false! !
 
-!XYControlMorph methodsFor: 'private' stamp: 'len 23/Apr/2026 20:27:26'!
-adjustYBy: aNumber
-	controlY adjustBy: aNumber.
-	controlY apply.
-	self redrawNeeded.
-	self wantsBalloon ifTrue: [self showBalloon: controlY printedBaseValueWithLabel]! !
-
-!FilterControlMorph methodsFor: 'accessing' stamp: 'len 6/Dec/2025 14:26:58'!
-frequency: aControl
-	self controlX: aControl! !
-
-!FilterControlMorph methodsFor: 'accessing' stamp: 'len 10/Mar/2026 14:36:39'!
-mode: aSymbol
-	mode := aSymbol.
-"	aSymbol = #LP ifTrue: [color := PatchMorph lowsColor. ^ self].
-	aSymbol = #HP ifTrue: [color := PatchMorph highsColor. ^ self].
-	(aSymbol = #BP or: [aSymbol = #BS]) ifTrue: [color := PatchMorph midsColor. ^ self].
-	color := Color white"! !
+!XYControlMorph methodsFor: 'private' stamp: 'len 28/Apr/2026 17:35:36'!
+invertsY
+	"Answer true if we invert the vertical direction in this control."
+	^ false! !
 
 !FilterControlMorph methodsFor: 'drawing' stamp: 'len 12/Feb/2026 05:45:25'!
 drawBPOn: aCanvas frequency: freq bandwidth: bandwidth color: curveColor fillColor: fillColor
@@ -11229,20 +11274,26 @@ notchWidth
 defaultExtent
 	^ `144 @ 96`! !
 
+!FilterControlMorph methodsFor: 'initialization' stamp: 'len 6/Dec/2025 14:26:58'!
+frequency: aControl
+	self controlX: aControl! !
+
 !FilterControlMorph methodsFor: 'initialization' stamp: 'len 12/Feb/2026 05:51:24'!
 initialize
 	super initialize.
 	color := Color white! !
 
-!FilterControlMorph methodsFor: 'private' stamp: 'len 4/Feb/2026 00:40:14'!
-adjustYBy: aNumber
-	super adjustYBy: (mode = #BP ifTrue: [aNumber negated] ifFalse: [aNumber])! !
+!FilterControlMorph methodsFor: 'initialization' stamp: 'len 10/Mar/2026 14:36:39'!
+mode: aSymbol
+	mode := aSymbol.
+"	aSymbol = #LP ifTrue: [color := PatchMorph lowsColor. ^ self].
+	aSymbol = #HP ifTrue: [color := PatchMorph highsColor. ^ self].
+	(aSymbol = #BP or: [aSymbol = #BS]) ifTrue: [color := PatchMorph midsColor. ^ self].
+	color := Color white"! !
 
-!LFORollingWaveControlMorph methodsFor: 'accessing' stamp: 'len 27/Apr/2026 03:06:33'!
-lfo: anLFO
-	lfo := anLFO.
-	self controlX: (lfo controls at: #speed).
-	self controlY: (lfo controls at: #shape)! !
+!FilterControlMorph methodsFor: 'private' stamp: 'len 28/Apr/2026 17:41:06'!
+invertsY
+	^ mode = #BP! !
 
 !LFORollingWaveControlMorph methodsFor: 'drawing' stamp: 'len 25/Apr/2026 21:50:45'!
 drawOn: aCanvas
@@ -11278,6 +11329,12 @@ initialize
 	samples := Float32Array new: 64*5.
 	currentPosition := 1! !
 
+!LFORollingWaveControlMorph methodsFor: 'initialization' stamp: 'len 27/Apr/2026 03:06:33'!
+lfo: anLFO
+	lfo := anLFO.
+	self controlX: (lfo controls at: #speed).
+	self controlY: (lfo controls at: #shape)! !
+
 !LFORollingWaveControlMorph methodsFor: 'private' stamp: 'len 27/Apr/2026 03:03:44'!
 addSample: aNumber
 	| x |
@@ -11287,18 +11344,6 @@ addSample: aNumber
 	x := x min: 1.0 max: 0.0.
 	samples at: currentPosition put: x.
 	self redrawNeeded! !
-
-!LFORollingWaveControlMorph methodsFor: 'private' stamp: 'len 23/Feb/2026 22:32:14'!
-adjustXBy: aNumber
-	super adjustXBy: aNumber * 2.0! !
-
-!LFOShapeOffsetControlMorph methodsFor: 'accessing' stamp: 'len 23/Apr/2026 19:08:31'!
-lfo: anLFO
-	lfo removeDependent: self.
-	lfo := anLFO.
-	lfo addDependent: self.
-	self controlY: (lfo controls at: #shape).
-	self controlX: (lfo controls at: #offset)! !
 
 !LFOShapeOffsetControlMorph methodsFor: 'drawing' stamp: 'len 25/Apr/2026 19:47:12'!
 drawOn: aCanvas
@@ -11358,6 +11403,14 @@ initialize
 	currentPhase := 0.0.
 	self lfo: LFO new! !
 
+!LFOShapeOffsetControlMorph methodsFor: 'initialization' stamp: 'len 23/Apr/2026 19:08:31'!
+lfo: anLFO
+	lfo removeDependent: self.
+	lfo := anLFO.
+	lfo addDependent: self.
+	self controlY: (lfo controls at: #shape).
+	self controlX: (lfo controls at: #offset)! !
+
 !LFOShapeOffsetControlMorph methodsFor: 'stepping' stamp: 'len 23/Apr/2026 19:07:43'!
 step
 	currentPhase := lfo phase.
@@ -11371,23 +11424,29 @@ stepTime
 wantsSteps
 	^ true! !
 
-!LFOShapeOffsetControlMorph methodsFor: 'private' stamp: 'len 23/Apr/2026 19:07:43'!
-adjustXBy: aNumber
-	super adjustXBy: aNumber * -4.0! !
+!LFOShapeOffsetControlMorph methodsFor: 'private' stamp: 'len 28/Apr/2026 17:43:02'!
+invertsX
+	^ true! !
 
-!LFOShapeOffsetControlMorph methodsFor: 'private' stamp: 'len 24/Apr/2026 15:50:23'!
-adjustYBy: aNumber
-	super adjustYBy: aNumber * -1.0! !
-
-!StereoMatrixControlMorph methodsFor: 'as yet unclassified' stamp: 'len 26/Apr/2026 00:23:46'!
+!StereoMatrixControlMorph methodsFor: 'initialization' stamp: 'len 26/Apr/2026 00:23:46'!
 balance: aControl
 	self controlY: aControl! !
 
-!StereoMatrixControlMorph methodsFor: 'as yet unclassified' stamp: 'len 26/Apr/2026 00:35:16'!
+!StereoMatrixControlMorph methodsFor: 'initialization' stamp: 'len 26/Apr/2026 00:35:16'!
 defaultExtent
 	^ `48 @ 32`! !
 
-!StereoMatrixControlMorph methodsFor: 'as yet unclassified' stamp: 'len 26/Apr/2026 01:27:51'!
+!StereoMatrixControlMorph methodsFor: 'initialization' stamp: 'len 26/Apr/2026 01:23:56'!
+initialize
+	super initialize.
+	midColor := PatchMorph waveformColor.
+	sideColor := PatchMorph waveformColor2! !
+
+!StereoMatrixControlMorph methodsFor: 'initialization' stamp: 'len 26/Apr/2026 00:23:36'!
+width: aControl
+	self controlX: aControl! !
+
+!StereoMatrixControlMorph methodsFor: 'drawing' stamp: 'len 26/Apr/2026 01:27:51'!
 drawOn: aCanvas
 "	width := controlX value.
 	balance := controlY value."
@@ -11401,38 +11460,6 @@ drawOn: aCanvas
 	aCanvas
 		fillRectangle: (m0 @ 0.0 extent: extent x / 2.0 @ extent y) color: (midColor alpha: 0.5 * balance + 0.5);
 		fillRectangle: (s0 @ 0.0 extent: extent x / 2.0 @ extent y) color: (sideColor alpha: 1.0 - (0.5 * balance + 0.5))! !
-
-!StereoMatrixControlMorph methodsFor: 'as yet unclassified' stamp: 'len 26/Apr/2026 01:23:56'!
-initialize
-	super initialize.
-	midColor := PatchMorph waveformColor.
-	sideColor := PatchMorph waveformColor2! !
-
-!StereoMatrixControlMorph methodsFor: 'as yet unclassified' stamp: 'len 26/Apr/2026 00:23:36'!
-width: aControl
-	self controlX: aControl! !
-
-!WaveshaperControlMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 14:25:23'!
-bias: aControl
-	self controlX: aControl.
-	valueX := aControl value! !
-
-!WaveshaperControlMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 14:22:21'!
-color: aColor
-	color := aColor! !
-
-!WaveshaperControlMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 14:34:40'!
-shape: aControl
-	self controlY: aControl.
-	valueY := aControl value! !
-
-!WaveshaperControlMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 14:24:40'!
-waveAt: aNumber
-	^ wave value: aNumber value: valueY! !
-
-!WaveshaperControlMorph methodsFor: 'accessing' stamp: 'len 11/Feb/2026 18:58:59'!
-waveBlock: aBlock
-	wave := aBlock! !
 
 !WaveshaperControlMorph methodsFor: 'dependency mechanism' stamp: 'len 11/Feb/2026 18:58:59'!
 update: anObject
@@ -11485,6 +11512,19 @@ drawOn: aCanvas
 			x := x + stepX.
 			aCanvas lineTo: x @ y]]! !
 
+!WaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 12/Feb/2026 14:24:40'!
+waveAt: aNumber
+	^ wave value: aNumber value: valueY! !
+
+!WaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 12/Feb/2026 14:25:23'!
+bias: aControl
+	self controlX: aControl.
+	valueX := aControl value! !
+
+!WaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 12/Feb/2026 14:22:21'!
+color: aColor
+	color := aColor! !
+
 !WaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:22:09'!
 defaultExtent
 	^ `96 @ 64`! !
@@ -11496,6 +11536,15 @@ initialize
 	image := Form extent: self defaultExtent depth: 32.
 	image fillColor: PatchMorph panelColor.
 	controlY := Knob min: 0.0 max: 0.0 value: 0.0! !
+
+!WaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 12/Feb/2026 14:34:40'!
+shape: aControl
+	self controlY: aControl.
+	valueY := aControl value! !
+
+!WaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 18:58:59'!
+waveBlock: aBlock
+	wave := aBlock! !
 
 !WaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 15/Feb/2026 15:13:22'!
 step
@@ -11510,25 +11559,13 @@ stepTime
 wantsSteps
 	^ true! !
 
-!XYVariableWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Feb/2026 19:16:48'!
-color: aColor
-	color := aColor! !
+!XYVariableWaveControlMorph methodsFor: 'dependency mechanism' stamp: 'len 11/Feb/2026 15:58:29'!
+update: anObject
+	super update: anObject.
+	valueX := controlX value.
+	valueY := controlY value! !
 
-!XYVariableWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Feb/2026 15:59:29'!
-controlX: aControl
-	super controlX: aControl.
-	valueX := aControl value! !
-
-!XYVariableWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Feb/2026 15:59:40'!
-controlY: aControl
-	super controlY: aControl.
-	valueY := aControl value! !
-
-!XYVariableWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 1/Mar/2026 15:22:14'!
-defaultExtent
-	^ `128 @ 64`! !
-
-!XYVariableWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 1/Mar/2026 15:00:25'!
+!XYVariableWaveControlMorph methodsFor: 'drawing' stamp: 'len 1/Mar/2026 15:00:25'!
 drawOn: aCanvas
 	| step stepX t x y h steps |
 	steps := 64.
@@ -11546,22 +11583,34 @@ drawOn: aCanvas
 			x := x + stepX.
 			aCanvas lineTo: x @ y]]! !
 
-!XYVariableWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Feb/2026 15:57:38'!
+!XYVariableWaveControlMorph methodsFor: 'drawing' stamp: 'len 11/Feb/2026 15:58:52'!
+waveAt: aNumber
+	^ wave value: aNumber value: valueX value: valueY! !
+
+!XYVariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 19:16:48'!
+color: aColor
+	color := aColor! !
+
+!XYVariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 15:59:29'!
+controlX: aControl
+	super controlX: aControl.
+	valueX := aControl value! !
+
+!XYVariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 15:59:40'!
+controlY: aControl
+	super controlY: aControl.
+	valueY := aControl value! !
+
+!XYVariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:22:14'!
+defaultExtent
+	^ `128 @ 64`! !
+
+!XYVariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 15:57:38'!
 initialize
 	super initialize.
 	color := PatchMorph waveformColor! !
 
-!XYVariableWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Feb/2026 15:58:29'!
-update: anObject
-	super update: anObject.
-	valueX := controlX value.
-	valueY := controlY value! !
-
-!XYVariableWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Feb/2026 15:58:52'!
-waveAt: aNumber
-	^ wave value: aNumber value: valueX value: valueY! !
-
-!XYVariableWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Feb/2026 15:57:06'!
+!XYVariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 15:57:06'!
 waveBlock: aBlock
 	wave := aBlock! !
 

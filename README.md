@@ -99,6 +99,7 @@ Instrument editor:
 * Backspace delete module or wire under the mouse
 * Mouse-drag from a module output pin to another module input pin to add a wire
 * ` to center and zoom the patch to make it fit the available space
+* Mouse-scroll on a control wire to change modulation depth
 * Cmd-b and Cmd-i browse and inspect module under the mouse
 
 You can use the computer keyboard to input notes in the tracker or trigger notes in realtime in the instrument editor while the tracker is playing. Transpose one octave up with Cmd-] and down with Cmd-[.

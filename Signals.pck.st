@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 28 April 2026 at 5:58:38 pm'!
+'From Cuis7.7 [latest update: #7880] on 29 April 2026 at 7:52:29 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 545!
+!provides: 'Signals' 1 547!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -9,7 +9,6 @@ SystemOrganization addCategory: #'Signals-Noise'!
 SystemOrganization addCategory: #'Signals-Samples'!
 SystemOrganization addCategory: #'Signals-Mix'!
 SystemOrganization addCategory: #'Signals-Modulation'!
-SystemOrganization addCategory: #'Signals-Envelopes'!
 SystemOrganization addCategory: #'Signals-Filters'!
 SystemOrganization addCategory: #'Signals-VA Filters'!
 SystemOrganization addCategory: #'Signals-Shapers'!
@@ -167,7 +166,7 @@ Crossover class
 
 !classDefinition: #SVF category: #'Signals-Filters'!
 Module subclass: #SVF
-	instanceVariableNames: 's1 s2 input outputLP outputHP outputBP outputBPN'
+	instanceVariableNames: 's1 s2 g r input outputLP outputHP outputBP outputBPN'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Filters'!
@@ -415,66 +414,6 @@ Module subclass: #Modulator
 Modulator class
 	instanceVariableNames: ''!
 
-!classDefinition: #EG category: #'Signals-Envelopes'!
-Modulator subclass: #EG
-	instanceVariableNames: 'velocity stage value factor increment attack'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Envelopes'!
-!classDefinition: 'EG class' category: #'Signals-Envelopes'!
-EG class
-	instanceVariableNames: ''!
-
-!classDefinition: #AD category: #'Signals-Envelopes'!
-EG subclass: #AD
-	instanceVariableNames: 'decay'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Envelopes'!
-!classDefinition: 'AD class' category: #'Signals-Envelopes'!
-AD class
-	instanceVariableNames: ''!
-
-!classDefinition: #ADSR category: #'Signals-Envelopes'!
-EG subclass: #ADSR
-	instanceVariableNames: 'decay sustain release'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Envelopes'!
-!classDefinition: 'ADSR class' category: #'Signals-Envelopes'!
-ADSR class
-	instanceVariableNames: ''!
-
-!classDefinition: #AHD category: #'Signals-Envelopes'!
-EG subclass: #AHD
-	instanceVariableNames: 'hold holding decay'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Envelopes'!
-!classDefinition: 'AHD class' category: #'Signals-Envelopes'!
-AHD class
-	instanceVariableNames: ''!
-
-!classDefinition: #AR category: #'Signals-Envelopes'!
-EG subclass: #AR
-	instanceVariableNames: 'release'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Envelopes'!
-!classDefinition: 'AR class' category: #'Signals-Envelopes'!
-AR class
-	instanceVariableNames: ''!
-
-!classDefinition: #ASR category: #'Signals-Envelopes'!
-EG subclass: #ASR
-	instanceVariableNames: 'sustain release'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Envelopes'!
-!classDefinition: 'ASR class' category: #'Signals-Envelopes'!
-ASR class
-	instanceVariableNames: ''!
-
 !classDefinition: #ControlIn category: #'Signals-IO'!
 Modulator subclass: #ControlIn
 	instanceVariableNames: 'values lastValue'
@@ -483,6 +422,66 @@ Modulator subclass: #ControlIn
 	category: 'Signals-IO'!
 !classDefinition: 'ControlIn class' category: #'Signals-IO'!
 ControlIn class
+	instanceVariableNames: ''!
+
+!classDefinition: #EG category: #'Signals-Modulation'!
+Modulator subclass: #EG
+	instanceVariableNames: 'velocity stage value factor increment attack'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Modulation'!
+!classDefinition: 'EG class' category: #'Signals-Modulation'!
+EG class
+	instanceVariableNames: ''!
+
+!classDefinition: #AD category: #'Signals-Modulation'!
+EG subclass: #AD
+	instanceVariableNames: 'decay'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Modulation'!
+!classDefinition: 'AD class' category: #'Signals-Modulation'!
+AD class
+	instanceVariableNames: ''!
+
+!classDefinition: #ADSR category: #'Signals-Modulation'!
+EG subclass: #ADSR
+	instanceVariableNames: 'decay sustain release'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Modulation'!
+!classDefinition: 'ADSR class' category: #'Signals-Modulation'!
+ADSR class
+	instanceVariableNames: ''!
+
+!classDefinition: #AHD category: #'Signals-Modulation'!
+EG subclass: #AHD
+	instanceVariableNames: 'hold holding decay'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Modulation'!
+!classDefinition: 'AHD class' category: #'Signals-Modulation'!
+AHD class
+	instanceVariableNames: ''!
+
+!classDefinition: #AR category: #'Signals-Modulation'!
+EG subclass: #AR
+	instanceVariableNames: 'release'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Modulation'!
+!classDefinition: 'AR class' category: #'Signals-Modulation'!
+AR class
+	instanceVariableNames: ''!
+
+!classDefinition: #ASR category: #'Signals-Modulation'!
+EG subclass: #ASR
+	instanceVariableNames: 'sustain release'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Modulation'!
+!classDefinition: 'ASR class' category: #'Signals-Modulation'!
+ASR class
 	instanceVariableNames: ''!
 
 !classDefinition: #EnvelopeFollower category: #'Signals-Modulation'!
@@ -707,7 +706,7 @@ Transform2x class
 
 !classDefinition: #TubeSaturator category: #'Signals-Shapers'!
 Transform2x subclass: #TubeSaturator
-	instanceVariableNames: 'prehpf prelpf drive postgain postlpf dcblock'
+	instanceVariableNames: 'prehpf prelpf drive driveRatio postgain postlpf dcblock'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Shapers'!
@@ -1073,6 +1072,26 @@ BoxMorph subclass: #ControlMorph
 	category: 'Signals-Morphic-Controls'!
 !classDefinition: 'ControlMorph class' category: #'Signals-Morphic-Controls'!
 ControlMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #AttackControlMorph category: #'Signals-Morphic-Controls'!
+ControlMorph subclass: #AttackControlMorph
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'AttackControlMorph class' category: #'Signals-Morphic-Controls'!
+AttackControlMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #DecayControlMorph category: #'Signals-Morphic-Controls'!
+ControlMorph subclass: #DecayControlMorph
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'DecayControlMorph class' category: #'Signals-Morphic-Controls'!
+DecayControlMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #FadeControlMorph category: #'Signals-Morphic-Controls'!
@@ -1985,6 +2004,9 @@ State:
 !Modulator commentStamp: '<historical>' prior: 0!
 This a generator of a control signal that can be used to modulate the controls of other modules. Modulators have one control output.!
 
+!ControlIn commentStamp: '<historical>' prior: 0!
+This module produces a control signal from values received from an external source, for example MIDI CC messages.!
+
 !EG commentStamp: '<historical>' prior: 0!
 Abstract superclass for envelope generators.!
 
@@ -2003,14 +2025,17 @@ Attack-Release envelope generator.!
 !ASR commentStamp: '<historical>' prior: 0!
 Attack-Sustain-Release envelope generator.!
 
-!ControlIn commentStamp: '<historical>' prior: 0!
-This module produces a control signal from values received from an external source, for example MIDI CC messages.!
-
 !EnvelopeFollower commentStamp: 'len 10/Feb/2026 14:59:57' prior: 0!
 Control-rate envelope follower with selectable peak or RMS detection and independent attack and release times.!
 
-!LFO commentStamp: '<historical>' prior: 0!
-Low-frequency oscillator.!
+!LFO commentStamp: 'len 28/Apr/2026 20:35:43' prior: 0!
+Low-frequency oscillator (LFO). An LFO produces a periodic or random control signal at a given frequency, and can be unipolar (0.0 to 1.0) or bipolar (-1.0 to 1.0). The following waveforms are supported: Sine, Triangle, Square, Rise, Fall, and Random.
+
+The 'mode' control determines the behaviour on gate-on:
+	∙ Free: free-running, do nothing on gate-on;
+	∙ Reset: reset phase to initial phase offset on gate-on;
+	∙ Hold: hold the value at each gate-on (internally it is free-running).
+!
 
 !Transform commentStamp: 'len 4/Feb/2026 00:25:27' prior: 0!
 Abstract superclass for unary transforms, i.e. modules with one audio input and one audio output, that transform the audio signal sample-by-sample (for each input sample, they apply a function to produce an output sample). Subclasses can just implement #value:.!
@@ -2663,10 +2688,6 @@ addPitchControl: aSymbol value: defaultValue
 !Module methodsFor: 'initialization' stamp: 'len 18/Mar/2026 18:05:47'!
 addQuadraticControl: aSymbol min: min max: max value: defaultValue
 	^ controls at: aSymbol put: ((Knob min: min max: max curve: #quadratic value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
-
-!Module methodsFor: 'initialization' stamp: 'len 1/Feb/2026 15:46:28'!
-addSpeedControl: aSymbol value: defaultValue
-	^ self addFrequencyControl: aSymbol min: 0.01 max: 20.0 value: defaultValue! !
 
 !Module methodsFor: 'initialization' stamp: 'len 4/Dec/2025 14:41:16'!
 addTimeControl: aSymbol min: min max: max value: defaultValue
@@ -3651,7 +3672,7 @@ initializeControls
 	super initializeControls.
 	self addFrequencyControl: #frequency value: 2500.0! !
 
-!Crossover methodsFor: 'processing' stamp: 'len 29/Mar/2026 03:30:28'!
+!Crossover methodsFor: 'processing' stamp: 'len 29/Apr/2026 18:08:28'!
 tick
 	input ifNil:
 		[outputLow ifNotNil: [outputLow atAllPut: 0.0].
@@ -3662,7 +3683,8 @@ tick
 		lpf2 process: outputLow into: outputLow].
 	outputHigh ifNotNil:
 		[hpf1 process: input into: outputHigh.
-		hpf2 process: outputHigh into: outputHigh]! !
+		hpf2 process: outputHigh into: outputHigh].
+	self undenormalize! !
 
 !Crossover methodsFor: 'ui' stamp: 'len 29/Mar/2026 03:35:40'!
 panel
@@ -3693,6 +3715,11 @@ setOutputLow: aBuffer
 reset
 	s1 := s2 := 0.0! !
 
+!SVF methodsFor: 'controlling' stamp: 'len 29/Apr/2026 18:04:40'!
+undenormalize
+	s1 abs < 1.0e-15 ifTrue: [s1 := 0.0].
+	s2 abs < 1.0e-15 ifTrue: [s2 := 0.0]! !
+
 !SVF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 01:37:23'!
 initialize
 	super initialize.
@@ -3704,23 +3731,26 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #Q min: 0.5 max: 20.0 value: 0.707! !
 
-!SVF methodsFor: 'processing' stamp: 'len 12/Feb/2026 14:41:18'!
+!SVF methodsFor: 'processing' stamp: 'len 29/Apr/2026 19:50:54'!
 tick
-	| r g h |
+	| gTarget gRatio rTarget rRatio |
 	(outputLP isNil and: [outputHP isNil and: [outputBP isNil and: [outputBPN isNil]]]) ifTrue: [^ self].
-	input ifNil:
-		[outputLP ifNotNil: [outputLP atAllPut: 0.0].
-		outputHP ifNotNil: [outputHP atAllPut: 0.0].
-		outputBP ifNotNil: [outputBP atAllPut: 0.0].
-		outputBPN ifNotNil: [outputBPN atAllPut: 0.0].
-		^ self].
-	g := (Float pi * (self get: #frequency) / self class sampleRate) tan.
-	r := 1.0 / (self get: #Q).
-	h := 1.0 / (1.0 + ((r + g) * g)).
+	input ifNil: [^ self tickNoInput].
+	gTarget := ((self get: #frequency) * Float pi / self class sampleRate) tan.
+	g ifNil: [g := gTarget].
+	rTarget := 1.0 / (self get: #Q).
+	r ifNil: [r := rTarget].
+	(g = gTarget and: [r = rTarget]) ifTrue: [^ self tickStatic].
+	gRatio := ((gTarget / g) ln / input size) exp.
+	rRatio := ((rTarget / r) ln / input size) exp.
 	1 to: input size do: [:i|
-		| in hp bp lp |
+		| gPlusR h in hp bp lp |
+		g := g * gRatio.
+		r := r * rRatio.
+		gPlusR := g + r.
+		h := 1.0 / (1.0 + (gPlusR * g)).
 		in := input at: i.
-		hp := (in - (s1 * (g + r)) - s2) * h.
+		hp := (in - (s1 * gPlusR) - s2) * h.
 		bp := g * hp + s1.
 		s1 := g * hp + bp.
 		lp := g * bp + s2.
@@ -3729,8 +3759,36 @@ tick
 		outputHP ifNotNil: [outputHP at: i put: hp].
 		outputBP ifNotNil: [outputBP at: i put: bp].
 		outputBPN ifNotNil: [outputBPN at: i put: bp * r]].
-	s1 abs < 1.0e-15 ifTrue: [s1 := 0.0].
-	s2 abs < 1.0e-15 ifTrue: [s1 := 0.0]! !
+	g := gTarget.
+	r := rTarget.
+	self undenormalize! !
+
+!SVF methodsFor: 'processing' stamp: 'len 29/Apr/2026 19:35:14'!
+tickNoInput
+	outputLP ifNotNil: [outputLP atAllPut: 0.0].
+	outputHP ifNotNil: [outputHP atAllPut: 0.0].
+	outputBP ifNotNil: [outputBP atAllPut: 0.0].
+	outputBPN ifNotNil: [outputBPN atAllPut: 0.0]! !
+
+!SVF methodsFor: 'processing' stamp: 'len 29/Apr/2026 19:49:41'!
+tickStatic
+	"This is almost 2x faster than the modulated version."
+	| h gPlusR |
+	gPlusR := g + r.
+	h := 1.0 / (1.0 + (gPlusR * g)).
+	1 to: input size do: [:i|
+		| in hp bp lp |
+		in := input at: i.
+		hp := (in - (s1 * gPlusR) - s2) * h.
+		bp := g * hp + s1.
+		s1 := g * hp + bp.
+		lp := g * bp + s2.
+		s2 := g * bp + lp.
+		outputLP ifNotNil: [outputLP at: i put: lp].
+		outputHP ifNotNil: [outputHP at: i put: hp].
+		outputBP ifNotNil: [outputBP at: i put: bp].
+		outputBPN ifNotNil: [outputBPN at: i put: bp * r]].
+	self undenormalize! !
 
 !SVF methodsFor: 'ui' stamp: 'len 12/Apr/2026 03:59:37'!
 patchable
@@ -6116,6 +6174,44 @@ send: aNumber
 patchable
 	^ super patchable addControlOutput; yourself! !
 
+!ControlIn methodsFor: 'accessing' stamp: 'len 18/Mar/2026 20:28:43'!
+port
+	^ self get: #port! !
+
+!ControlIn methodsFor: 'accessing' stamp: 'len 18/Mar/2026 20:29:26'!
+port: anInteger
+	self set: #port to: anInteger! !
+
+!ControlIn methodsFor: 'initialization' stamp: 'len 19/Mar/2026 02:35:53'!
+initialize
+	super initialize.
+	lastValue := 0.0! !
+
+!ControlIn methodsFor: 'initialization' stamp: 'len 18/Mar/2026 20:15:16'!
+initializeControls
+	super initializeControls.
+	self addChoiceControl: #port options: (0 to: 9) value: 0! !
+
+!ControlIn methodsFor: 'processing' stamp: 'len 26/Apr/2026 23:27:35'!
+tick
+	lastValue := values at: (self get: #port) + 1.
+	lastValue = 0.0 ifFalse: [self send: lastValue]! !
+
+!ControlIn methodsFor: 'ui' stamp: 'len 27/Apr/2026 22:54:11'!
+patchable
+	| answer screen |
+	answer := PatchableMorph new model: self.
+	screen := ControlPanel new gap: 0;
+		addMorph: (ChoiceControlMorph new color: PatchMorph waveformColor3; control: (controls at: #port));
+		addMorph: (RollingMeterMorph new color: PatchMorph waveformColor3; meterBlock: [lastValue]).
+	answer body addMorph: screen.
+	answer addControlOutput.
+	^ answer! !
+
+!ControlIn methodsFor: 'wiring' stamp: 'len 19/Mar/2026 02:33:26'!
+setValues: anArray
+	values := anArray! !
+
 !EG methodsFor: 'accessing' stamp: 'len 6/Jan/2026 18:33:45'!
 stage
 	^ stage! !
@@ -6446,44 +6542,6 @@ patchable
 		addControlInput: #release;
 		yourself! !
 
-!ControlIn methodsFor: 'accessing' stamp: 'len 18/Mar/2026 20:28:43'!
-port
-	^ self get: #port! !
-
-!ControlIn methodsFor: 'accessing' stamp: 'len 18/Mar/2026 20:29:26'!
-port: anInteger
-	self set: #port to: anInteger! !
-
-!ControlIn methodsFor: 'initialization' stamp: 'len 19/Mar/2026 02:35:53'!
-initialize
-	super initialize.
-	lastValue := 0.0! !
-
-!ControlIn methodsFor: 'initialization' stamp: 'len 18/Mar/2026 20:15:16'!
-initializeControls
-	super initializeControls.
-	self addChoiceControl: #port options: (0 to: 9) value: 0! !
-
-!ControlIn methodsFor: 'processing' stamp: 'len 26/Apr/2026 23:27:35'!
-tick
-	lastValue := values at: (self get: #port) + 1.
-	lastValue = 0.0 ifFalse: [self send: lastValue]! !
-
-!ControlIn methodsFor: 'ui' stamp: 'len 27/Apr/2026 22:54:11'!
-patchable
-	| answer screen |
-	answer := PatchableMorph new model: self.
-	screen := ControlPanel new gap: 0;
-		addMorph: (ChoiceControlMorph new color: PatchMorph waveformColor3; control: (controls at: #port));
-		addMorph: (RollingMeterMorph new color: PatchMorph waveformColor3; meterBlock: [lastValue]).
-	answer body addMorph: screen.
-	answer addControlOutput.
-	^ answer! !
-
-!ControlIn methodsFor: 'wiring' stamp: 'len 19/Mar/2026 02:33:26'!
-setValues: anArray
-	values := anArray! !
-
 !EnvelopeFollower methodsFor: 'controlling' stamp: 'len 10/Feb/2026 00:14:45'!
 reset
 	envelope := 0.0! !
@@ -6615,10 +6673,10 @@ initialize
 	random := Random seed: seed.
 	self reset! !
 
-!LFO methodsFor: 'initialization' stamp: 'len 27/Apr/2026 03:00:52'!
+!LFO methodsFor: 'initialization' stamp: 'len 28/Apr/2026 21:11:45'!
 initializeControls
 	super initializeControls.
-	self addSpeedControl: #speed value: 0.1.
+	self addFrequencyControl: #speed min: 0.01 max: 20.0 value: 0.1.
 	(self addControl: #offset min: 0.0 max: 0.999 value: 0.0) label: 'Phase Offset'; printer: [:x| (x*360) truncated printString, '°'].
 	self addToggleControl: #bipolar value: true.
 	self addChoiceControl: #mode options: #(Free Reset Hold) value: #Free.
@@ -6638,14 +6696,14 @@ next
 	mode = #Hold ifTrue: [heldValue := value].
 	^ value! !
 
-!LFO methodsFor: 'processing' stamp: 'len 24/Apr/2026 15:37:59'!
+!LFO methodsFor: 'processing' stamp: 'len 28/Apr/2026 20:38:10'!
 peek
 	bipolar ifTrue:
 		[shape = #Sine ifTrue: [^ (phase * Float twoPi) sin].
 		shape = #Triangle ifTrue: [^ phase < 0.5 ifTrue: [phase * 4.0 - 1.0] ifFalse: [-4.0 * phase + 3.0]].
 		shape = #Square ifTrue: [^ phase < 0.5 ifTrue: [1.0] ifFalse: [-1.0]].
-		shape = #Rise ifTrue: [^ (phase - 0.5) * 2.0].
-		shape = #Fall ifTrue: [^ (0.5 - phase) * 2.0].
+		shape = #Rise ifTrue: [^ phase * 2.0 - 1.0].
+		shape = #Fall ifTrue: [^ 1.0 - (phase * 2.0)].
 		shape = #Random ifTrue: [^ randomValue * 2.0 - 1.0]].
 	"unipolar:"
 	shape = #Sine ifTrue: [^ ((phase * Float twoPi) sin + 1.0) / 2.0].
@@ -6957,10 +7015,10 @@ initialize
 	y1 := Float32Array new: 4.
 	self reset! !
 
-!Phaser methodsFor: 'initialization' stamp: 'len 24/Feb/2026 23:53:15'!
+!Phaser methodsFor: 'initialization' stamp: 'len 28/Apr/2026 20:43:33'!
 initializeControls
 	super initializeControls.
-	self addSpeedControl: #speed value: 0.5.
+	self addFrequencyControl: #speed min: 0.01 max: 20.0 value: 0.5.
 	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
 	self addControl: #feedback min: -0.7 max: 0.7 value: 0.5.
 	self addDryWetControl: #mix value: 0.5! !
@@ -7513,10 +7571,13 @@ internalSampleRate
 	"The internal sample rate is doubled."
 	^ self class sampleRate * 2! !
 
-!TubeSaturator methodsFor: 'controlling' stamp: 'len 19/Mar/2026 16:58:59'!
+!TubeSaturator methodsFor: 'controlling' stamp: 'len 29/Apr/2026 19:44:35'!
 update
+	| targetDrive |
 	super update.
-	drive := self get: #drive.
+	targetDrive := self get: #drive.
+	drive ifNil: [drive := targetDrive].
+	driveRatio := ((targetDrive / drive) ln / (self class blockSize * 2 "oversampeld")) exp.
 	postgain := self get: #postgain.
 	prelpf frequency: (self get: #tone) / self internalSampleRate.
 	prehpf undenormalize.
@@ -7539,14 +7600,14 @@ initializeControls
 	self addFrequencyControl: #tone min: 8000.0 max: 14000.0 value: 10000.0. "8 to 14 khz"
 	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0! !
 
-!TubeSaturator methodsFor: 'processing' stamp: 'len 8/Feb/2026 21:32:26'!
+!TubeSaturator methodsFor: 'processing' stamp: 'len 29/Apr/2026 19:44:35'!
 value: in
 	| x y |
 	"hpf before the nonlinearity prevents low-frequency pumping, keeps bass clean while distoring mids/highs:"
 	x := in - (prehpf value: in).
 	"lpf before the nonlinearity prevents harsh hf from entering distorion, and makes saturation thicker and darker:"
 	x := prelpf value: x.
-	x := x * drive + 0.01. "add tube grid bias 0.01; useful range 0.01-0.03"
+	x := x * (drive := drive * driveRatio) + 0.01. "add tube grid bias 0.01; useful range 0.01-0.03"
 	y := ((-0.25 * x + 0.5) * x + 0.7) * x. "tube nonlinearity, coefficients for triode-like curve"
 	y := (y * 0.85) softclip. "soft ceiling"
 	"lowpass filter after the nonlinearity tames aliasing, mimics tube hf roll-off and reduces fizz:"
@@ -9416,6 +9477,14 @@ setInputY: aBuffer
 reset
 	y0 := y1 := y2 := y3 := y4 := 0.0! !
 
+!MoogLPF methodsFor: 'controlling' stamp: 'len 29/Apr/2026 19:33:11'!
+undenormalize
+	y0 abs < 1.0e-15 ifTrue: [y0 := 0.0].
+	y1 abs < 1.0e-15 ifTrue: [y1 := 0.0].
+	y2 abs < 1.0e-15 ifTrue: [y2 := 0.0].
+	y3 abs < 1.0e-15 ifTrue: [y3 := 0.0].
+	y4 abs < 1.0e-15 ifTrue: [y4 := 0.0]! !
+
 !MoogLPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 14:01:42'!
 initialize
 	super initialize.
@@ -9427,16 +9496,11 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	(self addControl: #resonance min: 0.0 max: 1.0 value: 0.1) printer: [:x| (x * 100.0) truncated printString, '%']! !
 
-!MoogLPF methodsFor: 'processing' stamp: 'len 3/Feb/2026 16:25:15'!
+!MoogLPF methodsFor: 'processing' stamp: 'len 29/Apr/2026 19:33:36'!
 tick
 	| f res t1 t2 p r k |
 	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
-	input ifNil:
-		[outputLP4 ifNotNil: [outputLP4 atAllPut: 0.0].
-		outputLP3 ifNotNil: [outputLP3 atAllPut: 0.0].
-		outputLP2 ifNotNil: [outputLP2 atAllPut: 0.0].
-		outputLP1 ifNotNil: [outputLP1 atAllPut: 0.0].
-		^ self].
+	input ifNil: [^ self tickNoInput].
 	f := (self get: #frequency) * 2.0 / self class sampleRate. "normalized frequency f / fₛ"
 	res := self get: #resonance.
 	f > 0.36 ifTrue: [res := res - ((f - 0.36) * 0.2)]. "limit resonance at high cutoff"
@@ -9468,11 +9532,14 @@ tick
 		outputLP3 ifNotNil: [outputLP3 at: i put: y3].
 		outputLP2 ifNotNil: [outputLP2 at: i put: y2].
 		outputLP1 ifNotNil: [outputLP1 at: i put: y1]].
-	y0 abs < 1.0e-15 ifTrue: [y0 := 0.0].
-	y1 abs < 1.0e-15 ifTrue: [y1 := 0.0].
-	y2 abs < 1.0e-15 ifTrue: [y2 := 0.0].
-	y3 abs < 1.0e-15 ifTrue: [y3 := 0.0].
-	y4 abs < 1.0e-15 ifTrue: [y4 := 0.0]! !
+	self undenormalize! !
+
+!MoogLPF methodsFor: 'processing' stamp: 'len 29/Apr/2026 19:33:48'!
+tickNoInput
+	outputLP4 ifNotNil: [outputLP4 atAllPut: 0.0].
+	outputLP3 ifNotNil: [outputLP3 atAllPut: 0.0].
+	outputLP2 ifNotNil: [outputLP2 atAllPut: 0.0].
+	outputLP1 ifNotNil: [outputLP1 atAllPut: 0.0]! !
 
 !MoogLPF methodsFor: 'ui' stamp: 'len 12/Apr/2026 04:06:23'!
 patchable
@@ -9517,6 +9584,13 @@ setOutputLP4: aBuffer
 reset
 	s1 := s2 := s3 := s4 := 0.0! !
 
+!MoogLadder methodsFor: 'controlling' stamp: 'len 29/Apr/2026 18:06:34'!
+undenormalize
+	s1 abs < 1.0e-15 ifTrue: [s1 := 0.0].
+	s2 abs < 1.0e-15 ifTrue: [s2 := 0.0].
+	s3 abs < 1.0e-15 ifTrue: [s3 := 0.0].
+	s4 abs < 1.0e-15 ifTrue: [s4 := 0.0]! !
+
 !MoogLadder methodsFor: 'initialization' stamp: 'len 30/Jan/2026 14:01:49'!
 initialize
 	super initialize.
@@ -9528,16 +9602,11 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	(self addControl: #resonance min: 0.0 max: 1.0 value: 0.1) printer: [:x| (x * 100.0) truncated printString, '%']! !
 
-!MoogLadder methodsFor: 'processing' stamp: 'len 3/Feb/2026 16:25:05'!
+!MoogLadder methodsFor: 'processing' stamp: 'len 29/Apr/2026 19:32:09'!
 tick
 	| f res g G γ k |
 	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
-	input ifNil:
-		[outputLP4 ifNotNil: [outputLP4 atAllPut: 0.0].
-		outputLP3 ifNotNil: [outputLP3 atAllPut: 0.0].
-		outputLP2 ifNotNil: [outputLP2 atAllPut: 0.0].
-		outputLP1 ifNotNil: [outputLP1 atAllPut: 0.0].
-		^ self].
+	input ifNil: [^ self tickNoInput].
 	f := (self get: #frequency) / self class sampleRate. "normalized frequency"
 	res := self get: #resonance.
 	f > 0.18 ifTrue: [res := res - ((f - 0.18) * 0.1)]. "limit resonance at high cutoff"
@@ -9575,10 +9644,14 @@ tick
 		outputLP3 ifNotNil: [outputLP3 at: i put: y3].
 		outputLP2 ifNotNil: [outputLP2 at: i put: y2].
 		outputLP1 ifNotNil: [outputLP1 at: i put: y1]].
-	s1 abs < 1.0e-15 ifTrue: [s1 := 0.0].
-	s2 abs < 1.0e-15 ifTrue: [s2 := 0.0].
-	s3 abs < 1.0e-15 ifTrue: [s3 := 0.0].
-	s4 abs < 1.0e-15 ifTrue: [s4 := 0.0]! !
+	self undenormalize! !
+
+!MoogLadder methodsFor: 'processing' stamp: 'len 29/Apr/2026 19:32:25'!
+tickNoInput
+	outputLP4 ifNotNil: [outputLP4 atAllPut: 0.0].
+	outputLP3 ifNotNil: [outputLP3 atAllPut: 0.0].
+	outputLP2 ifNotNil: [outputLP2 atAllPut: 0.0].
+	outputLP1 ifNotNil: [outputLP1 atAllPut: 0.0]! !
 
 !MoogLadder methodsFor: 'ui' stamp: 'len 12/Apr/2026 04:06:35'!
 patchable
@@ -10392,6 +10465,38 @@ initialize
 control: aControl
 	^ self new control: aControl! !
 
+!AttackControlMorph methodsFor: 'initialization' stamp: 'len 28/Apr/2026 18:58:51'!
+defaultExtent
+	^ `24 @ 24`! !
+
+!AttackControlMorph methodsFor: 'drawing' stamp: 'len 28/Apr/2026 19:17:03'!
+drawOn: aCanvas
+	| w h a |
+	w := extent x - 4.0.
+	h := extent y - 4.0.
+	a := control basePosition * w.
+	aCanvas strokeWidth: 2 color: color do:
+		[aCanvas
+			moveTo: h + 2.0 @ 2.0;
+			quadraticBezierTo: h + 2.0 - a @ (h + 2.0) control: h + 2.0 - (a/3.0) @ (h + 2.0);
+			lineTo: 2.0 @ (h + 2.0)]! !
+
+!DecayControlMorph methodsFor: 'initialization' stamp: 'len 28/Apr/2026 19:03:25'!
+defaultExtent
+	^ `24 @ 24`! !
+
+!DecayControlMorph methodsFor: 'drawing' stamp: 'len 28/Apr/2026 19:12:44'!
+drawOn: aCanvas
+	| w h d |
+	w := extent x - 4.0.
+	h := extent y - 4.0.
+	d := control basePosition * w.
+	aCanvas strokeWidth: 2 color: color do:
+		[aCanvas
+			moveTo: 2.0@2.0;
+			quadraticBezierTo: d @ h + 2.0 control: d/3.0 @ h + 2.0;
+			lineTo: extent - 2.0]! !
+
 !FadeControlMorph methodsFor: 'initialization' stamp: 'len 25/Apr/2026 15:45:47'!
 defaultExtent
 	^ `24 @ 24`! !
@@ -10652,12 +10757,12 @@ initialize
 	image fillColor: PatchMorph panelColor.
 ! !
 
-!SymmetricWaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 21/Apr/2026 20:29:30'!
+!SymmetricWaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 29/Apr/2026 18:45:43'!
 drawLevel: aNumber
 	| x0 δ |
 	x0 := image width * 0.5.
 	δ := aNumber * x0.
-	image fill: (x0 - δ @ 0 extent: δ * 2.0 @ image height) fillColor: (PatchMorph waveformColor alpha: aNumber * 0.15).
+	image fill: (x0 - δ @ 0 extent: δ * 2.0 @ image height) fillColor: (PatchMorph waveformColor alpha: (aNumber * 0.15 min: 1.0 max: 0.0)).
 	image fill: (x0 + δ @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor.
 	image fill: (x0 - δ @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor! !
 
@@ -13369,12 +13474,12 @@ addModuleCopying: aModule
 addModuleInstantiating: aClass
 	self addMorph: aClass new patchable position: (self valueOfProperty: #lastMenuOpeningPosition)! !
 
-!PatchMorph methodsFor: 'menu' stamp: 'len 3/Apr/2026 19:06:56'!
+!PatchMorph methodsFor: 'menu' stamp: 'len 28/Apr/2026 18:03:21'!
 getMenu
 	| menu submenu |
 	self setProperty: #lastMenuOpeningPosition toValue: (self internalizeFromWorld: self activeHand morphPosition).
 	menu := MenuMorph new defaultTarget: self.
-	#('Oscillators' 'Noise' 'Mix' 'Modulation' 'Envelopes' 'Filters' 'VA Filters' 'Shapers' 'Dynamics' 'FX') do: [:subcategory|
+	#('Oscillators' 'Noise' 'Mix' 'Modulation' 'Filters' 'VA Filters' 'Shapers' 'Dynamics' 'FX') do: [:subcategory|
 		submenu := MenuMorph new defaultTarget: self.
 		(SystemOrganization classesAt: 'Signals-', subcategory)
 			do: [:each| each hasSubclasses ifFalse: [submenu add: each name camelSeparatedWords action: #addModuleInstantiating: argument: each]].

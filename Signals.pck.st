@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 29 April 2026 at 7:52:29 pm'!
+'From Cuis7.7 [latest update: #7880] on 1 May 2026 at 2:49:10 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 547!
+!provides: 'Signals' 1 548!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -67,7 +67,7 @@ Toggle class
 !classDefinition: #Module category: #'Signals-Kernel'!
 ActiveModel subclass: #Module
 	instanceVariableNames: 'controls'
-	classVariableNames: ''
+	classVariableNames: 'Ramp'
 	poolDictionaries: ''
 	category: 'Signals-Kernel'!
 !classDefinition: 'Module class' category: #'Signals-Kernel'!
@@ -1124,6 +1124,16 @@ ControlMorph subclass: #PhaseOffsetControlMorph
 PhaseOffsetControlMorph class
 	instanceVariableNames: ''!
 
+!classDefinition: #RollingWaveControlMorph category: #'Signals-Morphic-Controls'!
+ControlMorph subclass: #RollingWaveControlMorph
+	instanceVariableNames: 'samples currentPosition bipolar'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'RollingWaveControlMorph class' category: #'Signals-Morphic-Controls'!
+RollingWaveControlMorph class
+	instanceVariableNames: ''!
+
 !classDefinition: #SliderControlMorph category: #'Signals-Morphic-Controls'!
 ControlMorph subclass: #SliderControlMorph
 	instanceVariableNames: ''
@@ -1234,16 +1244,6 @@ XYControlMorph subclass: #FilterControlMorph
 FilterControlMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #LFORollingWaveControlMorph category: #'Signals-Morphic-Controls'!
-XYControlMorph subclass: #LFORollingWaveControlMorph
-	instanceVariableNames: 'color lfo samples currentPosition'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Controls'!
-!classDefinition: 'LFORollingWaveControlMorph class' category: #'Signals-Morphic-Controls'!
-LFORollingWaveControlMorph class
-	instanceVariableNames: ''!
-
 !classDefinition: #LFOShapeOffsetControlMorph category: #'Signals-Morphic-Controls'!
 XYControlMorph subclass: #LFOShapeOffsetControlMorph
 	instanceVariableNames: 'color lfo currentPhase'
@@ -1252,6 +1252,16 @@ XYControlMorph subclass: #LFOShapeOffsetControlMorph
 	category: 'Signals-Morphic-Controls'!
 !classDefinition: 'LFOShapeOffsetControlMorph class' category: #'Signals-Morphic-Controls'!
 LFOShapeOffsetControlMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #RollingWaveXYControlMorph category: #'Signals-Morphic-Controls'!
+XYControlMorph subclass: #RollingWaveXYControlMorph
+	instanceVariableNames: 'samples currentPosition color bipolar'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'RollingWaveXYControlMorph class' category: #'Signals-Morphic-Controls'!
+RollingWaveXYControlMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #StereoMatrixControlMorph category: #'Signals-Morphic-Controls'!
@@ -1264,6 +1274,16 @@ XYControlMorph subclass: #StereoMatrixControlMorph
 StereoMatrixControlMorph class
 	instanceVariableNames: ''!
 
+!classDefinition: #VariableWaveXYControlMorph category: #'Signals-Morphic-Controls'!
+XYControlMorph subclass: #VariableWaveXYControlMorph
+	instanceVariableNames: 'color waveBlock valueX valueY'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'VariableWaveXYControlMorph class' category: #'Signals-Morphic-Controls'!
+VariableWaveXYControlMorph class
+	instanceVariableNames: ''!
+
 !classDefinition: #WaveshaperControlMorph category: #'Signals-Morphic-Controls'!
 XYControlMorph subclass: #WaveshaperControlMorph
 	instanceVariableNames: 'color mode wave valueX valueY image'
@@ -1272,16 +1292,6 @@ XYControlMorph subclass: #WaveshaperControlMorph
 	category: 'Signals-Morphic-Controls'!
 !classDefinition: 'WaveshaperControlMorph class' category: #'Signals-Morphic-Controls'!
 WaveshaperControlMorph class
-	instanceVariableNames: ''!
-
-!classDefinition: #XYVariableWaveControlMorph category: #'Signals-Morphic-Controls'!
-XYControlMorph subclass: #XYVariableWaveControlMorph
-	instanceVariableNames: 'color baseColor mode wave valueX valueY'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Controls'!
-!classDefinition: 'XYVariableWaveControlMorph class' category: #'Signals-Morphic-Controls'!
-XYVariableWaveControlMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #LFOControlMorphOld category: #'Signals-Trash'!
@@ -2661,6 +2671,10 @@ addChoiceControl: aSymbol options: anArray value: defaultValue
 addControl: aSymbol min: min max: max value: defaultValue
 	^ controls at: aSymbol put: ((Knob min: min max: max value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
 
+!Module methodsFor: 'initialization' stamp: 'len 30/Apr/2026 18:06:44'!
+addDepthControl: aSymbol value: defaultValue
+	^ (self addControl: aSymbol min: 0.0 max: 1.0 value: defaultValue) printer: [:x| (x * 100) truncated printString, '%']! !
+
 !Module methodsFor: 'initialization' stamp: 'len 24/Feb/2026 23:52:11'!
 addDryWetControl: aSymbol
 	^ self addDryWetControl: aSymbol value: 1.0! !
@@ -2772,6 +2786,11 @@ controlRate
 !Module class methodsFor: 'constants' stamp: 'len 6/Dec/2025 15:31:46'!
 sampleRate
 	^ AudioPlayer sampleRate! !
+
+!Module class methodsFor: 'as yet unclassified' stamp: 'len 29/Apr/2026 23:23:54'!
+initialize
+	super initialize.
+	Ramp := (Float32Array new: 128) fill: [:i| 1.0/128*i]! !
 
 !Amp methodsFor: 'initialization' stamp: 'len 31/Jan/2026 21:50:16'!
 initialize
@@ -3113,12 +3132,12 @@ initialize
 	lpfR := OnePole new.
 	self reset! !
 
-!Chorus methodsFor: 'initialization' stamp: 'len 26/Mar/2026 16:18:57'!
+!Chorus methodsFor: 'initialization' stamp: 'len 30/Apr/2026 18:08:40'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #time min: 0.005 "5 ms" max: 0.02 "20 ms" value: 0.01 "10 ms".
 	self addFrequencyControl: #speed min: 0.1 "Hz" max: 1.5 "Hz" value: 0.5 "Hz".
-	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
+	self addDepthControl: #depth value: 0.1.
 	self addFrequencyControl: #tone min: 2000.0 "2 kHz" max: 18000.0 "18 kHz" value: 8000.0. "8 kHz"
 	self addDryWetControl: #mix value: 0.5! !
 
@@ -3226,12 +3245,12 @@ initialize
 	lpfR := OnePole new.
 	self reset! !
 
-!Ensemble methodsFor: 'initialization' stamp: 'len 26/Mar/2026 16:19:48'!
+!Ensemble methodsFor: 'initialization' stamp: 'len 30/Apr/2026 18:08:29'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #time min: 0.015 "15 ms" max: 0.035 "35 ms" value: 0.02 "20 ms".
 	self addFrequencyControl: #speed min: 0.1 "Hz" max: 1.5 "Hz" value: 0.5 "Hz".
-	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
+	self addDepthControl: #depth value: 0.1.
 	self addFrequencyControl: #tone min: 2000.0 "2 kHz" max: 18000.0 "18 kHz" value: 6000.0. "6 kHz"
 	self addDryWetControl: #mix value: 0.5! !
 
@@ -4213,9 +4232,9 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!Operator methodsFor: 'ui' stamp: 'len 23/Apr/2026 01:25:58'!
+!Operator methodsFor: 'ui' stamp: 'len 30/Apr/2026 17:49:47'!
 screen
-	^​ XYVariableWaveControlMorph new
+	^​ VariableWaveXYControlMorph new
 		controlX: (controls at: #ratio);
 		controlY: (controls at: #level);
 		waveBlock: [:x :r :g| (x * r * 4.0 * Float twoPi) sin * g]! !
@@ -5497,7 +5516,7 @@ mixTailInto: aBuffer
 					^ self]]].
 	tailPosition := nil! !
 
-!Sample methodsFor: 'processing' stamp: 'len 4/Apr/2026 20:09:11'!
+!Sample methodsFor: 'processing' stamp: 'len 30/Apr/2026 18:51:01'!
 read: aBuffer
 	| end |
 	position ifNil: [aBuffer atAllPut: 0.0. ^ self].
@@ -6558,27 +6577,29 @@ initializeControls
 	self addTimeControl: #release min: 0.01 "10 ms" max: 0.5 "500 ms" value: 0.1 "100 ms".
 	self addChoiceControl: #mode options: #(peak rms) value: #rms! !
 
-!EnvelopeFollower methodsFor: 'processing' stamp: 'len 26/Apr/2026 23:28:09'!
+!EnvelopeFollower methodsFor: 'processing' stamp: 'len 30/Apr/2026 14:33:35'!
 tick
 	| attack release level |
 	input ifNil: [^ self].
-	attack := (-1.0 / ((self get: #attack) * self class controlRate)) exp.
-	release := (-1.0 / ((self get: #release) * self class controlRate)) exp.
 	level := (self get: #mode) = #peak ifTrue: [input peak] ifFalse: [input rms].
 	envelope := (level > envelope
-		ifTrue: [envelope * attack + (level * (1.0 - attack))]
-		ifFalse: [envelope * release + (level * (1.0 - release))]).
+		ifTrue:
+			[attack := (-1.0 / ((self get: #attack) * self class controlRate)) exp.
+			envelope * attack + (level * (1.0 - attack))]
+		ifFalse:
+			[release := (-1.0 / ((self get: #release) * self class controlRate)) exp.
+			envelope * release + (level * (1.0 - release))]).
 	envelope < 1.0e-15 ifTrue: [envelope := 0.0].
 	self send: envelope! !
 
-!EnvelopeFollower methodsFor: 'ui' stamp: 'len 26/Apr/2026 23:22:47'!
+!EnvelopeFollower methodsFor: 'ui' stamp: 'len 30/Apr/2026 16:14:03'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
 	answer
-		addAudioInput: #setInput: label: 'In';
+		addAudioInput: #setInput:;
 		addControlInput: #attack;
 		addControlInput: #release;
 		addControlOutput.
@@ -6739,10 +6760,11 @@ patchable
 		addControlOutput.
 	^ answer! !
 
-!LFO methodsFor: 'ui' stamp: 'len 23/Apr/2026 20:10:38'!
+!LFO methodsFor: 'ui' stamp: 'len 1/May/2026 01:32:17'!
 screen
 	| answer |
-	answer := LFORollingWaveControlMorph new lfo: self.
+	answer := RollingWaveControlMorph new control: (controls at: #speed); bipolar: (controls at: #bipolar) value.
+	(controls at: #bipolar) when: #changed: send: #bipolar: to: answer.
 	self when: #output: send: #addSample: to: answer.
 	^ answer! !
 
@@ -6945,7 +6967,7 @@ reset
 	tap reset.
 	lpf reset! !
 
-!Flanger methodsFor: 'controlling' stamp: 'len 27/Mar/2026 20:55:37'!
+!Flanger methodsFor: 'controlling' stamp: 'len 30/Apr/2026 16:24:18'!
 update
 	| increment depth time delay twoPi |
 	super update.
@@ -6956,6 +6978,7 @@ update
 	tap setDelayIncrement: (delay - tap delay) / self class blockSize.
 	increment := (self get: #speed) / self class controlRate * twoPi.
 	(phase := phase + increment) > twoPi ifTrue: [phase := phase - twoPi].
+	self triggerEvent: #lfo: with: phase sin.
 	lpf frequency: (self get: #tone)! !
 
 !Flanger methodsFor: 'initialization' stamp: 'len 27/Mar/2026 20:59:20'!
@@ -6966,12 +6989,12 @@ initialize
 	lpf := OnePole new.
 	self reset! !
 
-!Flanger methodsFor: 'initialization' stamp: 'len 27/Mar/2026 20:41:35'!
+!Flanger methodsFor: 'initialization' stamp: 'len 30/Apr/2026 18:08:16'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #time min: 0.0001 "0.1 ms" max: 0.01 "10 ms" value: 0.002 "2 ms".
 	self addFrequencyControl: #speed min: 0.05 "Hz" max: 2.0 "Hz" value: 0.1 "Hz".
-	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
+	self addDepthControl: #depth value: 0.1.
 	self addControl: #feedback min: -0.8 max: 0.8 value: 0.5.
 	self addFrequencyControl: #tone min: 3000.0 "3 kHz" max: 18000.0 "18 kHz" value: 6000.0. "6 kHz"
 	self addDryWetControl: #mix value: 0.5! !
@@ -6991,15 +7014,33 @@ tick
 		delayLine write: (lpf value: out) * feedback + in.
 		output at: i put: in * dry + (out * wet)]! !
 
-!Flanger methodsFor: 'ui' stamp: 'len 27/Mar/2026 21:01:51'!
+!Flanger methodsFor: 'ui' stamp: 'len 30/Apr/2026 16:28:32'!
 panel
 	^ ControlPanel new
-		addKnob: (controls at: #time) label: 'Time';
-		addKnob: (controls at: #speed) label: 'Speed';
-		addKnob: (controls at: #depth) label: 'Depth';
-		addKnob: (controls at: #feedback) label: 'FB';
-		addKnob: (controls at: #tone) label: 'Tone';
-		addKnob: (controls at: #mix) label: 'Mix'! !
+		addSmallKnob: (controls at: #time) label: 'Time';
+		addSmallKnob: (controls at: #speed) label: 'Speed';
+		addSmallKnob: (controls at: #depth) label: 'Depth';
+		addSmallKnob: (controls at: #feedback) label: 'FB';
+		addSmallKnob: (controls at: #tone) label: 'Tone';
+		addSmallKnob: (controls at: #mix) label: 'Mix'! !
+
+!Flanger methodsFor: 'ui' stamp: 'len 30/Apr/2026 16:28:41'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self screen.
+	answer flap addMorph: self panel.
+	answer
+		addAudioInput: #setInput:;
+		addAudioOutput: #setOutput:.
+	^ answer! !
+
+!Flanger methodsFor: 'ui' stamp: 'len 30/Apr/2026 18:00:30'!
+screen
+	| answer |
+	answer := RollingWaveXYControlMorph new morphExtent: 96 @ 32; controlX: (controls at: #speed); controlY: (controls at: #depth).
+	self when: #lfo: send: #addSample: to: answer.
+	^ answer! !
 
 !Phaser methodsFor: 'controlling' stamp: 'len 26/Jan/2026 13:42:09'!
 reset
@@ -7015,15 +7056,15 @@ initialize
 	y1 := Float32Array new: 4.
 	self reset! !
 
-!Phaser methodsFor: 'initialization' stamp: 'len 28/Apr/2026 20:43:33'!
+!Phaser methodsFor: 'initialization' stamp: 'len 30/Apr/2026 18:07:48'!
 initializeControls
 	super initializeControls.
 	self addFrequencyControl: #speed min: 0.01 max: 20.0 value: 0.5.
-	self addControl: #depth min: 0.0 max: 1.0 value: 0.1.
+	self addDepthControl: #depth value: 0.1.
 	self addControl: #feedback min: -0.7 max: 0.7 value: 0.5.
 	self addDryWetControl: #mix value: 0.5! !
 
-!Phaser methodsFor: 'processing' stamp: 'len 27/Mar/2026 16:42:13'!
+!Phaser methodsFor: 'processing' stamp: 'len 30/Apr/2026 16:11:16'!
 tick
 	| increment depth feedback wet dry twoPi |
 	output ifNil: [^ self]. "actually, we should process the input anyway, if available"
@@ -7037,7 +7078,7 @@ tick
 	1 to: input size do: [:i|
 		| a in out |
 		a := ​(phase sin + 1.0) * depth * 0.3 + 0.3. "0.3 - 0.9"
-		(phase := phase + increment) > twoPi ifTrue: [phase := phase - twoPi].
+		phase := phase + increment.
 		in := input at: i.
 		out := lastOutput * feedback + in.
 		1 to: x1 size do: [:k|
@@ -7046,15 +7087,35 @@ tick
 			x1 at: k put: out.
 			y1 at: k put: (out := y)].
 		lastOutput := out.
-		output at: i put: in * dry + (out * wet)]! !
+		output at: i put: in * dry + (out * wet)].
+	phase := phase \\ twoPi.
+	self triggerEvent: #lfo: with: phase sin! !
 
-!Phaser methodsFor: 'ui' stamp: 'len 2/Mar/2026 16:15:14'!
+!Phaser methodsFor: 'ui' stamp: 'len 30/Apr/2026 16:26:13'!
 panel
 	^ ControlPanel new
-		addKnob: (controls at: #speed) label: 'Speed';
-		addKnob: (controls at: #depth) label: 'Depth';
-		addKnob: (controls at: #feedback) label: 'FB';
-		addKnob: (controls at: #mix) label: 'Mix'! !
+		addSmallKnob: (controls at: #speed) label: 'Speed';
+		addSmallKnob: (controls at: #depth) label: 'Depth';
+		addSmallKnob: (controls at: #feedback) label: 'FB';
+		addSmallKnob: (controls at: #mix) label: 'Mix'! !
+
+!Phaser methodsFor: 'ui' stamp: 'len 30/Apr/2026 16:26:40'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self screen.
+	answer flap addMorph: self panel.
+	answer
+		addAudioInput: #setInput:;
+		addAudioOutput: #setOutput:.
+	^ answer! !
+
+!Phaser methodsFor: 'ui' stamp: 'len 30/Apr/2026 17:58:45'!
+screen
+	| answer |
+	answer := RollingWaveXYControlMorph new morphExtent: 96 @ 32; controlX: (controls at: #speed); controlY: (controls at: #depth).
+	self when: #lfo: send: #addSample: to: answer.
+	^ answer! !
 
 !PitchShifter methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:18:20'!
 initialize
@@ -7241,7 +7302,7 @@ reset
 	delayLine reset.
 	tap reset! !
 
-!Vibrato methodsFor: 'controlling' stamp: 'len 27/Mar/2026 15:04:49'!
+!Vibrato methodsFor: 'controlling' stamp: 'len 30/Apr/2026 16:33:42'!
 update
 	| increment time depth d twoPi |
 	super update.
@@ -7251,6 +7312,7 @@ update
 	twoPi := Float twoPi.
 	d := (phase sin * depth * 0.002 "2 ms" + time) * self class sampleRate.
 	(phase := phase + increment) > twoPi ifTrue: [phase := phase - twoPi].
+	self triggerEvent: #lfo: with: phase sin.
 	tap setDelayIncrement: (d - tap delay) / self class blockSize! !
 
 !Vibrato methodsFor: 'initialization' stamp: 'len 25/Mar/2026 16:09:16'!
@@ -7260,12 +7322,12 @@ initialize
 	tap := DelayTapC on: delayLine.
 	self reset! !
 
-!Vibrato methodsFor: 'initialization' stamp: 'len 1/Feb/2026 15:46:49'!
+!Vibrato methodsFor: 'initialization' stamp: 'len 30/Apr/2026 18:07:06'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #time min: 0.002 "2 ms" max: 0.010 "10 ms" value: 0.005 "5 ms".
 	self addFrequencyControl: #speed min: 3.0 "Hz" max: 8.0 "Hz" value: 5.0 "Hz".
-	self addControl: #depth min: 0.0 max: 1.0 value: 0.1! !
+	self addDepthControl: #depth value: 0.1! !
 
 !Vibrato methodsFor: 'processing' stamp: 'len 27/Mar/2026 15:04:04'!
 tick
@@ -7274,6 +7336,31 @@ tick
 	1 to: input size do: [:i|
 		delayLine write: (input at: i).
 		output at: i put: tap read]! !
+
+!Vibrato methodsFor: 'ui' stamp: 'len 30/Apr/2026 18:04:18'!
+panel
+	^ ControlPanel new
+		addTextualControl: (controls at: #time);
+		addTextualControl: (controls at: #speed);
+		addTextualControl: (controls at: #depth)! !
+
+!Vibrato methodsFor: 'ui' stamp: 'len 30/Apr/2026 16:32:09'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self screen.
+	answer flap addMorph: self panel.
+	answer
+		addAudioInput: #setInput:;
+		addAudioOutput: #setOutput:.
+	^ answer! !
+
+!Vibrato methodsFor: 'ui' stamp: 'len 30/Apr/2026 17:57:55'!
+screen
+	| answer |
+	answer := RollingWaveXYControlMorph new morphExtent: 96 @ 32; controlX: (controls at: #speed); controlY: (controls at: #depth).
+	self when: #lfo: send: #addSample: to: answer.
+	^ answer! !
 
 !BPF methodsFor: 'controlling' stamp: 'len 25/Jan/2026 22:18:45'!
 reset
@@ -10516,7 +10603,7 @@ drawOn: aCanvas
 defaultExtent
 	^ `36 @ 36`! !
 
-!KnobControlMorph methodsFor: 'drawing' stamp: 'len 25/Apr/2026 15:33:53'!
+!KnobControlMorph methodsFor: 'drawing' stamp: 'len 30/Apr/2026 20:33:28'!
 drawOn: aCanvas
 	| v vMod center radius zeroPosition dialPosition |
 "	self hasKeyboardFocus ifTrue: [self drawFocusIndicatorOn: aCanvas]."
@@ -10528,10 +10615,9 @@ drawOn: aCanvas
 	dialPosition := (zeroPosition - center / 2.0 rotatedBy: Float pi * 1.6 * v) + center.
 	"draw the dial on the base value:"
 	aCanvas strokeWidth: 3.0 color: self inactiveColor do:
-		[aCanvas
-			arcCenter: center radius: radius rotationAngle: Float pi / 2.0 start: Float pi * 1.8 sweep: Float pi * -1.6;
-			moveTo: dialPosition;
-			lineTo: center].
+		[aCanvas arcCenter: center radius: radius rotationAngle: Float pi / 2.0 start: Float pi * 1.8 sweep: Float pi * -1.6].
+	aCanvas strokeWidth: 3.0 color: (self hasKeyboardFocus ifTrue: [color] ifFalse: [self inactiveColor]) do:
+		[aCanvas moveTo: dialPosition; lineTo: center].
 	"and here show the modulated value, not the base value:"
 	aCanvas strokeWidth: 3.0 color: color do:
 		[control isBipolar
@@ -10552,6 +10638,52 @@ drawOn: aCanvas
 		[aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: 0.0 sweep: Float twoPi].
 	aCanvas strokeWidth: 3.0 color: color do:
 		[aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: 0.0 sweep: Float twoPi * v]! !
+
+!RollingWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 1/May/2026 01:31:08'!
+addSample: aNumber
+	| x |
+	currentPosition := currentPosition < samples size ifTrue: [currentPosition + 1] ifFalse: [1].
+	x := aNumber.
+	bipolar ifTrue: [x := x * 0.5 + 0.5].
+	x := x min: 1.0 max: 0.0.
+	samples at: currentPosition put: x.
+	self redrawNeeded! !
+
+!RollingWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 1/May/2026 01:31:13'!
+bipolar: aBoolean
+	bipolar := aBoolean.
+	self redrawNeeded! !
+
+!RollingWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 1/May/2026 01:31:22'!
+defaultExtent
+	^ `128 @ 64`! !
+
+!RollingWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 1/May/2026 01:31:30'!
+drawOn: aCanvas
+	| step x y h pos delta y0 |
+	delta := 20.
+	step := self morphWidth / (samples size - delta) * 5.
+	(pos := currentPosition + delta) > samples size ifTrue: [pos := pos - samples size].
+	h := self morphHeight.
+	x := 0.
+	y := 1.0 - (samples at: pos) * h.
+	y0 := bipolar ifTrue: [h / 2.0] ifFalse: [h].
+	aCanvas strokeWidth: 1.5 color: Color veryLightGray dashedStrokeBits: 2r1110000 do:
+		[aCanvas moveTo: 0 @ y0; lineTo: self morphWidth @ y0].
+	aCanvas strokeWidth: 2.0 color: color do:
+		[aCanvas moveTo: x @ y.
+		5 - (pos \\ 5) to: samples size - delta - 5 by: 5 do: [:i|
+			x := x + step.
+			y := 1.0 - (samples at: pos + i \\ samples size + 1) * h.
+			aCanvas lineTo: x @ y]]! !
+
+!RollingWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 1/May/2026 01:31:42'!
+initialize
+	super initialize.
+	color := PatchMorph waveformColor3.
+	samples := Float32Array new: 64*5.
+	currentPosition := 1.
+	bipolar := true! !
 
 !SliderControlMorph methodsFor: 'drawing' stamp: 'len 13/Feb/2026 19:59:57'!
 drawHorizontalOn: aCanvas
@@ -11400,56 +11532,6 @@ mode: aSymbol
 invertsY
 	^ mode = #BP! !
 
-!LFORollingWaveControlMorph methodsFor: 'drawing' stamp: 'len 25/Apr/2026 21:50:45'!
-drawOn: aCanvas
-	| step x y h pos delta y0 |
-	delta := 20.
-	step := self morphWidth / (samples size - delta) * 5.
-	(pos := currentPosition + delta) > samples size ifTrue: [pos := pos - samples size].
-	h := self morphHeight.
-	x := 0.
-	y := 1.0 - (samples at: pos) * h.
-	y0 := lfo bipolar ifTrue: [h / 2.0] ifFalse: [h].
-	aCanvas strokeWidth: 1.5 color: Color veryLightGray dashedStrokeBits: 2r1110000 do:
-		[aCanvas moveTo: 0 @ y0; lineTo: self morphWidth @ y0].
-	aCanvas strokeWidth: 2.0 color: color do:
-		[aCanvas moveTo: x @ y.
-		5 - (pos \\ 5) to: samples size - delta - 5 by: 5 do: [:i|
-			x := x + step.
-			y := 1.0 - (samples at: pos + i \\ samples size + 1) * h.
-			aCanvas lineTo: x @ y]]! !
-
-!LFORollingWaveControlMorph methodsFor: 'halos and balloon help' stamp: 'len 23/Apr/2026 20:28:39'!
-balloonText
-	^ nil! !
-
-!LFORollingWaveControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:21:59'!
-defaultExtent
-	^ `128 @ 64`! !
-
-!LFORollingWaveControlMorph methodsFor: 'initialization' stamp: 'len 25/Apr/2026 18:00:43'!
-initialize
-	super initialize.
-	color := PatchMorph waveformColor3.
-	samples := Float32Array new: 64*5.
-	currentPosition := 1! !
-
-!LFORollingWaveControlMorph methodsFor: 'initialization' stamp: 'len 27/Apr/2026 03:06:33'!
-lfo: anLFO
-	lfo := anLFO.
-	self controlX: (lfo controls at: #speed).
-	self controlY: (lfo controls at: #shape)! !
-
-!LFORollingWaveControlMorph methodsFor: 'private' stamp: 'len 27/Apr/2026 03:03:44'!
-addSample: aNumber
-	| x |
-	currentPosition := currentPosition < samples size ifTrue: [currentPosition + 1] ifFalse: [1].
-	x := aNumber.
-	lfo bipolar ifTrue: [x := x * 0.5 + 0.5].
-	x := x min: 1.0 max: 0.0.
-	samples at: currentPosition put: x.
-	self redrawNeeded! !
-
 !LFOShapeOffsetControlMorph methodsFor: 'drawing' stamp: 'len 25/Apr/2026 19:47:12'!
 drawOn: aCanvas
 	| step stepX t₀ t x y h steps |
@@ -11533,6 +11615,52 @@ wantsSteps
 invertsX
 	^ true! !
 
+!RollingWaveXYControlMorph methodsFor: 'drawing' stamp: 'len 30/Apr/2026 17:51:18'!
+drawOn: aCanvas
+	| step x y h pos delta y0 |
+	delta := 20.
+	step := self morphWidth / (samples size - delta) * 5.
+	(pos := currentPosition + delta) > samples size ifTrue: [pos := pos - samples size].
+	h := self morphHeight.
+	x := 0.
+	y := 1.0 - (samples at: pos) * h.
+	y0 := bipolar ifTrue: [h / 2.0] ifFalse: [h].
+	aCanvas strokeWidth: 1.5 color: Color veryLightGray dashedStrokeBits: 2r1110000 do:
+		[aCanvas moveTo: 0 @ y0; lineTo: self morphWidth @ y0].
+	aCanvas strokeWidth: 2.0 color: color do:
+		[aCanvas moveTo: x @ y.
+		5 - (pos \\ 5) to: samples size - delta - 5 by: 5 do: [:i|
+			x := x + step.
+			y := 1.0 - (samples at: pos + i \\ samples size + 1) * h.
+			aCanvas lineTo: x @ y]]! !
+
+!RollingWaveXYControlMorph methodsFor: 'initialization' stamp: 'len 30/Apr/2026 17:49:29'!
+defaultExtent
+	^ `128 @ 64`! !
+
+!RollingWaveXYControlMorph methodsFor: 'initialization' stamp: 'len 30/Apr/2026 18:03:11'!
+initialize
+	super initialize.
+	color := PatchMorph waveformColor3.
+	samples := Float32Array new: 64*5.
+	currentPosition := 1.
+	bipolar := true! !
+
+!RollingWaveXYControlMorph methodsFor: 'private' stamp: 'len 30/Apr/2026 17:53:38'!
+addSample: aNumber
+	| x |
+	currentPosition := currentPosition < samples size ifTrue: [currentPosition + 1] ifFalse: [1].
+	x := aNumber.
+	bipolar ifTrue: [x := x * 0.5 + 0.5].
+	x := x min: 1.0 max: 0.0.
+	samples at: currentPosition put: x.
+	self redrawNeeded! !
+
+!RollingWaveXYControlMorph methodsFor: 'private' stamp: 'len 30/Apr/2026 18:46:46'!
+bipolar: aBoolean
+	bipolar := aBoolean.
+	self redrawNeeded! !
+
 !StereoMatrixControlMorph methodsFor: 'initialization' stamp: 'len 26/Apr/2026 00:23:46'!
 balance: aControl
 	self controlY: aControl! !
@@ -11565,6 +11693,61 @@ drawOn: aCanvas
 	aCanvas
 		fillRectangle: (m0 @ 0.0 extent: extent x / 2.0 @ extent y) color: (midColor alpha: 0.5 * balance + 0.5);
 		fillRectangle: (s0 @ 0.0 extent: extent x / 2.0 @ extent y) color: (sideColor alpha: 1.0 - (0.5 * balance + 0.5))! !
+
+!VariableWaveXYControlMorph methodsFor: 'dependency mechanism' stamp: 'len 11/Feb/2026 15:58:29'!
+update: anObject
+	super update: anObject.
+	valueX := controlX value.
+	valueY := controlY value! !
+
+!VariableWaveXYControlMorph methodsFor: 'drawing' stamp: 'len 1/Mar/2026 15:00:25'!
+drawOn: aCanvas
+	| step stepX t x y h steps |
+	steps := 64.
+	step := 1.0 / (steps + 1).
+	stepX := self morphWidth - 8.0 * step.
+	h := self morphHeight - 6.0 / 2.0.
+	t := 0.0.
+	y := 1.0 - (self waveAt: t) * h + 3.0.
+	x := 4.0.
+	aCanvas strokeWidth: 2 color: color do:
+		[aCanvas moveTo: x @ y.
+		steps timesRepeat:
+			[t := t + step.
+			y := 1.0 - (self waveAt: t \\ 1.0) * h + 3.0.
+			x := x + stepX.
+			aCanvas lineTo: x @ y]]! !
+
+!VariableWaveXYControlMorph methodsFor: 'drawing' stamp: 'len 30/Apr/2026 20:29:45'!
+waveAt: aNumber
+	^ waveBlock value: aNumber value: valueX value: valueY! !
+
+!VariableWaveXYControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 19:16:48'!
+color: aColor
+	color := aColor! !
+
+!VariableWaveXYControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 15:59:29'!
+controlX: aControl
+	super controlX: aControl.
+	valueX := aControl value! !
+
+!VariableWaveXYControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 15:59:40'!
+controlY: aControl
+	super controlY: aControl.
+	valueY := aControl value! !
+
+!VariableWaveXYControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:22:14'!
+defaultExtent
+	^ `128 @ 64`! !
+
+!VariableWaveXYControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 15:57:38'!
+initialize
+	super initialize.
+	color := PatchMorph waveformColor! !
+
+!VariableWaveXYControlMorph methodsFor: 'initialization' stamp: 'len 30/Apr/2026 20:29:45'!
+waveBlock: aBlock
+	waveBlock := aBlock! !
 
 !WaveshaperControlMorph methodsFor: 'dependency mechanism' stamp: 'len 11/Feb/2026 18:58:59'!
 update: anObject
@@ -11663,61 +11846,6 @@ stepTime
 !WaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 12/Feb/2026 19:20:28'!
 wantsSteps
 	^ true! !
-
-!XYVariableWaveControlMorph methodsFor: 'dependency mechanism' stamp: 'len 11/Feb/2026 15:58:29'!
-update: anObject
-	super update: anObject.
-	valueX := controlX value.
-	valueY := controlY value! !
-
-!XYVariableWaveControlMorph methodsFor: 'drawing' stamp: 'len 1/Mar/2026 15:00:25'!
-drawOn: aCanvas
-	| step stepX t x y h steps |
-	steps := 64.
-	step := 1.0 / (steps + 1).
-	stepX := self morphWidth - 8.0 * step.
-	h := self morphHeight - 6.0 / 2.0.
-	t := 0.0.
-	y := 1.0 - (self waveAt: t) * h + 3.0.
-	x := 4.0.
-	aCanvas strokeWidth: 2 color: color do:
-		[aCanvas moveTo: x @ y.
-		steps timesRepeat:
-			[t := t + step.
-			y := 1.0 - (self waveAt: t \\ 1.0) * h + 3.0.
-			x := x + stepX.
-			aCanvas lineTo: x @ y]]! !
-
-!XYVariableWaveControlMorph methodsFor: 'drawing' stamp: 'len 11/Feb/2026 15:58:52'!
-waveAt: aNumber
-	^ wave value: aNumber value: valueX value: valueY! !
-
-!XYVariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 19:16:48'!
-color: aColor
-	color := aColor! !
-
-!XYVariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 15:59:29'!
-controlX: aControl
-	super controlX: aControl.
-	valueX := aControl value! !
-
-!XYVariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 15:59:40'!
-controlY: aControl
-	super controlY: aControl.
-	valueY := aControl value! !
-
-!XYVariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:22:14'!
-defaultExtent
-	^ `128 @ 64`! !
-
-!XYVariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 15:57:38'!
-initialize
-	super initialize.
-	color := PatchMorph waveformColor! !
-
-!XYVariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 15:57:06'!
-waveBlock: aBlock
-	wave := aBlock! !
 
 !LFOControlMorphOld methodsFor: 'accessing' stamp: 'len 19/Jan/2026 18:57:51'!
 lfo: anLFO
@@ -12621,43 +12749,31 @@ stepTime
 wantsSteps
 	^ true! !
 
-!RollingWaveMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Feb/2026 00:51:00'!
+!RollingWaveMorph methodsFor: 'accessing' stamp: 'len 30/Apr/2026 20:26:49'!
 addSample: aNumber
+	| x |
 	currentPosition := currentPosition < samples size ifTrue: [currentPosition + 1] ifFalse: [1].
-	samples at: currentPosition put: (aNumber min: 1.0 max: -1.0).
+	x := aNumber.
+	bipolar ifTrue: [x := x * 0.5 + 0.5].
+	x := x min: 1.0 max: 0.0.
+	samples at: currentPosition put: x.
 	self redrawNeeded! !
 
-!RollingWaveMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Feb/2026 19:34:16'!
+!RollingWaveMorph methodsFor: 'accessing' stamp: 'len 30/Apr/2026 18:46:54'!
 bipolar: aBoolean
-	bipolar := aBoolean! !
+	bipolar := aBoolean.
+	self redrawNeeded! !
 
-!RollingWaveMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Feb/2026 00:35:04'!
+!RollingWaveMorph methodsFor: 'accessing' stamp: 'len 23/Feb/2026 00:35:04'!
 color: aColor
 	color := aColor.
 	self redrawNeeded! !
 
-!RollingWaveMorph methodsFor: 'as yet unclassified' stamp: 'len 1/Mar/2026 15:26:03'!
+!RollingWaveMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:26:03'!
 defaultExtent
 	^`128 @ 64`! !
 
-!RollingWaveMorph methodsFor: 'as yet unclassified' stamp: 'len 25/Apr/2026 18:05:03'!
-drawOn: aCanvas
-	| step x y h pos delta |
-	delta := 20.
-	step := self morphWidth / (samples size - delta) * 5.
-	(pos := currentPosition + delta) > samples size ifTrue: [pos := pos - samples size].
-	h := self morphHeight - 6.0.
-	bipolar ifTrue: [h := h / 2.0].
-	x := 0.
-	y := 1.0 - (samples at: pos) * h + 3.0.
-	aCanvas strokeWidth: 2 color: color do:
-		[aCanvas moveTo: x @ y.
-		5 - (pos \\ 5) to: samples size - delta - 5 by: 5 do: [:i|
-			x := x + step.
-			y := 1.0 - (samples at: pos + i \\ samples size + 1) * h + 3.0.
-			aCanvas lineTo: x @ y]]! !
-
-!RollingWaveMorph methodsFor: 'as yet unclassified' stamp: 'len 1/Mar/2026 14:51:31'!
+!RollingWaveMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 14:51:31'!
 initialize
 	super initialize.
 	color := PatchMorph waveformColor3.
@@ -12665,7 +12781,26 @@ initialize
 	currentPosition := 1.
 	bipolar := true! !
 
-!RollingWaveMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Feb/2026 00:34:47'!
+!RollingWaveMorph methodsFor: 'drawing' stamp: 'len 30/Apr/2026 20:27:16'!
+drawOn: aCanvas
+	| step x y h pos delta y0 |
+	delta := 20.
+	step := self morphWidth / (samples size - delta) * 5.
+	(pos := currentPosition + delta) > samples size ifTrue: [pos := pos - samples size].
+	h := self morphHeight.
+	x := 0.
+	y := 1.0 - (samples at: pos) * h.
+	y0 := bipolar ifTrue: [h / 2.0] ifFalse: [h].
+	aCanvas strokeWidth: 1.5 color: Color veryLightGray dashedStrokeBits: 2r1110000 do:
+		[aCanvas moveTo: 0 @ y0; lineTo: self morphWidth @ y0].
+	aCanvas strokeWidth: 2.0 color: color do:
+		[aCanvas moveTo: x @ y.
+		5 - (pos \\ 5) to: samples size - delta - 5 by: 5 do: [:i|
+			x := x + step.
+			y := 1.0 - (samples at: pos + i \\ samples size + 1) * h.
+			aCanvas lineTo: x @ y]]! !
+
+!RollingWaveMorph methodsFor: 'drawing' stamp: 'len 23/Feb/2026 00:34:47'!
 requiresVectorCanvas
 	^ true! !
 
@@ -15017,6 +15152,10 @@ atWrapLinear: floatIndex
 	f := floatIndex - i.
 	^ (1.0 - f) * (self atWrap: i) + (f * (self atWrap: i+1))! !
 
+!Float32Array methodsFor: '*signals' stamp: 'len 29/Apr/2026 23:15:48'!
+fill: aBlock
+	1 to: self size do: [:i| self at: i put: (aBlock value: i)]! !
+
 !Float32Array methodsFor: '*signals' stamp: 'len 30/Sep/2025 02:02:00'!
 hardclip
 	1 to: self size do: [:i| self at: i put: (self at: i) hardclip]! !
@@ -15459,6 +15598,7 @@ timeProfile
 	form := self morphExtent ifNil: [Display] ifNotNil: [:aPoint| Form extent: aPoint depth: Display depth].
 	canvas := VectorCanvas onForm: form.
 	^ [100 timesRepeat: [self drawOn: canvas]] timeProfile! !
+Module initialize!
 Supersaw initialize!
 Multisample initialize!
 Sample initialize!

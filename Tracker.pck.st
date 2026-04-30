@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7872] on 27 April 2026 at 11:00:37 pm'!
+'From Cuis7.7 [latest update: #7880] on 1 May 2026 at 2:47:36 am'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 25!
+!provides: 'Tracker' 1 26!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -2537,7 +2537,7 @@ readFrom: aStream
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 
-!Tracker methodsFor: 'serialization' stamp: 'len 14/Mar/2026 18:35:15'!
+!Tracker methodsFor: 'serialization' stamp: 'len 28/Apr/2026 22:42:08'!
 readFromJson: json buffers: bufferList
 	| uniquePatterns |
 	bpm := json at: #bpm.
@@ -2550,6 +2550,7 @@ readFromJson: json buffers: bufferList
 	playheadLine := 0.
 	sequence := #().
 	tracks := #().
+	anyTrackSoloed := false.
 	(json at: #tracks) timesRepeat: [self addTrack].
 	uniquePatterns := (json at: #patterns) collect: [:each| Pattern new readFromJson: each].
 	sequence := (json at: #sequence) collect: [:each| (uniquePatterns at: (each at: #pattern)) -> (each at: #mask)].

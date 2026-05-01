@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 1 May 2026 at 2:49:10 am'!
+'From Cuis7.7 [latest update: #7880] on 1 May 2026 at 11:19:00 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 548!
+!provides: 'Signals' 1 549!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1124,6 +1124,16 @@ ControlMorph subclass: #PhaseOffsetControlMorph
 PhaseOffsetControlMorph class
 	instanceVariableNames: ''!
 
+!classDefinition: #PulseWidthControlMorph category: #'Signals-Morphic-Controls'!
+ControlMorph subclass: #PulseWidthControlMorph
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'PulseWidthControlMorph class' category: #'Signals-Morphic-Controls'!
+PulseWidthControlMorph class
+	instanceVariableNames: ''!
+
 !classDefinition: #RollingWaveControlMorph category: #'Signals-Morphic-Controls'!
 ControlMorph subclass: #RollingWaveControlMorph
 	instanceVariableNames: 'samples currentPosition bipolar'
@@ -1166,7 +1176,7 @@ TextualControlMorph class
 
 !classDefinition: #VariableWaveControlMorph category: #'Signals-Morphic-Controls'!
 ControlMorph subclass: #VariableWaveControlMorph
-	instanceVariableNames: 'currentShape wave'
+	instanceVariableNames: 'wave'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Controls'!
@@ -1276,7 +1286,7 @@ StereoMatrixControlMorph class
 
 !classDefinition: #VariableWaveXYControlMorph category: #'Signals-Morphic-Controls'!
 XYControlMorph subclass: #VariableWaveXYControlMorph
-	instanceVariableNames: 'color waveBlock valueX valueY'
+	instanceVariableNames: 'color waveBlock'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Controls'!
@@ -4285,14 +4295,14 @@ next
 	self advance.
 	^ (phase pulse: increment width: width) * 0.577 "normalize amplitude to match perceived loudness with other oscillators"! !
 
-!Pulse methodsFor: 'processing' stamp: 'len 20/Apr/2026 18:14:57'!
+!Pulse methodsFor: 'processing' stamp: 'len 1/May/2026 23:16:29'!
+nextModulated: modulation
+	self advance.
+	^ (phase pulse: increment width: (width + modulation min: 0.98 max: 0.02)) * 0.577 "normalize amplitude to match perceived loudness with other oscillators"! !
+
+!Pulse methodsFor: 'processing' stamp: 'len 1/May/2026 23:17:13'!
 read: aBuffer PWM: modulatorBuffer
-	| base |
-	base := width.
-	1 to: aBuffer size do: [:i|
-		width := (modulatorBuffer at: i) + base min: 0.98 max: 0.02.
-		aBuffer at: i put: self next].
-	width := base! !
+	1 to: aBuffer size do: [:i| aBuffer at: i put: (self nextModulated: (modulatorBuffer at: i))]! !
 
 !Pulse methodsFor: 'processing' stamp: 'len 21/Apr/2026 18:57:46'!
 tick
@@ -4313,11 +4323,9 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!Pulse methodsFor: 'ui' stamp: 'len 12/Apr/2026 03:59:49'!
+!Pulse methodsFor: 'ui' stamp: 'len 1/May/2026 21:51:52'!
 screen
-	^​ VariableWaveControlMorph new
-		control: (controls at: #width);
-		waveBlock: [:x :w| x pulseWidth: w]! !
+	^​ PulseWidthControlMorph new control: (controls at: #width)! !
 
 !Pulse methodsFor: 'wiring' stamp: 'len 13/Jan/2026 13:13:53'!
 setInputPWM: aBuffer
@@ -10639,6 +10647,22 @@ drawOn: aCanvas
 	aCanvas strokeWidth: 3.0 color: color do:
 		[aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: 0.0 sweep: Float twoPi * v]! !
 
+!PulseWidthControlMorph methodsFor: 'drawing' stamp: 'len 1/May/2026 21:50:58'!
+drawOn: aCanvas
+	| p |
+	p := control value * (extent x - 4.0) + 2.0.
+	aCanvas strokeWidth: 2.0 color: color do:
+		[aCanvas moveTo: 2.0 @ 2.0; lineTo: p @ 2.0; lineTo: p @ (extent y - 2.0); lineTo: extent - 2.0]! !
+
+!PulseWidthControlMorph methodsFor: 'initialization' stamp: 'len 1/May/2026 21:46:44'!
+defaultExtent
+	^ `128 @ 64`! !
+
+!PulseWidthControlMorph methodsFor: 'initialization' stamp: 'len 1/May/2026 21:51:44'!
+initialize
+	super initialize.
+	color := PatchMorph waveformColor! !
+
 !RollingWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 1/May/2026 01:31:08'!
 addSample: aNumber
 	| x |
@@ -10826,42 +10850,28 @@ initialize
 	font := FontFamily defaultFamilyPointSize: self defaultFontSize.
 	contents := ''! !
 
-!VariableWaveControlMorph methodsFor: 'accessing' stamp: 'len 16/Jan/2026 22:04:52'!
-control: aControl
-	super control: aControl.
-	currentShape := aControl value! !
-
 !VariableWaveControlMorph methodsFor: 'accessing' stamp: 'len 16/Jan/2026 22:20:03'!
 waveBlock: aBlock
 	wave := aBlock! !
 
-!VariableWaveControlMorph methodsFor: 'dependency mechanism' stamp: 'len 16/Jan/2026 16:52:10'!
-update: anObject
-	super update: anObject.
-	currentShape := control value! !
-
-!VariableWaveControlMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 23:14:46'!
+!VariableWaveControlMorph methodsFor: 'drawing' stamp: 'len 1/May/2026 22:00:15'!
 drawOn: aCanvas
 	| step stepX t x y h steps shape |
 	steps := 64.
 	step := 1.0 / (steps + 1).
-	stepX := self morphWidth - 8.0 * step.
-	h := self morphHeight - 6.0 / 2.0.
-	shape := currentShape.
+	stepX := self morphWidth - 4.0 / steps.
+	h := self morphHeight - 4.0 / 2.0.
+	shape := control value.
 	t := 0.0.
-	y := 1.0 - (self waveAt: t shape: shape) * h + 3.0.
-	x := 4.0.
-	aCanvas strokeWidth: 2 color: color do:
+	y := 1.0 - (self waveAt: t shape: shape) * h + 2.0.
+	x := 2.0.
+	aCanvas strokeWidth: 2.0 color: color do:
 		[aCanvas moveTo: x @ y.
 		steps timesRepeat:
 			[t := t + step.
-			y := 1.0 - (self waveAt: t \\ 1.0 shape: shape) * h + 3.0.
+			y := 1.0 - (self waveAt: t \\ 1.0 shape: shape) * h + 2.0.
 			x := x + stepX.
 			aCanvas lineTo: x @ y]]! !
-
-!VariableWaveControlMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 23:13:46'!
-waveAt: phase
-	^ self waveAt: phase shape: currentShape! !
 
 !VariableWaveControlMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 23:13:16'!
 waveAt: phase shape: shape
@@ -10871,11 +10881,10 @@ waveAt: phase shape: shape
 defaultExtent
 	^ `128 @ 64`! !
 
-!VariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 16/Jan/2026 16:53:16'!
+!VariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 1/May/2026 21:56:47'!
 initialize
 	super initialize.
-	color := PatchMorph waveformColor.
-	currentShape := 0.0! !
+	color := PatchMorph waveformColor! !
 
 !SymmetricWaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:21:19'!
 defaultExtent
@@ -11694,47 +11703,29 @@ drawOn: aCanvas
 		fillRectangle: (m0 @ 0.0 extent: extent x / 2.0 @ extent y) color: (midColor alpha: 0.5 * balance + 0.5);
 		fillRectangle: (s0 @ 0.0 extent: extent x / 2.0 @ extent y) color: (sideColor alpha: 1.0 - (0.5 * balance + 0.5))! !
 
-!VariableWaveXYControlMorph methodsFor: 'dependency mechanism' stamp: 'len 11/Feb/2026 15:58:29'!
-update: anObject
-	super update: anObject.
-	valueX := controlX value.
-	valueY := controlY value! !
-
-!VariableWaveXYControlMorph methodsFor: 'drawing' stamp: 'len 1/Mar/2026 15:00:25'!
+!VariableWaveXYControlMorph methodsFor: 'drawing' stamp: 'len 1/May/2026 22:03:56'!
 drawOn: aCanvas
-	| step stepX t x y h steps |
+	| step stepX t x y h steps valueX valueY |
 	steps := 64.
 	step := 1.0 / (steps + 1).
-	stepX := self morphWidth - 8.0 * step.
-	h := self morphHeight - 6.0 / 2.0.
+	stepX := self morphWidth - 4.0 / steps.
+	h := self morphHeight - 4.0 / 2.0.
 	t := 0.0.
-	y := 1.0 - (self waveAt: t) * h + 3.0.
-	x := 4.0.
-	aCanvas strokeWidth: 2 color: color do:
+	valueX := controlX value.
+	valueY := controlY value.
+	y := 1.0 - (waveBlock value: t value: valueX value: valueY) * h + 2.0.
+	x := 2.0.
+	aCanvas strokeWidth: 2.0 color: color do:
 		[aCanvas moveTo: x @ y.
 		steps timesRepeat:
 			[t := t + step.
-			y := 1.0 - (self waveAt: t \\ 1.0) * h + 3.0.
+			y := 1.0 - (waveBlock value: t value: valueX value: valueY) * h + 2.0.
 			x := x + stepX.
 			aCanvas lineTo: x @ y]]! !
-
-!VariableWaveXYControlMorph methodsFor: 'drawing' stamp: 'len 30/Apr/2026 20:29:45'!
-waveAt: aNumber
-	^ waveBlock value: aNumber value: valueX value: valueY! !
 
 !VariableWaveXYControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 19:16:48'!
 color: aColor
 	color := aColor! !
-
-!VariableWaveXYControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 15:59:29'!
-controlX: aControl
-	super controlX: aControl.
-	valueX := aControl value! !
-
-!VariableWaveXYControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 15:59:40'!
-controlY: aControl
-	super controlY: aControl.
-	valueY := aControl value! !
 
 !VariableWaveXYControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:22:14'!
 defaultExtent
@@ -12560,7 +12551,7 @@ stepTime
 wantsSteps
 	^ true! !
 
-!OscilloscopeMorph methodsFor: 'drawing' stamp: 'len 3/Apr/2026 00:31:41'!
+!OscilloscopeMorph methodsFor: 'drawing' stamp: 'len 1/May/2026 16:37:28'!
 drawOn: aCanvas
 	| step buf x y h |
 	step := self morphWidth / buffer size.

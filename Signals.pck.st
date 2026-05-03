@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 1 May 2026 at 11:19:00 pm'!
+'From Cuis7.7 [latest update: #7880] on 3 May 2026 at 10:51:20 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 549!
+!provides: 'Signals' 1 550!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -67,7 +67,7 @@ Toggle class
 !classDefinition: #Module category: #'Signals-Kernel'!
 ActiveModel subclass: #Module
 	instanceVariableNames: 'controls'
-	classVariableNames: 'Ramp'
+	classVariableNames: 'FadeIn FadeOut'
 	poolDictionaries: ''
 	category: 'Signals-Kernel'!
 !classDefinition: 'Module class' category: #'Signals-Kernel'!
@@ -186,7 +186,7 @@ AudioIn class
 
 !classDefinition: #AudioOut category: #'Signals-IO'!
 Module subclass: #AudioOut
-	instanceVariableNames: 'buses level levelLeft levelRight inputL inputR aux meterLeftValue meterRightValue enabled'
+	instanceVariableNames: 'buses level levelLeft levelRight targetLevelLeft targetLevelRight inputL inputR aux env meterLeftValue meterRightValue enabled'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-IO'!
@@ -1176,7 +1176,7 @@ TextualControlMorph class
 
 !classDefinition: #VariableWaveControlMorph category: #'Signals-Morphic-Controls'!
 ControlMorph subclass: #VariableWaveControlMorph
-	instanceVariableNames: 'wave'
+	instanceVariableNames: 'waveBlock'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Controls'!
@@ -1296,7 +1296,7 @@ VariableWaveXYControlMorph class
 
 !classDefinition: #WaveshaperControlMorph category: #'Signals-Morphic-Controls'!
 XYControlMorph subclass: #WaveshaperControlMorph
-	instanceVariableNames: 'color mode wave valueX valueY image'
+	instanceVariableNames: 'color waveBlock image'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Controls'!
@@ -1906,7 +1906,7 @@ Internally, LR4 consists of two parallel paths, each a pair of cascaded 2nd-orde
 The only parameter is the crossover frequency, which sets the −6 dB point of each band. At the crossover frequency, LP and HP each contribute −6 dB, summing back to 0 dB.​​​​​​​​​​​​​​​​!
 
 !SVF commentStamp: '<historical>' prior: 0!
-This is a state variable filter with a 12 dB/oct slope (2 poles). It has outputs for LP, HP, BP and BPN (normalized band-pass: BP / Q) modes. Based on stmlib/dsp/filter.h by Emilie Gillet.
+This is a state variable filter (SVF) with a 12 dB/oct slope (2 poles). It has outputs for LP, HP, BP and BPN (normalized band-pass: BP / Q). Based on stmlib/dsp/filter.h by Emilie Gillet.
 
 It implements the TPT (Topology-Preserving Transform) SVF, commonly called the Cytomic SVF or Simper SVF, from Andy Simper’s 2011 paper and Vadim Zavalishin’s "The Art of VA Filter Design".!
 
@@ -2459,9 +2459,12 @@ adjustDown
 adjustUp
 	self baseValue: (options atPin: (options indexOf: self baseValue) - 1)! !
 
-!Choice methodsFor: 'printing' stamp: 'len 20/Apr/2026 18:35:06'!
+!Choice methodsFor: 'printing' stamp: 'len 2/May/2026 15:07:50'!
 printedBaseValue
-	^ printer ifNil: [self baseValue printString] ifNotNil: [printer value: self baseValue]! !
+	| baseValue |
+	baseValue := self baseValue.
+	printer ifNotNil: [^ printer value: baseValue].
+	^ baseValue isSymbol ifTrue: [baseValue asPlainString] ifFalse: [baseValue printString]! !
 
 !Choice methodsFor: 'private' stamp: 'len 6/Apr/2026 02:15:36'!
 positionFromValue: anObject
@@ -2797,10 +2800,11 @@ controlRate
 sampleRate
 	^ AudioPlayer sampleRate! !
 
-!Module class methodsFor: 'as yet unclassified' stamp: 'len 29/Apr/2026 23:23:54'!
+!Module class methodsFor: 'as yet unclassified' stamp: 'len 3/May/2026 22:33:38'!
 initialize
 	super initialize.
-	Ramp := (Float32Array new: 128) fill: [:i| 1.0/128*i]! !
+	FadeIn := (Float32Array new: 128) fill: [:i| 1.0/128*i].
+	FadeOut := 1.0 - FadeIn! !
 
 !Amp methodsFor: 'initialization' stamp: 'len 31/Jan/2026 21:50:16'!
 initialize
@@ -3970,21 +3974,22 @@ setLevel: aNumber
 setPan: aNumber
 	self set: #pan to: aNumber! !
 
-!AudioOut methodsFor: 'controlling' stamp: 'len 2/Feb/2026 02:55:17'!
+!AudioOut methodsFor: 'controlling' stamp: 'len 3/May/2026 22:41:50'!
 update
 	| pan |
 	super update.
-	level := self get: #level.
+	level := enabled ifTrue: [self get: #level] ifFalse: [0.0].
 	pan := self get: #pan.
-	levelLeft := levelRight := level.
-	pan < 0.0 ifTrue: [levelRight := levelRight * (pan * Float halfPi) cos].
-	pan > 0.0 ifTrue: [levelLeft := levelLeft * (pan * Float halfPi) cos]! !
+	targetLevelLeft := targetLevelRight := level.
+	pan < 0.0 ifTrue: [targetLevelRight := targetLevelRight * (pan * Float halfPi) cos].
+	pan > 0.0 ifTrue: [targetLevelLeft := targetLevelLeft * (pan * Float halfPi) cos]! !
 
-!AudioOut methodsFor: 'initialization' stamp: 'len 18/Mar/2026 20:18:14'!
+!AudioOut methodsFor: 'initialization' stamp: 'len 3/May/2026 22:40:27'!
 initialize
 	super initialize.
 	aux := Float32Array new: self class blockSize.
-	level := levelLeft := levelRight := 0.5.
+	env := Float32Array new: self class blockSize.
+	level := levelLeft := levelRight := 0.001. "-60 dB"
 	meterLeftValue := meterRightValue := 0.0.
 	enabled := true! !
 
@@ -3995,11 +4000,11 @@ initializeControls
 	self addVolumeControl: #level min: 0.001 "-60 dB" max: 4.0 value: 0.5.
 	(self addControl: #pan min: -1.0 max: 1.0 value: 0.0) printer: [:x| x abs < 0.01 ifTrue: ['Center'] ifFalse: [(x abs * 100.0) rounded printString, '% ', (x < 0.0 ifTrue: ['L'] ifFalse: ['R'])]]! !
 
-!AudioOut methodsFor: 'processing' stamp: 'len 19/Apr/2026 14:51:14'!
+!AudioOut methodsFor: 'processing' stamp: 'len 3/May/2026 22:49:18'!
 tick
 	| bus |
 	inputL ifNil: [^ self].
-	enabled ifFalse: [^ self]. "this happens when the track is muted"
+	(levelLeft = 0.0 and: [targetLevelLeft = 0.0 and: [levelRight = 0.0 and: [targetLevelRight = 0.0]]]) ifTrue: [^ self].
 	bus := buses at: (self get: #port) ifAbsentPut: [Bus new].
 	meterLeftValue := meterLeftValue * 0.9 "dampen" max: (inputL rms max: inputL last abs).
 	inputR
@@ -4009,9 +4014,21 @@ tick
 		ifNotNil:
 			[meterRightValue := meterRightValue * 0.9 max: (inputR rms max: inputR last abs).
 			aux replaceWith: inputR].
-	aux *= levelRight.
+	"Apply levels:"
+	levelRight = targetLevelRight
+		ifTrue: [aux *= levelRight]
+		ifFalse:
+			[env replaceWith: FadeOut; *= (levelRight / (targetLevelRight max: 0.00001)); += FadeIn; *= targetLevelRight.
+			aux *= env.
+			levelRight := targetLevelRight].
 	bus rightBuffer += aux.
-	aux replaceWith: inputL; *= levelLeft.
+	aux replaceWith: inputL.
+	levelLeft = targetLevelLeft
+		ifTrue: [aux *= levelLeft]
+		ifFalse:
+			[env replaceWith: FadeOut; *= (levelLeft / (targetLevelLeft max: 0.00001)); += FadeIn; *= targetLevelLeft.
+			aux *= env.
+			levelLeft := targetLevelLeft].
 	bus leftBuffer += aux! !
 
 !AudioOut methodsFor: 'ui' stamp: 'len 12/Mar/2026 18:00:03'!
@@ -6288,10 +6305,10 @@ initialize
 	self reset.
 	velocity := 0.5! !
 
-!EG methodsFor: 'initialization' stamp: 'len 24/Apr/2026 15:21:49'!
+!EG methodsFor: 'initialization' stamp: 'len 3/May/2026 16:19:55'!
 initializeControls
 	super initializeControls.
-	self addTimeControl: #attack min: 0.001 max: 2.0 value: 0.01.
+	self addTimeControl: #attack min: 0.0005 "0.5 ms" max: 2.0 "s" value: 0.01 "10 ms".
 	self addToggleControl: #reset value: false! !
 
 !EG methodsFor: 'processing' stamp: 'len 29/Nov/2025 20:41:00'!
@@ -10850,9 +10867,9 @@ initialize
 	font := FontFamily defaultFamilyPointSize: self defaultFontSize.
 	contents := ''! !
 
-!VariableWaveControlMorph methodsFor: 'accessing' stamp: 'len 16/Jan/2026 22:20:03'!
+!VariableWaveControlMorph methodsFor: 'accessing' stamp: 'len 3/May/2026 14:43:18'!
 waveBlock: aBlock
-	wave := aBlock! !
+	waveBlock := aBlock! !
 
 !VariableWaveControlMorph methodsFor: 'drawing' stamp: 'len 1/May/2026 22:00:15'!
 drawOn: aCanvas
@@ -10873,9 +10890,9 @@ drawOn: aCanvas
 			x := x + stepX.
 			aCanvas lineTo: x @ y]]! !
 
-!VariableWaveControlMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 23:13:16'!
+!VariableWaveControlMorph methodsFor: 'drawing' stamp: 'len 3/May/2026 14:43:18'!
 waveAt: phase shape: shape
-	^ wave value: phase value: shape! !
+	^ waveBlock value: phase value: shape! !
 
 !VariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:21:22'!
 defaultExtent
@@ -10898,14 +10915,14 @@ initialize
 	image fillColor: PatchMorph panelColor.
 ! !
 
-!SymmetricWaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 29/Apr/2026 18:45:43'!
+!SymmetricWaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 3/May/2026 14:37:37'!
 drawLevel: aNumber
-	| x0 δ |
-	x0 := image width * 0.5.
-	δ := aNumber * x0.
-	image fill: (x0 - δ @ 0 extent: δ * 2.0 @ image height) fillColor: (PatchMorph waveformColor alpha: (aNumber * 0.15 min: 1.0 max: 0.0)).
-	image fill: (x0 + δ @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor.
-	image fill: (x0 - δ @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor! !
+	| x δ |
+	x := image width / 2.0.
+	δ := aNumber * x.
+	image fill: (x - δ @ 0 extent: δ * 2.0 @ image height) fillColor: (PatchMorph waveformColor alpha: (aNumber * 0.15 min: 1.0 max: 0.0)).
+	image fill: (x + δ @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor.
+	image fill: (x - δ @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor! !
 
 !SymmetricWaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 13/Feb/2026 19:32:19'!
 drawOn: aCanvas
@@ -11584,9 +11601,9 @@ waveAt: t
 	v == #Fall ifTrue: [^ (0.5 - t) * 2.0].
 	self notYetImplemented! !
 
-!LFOShapeOffsetControlMorph methodsFor: 'halos and balloon help' stamp: 'len 23/Apr/2026 19:32:21'!
+!LFOShapeOffsetControlMorph methodsFor: 'halos and balloon help' stamp: 'len 2/May/2026 15:05:41'!
 balloonText
-	^ nil! !
+	^ controlY printedBaseValueWithLabel, ', ', controlX printedBaseValueWithLabel! !
 
 !LFOShapeOffsetControlMorph methodsFor: 'initialization' stamp: 'len 23/Apr/2026 19:36:35'!
 defaultExtent
@@ -11740,65 +11757,47 @@ initialize
 waveBlock: aBlock
 	waveBlock := aBlock! !
 
-!WaveshaperControlMorph methodsFor: 'dependency mechanism' stamp: 'len 11/Feb/2026 18:58:59'!
-update: anObject
-	super update: anObject.
-	valueX := controlX value.
-	valueY := controlY value! !
-
-!WaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 15/Feb/2026 15:21:58'!
+!WaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 3/May/2026 14:48:29'!
 drawLevel: aNumber
-	| x0 δ |
-	x0 := image width * (valueX + 1.0) / 2.0.
-	δ := aNumber * image width / 2.0.
-	image fill: (x0 - δ @ 0 extent: δ * 2.0 @ image height) fillColor: (PatchMorph waveformColor alpha: aNumber).
-	image fill: (x0 + δ @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor.
-	image fill: (x0 - δ @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor
+	| m x δ |
+	m := image width / 2.0.
+	x := controlX value * m + m.
+	δ := aNumber * m.
+	image fill: (x - δ @ 0 extent: δ * 2.0 @ image height) fillColor: (PatchMorph waveformColor alpha: (aNumber * 0.15 min: 1.0 max: 0.0)).
+	image fill: (x + δ @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor.
+	image fill: (x - δ @ 0 extent: 1 @ image height) fillColor: PatchMorph waveformColor! !
 
-"	h := image height / 2.0.
-	y := (1.0 - (self waveAt: x0 - δ / image width)) * h.
-	image fill: (x0 + δ @ (h - y) extent: 1 @ h) fillColor: PatchMorph waveformColor.
-	y := (1.0 - (self waveAt: x0 + δ / image width)) * h.
-	image fill: (x0 - δ @ h extent: 1 @ y) fillColor: PatchMorph waveformColor"
-
-"	| t x v h |
-	t := ((aNumber min: 1.0 max: -1.0) + 1.0) / 2.0.
-	x := t * image width.
-	v := self waveAt: t.
-	h := (v + 1.0) / 2.0 * image height.
-	image fill: (x @ (image height // 2) extent: 3 @ (image height // 2 - h)) fillColor: Color white "! !
-
-!WaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 1/Mar/2026 14:47:15'!
+!WaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 3/May/2026 14:41:45'!
 drawOn: aCanvas
-	| step stepX t x y h steps m |
+	| step stepX t x y h steps m shape |
 	aCanvas image: image at: 0 @ 0.
 	m := self morphWidth / 2.0.
-	x := valueX * m + m.
+	x := controlX value * m + m.
 	aCanvas strokeWidth: 1.0 color: Color white dashedStrokeBits: 2r1110000000 do:
 		[aCanvas moveTo: x @ 0; lineTo: x @ self morphHeight].
 	steps := 64.
 	step := 1.0 / (steps + 1).
-	stepX := self morphWidth - 8.0 * step.
-	h := self morphHeight - 6.0 / 2.0.
+	stepX := self morphWidth - 4.0 / steps.
+	h := self morphHeight - 4.0 / 2.0.
 	t := 0.0.
-	y := 1.0 - (self waveAt: t) * h + 3.0.
-	x := 4.0.
+	shape := controlY value.
+	y := 1.0 - (self waveAt: t shape: shape) * h + 2.0.
+	x := 2.0.
 	aCanvas strokeWidth: 2 color: color do:
 		[aCanvas moveTo: x @ y.
 		steps timesRepeat:
 			[t := t + step.
-			y := 1.0 - (self waveAt: t \\ 1.0) * h + 3.0.
+			y := 1.0 - (self waveAt: t \\ 1.0 shape: shape) * h + 2.0.
 			x := x + stepX.
 			aCanvas lineTo: x @ y]]! !
 
-!WaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 12/Feb/2026 14:24:40'!
-waveAt: aNumber
-	^ wave value: aNumber value: valueY! !
+!WaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 3/May/2026 14:42:29'!
+waveAt: phase shape: shape
+	^ waveBlock value: phase value: shape! !
 
-!WaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 12/Feb/2026 14:25:23'!
+!WaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 3/May/2026 14:36:15'!
 bias: aControl
-	self controlX: aControl.
-	valueX := aControl value! !
+	self controlX: aControl! !
 
 !WaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 12/Feb/2026 14:22:21'!
 color: aColor
@@ -11816,14 +11815,13 @@ initialize
 	image fillColor: PatchMorph panelColor.
 	controlY := Knob min: 0.0 max: 0.0 value: 0.0! !
 
-!WaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 12/Feb/2026 14:34:40'!
+!WaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 3/May/2026 14:36:36'!
 shape: aControl
-	self controlY: aControl.
-	valueY := aControl value! !
+	self controlY: aControl! !
 
-!WaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 11/Feb/2026 18:58:59'!
+!WaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 3/May/2026 14:39:10'!
 waveBlock: aBlock
-	wave := aBlock! !
+	waveBlock := aBlock! !
 
 !WaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 15/Feb/2026 15:13:22'!
 step
@@ -14280,7 +14278,7 @@ undenormalize
 initialize
 	self reset! !
 
-!Biquad methodsFor: 'processing' stamp: 'len 29/Mar/2026 01:52:11'!
+!Biquad methodsFor: 'processing' stamp: 'len 2/May/2026 05:05:16'!
 process: inputBuffer into: outputBuffer
 	"Direct Form 1."
 	1 to: inputBuffer size do: [:i|
@@ -14291,8 +14289,8 @@ process: inputBuffer into: outputBuffer
 		y2 := y1.
 		x1 := in.
 		outputBuffer at: i put: (y1 := out)].
-	x1 abs < 1.0e-15 ifTrue: [x1 := 0.0].
-	x2 abs < 1.0e-15 ifTrue: [x2 := 0.0].
+"	x1 abs < 1.0e-15 ifTrue: [x1 := 0.0].
+	x2 abs < 1.0e-15 ifTrue: [x2 := 0.0]."
 	y1 abs < 1.0e-15 ifTrue: [y1 := 0.0].
 	y2 abs < 1.0e-15 ifTrue: [y2 := 0.0]! !
 

@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 3 May 2026 at 10:51:20 pm'!
+'From Cuis7.7 [latest update: #7880] on 4 May 2026 at 6:59:31 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 550!
+!provides: 'Signals' 1 551!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -76,7 +76,7 @@ Module class
 
 !classDefinition: #Amp category: #'Signals-Dynamics'!
 Module subclass: #Amp
-	instanceVariableNames: 'input gain output inputRM'
+	instanceVariableNames: 'input gain output inputRM envelope'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Dynamics'!
@@ -186,7 +186,7 @@ AudioIn class
 
 !classDefinition: #AudioOut category: #'Signals-IO'!
 Module subclass: #AudioOut
-	instanceVariableNames: 'buses level levelLeft levelRight targetLevelLeft targetLevelRight inputL inputR aux env meterLeftValue meterRightValue enabled'
+	instanceVariableNames: 'buses level levelLeft levelRight targetLevelLeft targetLevelRight inputL inputR aux envelope meterLeftValue meterRightValue enabled'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-IO'!
@@ -2806,31 +2806,32 @@ initialize
 	FadeIn := (Float32Array new: 128) fill: [:i| 1.0/128*i].
 	FadeOut := 1.0 - FadeIn! !
 
-!Amp methodsFor: 'initialization' stamp: 'len 31/Jan/2026 21:50:16'!
+!Amp methodsFor: 'initialization' stamp: 'len 4/May/2026 18:42:04'!
 initialize
 	super initialize.
-	gain := 0.0! !
+	gain := 0.0.
+	envelope := Float32Array new: self class blockSize! !
 
 !Amp methodsFor: 'initialization' stamp: 'len 2/Dec/2025 23:42:00'!
 initializeControls
 	super initializeControls.
 	self addControl: #gain min: 0.0 max: 1.0 value: 0.0! !
 
-!Amp methodsFor: 'processing' stamp: 'len 9/Mar/2026 15:49:01'!
+!Amp methodsFor: 'processing' stamp: 'len 4/May/2026 18:54:50'!
 tick
-	| increment |
+	| targetGain |
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
-	increment := (self get: #gain) - gain / self class blockSize.
-	(gain = 0.0 and: [increment = 0.0]) ifTrue: [output atAllPut: 0.0. ^ self].
-	increment = 0.0 
-		ifTrue:
-			[output replaceWith: input.
-			output *= gain]
+	output replaceWith: input.
+	(targetGain := self get: #gain) = gain
+		ifTrue: [output *= gain]
 		ifFalse:
-			[1 to: input size do: [:i|
-				gain := gain + increment.
-				output at: i put: (input at: i) * gain]].
+			[targetGain < 0.00001 "-100 dB"
+				ifTrue: [output *= gain; *= FadeOut]
+				ifFalse:
+					[envelope replaceWith: FadeOut; *= (gain / targetGain); += FadeIn; *= targetGain.
+					output *= envelope].
+			gain := targetGain].
 	inputRM ifNotNil: [output *= inputRM]! !
 
 !Amp methodsFor: 'ui' stamp: 'len 19/Apr/2026 04:52:01'!
@@ -3984,11 +3985,11 @@ update
 	pan < 0.0 ifTrue: [targetLevelRight := targetLevelRight * (pan * Float halfPi) cos].
 	pan > 0.0 ifTrue: [targetLevelLeft := targetLevelLeft * (pan * Float halfPi) cos]! !
 
-!AudioOut methodsFor: 'initialization' stamp: 'len 3/May/2026 22:40:27'!
+!AudioOut methodsFor: 'initialization' stamp: 'len 4/May/2026 18:47:14'!
 initialize
 	super initialize.
 	aux := Float32Array new: self class blockSize.
-	env := Float32Array new: self class blockSize.
+	envelope := Float32Array new: self class blockSize.
 	level := levelLeft := levelRight := 0.001. "-60 dB"
 	meterLeftValue := meterRightValue := 0.0.
 	enabled := true! !
@@ -4000,7 +4001,7 @@ initializeControls
 	self addVolumeControl: #level min: 0.001 "-60 dB" max: 4.0 value: 0.5.
 	(self addControl: #pan min: -1.0 max: 1.0 value: 0.0) printer: [:x| x abs < 0.01 ifTrue: ['Center'] ifFalse: [(x abs * 100.0) rounded printString, '% ', (x < 0.0 ifTrue: ['L'] ifFalse: ['R'])]]! !
 
-!AudioOut methodsFor: 'processing' stamp: 'len 3/May/2026 22:49:18'!
+!AudioOut methodsFor: 'processing' stamp: 'len 4/May/2026 18:54:19'!
 tick
 	| bus |
 	inputL ifNil: [^ self].
@@ -4018,16 +4019,22 @@ tick
 	levelRight = targetLevelRight
 		ifTrue: [aux *= levelRight]
 		ifFalse:
-			[env replaceWith: FadeOut; *= (levelRight / (targetLevelRight max: 0.00001)); += FadeIn; *= targetLevelRight.
-			aux *= env.
+			[targetLevelRight < 0.00001 "-100 dB"
+				ifTrue: [aux *= levelRight; *= FadeOut]
+				ifFalse:
+					[envelope replaceWith: FadeOut; *= (levelRight / targetLevelRight); += FadeIn; *= targetLevelRight.
+					aux *= envelope].
 			levelRight := targetLevelRight].
 	bus rightBuffer += aux.
 	aux replaceWith: inputL.
 	levelLeft = targetLevelLeft
 		ifTrue: [aux *= levelLeft]
 		ifFalse:
-			[env replaceWith: FadeOut; *= (levelLeft / (targetLevelLeft max: 0.00001)); += FadeIn; *= targetLevelLeft.
-			aux *= env.
+			[targetLevelLeft < 0.00001 "-100 dB"
+				ifTrue: [aux *= levelLeft; *= FadeOut]
+				ifFalse:
+					[envelope replaceWith: FadeOut; *= (levelLeft / (targetLevelLeft max: 0.00001)); += FadeIn; *= targetLevelLeft.
+					aux *= envelope].
 			levelLeft := targetLevelLeft].
 	bus leftBuffer += aux! !
 

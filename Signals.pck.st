@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 5 May 2026 at 2:59:43 pm'!
+'From Cuis7.7 [latest update: #7880] on 5 May 2026 at 4:54:27 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 552!
+!provides: 'Signals' 1 553!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -3580,9 +3580,9 @@ reset
 	flutterNoiseLPF1 reset.
 	flutterNoiseLPF2 reset! !
 
-!TapeDrift methodsFor: 'controlling' stamp: 'len 21/Apr/2026 15:01:20'!
+!TapeDrift methodsFor: 'controlling' stamp: 'len 5/May/2026 16:50:21'!
 update
-	| twoPi delay wowFreq flutterFreq instability flutterNoise kFlutter kWow noise wowNoise |
+	| twoPi delay wowFreq flutterFreq instability flutterNoise kFlutter kWow noise wowNoise wow flutter |
 	super update.
 	wowFreq := (self get: #wowRate) / self class controlRate.
 	flutterFreq := (self get: #flutterRate) / self class controlRate.
@@ -3599,10 +3599,12 @@ update
 	twoPi := Float twoPi.
 	wowPhase := wowFreq * twoPi * (wowNoise * kWow + 1.0) + wowPhase \\ twoPi.
 	flutterPhase := flutterFreq * twoPi * (flutterNoise * kFlutter + 1.0) + flutterPhase \\ twoPi.
-	delay := (wowPhase sin * (self get: #wowDepth) + (flutterPhase sin * (self get: #flutterDepth)) + 0.02 "20 ms") * self class sampleRate.
+	wow := wowPhase sin.
+	flutter := flutterPhase sin.
+	self triggerEvent: #drift: with: wow + (flutter * 0.1) / 1.1.
+	delay := (wow * (self get: #wowDepth) + (flutter * (self get: #flutterDepth)) + 0.02 "20 ms") * self class sampleRate.
 	tapL setDelayIncrement: (delay - tapL delay) / self class blockSize.
-	tapR setDelayIncrement: (delay - tapR delay) / self class blockSize.
-! !
+	tapR setDelayIncrement: (delay - tapR delay) / self class blockSize! !
 
 !TapeDrift methodsFor: 'initialization' stamp: 'len 21/Apr/2026 14:49:02'!
 initialize
@@ -3637,26 +3639,34 @@ tick
 			delayLineR write: (inputR at: i).
 			outputR at: i put: tapR read]]! !
 
-!TapeDrift methodsFor: 'ui' stamp: 'len 21/Apr/2026 01:43:29'!
+!TapeDrift methodsFor: 'ui' stamp: 'len 5/May/2026 16:52:19'!
 panel
 	^ ControlPanel new
-		addKnob: (controls at: #wowRate);
-		addKnob: (controls at: #wowDepth);
-		addKnob: (controls at: #flutterRate);
-		addKnob: (controls at: #flutterDepth);
-		addKnob: (controls at: #instability)! !
+"		addSmallKnob: (controls at: #wowRate);"
+		addSmallKnob: (controls at: #wowDepth);
+"		addSmallKnob: (controls at: #flutterRate);"
+		addSmallKnob: (controls at: #flutterDepth);
+		addSmallKnob: (controls at: #instability)! !
 
-!TapeDrift methodsFor: 'ui' stamp: 'len 20/Apr/2026 22:03:55'!
+!TapeDrift methodsFor: 'ui' stamp: 'len 5/May/2026 16:31:30'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
-	answer body addMorph: self panel.
+	answer body addMorph: self screen.
+	answer flap addMorph: self panel.
 	^ answer
 		addAudioInput: #setInputL: label: 'L/M';
 		addAudioInput: #setInputR: label: 'R';
 		addAudioOutput: #setOutputL: label: 'L/M';
 		addAudioOutput: #setOutputR: label: 'R';
 		yourself! !
+
+!TapeDrift methodsFor: 'ui' stamp: 'len 5/May/2026 16:53:00'!
+screen
+	| answer |
+	answer := RollingWaveXYControlMorph new morphExtent: 96 @ 32; controlX: (controls at: #wowRate); controlY: (controls at: #flutterRate).
+	self when: #drift: send: #addSample: to: answer.
+	^ answer! !
 
 !TapeDrift methodsFor: 'wiring' stamp: 'len 20/Apr/2026 22:01:34'!
 setInputL: aBuffer

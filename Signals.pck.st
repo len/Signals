@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 4 May 2026 at 6:59:31 pm'!
+'From Cuis7.7 [latest update: #7880] on 5 May 2026 at 2:59:43 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 551!
+!provides: 'Signals' 1 552!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -3147,20 +3147,22 @@ initialize
 	lpfR := OnePole new.
 	self reset! !
 
-!Chorus methodsFor: 'initialization' stamp: 'len 30/Apr/2026 18:08:40'!
+!Chorus methodsFor: 'initialization' stamp: 'len 5/May/2026 14:57:50'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #time min: 0.005 "5 ms" max: 0.02 "20 ms" value: 0.01 "10 ms".
 	self addFrequencyControl: #speed min: 0.1 "Hz" max: 1.5 "Hz" value: 0.5 "Hz".
 	self addDepthControl: #depth value: 0.1.
+	self addControl: #width min: 0.0 max: 1.0 value: 1.0.
 	self addFrequencyControl: #tone min: 2000.0 "2 kHz" max: 18000.0 "18 kHz" value: 8000.0. "8 kHz"
 	self addDryWetControl: #mix value: 0.5! !
 
-!Chorus methodsFor: 'processing' stamp: 'len 27/Mar/2026 16:41:10'!
+!Chorus methodsFor: 'processing' stamp: 'len 5/May/2026 14:58:45'!
 tick
-	| wet dry |
+	| width wet dry |
 	outputL ifNil: [^ self].
 	input ifNil: [outputL atAllPut: 0.0. outputR ifNotNil: [outputR atAllPut: 0.0].^ self].
+	width := (self get: #width) * 0.5. "0.0 to 0.5"
 	wet := self get: #mix.
 	dry := 1.0 - wet.
 	outputR isNil
@@ -3178,7 +3180,7 @@ tick
 				v2 := tap2 read.
 				v3 := tap3 read.
 				mid := v1 + v2 + v3 / 3.0.
-				side := v1 - v3 * 0.5.
+				side := v1 - v3 * width.
 				in := in * dry.
 				outputL at: i put: in + ((lpfL value: mid + side) * wet).
 				outputR at: i put: in + ((lpfR value: mid - side) * wet)]]! !
@@ -3260,20 +3262,23 @@ initialize
 	lpfR := OnePole new.
 	self reset! !
 
-!Ensemble methodsFor: 'initialization' stamp: 'len 30/Apr/2026 18:08:29'!
+!Ensemble methodsFor: 'initialization' stamp: 'len 5/May/2026 14:57:57'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #time min: 0.015 "15 ms" max: 0.035 "35 ms" value: 0.02 "20 ms".
 	self addFrequencyControl: #speed min: 0.1 "Hz" max: 1.5 "Hz" value: 0.5 "Hz".
 	self addDepthControl: #depth value: 0.1.
+	self addControl: #width min: 0.0 max: 1.0 value: 1.0.
 	self addFrequencyControl: #tone min: 2000.0 "2 kHz" max: 18000.0 "18 kHz" value: 6000.0. "6 kHz"
 	self addDryWetControl: #mix value: 0.5! !
 
-!Ensemble methodsFor: 'processing' stamp: 'len 27/Mar/2026 16:40:45'!
+!Ensemble methodsFor: 'processing' stamp: 'len 5/May/2026 14:54:02'!
 tick
-	| wet dry |
+	| width width2 wet dry |
 	outputL ifNil: [^ self].
 	input ifNil: [outputL atAllPut: 0.0. outputR ifNotNil: [outputR atAllPut: 0.0].^ self].
+	width := (self get: #width) / 2.0 + 0.5. "0 -> 0.5, 1 -> 1.0"
+	width2 := 1.0 - width. "0 -> 0.5, 1 -> 0.0"
 	wet := self get: #mix.
 	dry := 1.0 - wet.
 	outputR isNil
@@ -3297,8 +3302,8 @@ tick
 				outL := v1 + (v2 * 0.924) + (v3 * 0.707) + (v4 * 0.383) / 3.0. 
 				outR := v2 * 0.383 + (v3 * 0.707) + (v4 * 0.924) + v5 / 3.0.
 				in := in * dry.
-				outputL at: i put: in + ((lpfL value: outL) * wet).
-				outputR at: i put: in + ((lpfR value: outR) * wet)]]! !
+				outputL at: i put: in + ((lpfL value: outL * width + (outR * width2)) * wet).
+				outputR at: i put: in + ((lpfR value: outR * width + (outL * width2)) * wet)]]! !
 
 !Ensemble methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:12:47'!
 patchable

@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 5 May 2026 at 4:54:27 pm'!
+'From Cuis7.7 [latest update: #7880] on 9 May 2026 at 1:56:34 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 553!
+!provides: 'Signals' 1 554!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -296,7 +296,7 @@ TriSawPulse class
 
 !classDefinition: #Supersaw category: #'Signals-Oscillators'!
 TunedGenerator subclass: #Supersaw
-	instanceVariableNames: 'increment phases increments incrementRatio centerGain sideGain'
+	instanceVariableNames: 'phases increments increment incrementRatio centerGain sideGain'
 	classVariableNames: 'DetuneCurveLUT'
 	poolDictionaries: ''
 	category: 'Signals-Oscillators'!
@@ -1186,7 +1186,7 @@ VariableWaveControlMorph class
 
 !classDefinition: #SymmetricWaveshaperControlMorph category: #'Signals-Morphic-Controls'!
 VariableWaveControlMorph subclass: #SymmetricWaveshaperControlMorph
-	instanceVariableNames: 'image'
+	instanceVariableNames: 'image fillBlack'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Controls'!
@@ -1296,7 +1296,7 @@ VariableWaveXYControlMorph class
 
 !classDefinition: #WaveshaperControlMorph category: #'Signals-Morphic-Controls'!
 XYControlMorph subclass: #WaveshaperControlMorph
-	instanceVariableNames: 'color waveBlock image'
+	instanceVariableNames: 'color waveBlock image fillBlack'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Controls'!
@@ -1426,7 +1426,7 @@ OscilloscopeMorph class
 
 !classDefinition: #PhosphorDisplayMorph category: #'Signals-Morphic-Widgets'!
 BoxMorph subclass: #PhosphorDisplayMorph
-	instanceVariableNames: 'image'
+	instanceVariableNames: 'image fillBlack'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Widgets'!
@@ -2708,9 +2708,13 @@ addFrequencyControl: aSymbol value: defaultValue
 addLogControl: aSymbol min: min max: max value: defaultValue
 	^ controls at: aSymbol put: ((Knob min: min max: max curve: #exp value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
 
-!Module methodsFor: 'initialization' stamp: 'len 28/Jan/2026 00:09:19'!
-addPitchControl: aSymbol value: defaultValue
-	^ (self addControl: aSymbol min: 0 semitonesToHertz max: 127 semitonesToHertz value: defaultValue) printer: #hertzPrintString! !
+!Module methodsFor: 'initialization' stamp: 'len 9/May/2026 13:42:15'!
+addPitchControl: aSymbol
+	^ self addPitchControl: aSymbol min: -48.0 max: 48.0 value: 0.0! !
+
+!Module methodsFor: 'initialization' stamp: 'len 9/May/2026 13:41:37'!
+addPitchControl: aSymbol min: min max: max value: defaultValue
+	^ (self addControl: aSymbol min: min max: max value: defaultValue) coarseStep: 1.0 / (max - min); fineStep: 0.01 / (max - min) "one cent"; printer: #semitonesOffsetPrintString! !
 
 !Module methodsFor: 'initialization' stamp: 'len 18/Mar/2026 18:05:47'!
 addQuadraticControl: aSymbol min: min max: max value: defaultValue
@@ -2723,14 +2727,6 @@ addTimeControl: aSymbol min: min max: max value: defaultValue
 !Module methodsFor: 'initialization' stamp: 'len 18/Mar/2026 20:08:48'!
 addToggleControl: aSymbol value: defaultValue
 	^ controls at: aSymbol put: ((Toggle value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
-
-!Module methodsFor: 'initialization' stamp: 'len 29/Jan/2026 18:54:23'!
-addTuneControl: aSymbol
-	^ self addTuneControl: aSymbol min: -48.0 max: 48.0 value: 0.0! !
-
-!Module methodsFor: 'initialization' stamp: 'len 29/Jan/2026 18:54:33'!
-addTuneControl: aSymbol min: min max: max value: defaultValue
-	^ (self addControl: aSymbol min: min max: max value: defaultValue) coarseStep: 1.0 / (max - min); fineStep: 0.01 / (max - min) "one cent"; printer: #semitonesOffsetPrintString! !
 
 !Module methodsFor: 'initialization' stamp: 'len 31/Jan/2026 03:42:37'!
 addVolumeControl: aSymbol min: min max: max value: defaultValue
@@ -2948,7 +2944,7 @@ panel2
 		addSmallKnob: (controls at: #knee) label: 'Knee';
 		addSmallKnob: (controls at: #makeup) label: 'Makeup'! !
 
-!Compressor methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:11:40'!
+!Compressor methodsFor: 'ui' stamp: 'len 5/May/2026 17:06:22'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -4176,10 +4172,10 @@ initialize
 	super initialize.
 	note := 60.0! !
 
-!TunedGenerator methodsFor: 'initialization' stamp: 'len 29/Jan/2026 18:55:02'!
+!TunedGenerator methodsFor: 'initialization' stamp: 'len 9/May/2026 13:42:55'!
 initializeControls
 	super initializeControls.
-	self addTuneControl: #tune! !
+	self addPitchControl: #pitch! !
 
 !TunedGenerator methodsFor: 'controlling' stamp: 'len 3/Mar/2026 19:25:03'!
 adjustNoteBy: aNumber
@@ -4189,17 +4185,17 @@ adjustNoteBy: aNumber
 setNote: aNumber
 	note := aNumber! !
 
-!TunedGenerator methodsFor: 'ui' stamp: 'len 20/Mar/2026 15:01:33'!
+!TunedGenerator methodsFor: 'ui' stamp: 'len 9/May/2026 13:42:50'!
 panel
-	^​ ControlPanel new addTextualControl: (controls at: #tune)! !
+	^​ ControlPanel new addTextualControl: (controls at: #pitch)! !
 
-!TunedGenerator methodsFor: 'ui' stamp: 'len 2/Feb/2026 16:09:43'!
+!TunedGenerator methodsFor: 'ui' stamp: 'len 9/May/2026 13:43:00'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
 	answer
-		addControlInput: #tune label: 'Pitch';
+		addControlInput: #pitch;
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
@@ -4215,11 +4211,11 @@ gateOn
 reset
 	phase := 0.0! !
 
-!Operator methodsFor: 'controlling' stamp: 'len 22/Apr/2026 20:58:52'!
+!Operator methodsFor: 'controlling' stamp: 'len 9/May/2026 13:43:11'!
 update
 	| targetIncrement |
 	super update.
-	targetIncrement := ((self get: #tune) + note) semitonesToHertz * (self get: #ratio) / self class sampleRate.
+	targetIncrement := ((self get: #pitch) + note) semitonesToHertz * (self get: #ratio) / self class sampleRate.
 	increment ifNil: [increment := targetIncrement].
 	incrementRatio := ((targetIncrement / increment) ln / self class blockSize) exp! !
 
@@ -4266,7 +4262,7 @@ panel
 		addTextualControl: (controls at: #feedback);
 		addToggle: (controls at: #reset) label: 'Reset'! !
 
-!Operator methodsFor: 'ui' stamp: 'len 23/Apr/2026 01:34:41'!
+!Operator methodsFor: 'ui' stamp: 'len 9/May/2026 13:43:05'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -4274,7 +4270,7 @@ patchable
 	answer flap addMorph: self panel.
 	answer
 		addAudioInput: #setInputPM: label: 'PM';
-		addControlInput: #tune label: 'Pitch';
+		addControlInput: #pitch;
 		addControlInput: #ratio;
 		addControlInput: #level;
 		addControlInput: #feedback;
@@ -4296,11 +4292,11 @@ setInputPM: aBuffer
 reset
 	phase := 0.0! !
 
-!Oscillator methodsFor: 'controlling' stamp: 'len 16/Apr/2026 02:02:58'!
+!Oscillator methodsFor: 'controlling' stamp: 'len 9/May/2026 13:43:17'!
 update
 	| targetIncrement |
 	super update.
-	targetIncrement := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
+	targetIncrement := ((self get: #pitch) + note) semitonesToHertz / self class sampleRate.
 	increment ifNil: [increment := targetIncrement].
 	incrementRatio := ((targetIncrement / increment) ln / self class blockSize) exp! !
 
@@ -4349,14 +4345,14 @@ tick
 	inputPWM ifNotNil: [^ self read: output PWM: inputPWM].
 	self read: output! !
 
-!Pulse methodsFor: 'ui' stamp: 'len 22/Apr/2026 18:31:14'!
+!Pulse methodsFor: 'ui' stamp: 'len 9/May/2026 13:43:22'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
 	answer
-		addControlInput: #tune label: 'Pitch';
+		addControlInput: #pitch;
 		addControlInput: #width;
 		addAudioInput: #setInputPWM: label: 'PWM';
 		addAudioOutput: #setOutput:.
@@ -4391,14 +4387,14 @@ next
 	shape = 1.0 ifTrue: [^ phase saw: increment].
 	^ phase triangle: increment skew: shape! !
 
-!Saw methodsFor: 'ui' stamp: 'len 22/Apr/2026 18:31:18'!
+!Saw methodsFor: 'ui' stamp: 'len 9/May/2026 13:43:27'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
 	answer
-		addControlInput: #tune label: 'Pitch';
+		addControlInput: #pitch;
 		addControlInput: #shape;
 		addAudioOutput: #setOutput:.
 	^ answer! !
@@ -4447,14 +4443,14 @@ read: aBuffer
 	phase := phase - phase truncated.
 	increment := f / twoPi! !
 
-!Sine methodsFor: 'ui' stamp: 'len 22/Apr/2026 18:31:29'!
+!Sine methodsFor: 'ui' stamp: 'len 9/May/2026 13:43:30'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
 	answer
-		addControlInput: #tune label: 'Pitch';
+		addControlInput: #pitch;
 		addControlInput: #warp;
 		addAudioOutput: #setOutput:.
 	^ answer! !
@@ -4486,14 +4482,14 @@ next
 	shape = 0.0 ifTrue: [^ phase triangle: increment].
 	^ (phase triangle: increment) * (1.0 - shape) + ((phase * Float twoPi) sin * shape)! !
 
-!Triangle methodsFor: 'ui' stamp: 'len 22/Apr/2026 18:31:33'!
+!Triangle methodsFor: 'ui' stamp: 'len 9/May/2026 13:43:35'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
 	answer
-		addControlInput: #tune label: 'Pitch';
+		addControlInput: #pitch;
 		addControlInput: #shape;
 		addAudioOutput: #setOutput:.
 	^ answer! !
@@ -4523,14 +4519,14 @@ next
 	self advance.
 	^ self wave: wave at: phase! !
 
-!OPN methodsFor: 'ui' stamp: 'len 22/Apr/2026 18:31:38'!
+!OPN methodsFor: 'ui' stamp: 'len 9/May/2026 13:43:39'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
 	answer
-		addControlInput: #tune label: 'Pitch';
+		addControlInput: #pitch;
 		addControlInput: #wave;
 		addAudioOutput: #setOutput:.
 	^ answer! !
@@ -4583,14 +4579,14 @@ next.
 	shape < 0.5 ifTrue: [^ (phase saw: increment) * (0.5 - shape) + ((phase pulse: increment width: shape - 0.25 * 2) * 0.577 * (shape - 0.25)) / 0.25].
 	^ (phase pulse: increment width: shape) * 0.577! !
 
-!TriSawPulse methodsFor: 'ui' stamp: 'len 22/Apr/2026 18:31:42'!
+!TriSawPulse methodsFor: 'ui' stamp: 'len 9/May/2026 13:43:42'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
 	answer
-		addControlInput: #tune label: 'Pitch';
+		addControlInput: #pitch;
 		addControlInput: #shape;
 		addAudioOutput: #setOutput:.
 	^ answer! !
@@ -4612,11 +4608,11 @@ reset
 	super reset.
 	phases atAllPut: 0.0! !
 
-!Supersaw methodsFor: 'controlling' stamp: 'len 4/Apr/2026 22:36:00'!
+!Supersaw methodsFor: 'controlling' stamp: 'len 9/May/2026 13:43:54'!
 update
 	| targetIncrement detune detune2 detune3 mix normalization |
 	super update.
-	targetIncrement := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
+	targetIncrement := ((self get: #pitch) + note) semitonesToHertz / self class sampleRate.
 	increment ifNil: [increment := targetIncrement].
 	incrementRatio := ((targetIncrement / increment) ln / self class blockSize) exp.
 	detune := self get: #detune.
@@ -4639,11 +4635,11 @@ update
 	centerGain := centerGain * normalization.
 	sideGain := sideGain * normalization! !
 
-!Supersaw methodsFor: 'controlling' stamp: 'len 4/Apr/2026 19:34:35'!
+!Supersaw methodsFor: 'controlling' stamp: 'len 9/May/2026 13:44:00'!
 update2
 	| detune detune2 detune3 |
 	super update.
-	increment := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
+	increment := ((self get: #pitch) + note) semitonesToHertz / self class sampleRate.
 	detune := (self get: #detune) / self class sampleRate.
 	detune2 := detune * 0.5826491486398412 "0.66 raisedTo: 1.3".
 	detune3 := detune * 0.23662908360881574 "0.33 raisedTo: 1.3".
@@ -4656,11 +4652,11 @@ update2
 		at: 6 put: increment + detune2;
 		at: 7 put: increment + detune! !
 
-!Supersaw methodsFor: 'controlling' stamp: 'len 4/Apr/2026 19:34:35'!
+!Supersaw methodsFor: 'controlling' stamp: 'len 9/May/2026 13:44:05'!
 update3
 	| detune mix normalization |
 	super update.
-	increment := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
+	increment := ((self get: #pitch) + note) semitonesToHertz / self class sampleRate.
 	detune := self get: #detune.
 	"detune := DetuneCurveLUT at: (detune*1023.0 + 1.0) truncated."
 	mix := detune. "should use separate control #mix, but for now we just tie it to #detune"
@@ -4679,11 +4675,11 @@ update3
 	centerGain := centerGain * normalization.
 	sideGain := sideGain * normalization! !
 
-!Supersaw methodsFor: 'controlling' stamp: 'len 4/Apr/2026 19:34:35'!
+!Supersaw methodsFor: 'controlling' stamp: 'len 9/May/2026 13:44:10'!
 update4
 	| detune detune2 detune3 mix normalization |
 	super update.
-	increment := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
+	increment := ((self get: #pitch) + note) semitonesToHertz / self class sampleRate.
 	detune := self get: #detune.
 	"detune := DetuneCurveLUT at: (detune*1023.0 + 1.0) truncated."
 	mix := detune. "should use separate control #mix, but for now we just tie it to #detune"
@@ -4729,14 +4725,14 @@ next
 	1 to: 7 do: [:i| | t | (t := phases at: i) >= 1.0 ifTrue: [phases at: i put: t - t truncated]].
 	^ answer! !
 
-!Supersaw methodsFor: 'ui' stamp: 'len 12/Apr/2026 04:01:16'!
+!Supersaw methodsFor: 'ui' stamp: 'len 9/May/2026 13:43:47'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
 	answer
-		addControlInput: #tune label: 'Pitch';
+		addControlInput: #pitch;
 		addControlInput: #detune;
 		addAudioOutput: #setOutput:.
 	^ answer! !
@@ -4779,11 +4775,11 @@ reset
 	super reset.
 	phases atAllPut: 0.0! !
 
-!TonewheelOrgan methodsFor: 'controlling' stamp: 'len 14/Feb/2026 22:28:00'!
+!TonewheelOrgan methodsFor: 'controlling' stamp: 'len 9/May/2026 13:44:22'!
 update
 	| f0 |
 	super update.
-	f0 := ((self get: #tune) + note) semitonesToHertz.
+	f0 := ((self get: #pitch) + note) semitonesToHertz.
 	#(0.5 1.5 1.0 2.0 3.0 4.0 5.0 6.0 8.0) withIndexDo: [:each :i| frequencies at: i put: (self foldback: f0 * each) / self class sampleRate].
 	#('16''' '5¹/₃''' '8''' '4''' '2²/₃''' '2''' '1³/₅''' '1¹/₃''' '1''') withIndexDo: [:each :i| amplitudes at: i put: (self get: each)]! !
 
@@ -4827,7 +4823,7 @@ peek
 	click > 0.01 ifTrue: [answer := (random next * 2.0 - 1.0) * click + answer. click := click * 0.8]. 
 	^ answer! !
 
-!TonewheelOrgan methodsFor: 'ui' stamp: 'len 14/Feb/2026 22:30:45'!
+!TonewheelOrgan methodsFor: 'ui' stamp: 'len 9/May/2026 13:44:17'!
 patchable
 	| answer drawbars |
 	answer := PatchableMorph new model: self.
@@ -4837,7 +4833,7 @@ patchable
 		addMorph: drawbars;
 		addMorph: self panel.
 	answer
-		addControlInput: #tune label: 'Pitch';
+		addControlInput: #pitch;
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
@@ -4864,11 +4860,11 @@ reset
 	phases atAllPut: 0.0.
 	filter reset! !
 
-!TransistorOrgan methodsFor: 'controlling' stamp: 'len 9/Mar/2026 16:40:16'!
+!TransistorOrgan methodsFor: 'controlling' stamp: 'len 9/May/2026 13:44:33'!
 update
 	| f0 r4 |
 	super update.
-	f0 := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
+	f0 := ((self get: #pitch) + note) semitonesToHertz / self class sampleRate.
 	#(0.5 1.0 2.0 3.0 4.0 5.0 8.0) withIndexDo: [:each :i| frequencies at: i put: f0 * each].
 	r4 := self get: #'IV'. "maps to 2²/₃' , 2', 1³/₅' and 1'"
 	amplitudes
@@ -4914,7 +4910,7 @@ peek
 	1 to: 5 do: [:i| answer := ((phases at: i) pulse: (frequencies at: i) width: 0.35) * (amplitudes at: i) + answer].
 	^ answer! !
 
-!TransistorOrgan methodsFor: 'ui' stamp: 'len 14/Feb/2026 22:32:00'!
+!TransistorOrgan methodsFor: 'ui' stamp: 'len 9/May/2026 13:44:27'!
 patchable
 	| answer drawbars |
 	answer := PatchableMorph new model: self.
@@ -4924,15 +4920,15 @@ patchable
 		addMorph: drawbars;
 		addMorph: self panel.
 	answer
-		addControlInput: #tune label: 'Pitch';
+		addControlInput: #pitch;
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!VOSIM methodsFor: 'controlling' stamp: 'len 22/Mar/2026 15:52:56'!
+!VOSIM methodsFor: 'controlling' stamp: 'len 9/May/2026 13:44:37'!
 update
 	| f1 f2 vowelIndex |
 	super update.
-	carrierFrequency := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
+	carrierFrequency := ((self get: #pitch) + note) semitonesToHertz / self class sampleRate.
 	carrierShape := self get: #shape.
 	vowelIndex := ((self get: #vowel) * 15.0 + 1.0).
 	f1 := #[240.0 235.0 390.0 370.0 610.0 585.0 850.0 820.0 750.0 700.0 600.0 500.0 460.0 360.0 300.0 250.0] atLinear: vowelIndex.
@@ -5005,7 +5001,7 @@ adjustVelocityBy: aNumber
 gateOff
 	sample ifNotNil: [sample gateOff]! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 9/Apr/2026 23:08:25'!
+!Multisample methodsFor: 'controlling' stamp: 'len 9/May/2026 13:44:44'!
 gateOn
 	| closestKey speedFactor samplesByVelocity |
 	sample ifNotNil: [(sample isUnreleased and: [self get: #legato]) ifTrue: [^ self]].
@@ -5013,7 +5009,7 @@ gateOn
 	samplesByVelocity := keymap at: closestKey.
 	(tailSample := sample) ifNotNil: [tailSample gateOn "to setup the tail position"].
 	sample := (samplesByVelocity at: ((velocity sqrt * (samplesByVelocity size - 1)) truncated + 1 min: samplesByVelocity size)) copy.
-	sample controls at: #tune put: (controls at: #tune).
+	sample controls at: #pitch put: (controls at: #pitch).
 	sample controls at: #speed put: (controls at: #speed).
 	sample controls at: #warp put: (controls at: #warp).
 	speedFactor := 60 semitonesToHertz / closestKey semitonesToHertz.
@@ -5103,14 +5099,14 @@ panel
 "		addToggle: (controls at: #warp) label: 'Warp';"
 		addToggle: (controls at: #legato) label: 'Legato'! !
 
-!Multisample methodsFor: 'ui' stamp: 'len 15/Feb/2026 20:42:04'!
+!Multisample methodsFor: 'ui' stamp: 'len 9/May/2026 13:44:51'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	label ifNotNil: [answer setTitle: label].
 	answer body addMorph: self panel.
 	answer
-		addControlInput: #tune label: 'Pitch';
+		addControlInput: #pitch;
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
@@ -5512,12 +5508,12 @@ setOffset: aNumber
 setSpeed: aNumber
 	self set: #speed to: aNumber! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 15/Apr/2026 21:52:10'!
+!Sample methodsFor: 'controlling' stamp: 'len 9/May/2026 13:45:00'!
 update
 	| targetIncrement |
 	super update.
 	speed := self get: #speed.
-	targetIncrement := rate * ((self get: #tune) + note - 60.0) semitonesToRatio / self class sampleRate.
+	targetIncrement := rate * ((self get: #pitch) + note - 60.0) semitonesToRatio / self class sampleRate.
 	warp := self get: #warp.
 	warp ifFalse: [targetIncrement := targetIncrement * speed abs].
 	increment ifNil: [increment := targetIncrement].
@@ -5626,7 +5622,7 @@ panel
 "		addToggle: (controls at: #warp) label: 'Warp';"
 		addToggle: (controls at: #legato) label: 'Legato'! !
 
-!Sample methodsFor: 'ui' stamp: 'len 12/Apr/2026 04:01:30'!
+!Sample methodsFor: 'ui' stamp: 'len 9/May/2026 13:44:55'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -5634,7 +5630,7 @@ patchable
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
 	answer
-		addControlInput: #tune label: 'Pitch';
+		addControlInput: #pitch;
 		addControlInput: #speed;
 		addAudioOutput: #setOutput:.
 	^ answer! !
@@ -5783,11 +5779,11 @@ reset
 	phase := 0.0.
 	ticksToUpdate := 0! !
 
-!Wavetable methodsFor: 'controlling' stamp: 'len 21/Apr/2026 18:21:27'!
+!Wavetable methodsFor: 'controlling' stamp: 'len 9/May/2026 13:53:16'!
 update
 	| targetIncrement maxHarmonic p i f start |
 	super update.
-	targetIncrement := ((self get: #tune) + note) semitonesToHertz / self class sampleRate.
+	targetIncrement := ((self get: #pitch) + note) semitonesToHertz / self class sampleRate.
 	increment ifNil: [increment := targetIncrement].
 	incrementRatio := ((targetIncrement / increment) ln / self class blockSize) exp.
 	position := self get: #position.
@@ -5803,12 +5799,9 @@ update
 	fft imagData replaceFrom: 1 to: maxHarmonic with: spectrumImaginary startingAt: start.
 	f = 0.0 ifFalse:
 		[start := start + frameSize.
-		aux atAllPut: 0.0.
-		aux replaceFrom: 1 to: maxHarmonic with: spectrumReal startingAt: start.
-		aux *= f.
+		aux atAllPut: 0.0; replaceFrom: 1 to: maxHarmonic with: spectrumReal startingAt: start; *= f.
 		fft realData *= (1.0 - f); += aux.
-		aux replaceFrom: 1 to: maxHarmonic with: spectrumImaginary startingAt: start.
-		aux *= f.
+		aux replaceFrom: 1 to: maxHarmonic with: spectrumImaginary startingAt: start; *= f.
 		fft imagData *= (1.0 - f); += aux].
 	fft transformInverse.
 	fft realData *= 2.0 "why?!!"! !
@@ -5889,7 +5882,7 @@ readFromJson: json buffers: aList
 	label := json at: #label ifAbsent: [''].
 	label isEmpty ifTrue: [label := nil]! !
 
-!Wavetable methodsFor: 'ui' stamp: 'len 21/Apr/2026 20:20:56'!
+!Wavetable methodsFor: 'ui' stamp: 'len 9/May/2026 13:45:05'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -5897,7 +5890,7 @@ patchable
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
 	answer
-		addControlInput: #tune label: 'Pitch';
+		addControlInput: #pitch;
 		addControlInput: #position;
 		addAudioOutput: #setOutput:.
 	^ answer! !
@@ -10929,13 +10922,16 @@ initialize
 defaultExtent
 	^ `96 @ 64`! !
 
-!SymmetricWaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 13/Feb/2026 19:32:00'!
+!SymmetricWaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 5/May/2026 21:15:25'!
 initialize
 	super initialize.
 	color := PatchMorph waveformColor2.
 	image := Form extent: self defaultExtent depth: 32.
 	image fillColor: PatchMorph panelColor.
-! !
+	(fillBlack := BitBlt toForm: image)
+		copy: image boundingBox
+		from: 0 @ 0 in: nil
+		fillColor: (PatchMorph panelColor alpha: 0.1) rule: Form blend! !
 
 !SymmetricWaveshaperControlMorph methodsFor: 'drawing' stamp: 'len 3/May/2026 14:37:37'!
 drawLevel: aNumber
@@ -10951,9 +10947,9 @@ drawOn: aCanvas
 	aCanvas image: image at: 0 @ 0.
 	super drawOn: aCanvas! !
 
-!SymmetricWaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 13/Feb/2026 19:32:42'!
+!SymmetricWaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 5/May/2026 21:13:41'!
 step
-	image fill: image boundingBox rule: Form blend fillColor: (PatchMorph panelColor alpha: 0.3).
+	fillBlack copyBits.
 	self redrawNeeded! !
 
 !SymmetricWaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 13/Feb/2026 19:32:47'!
@@ -11151,34 +11147,34 @@ addGainReduction: aNumber
 defaultExtent
 	^`128 @ 64`! !
 
-!DynamicsActivityMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Mar/2026 19:12:38'!
+!DynamicsActivityMorph methodsFor: 'as yet unclassified' stamp: 'len 5/May/2026 17:00:17'!
 drawOn: aCanvas
 	| step x y h pos delta |
 	delta := 20.
 	step := self morphWidth / (envelopeBuffer size - delta) * 5.
 	(pos := currentPosition + delta) > envelopeBuffer size ifTrue: [pos := pos - envelopeBuffer size].
-	h := self morphHeight - 6.0.
+	h := self morphHeight - 4.0.
 	x := 0.
-	y := 1.0 - (gainReductionBuffer at: pos) * h + 3.0.
+	y := 1.0 - (gainReductionBuffer at: pos) * h + 2.0.
 	aCanvas strokeWidth: 2 color: PatchMorph waveformColor3 do:
 		[aCanvas moveTo: x @ y.
 		0 to: gainReductionBuffer size - delta - 5 by: 5 do: [:i|
 			x := x + step.
-			y := 1.0 - (gainReductionBuffer at: pos + i \\ gainReductionBuffer size + 1) * h + 3.0.
+			y := 1.0 - (gainReductionBuffer at: pos + i \\ gainReductionBuffer size + 1) * h + 4.0.
 			aCanvas lineTo: x @ y]].
 	x := 0.
-	y := 1.0 - (envelopeBuffer at: pos) * h + 3.0.
+	y := 1.0 - (envelopeBuffer at: pos) * h + 2.0.
 	aCanvas fillColor: Color lightGray do:
-		[aCanvas moveTo: x @ (h + 3.0); lineTo: x @ y.
+		[aCanvas moveTo: x @ (h + 2.0); lineTo: x @ y.
 		0 to: envelopeBuffer size - delta - 5 by: 5 do: [:i|
 			x := x + step.
-			y := 1.0 - (envelopeBuffer at: pos + i \\ envelopeBuffer size + 1) * h + 3.0.
+			y := 1.0 - (envelopeBuffer at: pos + i \\ envelopeBuffer size + 1) * h + 4.0.
 			aCanvas lineTo: x @ y].
-		aCanvas lineTo: x @ (h + 3.0); closePath].
-	y := 1.0 - control1 modulatedPosition * h + 3.0.
+		aCanvas lineTo: x @ (h + 2.0); closePath].
+	y := 1.0 - control1 modulatedPosition * h + 2.0.
 	aCanvas line: 0 @ y to: self morphWidth @ y width: 2 color: PatchMorph waveformColor.
 	control2 ifNil: [^ self].
-	y := 1.0 - control2 modulatedPosition * h + 3.0.
+	y := 1.0 - control2 modulatedPosition * h + 2.0.
 	aCanvas line: 0 @ y to: self morphWidth @ y width: 2 color: (PatchMorph waveformColor darker: 0.25)! !
 
 !DynamicsActivityMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Mar/2026 21:19:34'!
@@ -11829,12 +11825,17 @@ color: aColor
 defaultExtent
 	^ `96 @ 64`! !
 
-!WaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 18/Mar/2026 18:06:26'!
+!WaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 5/May/2026 21:16:31'!
 initialize
 	super initialize.
 	color := PatchMorph waveformColor2.
 	image := Form extent: self defaultExtent depth: 32.
 	image fillColor: PatchMorph panelColor.
+	(fillBlack := BitBlt toForm: image)
+		copy: image boundingBox
+		from: 0 @ 0 in: nil
+		fillColor: (PatchMorph panelColor alpha: 0.1) rule: Form blend.
+
 	controlY := Knob min: 0.0 max: 0.0 value: 0.0! !
 
 !WaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 3/May/2026 14:36:36'!
@@ -11845,9 +11846,9 @@ shape: aControl
 waveBlock: aBlock
 	waveBlock := aBlock! !
 
-!WaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 15/Feb/2026 15:13:22'!
+!WaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 5/May/2026 21:13:30'!
 step
-	image fill: image boundingBox rule: Form blend fillColor: (PatchMorph panelColor alpha: 0.1).
+	fillBlack copyBits.
 	self redrawNeeded! !
 
 !WaveshaperControlMorph methodsFor: 'stepping' stamp: 'len 12/Feb/2026 19:24:07'!
@@ -12629,14 +12630,18 @@ drawOn: aCanvas
 requiresVectorCanvas
 	^ true ! !
 
-!PhosphorDisplayMorph methodsFor: 'initialization' stamp: 'len 3/Apr/2026 15:49:25'!
+!PhosphorDisplayMorph methodsFor: 'initialization' stamp: 'len 5/May/2026 21:15:44'!
 image: aForm
 	image := aForm.
-	self morphExtent: image extent! !
+	self morphExtent: image extent.
+	(fillBlack := BitBlt toForm: image)
+		copy: image boundingBox
+		from: 0 @ 0 in: nil
+		fillColor: (Color black alpha: 0.1) rule: Form blend! !
 
-!PhosphorDisplayMorph methodsFor: 'stepping' stamp: 'len 3/Feb/2026 02:32:24'!
+!PhosphorDisplayMorph methodsFor: 'stepping' stamp: 'len 5/May/2026 21:10:50'!
 step
-	image fill: image boundingBox rule: Form blend fillColor: (Color black alpha: 0.1).
+	fillBlack copyBits.
 	self redrawNeeded! !
 
 !PhosphorDisplayMorph methodsFor: 'stepping' stamp: 'len 3/Feb/2026 00:35:27'!
@@ -13781,15 +13786,10 @@ addAudioOutput: aSymbol label: labelString
 	outputsArea addMorph: pin.
 	^ pin! !
 
-!PatchableMorph methodsFor: 'building' stamp: 'len 2/Feb/2026 15:28:01'!
+!PatchableMorph methodsFor: 'building' stamp: 'len 5/May/2026 17:11:27'!
 addControlInput: aSymbol
-	self assert: aSymbol isUnary.
-	^ self addControlInput: aSymbol label: aSymbol asPlainString capitalized camelSeparatedWords! !
-
-!PatchableMorph methodsFor: 'building' stamp: 'len 27/Apr/2026 04:23:08'!
-addControlInput: aSymbol label: labelString
 	| pin |
-	pin := ControlInputPinMorph new control: (model controls at: aSymbol ifAbsent: [^ self]); name: labelString.
+	pin := ControlInputPinMorph new control: (model controls at: aSymbol ifAbsent: [^ self]); name: aSymbol asPlainString capitalized camelSeparatedWords.
 	inputsArea addMorph: pin.
 	^ pin! !
 

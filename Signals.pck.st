@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 10 May 2026 at 7:26:16 pm'!
+'From Cuis7.7 [latest update: #7880] on 10 May 2026 at 7:48:48 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 557!
+!provides: 'Signals' 1 558!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -15379,19 +15379,19 @@ parabolic: dt
 	The parabolic wave is the result of integrating a sawtooth wave. It has a distinctive mellow character, somewhere between a sine and a triangle wave, but with richer harmonic series that rools off at 12 dB/oct (compared to 6 dB/oct for a saw)."
 	^ ((4.0 * (self - 0.5) squared) + (8.0 * dt * (self blamp: dt)) - 0.5) * 1.95! !
 
-!Float methodsFor: '*signals' stamp: 'len 10/May/2026 19:12:42'!
+!Float methodsFor: '*signals' stamp: 'len 10/May/2026 19:46:09'!
 pulse: dt width: width
-	"Answer a PolyBLEP antialiased pulse wave with 0 DC (centered at 0).
+	"Answer a PolyBLEP antialiased pulse wave with 0 DC offset (centered at 0).
 	Note: the #blep: method already has a baked-in scaling factor of 2, which corresponds to the jump between -1 and 1."
 	| fallingPhase |
-	fallingPhase := self - width + 1.0.
+	fallingPhase := self + 1.0 - width.
 	fallingPhase := fallingPhase - fallingPhase truncated.
-	^ (self < width ifTrue: [1.0] ifFalse: [-1.0]) + (self blep: dt) - (fallingPhase blep: dt) - (2.0 * width - 1.0)! !
+	^ (self < width ifTrue: [2.0 * (1.0 - width)] ifFalse: [-2.0 * width]) + (self blep: dt) - (fallingPhase blep: dt)! !
 
-!Float methodsFor: '*signals' stamp: 'len 22/Jan/2026 04:22:11'!
+!Float methodsFor: '*signals' stamp: 'len 10/May/2026 19:46:14'!
 pulseWidth: width
-	"Answer a pulse wave."
-	^ self < width ifTrue: [1.0] ifFalse: [-1.0]! !
+	"Answer a pulse wave with 0 DC offset (centered at 0)."
+	^ self < width ifTrue: [2.0 * (1.0 - width)] ifFalse: [-2.0 * width]! !
 
 !Float methodsFor: '*signals' stamp: 'len 22/Jan/2026 04:20:09'!
 saw

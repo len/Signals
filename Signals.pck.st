@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 10 May 2026 at 2:33:06 pm'!
+'From Cuis7.7 [latest update: #7880] on 10 May 2026 at 3:55:19 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 555!
+!provides: 'Signals' 1 556!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -8855,7 +8855,7 @@ setInput: aBuffer
 reset
 	image fillColor: Color transparent! !
 
-!Spectrogram methodsFor: 'controlling' stamp: 'len 3/Apr/2026 16:46:59'!
+!Spectrogram methodsFor: 'controlling' stamp: 'len 10/May/2026 15:52:52'!
 update
 	| n |
 	super update.
@@ -8866,7 +8866,11 @@ update
 			[stft := STFT new: n.
 			hop := (stft size * 0.5) truncated.
 			buffer := Float32Array new: stft size.
-			bufferIndex := 1]! !
+			bufferIndex := 1.
+			"image := Form extent: n // 2 @ (128 + 2) depth: 32.
+			image fillColor: Color transparent.
+			logSpectrum := Float32Array new: image width.
+			self triggerEvent: #imageChanged: with: image"]! !
 
 !Spectrogram methodsFor: 'initialization' stamp: 'len 3/Apr/2026 15:52:40'!
 defaultExtent
@@ -8925,10 +8929,11 @@ patchable
 	answer addAudioInput: #setInput:.
 	^ answer! !
 
-!Spectrogram methodsFor: 'ui' stamp: 'len 12/Apr/2026 04:05:51'!
+!Spectrogram methodsFor: 'ui' stamp: 'len 10/May/2026 15:53:03'!
 screen
 	| answer |
 	answer := WaterfallMorph new image: image.
+"	self when: #imageChanged: send: #image: to: answer."
 	self when: #positionChanged: send: #position: to: answer.
 	^ answer! !
 
@@ -12991,7 +12996,11 @@ drawOn: aCanvas
 	"and then wrap and continue drawing from the first column to the current column position - 1:"
 	aCanvas image: image at: 0 @ (h - p - 2) sourceRect: (0 @ 0 corner: w @ (p - 1))! !
 
-!WaterfallMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Apr/2026 16:44:18'!
+!WaterfallMorph methodsFor: 'as yet unclassified' stamp: 'len 10/May/2026 15:46:10'!
+defaultExtent
+	^ 256@128! !
+
+!WaterfallMorph methodsFor: 'as yet unclassified' stamp: 'len 10/May/2026 15:53:15'!
 image: aForm
 	image := aForm.
 	position := 0.
@@ -14891,7 +14900,7 @@ window: anArray
 size
 	^ fft size! !
 
-!STFT methodsFor: 'processing' stamp: 'len 31/Mar/2026 17:39:04'!
+!STFT methodsFor: 'processing' stamp: 'len 10/May/2026 15:29:26'!
 logSpectrumFrom: anArray into: logArray
 	"Compute the log power spectrum of a frame.
 	The frequency bins are logarithmic."
@@ -14901,8 +14910,8 @@ logSpectrumFrom: anArray into: logArray
 	k := logArray size - 1.0.
 	1 to: logArray size do: [:i|
 		| low high sum |
-		low := (b raisedTo: i - 2.0 / k) truncated + 1.
-		high := (b raisedTo: i - 1.0 / k) truncated + 1.
+		low := (b raisedTo: i - 2.0 / k) ceiling + 1.
+		high := (b raisedTo: i - 1.0 / k) ceiling + 1.
 		sum := 0.0.
 		low to: high do: [:j| sum := sum + (spectrum at: j)].
 		logArray at: i put: sum / (high - low + 1)].! !

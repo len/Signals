@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 10 May 2026 at 3:55:19 pm'!
+'From Cuis7.7 [latest update: #7880] on 10 May 2026 at 7:26:16 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 556!
+!provides: 'Signals' 1 557!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1928,27 +1928,27 @@ An operator for classic FM synthesis (as in the Yamaha DX7, technically phase mo
 !Oscillator commentStamp: 'len 10/May/2026 00:46:11' prior: 0!
 Abstract superclass for simple oscillators that can be defined by a single phase accumulator.!
 
-!Pulse commentStamp: 'len 10/May/2026 00:39:45' prior: 0!
+!Pulse commentStamp: 'len 10/May/2026 19:22:58' prior: 0!
 This is a virtual analog oscillator. It generates a pulse wave applying PolyBLEP to prevent aliasing. This oscillator supports audio-rate pulse width modulation (PWM).
 
-For a duty cycle of 50% (1/2 width), the pulse wave is a square wave and consists of a fundamental sine wave plus an infinite series of odd harmonics. The harmonics have amplitudes inversely proportional to their harmonic number 1/n (e.g., the 3rd harmonic has 1/3 the amplitude of the fundamental).
+For a duty cycle of 50% (1/2 width), the pulse wave is a square wave and consists of a fundamental sine wave plus an infinite series of odd harmonics. The harmonics have amplitudes inversely proportional to their harmonic number 1/n (e.g., the 3rd harmonic has 1/3 the amplitude of the fundamental). The spectral decay of the harmonics is about 6 dB per octave, like a saw wave.
 
 Pulse waves with duty cycles other than 50% have both odd and even harmonics. Specific duty cycles can eliminate certain harmonics; for example, a 25% duty cycle (1/4 width) causes every fourth harmonic to be missing.
 
 Pulse waves with a 50% duty cycle sound hollow, like a clarinet, while narrower pulses (smaller duty cycles) sound more nasal, resembling an oboe.!
 
-!Saw commentStamp: 'len 10/May/2026 00:40:30' prior: 0!
+!Saw commentStamp: 'len 10/May/2026 19:23:03' prior: 0!
 This is a virtual analog oscillator. It generates a variable-slope saw that morphs between falling saw, triangle and rising saw, applying PolyBLEP and PolyBLAMP to prevent aliasing.
 
-A sawtooth wave contains both even and odd harmonics of the fundamental frequency. The amplitude of each harmonic is inversely proportional to its harmonic number (e.g., the 3rd harmonic is 1/3 the amplitude of the fundamental), creating a gradual, harmonic-rich decay.!
+A sawtooth wave contains both even and odd harmonics of the fundamental frequency. The amplitude of each harmonic is inversely proportional to its harmonic number (e.g., the 3rd harmonic is 1/3 the amplitude of the fundamental), creating a gradual, harmonic-rich decay. The spectral decay of the harmonics is about 6 dB per octave, like a pulse wave.!
 
 !Sine commentStamp: '<historical>' prior: 0!
 This is a sine wave oscillator with variable warping produced by self-phase modulation. At zero warp, it's a sine. As the warp parameter moves from 0 to 1, integer harmonics (both odd and even) are added up to about the 6th harmonic.!
 
-!Triangle commentStamp: 'len 10/May/2026 00:41:34' prior: 0!
+!Triangle commentStamp: 'len 10/May/2026 19:22:46' prior: 0!
 This is a virtual analog triangle oscillator that uses PolyBLAMP for antialiasing. It morphs from a pure triangle to a sine wave.
 
-A triangle wave consists of only odd harmonics of the fundamental frequency, similar to a square wave, but its harmonic amplitudes decrease much faster, proportional to the inverse square of the harmonic number 1/n². This results in a brighter tone than a sine wave but mellower than a square wave, with 12 dB per octave roll-off.!
+A triangle wave consists of only odd harmonics of the fundamental frequency, similar to a square wave, but its harmonic amplitudes decrease much faster, proportional to the inverse square of the harmonic number 1/n². This results in a brighter tone than a sine wave but mellower than a square wave, with 12 dB per octave roll-off (while saw and pulse waves harmonics decay at 6 dB per octave).!
 
 !OPN commentStamp: '<historical>' prior: 0!
 This oscillator emulates the oscillators of the Yamaha sound chips YM2414 (used in the TX81Z and DX11 synthesizers) and YM2612 (used in the Sega Mega Drive game console). It has a choice of 8 waveforms.!
@@ -4325,7 +4325,7 @@ initializeControls
 	super initializeControls.
 	(self addControl: #width min: 0.0 max: 1.0 value: 0.5) printer: [:x| (x * 100.0) rounded printString, '%']! !
 
-!Pulse methodsFor: 'processing' stamp: 'len 21/Apr/2026 19:00:30'!
+!Pulse methodsFor: 'processing' stamp: 'len 10/May/2026 19:13:14'!
 next
 	self advance.
 	^ (phase pulse: increment width: width) * 0.577 "normalize amplitude to match perceived loudness with other oscillators"! !
@@ -15379,14 +15379,14 @@ parabolic: dt
 	The parabolic wave is the result of integrating a sawtooth wave. It has a distinctive mellow character, somewhere between a sine and a triangle wave, but with richer harmonic series that rools off at 12 dB/oct (compared to 6 dB/oct for a saw)."
 	^ ((4.0 * (self - 0.5) squared) + (8.0 * dt * (self blamp: dt)) - 0.5) * 1.95! !
 
-!Float methodsFor: '*signals' stamp: 'len 21/Apr/2026 18:43:51'!
+!Float methodsFor: '*signals' stamp: 'len 10/May/2026 19:12:42'!
 pulse: dt width: width
-	"Answer a PolyBLEP antialiased pulse wave.
+	"Answer a PolyBLEP antialiased pulse wave with 0 DC (centered at 0).
 	Note: the #blep: method already has a baked-in scaling factor of 2, which corresponds to the jump between -1 and 1."
 	| fallingPhase |
 	fallingPhase := self - width + 1.0.
 	fallingPhase := fallingPhase - fallingPhase truncated.
-	^ (self < width ifTrue: [1.0] ifFalse: [-1.0]) + (self blep: dt) - (fallingPhase blep: dt)! !
+	^ (self < width ifTrue: [1.0] ifFalse: [-1.0]) + (self blep: dt) - (fallingPhase blep: dt) - (2.0 * width - 1.0)! !
 
 !Float methodsFor: '*signals' stamp: 'len 22/Jan/2026 04:22:11'!
 pulseWidth: width

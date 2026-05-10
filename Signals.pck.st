@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 10 May 2026 at 7:48:48 pm'!
+'From Cuis7.7 [latest update: #7880] on 11 May 2026 at 1:10:19 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 558!
+!provides: 'Signals' 1 559!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -936,7 +936,7 @@ LogAttenuator class
 
 !classDefinition: #Oscilloscope category: #'Signals-Utility'!
 Module subclass: #Oscilloscope
-	instanceVariableNames: 'input delayLine'
+	instanceVariableNames: 'input buffer writePosition readPosition'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Utility'!
@@ -8823,29 +8823,58 @@ patchable
 		addControlOutput.
 	^ answer! !
 
-!Oscilloscope methodsFor: 'initialization' stamp: 'len 3/Apr/2026 00:21:55'!
+!Oscilloscope methodsFor: 'initialization' stamp: 'len 11/May/2026 00:52:17'!
 initialize
 	super initialize.
-	delayLine := DelayLine new: 64! !
+	buffer := Float32Array new: 128.
+	readPosition := 1! !
 
-!Oscilloscope methodsFor: 'processing' stamp: 'len 26/Apr/2026 22:42:27'!
+!Oscilloscope methodsFor: 'initialization' stamp: 'len 10/May/2026 22:09:25'!
+initializeControls
+	super initializeControls.
+	self addFrequencyControl: #frequency min: 20.0 "Hz" max: 4000.0 "4 kHz" value: 100.0 "Hz"! !
+
+!Oscilloscope methodsFor: 'processing' stamp: 'len 11/May/2026 01:05:53'!
+scan
+	| step |
+	step := self class sampleRate / (self get: #frequency) / buffer size.
+	[readPosition <= input size and: [writePosition <= buffer size]]
+		whileTrue:
+			[buffer at: writePosition put: ((input atLinear: readPosition) min: 1.0 max: -1.0).
+			writePosition := writePosition + 1.
+			readPosition := readPosition + step].
+	readPosition > input size ifTrue: [readPosition := readPosition - input size + 1.0].
+	writePosition > buffer size ifTrue: [writePosition := nil. readPosition := 1]! !
+
+!Oscilloscope methodsFor: 'processing' stamp: 'len 11/May/2026 01:02:12'!
 tick
-	| i |
+	| v |
 	input ifNil: [^ self].
-	i := 1.
-	[i <= input size] whileTrue: [delayLine write: ((input at: i) min: 1.0 max: -1.0). i := i + 8]. "assume the block size is divisible by 8"! !
+	writePosition ifNotNil: [^ self scan].
+	v := input first.
+	2 to: input size do: [:i|
+		(v < 0.0 and: [(v := input at: i) > 0.0]) ifTrue:
+			[writePosition := 1.
+			readPosition := i - 1.
+			^ self scan]]! !
 
-!Oscilloscope methodsFor: 'ui' stamp: 'len 19/Apr/2026 04:50:22'!
+!Oscilloscope methodsFor: 'ui' stamp: 'len 11/May/2026 00:48:17'!
+panel
+	^ ControlPanel new
+		addTextualControl: (controls at: #frequency)! !
+
+!Oscilloscope methodsFor: 'ui' stamp: 'len 11/May/2026 00:47:42'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
+	answer flap addMorph: self panel.
 	answer addAudioInput: #setInput:.
 	^ answer! !
 
-!Oscilloscope methodsFor: 'ui' stamp: 'len 26/Apr/2026 22:42:13'!
+!Oscilloscope methodsFor: 'ui' stamp: 'len 11/May/2026 00:46:59'!
 screen
-	^ OscilloscopeMorph new buffer: delayLine buffer! !
+	^ OscilloscopeMorph new buffer: buffer! !
 
 !Oscilloscope methodsFor: 'wiring' stamp: 'len 3/Apr/2026 00:17:56'!
 setInput: aBuffer
@@ -12577,7 +12606,7 @@ stepTime
 wantsSteps
 	^ true! !
 
-!OscilloscopeMorph methodsFor: 'drawing' stamp: 'len 1/May/2026 16:37:28'!
+!OscilloscopeMorph methodsFor: 'drawing' stamp: 'len 11/May/2026 01:09:20'!
 drawOn: aCanvas
 	| step buf x y h |
 	step := self morphWidth / buffer size.
@@ -12585,7 +12614,7 @@ drawOn: aCanvas
 	h := self morphHeight / 2.0.
 	x := 0.
 	y := 1.0 - (buf at: 1) * h.
-	aCanvas strokeWidth: 2 color: color do:
+	aCanvas strokeWidth: 1.5 color: color do:
 		[aCanvas moveTo: x@y.
 		2 to: buf size do: [:i|
 			x := x + step.

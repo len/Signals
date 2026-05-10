@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 9 May 2026 at 1:56:34 pm'!
+'From Cuis7.7 [latest update: #7880] on 10 May 2026 at 2:33:06 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 554!
+!provides: 'Signals' 1 555!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1922,33 +1922,33 @@ A signal generator produces a stream of samples for a mono audio signal. It is s
 !TunedGenerator commentStamp: '<historical>' prior: 0!
 A tuned generator is a signal generator with pitch, such as an oscillator. See subclasses.!
 
-!Operator commentStamp: '<historical>' prior: 0!
-An operator for classic FM synthesis (as in the Yamaha DX7, technically phase modulation). Essentially, an operator is a sine oscillator with an amp, that can be phase-modulated at audio rate from a modulator input and feedback.!
+!Operator commentStamp: 'len 10/May/2026 00:45:43' prior: 0!
+An operator for classic FM synthesis (as in the Yamaha DX7, technically phase modulation). Essentially, an operator is a sine oscillator together with an amp, with an audio rate input for phase-modulation and feedback.!
 
-!Oscillator commentStamp: '<historical>' prior: 0!
-Abstract superclass for simple oscillators that can be defined by a single phase variable that is incremented at each sampling step.!
+!Oscillator commentStamp: 'len 10/May/2026 00:46:11' prior: 0!
+Abstract superclass for simple oscillators that can be defined by a single phase accumulator.!
 
-!Pulse commentStamp: '<historical>' prior: 0!
+!Pulse commentStamp: 'len 10/May/2026 00:39:45' prior: 0!
 This is a virtual analog oscillator. It generates a pulse wave applying PolyBLEP to prevent aliasing. This oscillator supports audio-rate pulse width modulation (PWM).
 
-For a duty cycle of 50% (1/2 width), the pulse wave is a square wave and consists of a fundamental sine wave frequency (f) and an infinite series of odd harmonics (3f, 5f, 7f, ...). The harmonics have amplitudes inversely proportional to their harmonic number 1/n (e.g., the 3rd harmonic has 1/3 the amplitude of the fundamental).
+For a duty cycle of 50% (1/2 width), the pulse wave is a square wave and consists of a fundamental sine wave plus an infinite series of odd harmonics. The harmonics have amplitudes inversely proportional to their harmonic number 1/n (e.g., the 3rd harmonic has 1/3 the amplitude of the fundamental).
 
 Pulse waves with duty cycles other than 50% have both odd and even harmonics. Specific duty cycles can eliminate certain harmonics; for example, a 25% duty cycle (1/4 width) causes every fourth harmonic to be missing.
 
 Pulse waves with a 50% duty cycle sound hollow, like a clarinet, while narrower pulses (smaller duty cycles) sound more nasal, resembling an oboe.!
 
-!Saw commentStamp: 'len 22/Apr/2026 16:29:30' prior: 0!
+!Saw commentStamp: 'len 10/May/2026 00:40:30' prior: 0!
 This is a virtual analog oscillator. It generates a variable-slope saw that morphs between falling saw, triangle and rising saw, applying PolyBLEP and PolyBLAMP to prevent aliasing.
 
-A sawtooth wave contains both even and odd harmonics (2f, 3f, 4f, ...) of the fundamental frequency (f). The amplitude of each harmonic is inversely proportional to its harmonic number (e.g., the 3rd harmonic 3f is 1/3 the amplitude of the fundamental), creating a gradual, harmonic-rich decay.!
+A sawtooth wave contains both even and odd harmonics of the fundamental frequency. The amplitude of each harmonic is inversely proportional to its harmonic number (e.g., the 3rd harmonic is 1/3 the amplitude of the fundamental), creating a gradual, harmonic-rich decay.!
 
 !Sine commentStamp: '<historical>' prior: 0!
 This is a sine wave oscillator with variable warping produced by self-phase modulation. At zero warp, it's a sine. As the warp parameter moves from 0 to 1, integer harmonics (both odd and even) are added up to about the 6th harmonic.!
 
-!Triangle commentStamp: '<historical>' prior: 0!
+!Triangle commentStamp: 'len 10/May/2026 00:41:34' prior: 0!
 This is a virtual analog triangle oscillator that uses PolyBLAMP for antialiasing. It morphs from a pure triangle to a sine wave.
 
-A triangle wave consists of only odd harmonics (f, 3f, 5f, 7f, ...) of the fundamental frequency, similar to a square wave, but its harmonic amplitudes decrease much faster, proportional to the inverse square of the harmonic number (1/n²). This results in a brighter tone than a sine wave but mellower than a square wave, with 12 dB per octave roll-off.!
+A triangle wave consists of only odd harmonics of the fundamental frequency, similar to a square wave, but its harmonic amplitudes decrease much faster, proportional to the inverse square of the harmonic number 1/n². This results in a brighter tone than a sine wave but mellower than a square wave, with 12 dB per octave roll-off.!
 
 !OPN commentStamp: '<historical>' prior: 0!
 This oscillator emulates the oscillators of the Yamaha sound chips YM2414 (used in the TX81Z and DX11 synthesizers) and YM2612 (used in the Sega Mega Drive game console). It has a choice of 8 waveforms.!
@@ -2712,9 +2712,9 @@ addLogControl: aSymbol min: min max: max value: defaultValue
 addPitchControl: aSymbol
 	^ self addPitchControl: aSymbol min: -48.0 max: 48.0 value: 0.0! !
 
-!Module methodsFor: 'initialization' stamp: 'len 9/May/2026 13:41:37'!
+!Module methodsFor: 'initialization' stamp: 'len 9/May/2026 17:52:53'!
 addPitchControl: aSymbol min: min max: max value: defaultValue
-	^ (self addControl: aSymbol min: min max: max value: defaultValue) coarseStep: 1.0 / (max - min); fineStep: 0.01 / (max - min) "one cent"; printer: #semitonesOffsetPrintString! !
+	^ (self addControl: aSymbol min: min max: max value: defaultValue) coarseStep: 1.0 / (max - min) "one semitone"; fineStep: 0.01 / (max - min) "one cent"; printer: #semitonesOffsetPrintString! !
 
 !Module methodsFor: 'initialization' stamp: 'len 18/Mar/2026 18:05:47'!
 addQuadraticControl: aSymbol min: min max: max value: defaultValue
@@ -4381,7 +4381,7 @@ initializeControls
 	super initializeControls.
 	self addControl: #shape min: 0.0 max: 1.0 value: 1.0! !
 
-!Saw methodsFor: 'processing' stamp: 'len 21/Apr/2026 19:01:41'!
+!Saw methodsFor: 'processing' stamp: 'len 9/May/2026 19:48:26'!
 next
 	self advance.
 	shape = 1.0 ifTrue: [^ phase saw: increment].

@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 11 May 2026 at 5:22:43 pm'!
+'From Cuis7.7 [latest update: #7880] on 11 May 2026 at 8:34:50 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 561!
+!provides: 'Signals' 1 562!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -956,7 +956,7 @@ Spectrogram class
 
 !classDefinition: #SpectrumAnalyzer category: #'Signals-Utility'!
 Module subclass: #SpectrumAnalyzer
-	instanceVariableNames: 'input spectrum stft buffer bufferIndex'
+	instanceVariableNames: 'input stft buffer bufferIndex'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Utility'!
@@ -8919,10 +8919,10 @@ initialize
 	logSpectrum := Float32Array new: image width.
 	frequencyScale := #linear! !
 
-!Spectrogram methodsFor: 'initialization' stamp: 'len 3/Apr/2026 16:35:40'!
+!Spectrogram methodsFor: 'initialization' stamp: 'len 11/May/2026 20:33:04'!
 initializeControls
 	super initializeControls.
-	self addChoiceControl: #windowSize options: #(256 512 1024 2048 4096) value: 512.
+	self addChoiceControl: #windowSize options: #(256 512 1024 2048 4096) value: 1024.
 	self addChoiceControl: #frequencyScale options: #(linear log) value: #linear! !
 
 !Spectrogram methodsFor: 'processing' stamp: 'len 3/Apr/2026 19:23:41'!
@@ -9524,12 +9524,11 @@ initializeViridis
                  (0.983868 0.904867 0.136897)
                  (0.993248 0.906157 0.143936)) collect: [:each| Color fromArray: each])! !
 
-!SpectrumAnalyzer methodsFor: 'controlling' stamp: 'len 3/Apr/2026 19:26:50'!
+!SpectrumAnalyzer methodsFor: 'controlling' stamp: 'len 11/May/2026 20:14:23'!
 reset
-	buffer atAllPut: 0.0.
-	spectrum atAllPut: 0.0! !
+	buffer atAllPut: 0.0! !
 
-!SpectrumAnalyzer methodsFor: 'controlling' stamp: 'len 3/Apr/2026 19:25:48'!
+!SpectrumAnalyzer methodsFor: 'controlling' stamp: 'len 11/May/2026 20:12:15'!
 update
 	| n |
 	super update.
@@ -9537,23 +9536,20 @@ update
 	(stft notNil and: [n = stft size])
 		ifFalse:
 			[stft := STFT new: n.
-			spectrum := Float32Array new: stft size / 2.
 			buffer := Float32Array new: stft size.
-			bufferIndex := 1.
-			self triggerEvent: #spectrumBufferChanged: with: spectrum]! !
+			bufferIndex := 1]! !
 
-!SpectrumAnalyzer methodsFor: 'initialization' stamp: 'len 3/Apr/2026 18:59:48'!
+!SpectrumAnalyzer methodsFor: 'initialization' stamp: 'len 11/May/2026 20:27:23'!
 initializeControls
 	super initializeControls.
-	self addChoiceControl: #windowSize options: #(256 512 1024 2048 4096) value: 512.
+	self addChoiceControl: #windowSize options: #(256 512 1024 2048 4096) value: 1024.
 	self addChoiceControl: #frequencyScale options: #(linear log) value: #linear.
 	self addChoiceControl: #displayMode options: #(bars outline) value: #bars! !
 
-!SpectrumAnalyzer methodsFor: 'processing' stamp: 'len 4/Apr/2026 20:25:28'!
+!SpectrumAnalyzer methodsFor: 'processing' stamp: 'len 11/May/2026 20:10:16'!
 tick
-	| j remaining k changed |
+	| j remaining k |
 	input ifNil: [^ self].
-	changed := false.
 	j := 1.
 	remaining := input size.
 	[remaining > 0] whileTrue:
@@ -9564,24 +9560,21 @@ tick
 		remaining := remaining - k.
 		bufferIndex := bufferIndex + k.
 		bufferIndex > buffer size ifTrue:
-			[spectrum +=​ (stft spectrumFrom: buffer); *= 0.5.
-			bufferIndex := 1.
-			changed := true]].
-	changed ifTrue: [self triggerEvent: #changed]! !
+			[self triggerEvent: #spectrum: with: (stft spectrumFrom: buffer).
+			bufferIndex := 1]]! !
 
-!SpectrumAnalyzer methodsFor: 'ui' stamp: 'len 3/Apr/2026 19:33:31'!
+!SpectrumAnalyzer methodsFor: 'ui' stamp: 'len 11/May/2026 20:11:22'!
 patchable
-	| answer display panel |
+	| answer screen panel |
 	answer := PatchableMorph new model: self.
-	display := SpectrumMorph new spectrum: spectrum.
-	self when: #spectrumBufferChanged: send: #spectrum: to: display.
-	self when: #changed send: #redrawNeeded to: display.
-	answer body addMorph: display.
+	screen := SpectrumMorph new.
+	self when: #spectrum: send: #spectrum: to: screen.
+	answer body addMorph: screen.
 	panel := ControlPanel new.
 	panel
 		addChoice: (controls at: #windowSize);
-		addMorph: (PluggableChoiceMorph new options: #(linear log); model: display; getter: #frequencyScale; setter: #frequencyScale:);
-		addMorph: (PluggableChoiceMorph new options: #(bars outline); model: display; getter: #displayMode; setter: #displayMode:).
+		addMorph: (PluggableChoiceMorph new options: #(linear log); model: screen; getter: #frequencyScale; setter: #frequencyScale:);
+		addMorph: (PluggableChoiceMorph new options: #(bars outline); model: screen; getter: #displayMode; setter: #displayMode:).
 	answer flap addMorph: panel.
 	answer addAudioInput: #setInput:.
 	^ answer! !
@@ -12915,105 +12908,105 @@ stepTime
 wantsSteps
 	^ true! !
 
-!SpectrumMorph methodsFor: 'as yet unclassified' stamp: 'len 17/Oct/2025 19:42:00'!
-defaultExtent
-	^`256@128`! !
-
-!SpectrumMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:24:19'!
+!SpectrumMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 18:24:19'!
 displayMode
 	^ displayMode! !
 
-!SpectrumMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:24:10'!
+!SpectrumMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 18:24:10'!
 displayMode: aSymbol
 	displayMode := aSymbol.
 	self changed! !
 
-!SpectrumMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:01:47'!
-drawBarsOn: aCanvas
+!SpectrumMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 18:23:41'!
+frequencyScale
+	^ frequencyScale! !
+
+!SpectrumMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026 18:23:31'!
+frequencyScale: aSymbol
+	frequencyScale := aSymbol.
+	self changed! !
+
+!SpectrumMorph methodsFor: 'accessing' stamp: 'len 3/Apr/2026 19:20:42'!
+spectrum: aBuffer
+	spectrum := aBuffer.
+	self redrawNeeded! !
+
+!SpectrumMorph methodsFor: 'drawing' stamp: 'len 11/May/2026 20:17:01'!
+drawBars: bins on: aCanvas
 	| step x h n |
-	n := spectrum size asFloat.
+	n := bins size asFloat.
 	step := self morphWidth / n.
 	h := self morphHeight.
 	x := 0.
-	1 to: spectrum size do: [:i|
+	1 to: bins size do: [:i|
 		| v y |
-		y := (1.0 - (v := spectrum at: i)) * h.
+		y := (1.0 - (v := bins at: i)) * h.
 		v := v min: 0.99 max: 0.1. "make it a bit more visible on black background"
 		aCanvas line: x@y to: x@h width: step color: (Viridis at: (v * Viridis size + 1.0) truncated).
 		x := x + step]! !
 
-!SpectrumMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:00:48'!
-drawLogBarsOn: aCanvas
+!SpectrumMorph methodsFor: 'drawing' stamp: 'len 11/May/2026 20:17:26'!
+drawLogBars: bins on: aCanvas
 	| step x h  |
 	step := self morphWidth / 20.0.
 	h := self morphHeight.
 	x := 0.
-	1 to: spectrum size do: [:i|
+	1 to: bins size do: [:i|
 		| v y |
-		y := (1.0 - (v := spectrum at: i)) * h.
+		y := (1.0 - (v := bins at: i)) * h.
 		v := v min: 0.99 max: 0.1. "make it a bit more visible on black background"
 		aCanvas fillRectangle: (x@y corner: x+step@h) color: (Viridis at: (v * Viridis size + 1.0) truncated).
 		x := x + step.
 		step := step * 0.95]! !
 
-!SpectrumMorph methodsFor: 'as yet unclassified' stamp: 'len 25/Oct/2025 15:08:00'!
-drawLogOutlineOn: aCanvas
+!SpectrumMorph methodsFor: 'drawing' stamp: 'len 11/May/2026 20:17:46'!
+drawLogOutline: bins on: aCanvas
 	| step  x y h |
 	step := self morphWidth / 20.0.
 	h := self morphHeight.
-	y := 1.0 - (spectrum at: 1) * h.
+	y := 1.0 - (bins at: 1) * h.
 	x := 0.0.
-	2 to: spectrum size do: [:i|
+	2 to: bins size do: [:i|
 		| v x2 y2 |
-		y2 := 1.0 - (v := spectrum at: i) * h.
+		y2 := 1.0 - (v := bins at: i) * h.
 		x2 := x + step.
 		aCanvas line: x@y to: x2@y2 width: 1 color: color.
 		x := x2.
 		y := y2.
 		step := step * 0.95]! !
 
-!SpectrumMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Apr/2026 19:30:24'!
+!SpectrumMorph methodsFor: 'drawing' stamp: 'len 11/May/2026 20:19:20'!
 drawOn: aCanvas
-	spectrum ifNil: [^ self].
-	frequencyScale = #linear ifTrue:
-		[^ displayMode = #bars ifTrue: [self drawBarsOn: aCanvas] ifFalse: [self drawOutlineOn: aCanvas]].
-	^ displayMode = #bars ifTrue: [self drawLogBarsOn: aCanvas] ifFalse: [self drawLogOutlineOn: aCanvas]! !
+	spectrum ifNotNil: [:bins|
+		frequencyScale = #linear ifTrue:
+			[^ displayMode = #bars ifTrue: [self drawBars: bins on: aCanvas] ifFalse: [self drawOutline: bins on: aCanvas]].
+		displayMode = #bars ifTrue: [self drawLogBars: bins on: aCanvas] ifFalse: [self drawLogOutline: bins on: aCanvas]]! !
 
-!SpectrumMorph methodsFor: 'as yet unclassified' stamp: 'len 25/Oct/2025 14:40:00'!
-drawOutlineOn: aCanvas
+!SpectrumMorph methodsFor: 'drawing' stamp: 'len 11/May/2026 20:18:10'!
+drawOutline: bins on: aCanvas
 	| step  x y h |
-	step := self morphWidth / spectrum size.
+	step := self morphWidth / bins size.
 	h := self morphHeight.
-	y := 1.0 - (spectrum at: 1) * h.
+	y := 1.0 - (bins at: 1) * h.
 	x := 0.
-	2 to: spectrum size do: [:i|
+	2 to: bins size do: [:i|
 		| v x2 y2 |
-		y2 := 1.0 - (v := spectrum at: i) * h.
+		y2 := 1.0 - (v := bins at: i) * h.
 		x2 := x + step.
 		aCanvas line: x@y to: x2@y2 width: 1 color: color.
 		x := x2.
 		y := y2]! !
 
-!SpectrumMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:23:41'!
-frequencyScale
-	^ frequencyScale! !
+!SpectrumMorph methodsFor: 'initialization' stamp: 'len 17/Oct/2025 19:42:00'!
+defaultExtent
+	^`256@128`! !
 
-!SpectrumMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 18:23:31'!
-frequencyScale: aSymbol
-	frequencyScale := aSymbol.
-	self changed! !
-
-!SpectrumMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Apr/2026 19:11:16'!
+!SpectrumMorph methodsFor: 'initialization' stamp: 'len 3/Apr/2026 19:11:16'!
 initialize
 	super initialize.
 	color := Color white.
 	frequencyScale := #linear.
 	displayMode := #bars! !
-
-!SpectrumMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Apr/2026 19:20:42'!
-spectrum: aBuffer
-	spectrum := aBuffer.
-	self redrawNeeded! !
 
 !WaterfallMorph methodsFor: 'drawing' stamp: 'len 4/Feb/2026 19:14:11'!
 drawOn: aCanvas

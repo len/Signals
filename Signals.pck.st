@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 11 May 2026 at 4:11:56 pm'!
+'From Cuis7.7 [latest update: #7880] on 11 May 2026 at 5:22:43 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 560!
+!provides: 'Signals' 1 561!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -2867,11 +2867,11 @@ reset
 	schpf reset.
 	rmslpf reset! !
 
-!Compressor methodsFor: 'controlling' stamp: 'len 19/Mar/2026 16:57:56'!
+!Compressor methodsFor: 'controlling' stamp: 'len 11/May/2026 17:01:48'!
 update
 	super update.
-	schpf undenormalize; frequency: (self get: #schpf) / self class sampleRate.
-	rmslpf undenormalize! !
+	schpf snapToZero; frequency: (self get: #schpf) / self class sampleRate.
+	rmslpf snapToZero! !
 
 !Compressor methodsFor: 'initialization' stamp: 'len 19/Mar/2026 21:22:43'!
 initialize
@@ -2996,11 +2996,11 @@ reset
 	schpf reset.
 	rmslpf reset! !
 
-!Gate methodsFor: 'controlling' stamp: 'len 19/Mar/2026 16:58:08'!
+!Gate methodsFor: 'controlling' stamp: 'len 11/May/2026 17:02:05'!
 update
 	super update.
-	schpf undenormalize; frequency: (self get: #schpf) / self class sampleRate.
-	rmslpf undenormalize! !
+	schpf snapToZero; frequency: (self get: #schpf) / self class sampleRate.
+	rmslpf snapToZero! !
 
 !Gate methodsFor: 'initialization' stamp: 'len 19/Mar/2026 21:29:26'!
 initialize
@@ -3339,7 +3339,7 @@ reset
 	lsfR reset.
 	hsfR reset! !
 
-!StereoEcho methodsFor: 'controlling' stamp: 'len 19/Mar/2026 16:58:31'!
+!StereoEcho methodsFor: 'controlling' stamp: 'len 11/May/2026 17:01:48'!
 update
 	| delay thirtyMsecs bass treble spread lpfSpread trebleSpread |
 	super update.
@@ -3349,17 +3349,17 @@ update
 	tapR setDelayIncrement: delay - tapR delay / thirtyMsecs. "slide over 30 ms"
 	spread := self get: #spread.
 	lpfSpread := 1500.0 * spread. "± 1.5 kHz"
-	lpfL undenormalize; frequency: 6000.0 - lpfSpread / self class sampleRate. "6 kHz - spreading"
-	lpfR undenormalize; frequency: 6000.0 + lpfSpread / self class sampleRate. "6 kHz + spreading"
-	hpfL undenormalize.
-	hpfR undenormalize.
+	lpfL snapToZero; frequency: 6000.0 - lpfSpread / self class sampleRate. "6 kHz - spreading"
+	lpfR snapToZero; frequency: 6000.0 + lpfSpread / self class sampleRate. "6 kHz + spreading"
+	hpfL snapToZero.
+	hpfR snapToZero.
 	bass := self get: #bass.
 	treble := self get: #treble.
 	trebleSpread := (3.0 * spread) decibelsToLinear. "± 3 dB"
-	lsfL undenormalize; ls: 120.0 / self class sampleRate Q: 0.707 gain: bass. "120 Hz"
-	lsfR undenormalize; ls: 120.0 / self class sampleRate Q: 0.707 gain: bass. "120 Hz"
-	hsfL undenormalize; hs: 4000.0 / self class sampleRate Q: 0.707 gain: treble / trebleSpread. "4 kHz"
-	hsfR undenormalize; hs: 4000.0 / self class sampleRate Q: 0.707 gain: treble * trebleSpread. "4 kHz"! !
+	lsfL snapToZero; ls: 120.0 / self class sampleRate Q: 0.707 gain: bass. "120 Hz"
+	lsfR snapToZero; ls: 120.0 / self class sampleRate Q: 0.707 gain: bass. "120 Hz"
+	hsfL snapToZero; hs: 4000.0 / self class sampleRate Q: 0.707 gain: treble / trebleSpread. "4 kHz"
+	hsfR snapToZero; hs: 4000.0 / self class sampleRate Q: 0.707 gain: treble * trebleSpread. "4 kHz"! !
 
 !StereoEcho methodsFor: 'initialization' stamp: 'len 26/Mar/2026 16:23:10'!
 initialize
@@ -3473,15 +3473,15 @@ reset
 	combsR do: [:each| each reset].
 	allpassesR do: [:each| each reset]! !
 
-!StereoReverb methodsFor: 'controlling' stamp: 'len 9/Mar/2026 16:46:06'!
+!StereoReverb methodsFor: 'controlling' stamp: 'len 11/May/2026 17:01:48'!
 update
 	| feedback damp |
 	super update.
 	predelayTap setDelayIncrement: ((self get: #predelay) * self class sampleRate - predelayTap delay) / self class blockSize.
 	feedback := self get: #feedback.
 	damp := self get: #damp.
-	combsL do: [:each| each undenormalize; feedback: feedback; damp: damp].
-	combsR do: [:each| each undenormalize; feedback: feedback; damp: damp]! !
+	combsL do: [:each| each snapToZero; feedback: feedback; damp: damp].
+	combsR do: [:each| each snapToZero; feedback: feedback; damp: damp]! !
 
 !StereoReverb methodsFor: 'initialization' stamp: 'len 25/Mar/2026 15:58:40'!
 initialize
@@ -3690,12 +3690,12 @@ reset
 	hpf1 reset.
 	hpf2 reset! !
 
-!Crossover methodsFor: 'controlling' stamp: 'len 29/Mar/2026 01:55:08'!
-undenormalize
-	lpf1 undenormalize.
-	lpf2 undenormalize.
-	hpf1 undenormalize.
-	hpf2 undenormalize! !
+!Crossover methodsFor: 'controlling' stamp: 'len 11/May/2026 17:01:48'!
+snapToZero
+	lpf1 snapToZero.
+	lpf2 snapToZero.
+	hpf1 snapToZero.
+	hpf2 snapToZero! !
 
 !Crossover methodsFor: 'controlling' stamp: 'len 29/Mar/2026 03:26:53'!
 update
@@ -3720,7 +3720,7 @@ initializeControls
 	super initializeControls.
 	self addFrequencyControl: #frequency value: 2500.0! !
 
-!Crossover methodsFor: 'processing' stamp: 'len 29/Apr/2026 18:08:28'!
+!Crossover methodsFor: 'processing' stamp: 'len 11/May/2026 17:01:48'!
 tick
 	input ifNil:
 		[outputLow ifNotNil: [outputLow atAllPut: 0.0].
@@ -3732,7 +3732,7 @@ tick
 	outputHigh ifNotNil:
 		[hpf1 process: input into: outputHigh.
 		hpf2 process: outputHigh into: outputHigh].
-	self undenormalize! !
+	self snapToZero! !
 
 !Crossover methodsFor: 'ui' stamp: 'len 29/Mar/2026 03:35:40'!
 panel
@@ -3763,10 +3763,10 @@ setOutputLow: aBuffer
 reset
 	s1 := s2 := 0.0! !
 
-!SVF methodsFor: 'controlling' stamp: 'len 29/Apr/2026 18:04:40'!
-undenormalize
-	s1 abs < 1.0e-15 ifTrue: [s1 := 0.0].
-	s2 abs < 1.0e-15 ifTrue: [s2 := 0.0]! !
+!SVF methodsFor: 'controlling' stamp: 'len 11/May/2026 17:13:27'!
+snapToZero
+	s1 abs < 1.0e-8 ifTrue: [s1 := 0.0].
+	s2 abs < 1.0e-8 ifTrue: [s2 := 0.0]! !
 
 !SVF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 01:37:23'!
 initialize
@@ -3779,7 +3779,7 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #Q min: 0.5 max: 20.0 value: 0.707! !
 
-!SVF methodsFor: 'processing' stamp: 'len 29/Apr/2026 19:50:54'!
+!SVF methodsFor: 'processing' stamp: 'len 11/May/2026 17:01:48'!
 tick
 	| gTarget gRatio rTarget rRatio |
 	(outputLP isNil and: [outputHP isNil and: [outputBP isNil and: [outputBPN isNil]]]) ifTrue: [^ self].
@@ -3809,7 +3809,7 @@ tick
 		outputBPN ifNotNil: [outputBPN at: i put: bp * r]].
 	g := gTarget.
 	r := rTarget.
-	self undenormalize! !
+	self snapToZero! !
 
 !SVF methodsFor: 'processing' stamp: 'len 29/Apr/2026 19:35:14'!
 tickNoInput
@@ -3818,7 +3818,7 @@ tickNoInput
 	outputBP ifNotNil: [outputBP atAllPut: 0.0].
 	outputBPN ifNotNil: [outputBPN atAllPut: 0.0]! !
 
-!SVF methodsFor: 'processing' stamp: 'len 29/Apr/2026 19:49:41'!
+!SVF methodsFor: 'processing' stamp: 'len 11/May/2026 17:01:48'!
 tickStatic
 	"This is almost 2x faster than the modulated version."
 	| h gPlusR |
@@ -3836,7 +3836,7 @@ tickStatic
 		outputHP ifNotNil: [outputHP at: i put: hp].
 		outputBP ifNotNil: [outputBP at: i put: bp].
 		outputBPN ifNotNil: [outputBPN at: i put: bp * r]].
-	self undenormalize! !
+	self snapToZero! !
 
 !SVF methodsFor: 'ui' stamp: 'len 12/Apr/2026 03:59:37'!
 patchable
@@ -4863,7 +4863,7 @@ reset
 	phases atAllPut: 0.0.
 	filter reset! !
 
-!TransistorOrgan methodsFor: 'controlling' stamp: 'len 11/May/2026 15:45:59'!
+!TransistorOrgan methodsFor: 'controlling' stamp: 'len 11/May/2026 17:01:48'!
 update
 	| f0 r4 |
 	super update.
@@ -4878,7 +4878,7 @@ update
 		at: 5 put: r4;
 		at: 6 put: r4;
 		at: 7 put: r4.
-	filter undenormalize! !
+	filter snapToZero! !
 
 !TransistorOrgan methodsFor: 'initialization' stamp: 'len 19/Mar/2026 16:58:35'!
 initialize
@@ -7193,14 +7193,14 @@ reset
 	combs do: [:each| each reset].
 	allpasses do: [:each| each reset]! !
 
-!Reverb methodsFor: 'controlling' stamp: 'len 18/Apr/2026 19:39:00'!
+!Reverb methodsFor: 'controlling' stamp: 'len 11/May/2026 17:01:48'!
 update
 	| feedback damp θ |
 	super update.
 	predelayTap setDelayIncrement: ((self get: #predelay) * self class sampleRate - predelayTap delay) / self class blockSize.
 	feedback := self get: #feedback.
 	damp := self get: #damp.
-	combs do: [:each| each undenormalize; feedback: feedback; damp: damp].
+	combs do: [:each| each snapToZero; feedback: feedback; damp: damp].
 	θ := (self get: #mix) * Float pi / 2.0. "equal-power wet/dry mix"
 	wet := θ sin.
 	dry := θ cos! !
@@ -7250,7 +7250,7 @@ reset
 	lsf reset.
 	hsf reset! !
 
-!TapeEcho methodsFor: 'controlling' stamp: 'len 18/Apr/2026 19:42:40'!
+!TapeEcho methodsFor: 'controlling' stamp: 'len 11/May/2026 17:01:48'!
 update
 	| delay1 delay2 delay3 thirtyMsecs θ |
 	super update.
@@ -7268,10 +7268,10 @@ update
 	θ := (self get: #mix) * Float pi / 2.0. "equal-power wet/dry mix"
 	wet := θ sin.
 	dry := θ cos.
-	lpf undenormalize.
-	hpf undenormalize.
-	lsf undenormalize; ls: 120.0 / self class sampleRate Q: 0.707 gain: (self get: #bass). "120 Hz"
-	hsf undenormalize; hs: 4000.0 / self class sampleRate Q: 0.707 gain: (self get: #treble) "4 kHz"! !
+	lpf snapToZero.
+	hpf snapToZero.
+	lsf snapToZero; ls: 120.0 / self class sampleRate Q: 0.707 gain: (self get: #bass). "120 Hz"
+	hsf snapToZero; hs: 4000.0 / self class sampleRate Q: 0.707 gain: (self get: #treble) "4 kHz"! !
 
 !TapeEcho methodsFor: 'initialization' stamp: 'len 25/Mar/2026 15:57:04'!
 initialize
@@ -7409,10 +7409,10 @@ screen
 reset
 	biquad reset! !
 
-!BPF methodsFor: 'controlling' stamp: 'len 8/Feb/2026 14:50:10'!
+!BPF methodsFor: 'controlling' stamp: 'len 11/May/2026 17:01:48'!
 update
 	super update.
-	biquad undenormalize.
+	biquad snapToZero.
 	biquad bp: (self get: #frequency) / self class sampleRate Q: 1.0 / (2.0 * (0.5 * 2.0 log * (self get: #bandwidth)) sinh)! !
 
 !BPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 00:57:46'!
@@ -7452,10 +7452,10 @@ screen
 reset
 	biquad reset! !
 
-!BSF methodsFor: 'controlling' stamp: 'len 8/Feb/2026 14:50:20'!
+!BSF methodsFor: 'controlling' stamp: 'len 11/May/2026 17:01:48'!
 update
 	super update.
-	biquad undenormalize.
+	biquad snapToZero.
 	biquad bs: (self get: #frequency) / self class sampleRate Q: 1.0 / (2.0 * (0.5 * 2.0 log * (self get: #bandwidth)) sinh)! !
 
 !BSF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 00:57:49'!
@@ -7498,13 +7498,13 @@ reset
 	highPassMid reset.
 	highPassHigh reset! !
 
-!EQ3 methodsFor: 'controlling' stamp: 'len 8/Feb/2026 14:51:14'!
+!EQ3 methodsFor: 'controlling' stamp: 'len 11/May/2026 17:01:48'!
 update
 	super update.
-	lowPassLow undenormalize.
-	highPassMid undenormalize.
-	lowPassMid undenormalize.
-	highPassHigh undenormalize! !
+	lowPassLow snapToZero.
+	highPassMid snapToZero.
+	lowPassMid snapToZero.
+	highPassHigh snapToZero! !
 
 !EQ3 methodsFor: 'initialization' stamp: 'len 31/Jan/2026 03:39:10'!
 initialize
@@ -7544,14 +7544,14 @@ reset
 	bell3 reset.
 	highShelf reset! !
 
-!EQ5 methodsFor: 'controlling' stamp: 'len 17/Mar/2026 15:35:49'!
+!EQ5 methodsFor: 'controlling' stamp: 'len 11/May/2026 17:01:48'!
 update
 	super update.
-	lowShelf undenormalize; ls: (self get: #f1) / self class sampleRate Q: (self get: #q1) gain: (self get: #g1).
-	bell1 undenormalize; peaking: (self get: #f2) / self class sampleRate Q: (self get: #q2) gain: (self get: #g2).
-	bell2 undenormalize; peaking: (self get: #f3) / self class sampleRate Q: (self get: #q3) gain: (self get: #g3).
-	bell3 undenormalize; peaking: (self get: #f4) / self class sampleRate Q: (self get: #q4) gain: (self get: #g4).
-	highShelf undenormalize; ls: (self get: #f5) / self class sampleRate Q: (self get: #q5) gain: (self get: #g5)! !
+	lowShelf snapToZero; ls: (self get: #f1) / self class sampleRate Q: (self get: #q1) gain: (self get: #g1).
+	bell1 snapToZero; peaking: (self get: #f2) / self class sampleRate Q: (self get: #q2) gain: (self get: #g2).
+	bell2 snapToZero; peaking: (self get: #f3) / self class sampleRate Q: (self get: #q3) gain: (self get: #g3).
+	bell3 snapToZero; peaking: (self get: #f4) / self class sampleRate Q: (self get: #q4) gain: (self get: #g4).
+	highShelf snapToZero; ls: (self get: #f5) / self class sampleRate Q: (self get: #q5) gain: (self get: #g5)! !
 
 !EQ5 methodsFor: 'initialization' stamp: 'len 17/Mar/2026 15:40:59'!
 initialize
@@ -7603,10 +7603,10 @@ panel
 reset
 	biquad reset! !
 
-!HPF methodsFor: 'controlling' stamp: 'len 8/Feb/2026 14:52:12'!
+!HPF methodsFor: 'controlling' stamp: 'len 11/May/2026 17:01:48'!
 update
 	super update.
-	biquad undenormalize.
+	biquad snapToZero.
 	biquad hp: (self get: #frequency) / self class sampleRate Q: (self get: #Q)! !
 
 !HPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 00:57:32'!
@@ -7646,10 +7646,10 @@ screen
 reset
 	biquad reset! !
 
-!LPF methodsFor: 'controlling' stamp: 'len 8/Feb/2026 14:52:21'!
+!LPF methodsFor: 'controlling' stamp: 'len 11/May/2026 17:01:48'!
 update
 	super update.
-	biquad undenormalize.
+	biquad snapToZero.
 	biquad lp: (self get: #frequency) / self class sampleRate Q: (self get: #Q)! !
 
 !LPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 00:57:38'!
@@ -7701,7 +7701,7 @@ internalSampleRate
 	"The internal sample rate is doubled."
 	^ self class sampleRate * 2! !
 
-!TubeSaturator methodsFor: 'controlling' stamp: 'len 29/Apr/2026 19:44:35'!
+!TubeSaturator methodsFor: 'controlling' stamp: 'len 11/May/2026 17:01:48'!
 update
 	| targetDrive |
 	super update.
@@ -7710,10 +7710,10 @@ update
 	driveRatio := ((targetDrive / drive) ln / (self class blockSize * 2 "oversampeld")) exp.
 	postgain := self get: #postgain.
 	prelpf frequency: (self get: #tone) / self internalSampleRate.
-	prehpf undenormalize.
-	prelpf undenormalize.
-	postlpf undenormalize.
-	dcblock undenormalize! !
+	prehpf snapToZero.
+	prelpf snapToZero.
+	postlpf snapToZero.
+	dcblock snapToZero! !
 
 !TubeSaturator methodsFor: 'initialization' stamp: 'len 19/Mar/2026 16:58:54'!
 initialize
@@ -8093,7 +8093,7 @@ patchable
 		addAudioOutput: #setOutput:;
 		yourself! !
 
-!TapeSaturator methodsFor: 'controlling' stamp: 'len 19/Mar/2026 16:59:09'!
+!TapeSaturator methodsFor: 'controlling' stamp: 'len 11/May/2026 17:01:48'!
 update
 	super update.
 	drive := self get: #drive.
@@ -8104,8 +8104,8 @@ update
 	postgain := self get: #postgain.
 	"darker at high drive:"
 	postlpf frequency: ((drive * 0.08) tanh * 12000.0 + 6000.0) / self class sampleRate. "6 kHz to 18 kHz"
-	prehpf undenormalize.
-	postlpf undenormalize! !
+	prehpf snapToZero.
+	postlpf snapToZero! !
 
 !TapeSaturator methodsFor: 'initialization' stamp: 'len 19/Mar/2026 16:59:02'!
 initialize
@@ -9641,13 +9641,13 @@ setInputY: aBuffer
 reset
 	y0 := y1 := y2 := y3 := y4 := 0.0! !
 
-!MoogLPF methodsFor: 'controlling' stamp: 'len 29/Apr/2026 19:33:11'!
-undenormalize
-	y0 abs < 1.0e-15 ifTrue: [y0 := 0.0].
-	y1 abs < 1.0e-15 ifTrue: [y1 := 0.0].
-	y2 abs < 1.0e-15 ifTrue: [y2 := 0.0].
-	y3 abs < 1.0e-15 ifTrue: [y3 := 0.0].
-	y4 abs < 1.0e-15 ifTrue: [y4 := 0.0]! !
+!MoogLPF methodsFor: 'controlling' stamp: 'len 11/May/2026 17:13:20'!
+snapToZero
+	y0 abs < 1.0e-8 ifTrue: [y0 := 0.0].
+	y1 abs < 1.0e-8 ifTrue: [y1 := 0.0].
+	y2 abs < 1.0e-8 ifTrue: [y2 := 0.0].
+	y3 abs < 1.0e-8 ifTrue: [y3 := 0.0].
+	y4 abs < 1.0e-8 ifTrue: [y4 := 0.0]! !
 
 !MoogLPF methodsFor: 'initialization' stamp: 'len 30/Jan/2026 14:01:42'!
 initialize
@@ -9660,7 +9660,7 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	(self addControl: #resonance min: 0.0 max: 1.0 value: 0.1) printer: [:x| (x * 100.0) truncated printString, '%']! !
 
-!MoogLPF methodsFor: 'processing' stamp: 'len 29/Apr/2026 19:33:36'!
+!MoogLPF methodsFor: 'processing' stamp: 'len 11/May/2026 17:01:48'!
 tick
 	| f res t1 t2 p r k |
 	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
@@ -9696,7 +9696,7 @@ tick
 		outputLP3 ifNotNil: [outputLP3 at: i put: y3].
 		outputLP2 ifNotNil: [outputLP2 at: i put: y2].
 		outputLP1 ifNotNil: [outputLP1 at: i put: y1]].
-	self undenormalize! !
+	self snapToZero! !
 
 !MoogLPF methodsFor: 'processing' stamp: 'len 29/Apr/2026 19:33:48'!
 tickNoInput
@@ -9748,12 +9748,12 @@ setOutputLP4: aBuffer
 reset
 	s1 := s2 := s3 := s4 := 0.0! !
 
-!MoogLadder methodsFor: 'controlling' stamp: 'len 29/Apr/2026 18:06:34'!
-undenormalize
-	s1 abs < 1.0e-15 ifTrue: [s1 := 0.0].
-	s2 abs < 1.0e-15 ifTrue: [s2 := 0.0].
-	s3 abs < 1.0e-15 ifTrue: [s3 := 0.0].
-	s4 abs < 1.0e-15 ifTrue: [s4 := 0.0]! !
+!MoogLadder methodsFor: 'controlling' stamp: 'len 11/May/2026 17:13:09'!
+snapToZero
+	s1 abs < 1.0e-8 ifTrue: [s1 := 0.0].
+	s2 abs < 1.0e-8 ifTrue: [s2 := 0.0].
+	s3 abs < 1.0e-8 ifTrue: [s3 := 0.0].
+	s4 abs < 1.0e-8 ifTrue: [s4 := 0.0]! !
 
 !MoogLadder methodsFor: 'initialization' stamp: 'len 30/Jan/2026 14:01:49'!
 initialize
@@ -9766,7 +9766,7 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	(self addControl: #resonance min: 0.0 max: 1.0 value: 0.1) printer: [:x| (x * 100.0) truncated printString, '%']! !
 
-!MoogLadder methodsFor: 'processing' stamp: 'len 29/Apr/2026 19:32:09'!
+!MoogLadder methodsFor: 'processing' stamp: 'len 11/May/2026 17:01:48'!
 tick
 	| f res g G γ k |
 	(outputLP4 isNil and: [outputLP3 isNil and: [outputLP2 isNil and: [outputLP1 isNil]]]) ifTrue: [^ self].
@@ -9808,7 +9808,7 @@ tick
 		outputLP3 ifNotNil: [outputLP3 at: i put: y3].
 		outputLP2 ifNotNil: [outputLP2 at: i put: y2].
 		outputLP1 ifNotNil: [outputLP1 at: i put: y1]].
-	self undenormalize! !
+	self snapToZero! !
 
 !MoogLadder methodsFor: 'processing' stamp: 'len 29/Apr/2026 19:32:25'!
 tickNoInput
@@ -14330,11 +14330,11 @@ peaking: frequency Q: Q gain: gain
 reset
 	x1 := y1 := x2 := y2 := 0.0! !
 
-!Biquad methodsFor: 'controlling' stamp: 'len 8/Feb/2026 14:54:51'!
-undenormalize
-	"Clear any denormal state."
-	y1 abs < 1.0e-15 ifTrue: [y1 := 0.0].
-	y2 abs < 1.0e-15 ifTrue: [y2 := 0.0]! !
+!Biquad methodsFor: 'controlling' stamp: 'len 11/May/2026 17:12:56'!
+snapToZero
+	"Snap to zero any state below -300 dB to avoid limit cycles and denormals."
+	y1 abs < 1.0e-8 ifTrue: [y1 := 0.0].
+	y2 abs < 1.0e-8 ifTrue: [y2 := 0.0]! !
 
 !Biquad methodsFor: 'initialization' stamp: 'len 17/Mar/2026 18:15:10'!
 initialize
@@ -14778,10 +14778,10 @@ reset
 	buffer atAllPut: 0.0.
 	state := 0.0! !
 
-!LowpassComb methodsFor: 'controlling' stamp: 'len 9/Mar/2026 16:45:40'!
-undenormalize
-	"Clear any denormal state."
-	state abs < 1.0e-15 ifTrue: [state := 0.0]! !
+!LowpassComb methodsFor: 'controlling' stamp: 'len 11/May/2026 17:12:48'!
+snapToZero
+	"Snap to zero any state below -160 dB to avoid limit cycles (and denormals)."
+	state abs < 1.0e-8 ifTrue: [state := 0.0]! !
 
 !LowpassComb methodsFor: 'initialization' stamp: 'len 5/Mar/2026 22:22:44'!
 initialize: anInteger
@@ -14875,10 +14875,10 @@ time: timeInSamples
 reset
 	y := 0.0! !
 
-!OnePole methodsFor: 'controlling' stamp: 'len 8/Feb/2026 14:54:09'!
-undenormalize
-	"Clear any denormal state."
-	y abs < 1.0e-15 ifTrue: [y := 0.0]! !
+!OnePole methodsFor: 'controlling' stamp: 'len 11/May/2026 17:12:43'!
+snapToZero
+	"Snap to zero any state below -160 dB to avoid limit cycles (and denormals)."
+	y abs < 1.0e-8 ifTrue: [y := 0.0]! !
 
 !OnePole methodsFor: 'initialization' stamp: 'len 19/Mar/2026 16:59:30'!
 initialize
@@ -15289,11 +15289,11 @@ hertzPrintString
 hertzToNote
 	^ 12.0 * (self / 440.0 log: 2) + 69.0! !
 
-!Number methodsFor: '*signals' stamp: 'len 17/Oct/2025 21:20:00'!
+!Number methodsFor: '*signals' stamp: 'len 11/May/2026 17:07:18'!
 linearToDecibels
 	| x |
 	x := self abs.
-	x < 1.0e-12 ifTrue: [^ -120.0].
+	x < 1.0e-15 ifTrue: [^ Float negativeInfinity].
 	^ 20.0 * x log! !
 
 !Number methodsFor: '*signals' stamp: 'len 31/Jan/2026 16:32:57'!
@@ -15434,6 +15434,11 @@ saw: dt
 	"Answer a PolyBLEP antialiased sawtooth wave.
 	Note: the #blep: method already has a baked-in scaling factor of 2, which corresponds to the jump from -1 to 1."
 	^ (2.0 * self - 1.0) - (self blep: dt)! !
+
+!Float methodsFor: '*signals' stamp: 'len 11/May/2026 17:16:23'!
+snapToZero
+	"Snap to zero any value below -160 dB to avoid limit cycles (and denormals as a side benefit)."
+	(self < -1.0e-8 or: [self > 1.0e-8]) ifFalse: [^ 0.0]! !
 
 !Float methodsFor: '*signals' stamp: 'len 24/Jan/2026 18:20:22'!
 softclip

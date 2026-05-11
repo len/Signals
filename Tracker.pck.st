@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 1 May 2026 at 2:47:36 am'!
+'From Cuis7.7 [latest update: #7880] on 11 May 2026 at 4:12:00 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 26!
+!provides: 'Tracker' 1 27!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -1279,11 +1279,11 @@ setTracker: aTracker
 headerHeight
 	^ labelFont lineSpacing + 8! !
 
-!PatternEditorMorph methodsFor: 'private' stamp: 'len 2/Jan/2026 01:15:37'!
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 11/May/2026 15:46:33'!
 noteStringFrom: note
 	note ifNil: [^ '···'].
 	note = -1 ifTrue: [^ 'OFF'].
-	^ note semitonesToName! !
+	^ note noteToName! !
 
 !PatternEditorMorph methodsFor: 'private' stamp: 'len 9/Jan/2026 15:22:29'!
 onBlinkCursor
@@ -1562,7 +1562,7 @@ update
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 15/Mar/2026 15:09:21'!
+!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 11/May/2026 15:46:33'!
 drawOn: aCanvas
 	| color |
 	aCanvas fillRectangle: (0 @ 0 extent: extent) color: Color darkGray.
@@ -1572,7 +1572,7 @@ drawOn: aCanvas
 		drawString: (tracker isPlaying ifTrue: ['▶'] ifFalse: ['◼']) at: 4 @ 0 font: font color: color;
 		drawString: (tracker bpm printStringFractionDigits: 1), ' BPM ⇄ ', (tracker swing * 100) truncated printString, '%' at: 32 @ 2 font: font color: color;
 		drawString: '↧' at: 240 @ 3 font: font color: (tracker followPlayhead ifTrue: [color] ifFalse: [Color lightGray]);
-		drawString: tracker inputCenterKey semitonesToName at: 280 @ 3 font: font color: color.
+		drawString: tracker inputCenterKey noteToName at: 280 @ 3 font: font color: color.
 "	tracker selectedInstrumentNumber ifNotNil: [:instrumentNumber|
 		patchLabel := (instrumentNumber printStringBase: 16 nDigits: 2), ' ', (tracker selectedInstrument ifNil: ['EMPTY'] ifNotNil: [:anInstrument| anInstrument label ifNil: ['']]).
 		aCanvas drawString: patchLabel at: (extent x - 4 - (font widthOfString: patchLabel)) @ 2 font: font color: color]"! !

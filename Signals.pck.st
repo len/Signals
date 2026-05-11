@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 11 May 2026 at 1:10:19 am'!
+'From Cuis7.7 [latest update: #7880] on 11 May 2026 at 4:11:56 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 559!
+!provides: 'Signals' 1 560!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1945,10 +1945,10 @@ A sawtooth wave contains both even and odd harmonics of the fundamental frequenc
 !Sine commentStamp: '<historical>' prior: 0!
 This is a sine wave oscillator with variable warping produced by self-phase modulation. At zero warp, it's a sine. As the warp parameter moves from 0 to 1, integer harmonics (both odd and even) are added up to about the 6th harmonic.!
 
-!Triangle commentStamp: 'len 10/May/2026 19:22:46' prior: 0!
+!Triangle commentStamp: '<historical>' prior: 0!
 This is a virtual analog triangle oscillator that uses PolyBLAMP for antialiasing. It morphs from a pure triangle to a sine wave.
 
-A triangle wave consists of only odd harmonics of the fundamental frequency, similar to a square wave, but its harmonic amplitudes decrease much faster, proportional to the inverse square of the harmonic number 1/n². This results in a brighter tone than a sine wave but mellower than a square wave, with 12 dB per octave roll-off (while saw and pulse waves harmonics decay at 6 dB per octave).!
+A triangle wave consists of only odd harmonics of the fundamental frequency, similar to a square wave, but its harmonic amplitudes decrease much faster, proportional to the inverse square of the harmonic number 1/n². This results in a brighter tone than a sine wave but mellower than a square wave, with 12 dB per octave roll-off (while the harmonics of saw and pulse waves decay at 6 dB per octave).!
 
 !OPN commentStamp: '<historical>' prior: 0!
 This oscillator emulates the oscillators of the Yamaha sound chips YM2414 (used in the TX81Z and DX11 synthesizers) and YM2612 (used in the Sega Mega Drive game console). It has a choice of 8 waveforms.!
@@ -2022,7 +2022,7 @@ State:
     - Sample counter until next impulse!
 
 !Modulator commentStamp: '<historical>' prior: 0!
-This a generator of a control signal that can be used to modulate the controls of other modules. Modulators have one control output.!
+This a control signal generator that can be used to modulate the controls of other modules. Modulators have one control output.!
 
 !ControlIn commentStamp: '<historical>' prior: 0!
 This module produces a control signal from values received from an external source, for example MIDI CC messages.!
@@ -2115,6 +2115,9 @@ This saturator emulates the characteristic soft-knee saturation of vacuum tube c
 Tube saturation adds harmonics and weight to a sound, specially in the lower mids. It adds a grit or bite in the higher frequencies and enhances detail and presence without sounding too harsh.
 
 This module is suited for musical overdrive on guitars, synths, or mix buses, where a classic tube-like warmth and gentle compression is desired.!
+
+!Waveshaper commentStamp: '<historical>' prior: 0!
+Abstract superclass for waveshapers defined by a function that is applied to each sample.!
 
 !DiodeClipper commentStamp: '<historical>' prior: 0!
 This module implements a nonlinear clipping stage inspired by diode conduction. The signal remains linear below the forward voltage and transitions into soft clipping above it, producing a harder and more mid-focused character than smooth saturation.
@@ -4211,11 +4214,11 @@ gateOn
 reset
 	phase := 0.0! !
 
-!Operator methodsFor: 'controlling' stamp: 'len 9/May/2026 13:43:11'!
+!Operator methodsFor: 'controlling' stamp: 'len 11/May/2026 15:45:59'!
 update
 	| targetIncrement |
 	super update.
-	targetIncrement := ((self get: #pitch) + note) semitonesToHertz * (self get: #ratio) / self class sampleRate.
+	targetIncrement := ((self get: #pitch) + note) noteToHertz * (self get: #ratio) / self class sampleRate.
 	increment ifNil: [increment := targetIncrement].
 	incrementRatio := ((targetIncrement / increment) ln / self class blockSize) exp! !
 
@@ -4292,11 +4295,11 @@ setInputPM: aBuffer
 reset
 	phase := 0.0! !
 
-!Oscillator methodsFor: 'controlling' stamp: 'len 9/May/2026 13:43:17'!
+!Oscillator methodsFor: 'controlling' stamp: 'len 11/May/2026 15:45:59'!
 update
 	| targetIncrement |
 	super update.
-	targetIncrement := ((self get: #pitch) + note) semitonesToHertz / self class sampleRate.
+	targetIncrement := ((self get: #pitch) + note) noteToHertz / self class sampleRate.
 	increment ifNil: [increment := targetIncrement].
 	incrementRatio := ((targetIncrement / increment) ln / self class blockSize) exp! !
 
@@ -4608,11 +4611,11 @@ reset
 	super reset.
 	phases atAllPut: 0.0! !
 
-!Supersaw methodsFor: 'controlling' stamp: 'len 9/May/2026 13:43:54'!
+!Supersaw methodsFor: 'controlling' stamp: 'len 11/May/2026 15:45:59'!
 update
 	| targetIncrement detune detune2 detune3 mix normalization |
 	super update.
-	targetIncrement := ((self get: #pitch) + note) semitonesToHertz / self class sampleRate.
+	targetIncrement := ((self get: #pitch) + note) noteToHertz / self class sampleRate.
 	increment ifNil: [increment := targetIncrement].
 	incrementRatio := ((targetIncrement / increment) ln / self class blockSize) exp.
 	detune := self get: #detune.
@@ -4635,11 +4638,11 @@ update
 	centerGain := centerGain * normalization.
 	sideGain := sideGain * normalization! !
 
-!Supersaw methodsFor: 'controlling' stamp: 'len 9/May/2026 13:44:00'!
+!Supersaw methodsFor: 'controlling' stamp: 'len 11/May/2026 15:45:59'!
 update2
 	| detune detune2 detune3 |
 	super update.
-	increment := ((self get: #pitch) + note) semitonesToHertz / self class sampleRate.
+	increment := ((self get: #pitch) + note) noteToHertz / self class sampleRate.
 	detune := (self get: #detune) / self class sampleRate.
 	detune2 := detune * 0.5826491486398412 "0.66 raisedTo: 1.3".
 	detune3 := detune * 0.23662908360881574 "0.33 raisedTo: 1.3".
@@ -4652,11 +4655,11 @@ update2
 		at: 6 put: increment + detune2;
 		at: 7 put: increment + detune! !
 
-!Supersaw methodsFor: 'controlling' stamp: 'len 9/May/2026 13:44:05'!
+!Supersaw methodsFor: 'controlling' stamp: 'len 11/May/2026 15:45:59'!
 update3
 	| detune mix normalization |
 	super update.
-	increment := ((self get: #pitch) + note) semitonesToHertz / self class sampleRate.
+	increment := ((self get: #pitch) + note) noteToHertz / self class sampleRate.
 	detune := self get: #detune.
 	"detune := DetuneCurveLUT at: (detune*1023.0 + 1.0) truncated."
 	mix := detune. "should use separate control #mix, but for now we just tie it to #detune"
@@ -4675,11 +4678,11 @@ update3
 	centerGain := centerGain * normalization.
 	sideGain := sideGain * normalization! !
 
-!Supersaw methodsFor: 'controlling' stamp: 'len 9/May/2026 13:44:10'!
+!Supersaw methodsFor: 'controlling' stamp: 'len 11/May/2026 15:45:59'!
 update4
 	| detune detune2 detune3 mix normalization |
 	super update.
-	increment := ((self get: #pitch) + note) semitonesToHertz / self class sampleRate.
+	increment := ((self get: #pitch) + note) noteToHertz / self class sampleRate.
 	detune := self get: #detune.
 	"detune := DetuneCurveLUT at: (detune*1023.0 + 1.0) truncated."
 	mix := detune. "should use separate control #mix, but for now we just tie it to #detune"
@@ -4775,11 +4778,11 @@ reset
 	super reset.
 	phases atAllPut: 0.0! !
 
-!TonewheelOrgan methodsFor: 'controlling' stamp: 'len 9/May/2026 13:44:22'!
+!TonewheelOrgan methodsFor: 'controlling' stamp: 'len 11/May/2026 15:45:59'!
 update
 	| f0 |
 	super update.
-	f0 := ((self get: #pitch) + note) semitonesToHertz.
+	f0 := ((self get: #pitch) + note) noteToHertz.
 	#(0.5 1.5 1.0 2.0 3.0 4.0 5.0 6.0 8.0) withIndexDo: [:each :i| frequencies at: i put: (self foldback: f0 * each) / self class sampleRate].
 	#('16''' '5¹/₃''' '8''' '4''' '2²/₃''' '2''' '1³/₅''' '1¹/₃''' '1''') withIndexDo: [:each :i| amplitudes at: i put: (self get: each)]! !
 
@@ -4860,11 +4863,11 @@ reset
 	phases atAllPut: 0.0.
 	filter reset! !
 
-!TransistorOrgan methodsFor: 'controlling' stamp: 'len 9/May/2026 13:44:33'!
+!TransistorOrgan methodsFor: 'controlling' stamp: 'len 11/May/2026 15:45:59'!
 update
 	| f0 r4 |
 	super update.
-	f0 := ((self get: #pitch) + note) semitonesToHertz / self class sampleRate.
+	f0 := ((self get: #pitch) + note) noteToHertz / self class sampleRate.
 	#(0.5 1.0 2.0 3.0 4.0 5.0 8.0) withIndexDo: [:each :i| frequencies at: i put: f0 * each].
 	r4 := self get: #'IV'. "maps to 2²/₃' , 2', 1³/₅' and 1'"
 	amplitudes
@@ -4924,11 +4927,11 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!VOSIM methodsFor: 'controlling' stamp: 'len 9/May/2026 13:44:37'!
+!VOSIM methodsFor: 'controlling' stamp: 'len 11/May/2026 15:45:59'!
 update
 	| f1 f2 vowelIndex |
 	super update.
-	carrierFrequency := ((self get: #pitch) + note) semitonesToHertz / self class sampleRate.
+	carrierFrequency := ((self get: #pitch) + note) noteToHertz / self class sampleRate.
 	carrierShape := self get: #shape.
 	vowelIndex := ((self get: #vowel) * 15.0 + 1.0).
 	f1 := #[240.0 235.0 390.0 370.0 610.0 585.0 850.0 820.0 750.0 700.0 600.0 500.0 460.0 360.0 300.0 250.0] atLinear: vowelIndex.
@@ -5001,7 +5004,7 @@ adjustVelocityBy: aNumber
 gateOff
 	sample ifNotNil: [sample gateOff]! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 9/May/2026 13:44:44'!
+!Multisample methodsFor: 'controlling' stamp: 'len 11/May/2026 15:45:59'!
 gateOn
 	| closestKey speedFactor samplesByVelocity |
 	sample ifNotNil: [(sample isUnreleased and: [self get: #legato]) ifTrue: [^ self]].
@@ -5012,7 +5015,7 @@ gateOn
 	sample controls at: #pitch put: (controls at: #pitch).
 	sample controls at: #speed put: (controls at: #speed).
 	sample controls at: #warp put: (controls at: #warp).
-	speedFactor := 60 semitonesToHertz / closestKey semitonesToHertz.
+	speedFactor := 60 noteToHertz / closestKey noteToHertz.
 	sample rate: sample rate * speedFactor.
 	sample setNote: note.
 	offset ifNotNil: [sample setOffset: offset].
@@ -5167,7 +5170,7 @@ loadBookerTFast
 				{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}]].
 	^ self new label: 'Booker T (Fast)'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:14:24'!
+!Multisample class methodsFor: 'library' stamp: 'len 11/May/2026 15:48:16'!
 loadChoirAah
 	| keymap |
 	keymap := Dictionary new.
@@ -5177,11 +5180,11 @@ loadChoirAah
 		filename := 'Choir Aah - ', noteName, '(L).wav'.
 		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Choir Aah Ouh' // filename.
 		buffer := reader leftSamples.
-		keymap at: noteName nameToSemitones put:
+		keymap at: noteName nameToNote put:
 			{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Choir Aah'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:14:24'!
+!Multisample class methodsFor: 'library' stamp: 'len 11/May/2026 15:48:16'!
 loadChoirOuh
 	| keymap oldAttack newAttack |
 	keymap := Dictionary new.
@@ -5198,11 +5201,11 @@ loadChoirOuh
 		1 to: newAttack do: [:i| buffer at: i put: (buffer at: i) * i asFloat / newAttack].
 		loopStart := reader loopStart - oldAttack.
 		loopEnd := reader loopEnd - oldAttack.
-		keymap at: noteName nameToSemitones put:
+		keymap at: noteName nameToNote put:
 			{Sample buffer: buffer rate: reader sampleRate loopStart: loopStart loopEnd: loopEnd}].
 	^ self new label: 'Choir Ouh'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:14:24'!
+!Multisample class methodsFor: 'library' stamp: 'len 11/May/2026 15:48:16'!
 loadDancePiano
 	"Salamander Dance Piano."
 	| keymap |
@@ -5214,7 +5217,7 @@ loadDancePiano
 		buffer := reader leftSamples.
 		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Sal House' // (filename, 'R.wav').
 		buffer += reader leftSamples.
-		keymap at: noteName nameToSemitones put:
+		keymap at: noteName nameToNote put:
 			{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Dance Piano'; keymap: keymap! !
 
@@ -5254,7 +5257,7 @@ loadFingerBass
 		keymap at: midiKey put: {Sample buffer: reader leftSamples rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Finger Bass'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:14:24'!
+!Multisample class methodsFor: 'library' stamp: 'len 11/May/2026 15:48:16'!
 loadFlute
 	"Iowa Flute with vibrato."
 	| keymap |
@@ -5264,7 +5267,7 @@ loadFlute
 		filename := 'Flute - Flute_vib_loud_', noteName, '.wav'.
 		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'MCO' // filename.
 		buffer := reader leftSamples.
-		keymap at: noteName nameToSemitones put:
+		keymap at: noteName nameToNote put:
 			{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Flute'; keymap: keymap! !
 
@@ -5321,7 +5324,7 @@ loadPopBass
 		keymap at: midiKey put: {Sample buffer: reader leftSamples rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Pop Bass'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:13:41'!
+!Multisample class methodsFor: 'library' stamp: 'len 11/May/2026 15:48:16'!
 loadSixStringSteelGuitar
 	| keymap |
 	keymap := Dictionary new.
@@ -5330,7 +5333,7 @@ loadSixStringSteelGuitar
 		filename := '6-Stg-Steel-Gtr-', noteName, '.wav'.
 		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / '6-String Steel Guitar' // filename.
 		buffer := reader leftSamples.
-		keymap at: noteName nameToSemitones put:
+		keymap at: noteName nameToNote put:
 			{Sample buffer: buffer rate: reader sampleRate}].
 	^ self new label: '6-String Steel Guitar'; keymap: keymap! !
 
@@ -5345,7 +5348,7 @@ loadSlapBass
 		keymap at: midiKey put: {Sample buffer: reader leftSamples rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Slap Bass'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:14:24'!
+!Multisample class methodsFor: 'library' stamp: 'len 11/May/2026 15:48:16'!
 loadSquireBass
 	"Fender Squire Bass."
 	| keymap |
@@ -5355,11 +5358,11 @@ loadSquireBass
 		filename := 'squirebass - ', noteName, '.wav'.
 		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Fender Squire Bass' // filename.
 		buffer := reader leftSamples.
-		keymap at: (#('E1' 'A1' 'D2' 'E2' 'G2' 'A2' 'D3' 'G3') at: i) nameToSemitones put:
+		keymap at: (#('E1' 'A1' 'D2' 'E2' 'G2' 'A2' 'D3' 'G3') at: i) nameToNote put:
 			{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Squire Bass'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 12/Apr/2026 22:13:21'!
+!Multisample class methodsFor: 'library' stamp: 'len 11/May/2026 15:48:16'!
 loadStringEnsemble
 	| keymap |
 	keymap := Dictionary new.
@@ -5368,7 +5371,7 @@ loadStringEnsemble
 		filename := 'String ensemble - String ', noteName, '.wav'.
 		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'String Ensemble' // filename.
 		buffer := reader leftSamples.
-		keymap at: noteName nameToSemitones put:
+		keymap at: noteName nameToNote put:
 			{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'String Ensemble'; keymap: keymap! !
 
@@ -5385,7 +5388,7 @@ loadTrombone
 			{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Trombone'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:14:24'!
+!Multisample class methodsFor: 'library' stamp: 'len 11/May/2026 15:48:16'!
 loadTrumpet
 	"Jazz Trumpet."
 	| keymap |
@@ -5395,11 +5398,11 @@ loadTrumpet
 		filename := 'Jazz Trumpet ', noteName, '.wav'.
 		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Jazz Trumpet' // filename.
 		buffer := reader leftSamples.
-		keymap at: noteName nameToSemitones put:
+		keymap at: noteName nameToNote put:
 			{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Trumpet'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:13:48'!
+!Multisample class methodsFor: 'library' stamp: 'len 11/May/2026 15:48:16'!
 loadTwoToneHouseOrgan
 	| keymap |
 	keymap := Dictionary new.
@@ -5408,7 +5411,7 @@ loadTwoToneHouseOrgan
 		filename := noteName, '.wav'.
 		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Two Tone House Organ' // filename.
 		buffer := reader leftSamples + reader rightSamples.
-		keymap at: noteName nameToSemitones put:
+		keymap at: noteName nameToNote put:
 			{Sample buffer: buffer rate: reader sampleRate}].
 	^ self new label: 'Two-Tone House Organ'; keymap: keymap! !
 
@@ -5779,11 +5782,11 @@ reset
 	phase := 0.0.
 	ticksToUpdate := 0! !
 
-!Wavetable methodsFor: 'controlling' stamp: 'len 9/May/2026 13:53:16'!
+!Wavetable methodsFor: 'controlling' stamp: 'len 11/May/2026 15:45:59'!
 update
 	| targetIncrement maxHarmonic p i f start |
 	super update.
-	targetIncrement := ((self get: #pitch) + note) semitonesToHertz / self class sampleRate.
+	targetIncrement := ((self get: #pitch) + note) noteToHertz / self class sampleRate.
 	increment ifNil: [increment := targetIncrement].
 	incrementRatio := ((targetIncrement / increment) ln / self class blockSize) exp.
 	position := self get: #position.
@@ -12606,19 +12609,18 @@ stepTime
 wantsSteps
 	^ true! !
 
-!OscilloscopeMorph methodsFor: 'drawing' stamp: 'len 11/May/2026 01:09:20'!
+!OscilloscopeMorph methodsFor: 'drawing' stamp: 'len 11/May/2026 15:55:45'!
 drawOn: aCanvas
-	| step buf x y h |
+	| step x y h |
 	step := self morphWidth / buffer size.
-	buf := buffer copy.
 	h := self morphHeight / 2.0.
 	x := 0.
-	y := 1.0 - (buf at: 1) * h.
+	y := 1.0 - (buffer at: 1) * h.
 	aCanvas strokeWidth: 1.5 color: color do:
 		[aCanvas moveTo: x@y.
-		2 to: buf size do: [:i|
+		2 to: buffer size do: [:i|
 			x := x + step.
-			y := 1.0 - (buf at: i) * h.
+			y := 1.0 - (buffer at: i) * h.
 			aCanvas lineTo: x@y]]! !
 
 !OscilloscopeMorph methodsFor: 'drawing' stamp: 'len 23/Feb/2026 00:34:49'!
@@ -12635,11 +12637,11 @@ color: aColor
 	color := aColor.
 	self redrawNeeded! !
 
-!OscilloscopeMorph methodsFor: 'initialization' stamp: 'len 9/Feb/2026 01:07:22'!
+!OscilloscopeMorph methodsFor: 'initialization' stamp: 'len 11/May/2026 15:57:32'!
 defaultExtent
-	^`144@96`! !
+	^ `144@96`! !
 
-!OscilloscopeMorph methodsFor: 'initialization' stamp: 'len 3/Apr/2026 00:27:01'!
+!OscilloscopeMorph methodsFor: 'initialization' stamp: 'len 11/May/2026 16:01:15'!
 initialize
 	super initialize.
 	color := PatchMorph waveformColor! !
@@ -15241,10 +15243,10 @@ camelSeparatedWords
 	^ w contents
 ! !
 
-!CharacterSequence methodsFor: '*signals' stamp: 'len 15/Feb/2026 23:05:34'!
-nameToSemitones
+!CharacterSequence methodsFor: '*signals' stamp: 'len 11/May/2026 15:48:30'!
+nameToNote
 "
-	(0 to: 127) allSatisfy: [:i| i semitonesToName nameToSemitones = i]
+	(0 to: 127) allSatisfy: [:i| i noteToName nameToNote = i]
 "
 	| answer |
 	answer := #(60 62 64 65 67 69 71) at: ('CDEFGAB' indexOf: self first asUppercase).
@@ -15283,8 +15285,8 @@ hertzPrintString
 	self < 1000.0 ifTrue: [^ self asInteger printString, ' Hz'].
 	^ ((self / 1000.0) printStringFractionDigits: 1), ' kHz'! !
 
-!Number methodsFor: '*signals' stamp: 'len 22/Oct/2025 15:24:00'!
-hertzToSemitones
+!Number methodsFor: '*signals' stamp: 'len 11/May/2026 15:46:53'!
+hertzToNote
 	^ 12.0 * (self / 440.0 log: 2) + 69.0! !
 
 !Number methodsFor: '*signals' stamp: 'len 17/Oct/2025 21:20:00'!
@@ -15307,6 +15309,18 @@ linearToNormalizedLog
 	"Map linear amplitude to a value between 0 and 1 in log scale."
 	^ ((self abs + 1.0e-8) log * 20.0 + 80.0) / 80.0 min: 1.0 max: 0.0! !
 
+!Number methodsFor: '*signals' stamp: 'len 11/May/2026 15:45:59'!
+noteToHertz
+	^ 440.0 * (2.0 raisedTo: self - 69.0 / 12.0)! !
+
+!Number methodsFor: '*signals' stamp: 'len 11/May/2026 15:46:33'!
+noteToName
+	"Return a note name corresponding to the closest MIDI key.
+	The answer is always 3 characters long."
+	| midiKey |
+	midiKey := self rounded.
+	^ (#('C‐' 'C♯' 'D‐' 'D♯' 'E‐' 'F‐' 'F♯' 'G‐' 'G♯' 'A‐' 'A♯' 'B‐') at: (midiKey \\ 12) + 1) , (#('N' '0' '1' '2' '3' '4' '5' '6' '7' '8' '9') at: (midiKey // 12) + 1)! !
+
 !Number methodsFor: '*signals' stamp: 'len 13/Oct/2025 15:56:00'!
 ratioToCents
 	^ self ratioToSemitones * 100.0! !
@@ -15326,18 +15340,6 @@ semitonesOffsetPrintString
 	self > 0.001 ifTrue: [^ '+', (self printStringFractionDigits: 2), ' st'].
 	self < -0.001 ifTrue: [^ '-', (self abs printStringFractionDigits: 2), ' st'].
 	^ '+0.00 st'! !
-
-!Number methodsFor: '*signals' stamp: 'len 22/Oct/2025 15:23:00'!
-semitonesToHertz
-	^ 440.0 * (2.0 raisedTo: self - 69.0 / 12.0)! !
-
-!Number methodsFor: '*signals' stamp: 'len 6/Jan/2026 17:17:12'!
-semitonesToName
-	"Return a note name corresponding to the closest MIDI key.
-	The answer is always 3 characters long."
-	| midiKey |
-	midiKey := self rounded.
-	^ (#('C‐' 'C♯' 'D‐' 'D♯' 'E‐' 'F‐' 'F♯' 'G‐' 'G♯' 'A‐' 'A♯' 'B‐') at: (midiKey \\ 12) + 1) , (#('N' '0' '1' '2' '3' '4' '5' '6' '7' '8' '9') at: (midiKey // 12) + 1)! !
 
 !Number methodsFor: '*signals' stamp: 'len 13/Oct/2025 15:54:00'!
 semitonesToRatio

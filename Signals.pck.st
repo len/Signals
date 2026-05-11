@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 11 May 2026 at 8:34:50 pm'!
+'From Cuis7.7 [latest update: #7880] on 12 May 2026 at 4:39:14 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 562!
+!provides: 'Signals' 1 563!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1112,6 +1112,16 @@ ControlMorph subclass: #KnobControlMorph
 	category: 'Signals-Morphic-Controls'!
 !classDefinition: 'KnobControlMorph class' category: #'Signals-Morphic-Controls'!
 KnobControlMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #OscilloscopeControlMorph category: #'Signals-Morphic-Controls'!
+ControlMorph subclass: #OscilloscopeControlMorph
+	instanceVariableNames: 'buffer'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'OscilloscopeControlMorph class' category: #'Signals-Morphic-Controls'!
+OscilloscopeControlMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #PhaseOffsetControlMorph category: #'Signals-Morphic-Controls'!
@@ -8861,23 +8871,17 @@ tick
 			readPosition := i - 1.
 			^ self scan]]! !
 
-!Oscilloscope methodsFor: 'ui' stamp: 'len 11/May/2026 00:48:17'!
-panel
-	^ ControlPanel new
-		addTextualControl: (controls at: #frequency)! !
-
-!Oscilloscope methodsFor: 'ui' stamp: 'len 11/May/2026 00:47:42'!
+!Oscilloscope methodsFor: 'ui' stamp: 'len 12/May/2026 01:48:50'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
-	answer flap addMorph: self panel.
 	answer addAudioInput: #setInput:.
 	^ answer! !
 
-!Oscilloscope methodsFor: 'ui' stamp: 'len 11/May/2026 00:46:59'!
+!Oscilloscope methodsFor: 'ui' stamp: 'len 12/May/2026 01:42:06'!
 screen
-	^ OscilloscopeMorph new buffer: buffer! !
+	^ OscilloscopeControlMorph new control: (controls at: #frequency); buffer: buffer! !
 
 !Oscilloscope methodsFor: 'wiring' stamp: 'len 3/Apr/2026 00:17:56'!
 setInput: aBuffer
@@ -10590,9 +10594,10 @@ requiresVectorCanvas
 balloonText
 	^ control printedBaseValueWithLabel! !
 
-!ControlMorph methodsFor: 'initialization' stamp: 'len 30/Sep/2025 22:36:00'!
+!ControlMorph methodsFor: 'initialization' stamp: 'len 12/May/2026 01:40:13'!
 color: aColor
-	color := aColor! !
+	color := aColor.
+	self redrawNeeded! !
 
 !ControlMorph methodsFor: 'initialization' stamp: 'len 1/Dec/2025 15:21:00'!
 control: aControl
@@ -10693,6 +10698,45 @@ drawOn: aCanvas
 		[control isBipolar
 			ifTrue: [aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: Float pi sweep: Float pi * 1.6 * (vMod - 0.5)]
 			ifFalse: [aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: Float pi * 0.2 sweep: Float pi * 1.6 * vMod]]! !
+
+!OscilloscopeControlMorph methodsFor: 'drawing' stamp: 'len 12/May/2026 01:39:09'!
+drawOn: aCanvas
+	| step x y h |
+	step := self morphWidth / buffer size.
+	h := self morphHeight / 2.0.
+	x := 0.
+	y := 1.0 - (buffer at: 1) * h.
+	aCanvas strokeWidth: 1.5 color: color do:
+		[aCanvas moveTo: x@y.
+		2 to: buffer size do: [:i|
+			x := x + step.
+			y := 1.0 - (buffer at: i) * h.
+			aCanvas lineTo: x@y]]! !
+
+!OscilloscopeControlMorph methodsFor: 'initialization' stamp: 'len 12/May/2026 01:39:09'!
+buffer: aBuffer
+	buffer := aBuffer.
+	self redrawNeeded! !
+
+!OscilloscopeControlMorph methodsFor: 'initialization' stamp: 'len 12/May/2026 01:41:00'!
+defaultColor
+	^​ PatchMorph waveformColor! !
+
+!OscilloscopeControlMorph methodsFor: 'initialization' stamp: 'len 12/May/2026 01:39:09'!
+defaultExtent
+	^ `144@96`! !
+
+!OscilloscopeControlMorph methodsFor: 'stepping' stamp: 'len 12/May/2026 01:39:09'!
+step
+	self redrawNeeded! !
+
+!OscilloscopeControlMorph methodsFor: 'stepping' stamp: 'len 12/May/2026 01:39:09'!
+stepTime
+	^ 100! !
+
+!OscilloscopeControlMorph methodsFor: 'stepping' stamp: 'len 12/May/2026 01:39:09'!
+wantsSteps
+	^ true! !
 
 !PhaseOffsetControlMorph methodsFor: 'initialization' stamp: 'len 25/Apr/2026 15:37:01'!
 defaultExtent

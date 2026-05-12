@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 12 May 2026 at 4:39:14 am'!
+'From Cuis7.7 [latest update: #7880] on 12 May 2026 at 5:31:00 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 563!
+!provides: 'Signals' 1 564!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1144,16 +1144,6 @@ ControlMorph subclass: #PulseWidthControlMorph
 PulseWidthControlMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #RollingWaveControlMorph category: #'Signals-Morphic-Controls'!
-ControlMorph subclass: #RollingWaveControlMorph
-	instanceVariableNames: 'samples currentPosition bipolar'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Controls'!
-!classDefinition: 'RollingWaveControlMorph class' category: #'Signals-Morphic-Controls'!
-RollingWaveControlMorph class
-	instanceVariableNames: ''!
-
 !classDefinition: #SliderControlMorph category: #'Signals-Morphic-Controls'!
 ControlMorph subclass: #SliderControlMorph
 	instanceVariableNames: ''
@@ -1162,6 +1152,16 @@ ControlMorph subclass: #SliderControlMorph
 	category: 'Signals-Morphic-Controls'!
 !classDefinition: 'SliderControlMorph class' category: #'Signals-Morphic-Controls'!
 SliderControlMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #StripChartControlMorph category: #'Signals-Morphic-Controls'!
+ControlMorph subclass: #StripChartControlMorph
+	instanceVariableNames: 'buffer writePosition readPosition downsampleFactor bipolar'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'StripChartControlMorph class' category: #'Signals-Morphic-Controls'!
+StripChartControlMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #SupersawControlMorph category: #'Signals-Morphic-Controls'!
@@ -1274,16 +1274,6 @@ XYControlMorph subclass: #LFOShapeOffsetControlMorph
 LFOShapeOffsetControlMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #RollingWaveXYControlMorph category: #'Signals-Morphic-Controls'!
-XYControlMorph subclass: #RollingWaveXYControlMorph
-	instanceVariableNames: 'samples currentPosition color bipolar'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Controls'!
-!classDefinition: 'RollingWaveXYControlMorph class' category: #'Signals-Morphic-Controls'!
-RollingWaveXYControlMorph class
-	instanceVariableNames: ''!
-
 !classDefinition: #StereoMatrixControlMorph category: #'Signals-Morphic-Controls'!
 XYControlMorph subclass: #StereoMatrixControlMorph
 	instanceVariableNames: 'midColor sideColor'
@@ -1292,6 +1282,16 @@ XYControlMorph subclass: #StereoMatrixControlMorph
 	category: 'Signals-Morphic-Controls'!
 !classDefinition: 'StereoMatrixControlMorph class' category: #'Signals-Morphic-Controls'!
 StereoMatrixControlMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #StripChartXYControlMorph category: #'Signals-Morphic-Controls'!
+XYControlMorph subclass: #StripChartXYControlMorph
+	instanceVariableNames: 'buffer writePosition readPosition downsampleFactor bipolar color'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'StripChartXYControlMorph class' category: #'Signals-Morphic-Controls'!
+StripChartXYControlMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #VariableWaveXYControlMorph category: #'Signals-Morphic-Controls'!
@@ -1464,16 +1464,6 @@ BoxMorph subclass: #RollingMeterMorph
 RollingMeterMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #RollingWaveMorph category: #'Signals-Morphic-Widgets'!
-BoxMorph subclass: #RollingWaveMorph
-	instanceVariableNames: 'samples currentPosition color bipolar'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Widgets'!
-!classDefinition: 'RollingWaveMorph class' category: #'Signals-Morphic-Widgets'!
-RollingWaveMorph class
-	instanceVariableNames: ''!
-
 !classDefinition: #SampleWaveformMorph category: #'Signals-Morphic-Widgets'!
 BoxMorph subclass: #SampleWaveformMorph
 	instanceVariableNames: 'sample color image lastPosition'
@@ -1492,6 +1482,16 @@ BoxMorph subclass: #SpectrumMorph
 	category: 'Signals-Morphic-Widgets'!
 !classDefinition: 'SpectrumMorph class' category: #'Signals-Morphic-Widgets'!
 SpectrumMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #StripChartMorph category: #'Signals-Morphic-Widgets'!
+BoxMorph subclass: #StripChartMorph
+	instanceVariableNames: 'buffer writePosition readPosition downsampleFactor color bipolar'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Widgets'!
+!classDefinition: 'StripChartMorph class' category: #'Signals-Morphic-Widgets'!
+StripChartMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #WaterfallMorph category: #'Signals-Morphic-Widgets'!
@@ -3670,10 +3670,10 @@ patchable
 		addAudioOutput: #setOutputR: label: 'R';
 		yourself! !
 
-!TapeDrift methodsFor: 'ui' stamp: 'len 5/May/2026 16:53:00'!
+!TapeDrift methodsFor: 'ui' stamp: 'len 12/May/2026 15:19:36'!
 screen
 	| answer |
-	answer := RollingWaveXYControlMorph new morphExtent: 96 @ 32; controlX: (controls at: #wowRate); controlY: (controls at: #flutterRate).
+	answer := StripChartXYControlMorph new morphExtent: 96 @ 32; controlX: (controls at: #wowRate); controlY: (controls at: #flutterRate).
 	self when: #drift: send: #addSample: to: answer.
 	^ answer! !
 
@@ -4290,11 +4290,12 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!Operator methodsFor: 'ui' stamp: 'len 30/Apr/2026 17:49:47'!
+!Operator methodsFor: 'ui' stamp: 'len 12/May/2026 14:26:33'!
 screen
 	^​ VariableWaveXYControlMorph new
 		controlX: (controls at: #ratio);
 		controlY: (controls at: #level);
+		setProperty: #invertsX toValue: true;
 		waveBlock: [:x :r :g| (x * r * 4.0 * Float twoPi) sin * g]! !
 
 !Operator methodsFor: 'wiring' stamp: 'len 22/Apr/2026 16:18:01'!
@@ -6356,10 +6357,10 @@ patchable
 	answer addControlOutput.
 	^ answer! !
 
-!EG methodsFor: 'ui' stamp: 'len 23/Apr/2026 20:10:14'!
+!EG methodsFor: 'ui' stamp: 'len 12/May/2026 15:19:12'!
 screen
 	| answer |
-	answer := RollingWaveMorph new bipolar: false.
+	answer := StripChartMorph new bipolar: false.
 	self when: #output: send: #addSample: to: answer.
 	^ answer! !
 
@@ -6658,10 +6659,10 @@ patchable
 		addControlOutput.
 	^ answer! !
 
-!EnvelopeFollower methodsFor: 'ui' stamp: 'len 23/Apr/2026 20:10:14'!
+!EnvelopeFollower methodsFor: 'ui' stamp: 'len 12/May/2026 15:19:12'!
 screen
 	| answer |
-	answer := RollingWaveMorph new bipolar: false.
+	answer := StripChartMorph new bipolar: false.
 	self when: #output: send: #addSample: to: answer.
 	^ answer! !
 
@@ -6813,10 +6814,10 @@ patchable
 		addControlOutput.
 	^ answer! !
 
-!LFO methodsFor: 'ui' stamp: 'len 1/May/2026 01:32:17'!
+!LFO methodsFor: 'ui' stamp: 'len 12/May/2026 15:20:02'!
 screen
 	| answer |
-	answer := RollingWaveControlMorph new control: (controls at: #speed); bipolar: (controls at: #bipolar) value.
+	answer := StripChartControlMorph new control: (controls at: #speed); bipolar: (controls at: #bipolar) value.
 	(controls at: #bipolar) when: #changed: send: #bipolar: to: answer.
 	self when: #output: send: #addSample: to: answer.
 	^ answer! !
@@ -7088,10 +7089,10 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!Flanger methodsFor: 'ui' stamp: 'len 30/Apr/2026 18:00:30'!
+!Flanger methodsFor: 'ui' stamp: 'len 12/May/2026 15:19:36'!
 screen
 	| answer |
-	answer := RollingWaveXYControlMorph new morphExtent: 96 @ 32; controlX: (controls at: #speed); controlY: (controls at: #depth).
+	answer := StripChartXYControlMorph new morphExtent: 96 @ 32; controlX: (controls at: #speed); controlY: (controls at: #depth).
 	self when: #lfo: send: #addSample: to: answer.
 	^ answer! !
 
@@ -7163,10 +7164,10 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!Phaser methodsFor: 'ui' stamp: 'len 30/Apr/2026 17:58:45'!
+!Phaser methodsFor: 'ui' stamp: 'len 12/May/2026 15:19:36'!
 screen
 	| answer |
-	answer := RollingWaveXYControlMorph new morphExtent: 96 @ 32; controlX: (controls at: #speed); controlY: (controls at: #depth).
+	answer := StripChartXYControlMorph new morphExtent: 96 @ 32; controlX: (controls at: #speed); controlY: (controls at: #depth).
 	self when: #lfo: send: #addSample: to: answer.
 	^ answer! !
 
@@ -7408,10 +7409,10 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!Vibrato methodsFor: 'ui' stamp: 'len 30/Apr/2026 17:57:55'!
+!Vibrato methodsFor: 'ui' stamp: 'len 12/May/2026 15:19:36'!
 screen
 	| answer |
-	answer := RollingWaveXYControlMorph new morphExtent: 96 @ 32; controlX: (controls at: #speed); controlY: (controls at: #depth).
+	answer := StripChartXYControlMorph new morphExtent: 96 @ 32; controlX: (controls at: #speed); controlY: (controls at: #depth).
 	self when: #lfo: send: #addSample: to: answer.
 	^ answer! !
 
@@ -10769,52 +10770,6 @@ initialize
 	super initialize.
 	color := PatchMorph waveformColor! !
 
-!RollingWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 1/May/2026 01:31:08'!
-addSample: aNumber
-	| x |
-	currentPosition := currentPosition < samples size ifTrue: [currentPosition + 1] ifFalse: [1].
-	x := aNumber.
-	bipolar ifTrue: [x := x * 0.5 + 0.5].
-	x := x min: 1.0 max: 0.0.
-	samples at: currentPosition put: x.
-	self redrawNeeded! !
-
-!RollingWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 1/May/2026 01:31:13'!
-bipolar: aBoolean
-	bipolar := aBoolean.
-	self redrawNeeded! !
-
-!RollingWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 1/May/2026 01:31:22'!
-defaultExtent
-	^ `128 @ 64`! !
-
-!RollingWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 1/May/2026 01:31:30'!
-drawOn: aCanvas
-	| step x y h pos delta y0 |
-	delta := 20.
-	step := self morphWidth / (samples size - delta) * 5.
-	(pos := currentPosition + delta) > samples size ifTrue: [pos := pos - samples size].
-	h := self morphHeight.
-	x := 0.
-	y := 1.0 - (samples at: pos) * h.
-	y0 := bipolar ifTrue: [h / 2.0] ifFalse: [h].
-	aCanvas strokeWidth: 1.5 color: Color veryLightGray dashedStrokeBits: 2r1110000 do:
-		[aCanvas moveTo: 0 @ y0; lineTo: self morphWidth @ y0].
-	aCanvas strokeWidth: 2.0 color: color do:
-		[aCanvas moveTo: x @ y.
-		5 - (pos \\ 5) to: samples size - delta - 5 by: 5 do: [:i|
-			x := x + step.
-			y := 1.0 - (samples at: pos + i \\ samples size + 1) * h.
-			aCanvas lineTo: x @ y]]! !
-
-!RollingWaveControlMorph methodsFor: 'as yet unclassified' stamp: 'len 1/May/2026 01:31:42'!
-initialize
-	super initialize.
-	color := PatchMorph waveformColor3.
-	samples := Float32Array new: 64*5.
-	currentPosition := 1.
-	bipolar := true! !
-
 !SliderControlMorph methodsFor: 'drawing' stamp: 'len 13/Feb/2026 19:59:57'!
 drawHorizontalOn: aCanvas
 	| v vMod w h basePos modulatedPos |
@@ -10870,6 +10825,61 @@ transpose
 !SliderControlMorph methodsFor: 'testing' stamp: 'len 20/Jan/2026 14:44:53'!
 isHorizontal
 	^ extent x > extent y! !
+
+!StripChartControlMorph methodsFor: 'accessing' stamp: 'len 12/May/2026 14:59:43'!
+addSample: aNumber
+	| x |
+	(readPosition := readPosition + 1) > downsampleFactor ifTrue: [readPosition := 1].
+	readPosition = 1 ifFalse: [^ self].
+	x := aNumber.
+	bipolar ifTrue: [x := x * 0.5 + 0.5].
+	x := x min: 1.0 max: 0.0.
+	writePosition := writePosition < buffer size ifTrue: [writePosition + 1] ifFalse: [1].
+	buffer at: writePosition put: x.
+	self redrawNeeded! !
+
+!StripChartControlMorph methodsFor: 'accessing' stamp: 'len 12/May/2026 14:59:43'!
+bipolar: aBoolean
+	bipolar := aBoolean.
+	self redrawNeeded! !
+
+!StripChartControlMorph methodsFor: 'initialization' stamp: 'len 12/May/2026 14:59:43'!
+defaultExtent
+	^`128 @ 64`! !
+
+!StripChartControlMorph methodsFor: 'initialization' stamp: 'len 12/May/2026 14:59:43'!
+initialize
+	super initialize.
+	color := PatchMorph waveformColor3.
+	buffer := Float32Array new: 64.
+	writePosition := 1.
+	readPosition := 0.
+	bipolar := true.
+	downsampleFactor := 5! !
+
+!StripChartControlMorph methodsFor: 'drawing' stamp: 'len 12/May/2026 15:30:21'!
+drawOn: aCanvas
+	| scale step x y h offset slack y0 |
+	scale := aCanvas currentTransformation scale.
+	slack := 5.
+	step := self morphWidth - 2.0 / (buffer size - slack).
+	(offset := writePosition + slack - 1) > buffer size ifTrue: [offset := offset - buffer size].
+	h := self morphHeight.
+	x := 1.0.
+	y := 1.0 - (buffer at: offset) * h.
+	y0 := bipolar ifTrue: [h / 2.0] ifFalse: [h].
+	aCanvas strokeWidth: 1.5 / scale color: Color veryLightGray dashedStrokeBits: 2r1110000 do:
+		[aCanvas moveTo: 0 @ y0; lineTo: self morphWidth @ y0].
+	aCanvas strokeWidth: 2.0 / scale color: color do:
+		[aCanvas moveTo: x @ y.
+		1 to: buffer size - slack do: [:i|
+			x := x + step.
+			y := 1.0 - (buffer at: offset + i \\ buffer size + 1) * h.
+			aCanvas lineTo: x @ y]]! !
+
+!StripChartControlMorph methodsFor: 'drawing' stamp: 'len 12/May/2026 14:59:43'!
+requiresVectorCanvas
+	^ true! !
 
 !SupersawControlMorph methodsFor: 'initialization' stamp: 'len 2/Dec/2025 18:31:00'!
 color2: aColor
@@ -11456,15 +11466,15 @@ controlY: aControl
 defaultExtent
 	^ `128 @ 64`! !
 
-!XYControlMorph methodsFor: 'private' stamp: 'len 28/Apr/2026 17:35:27'!
+!XYControlMorph methodsFor: 'private' stamp: 'len 12/May/2026 14:25:03'!
 invertsX
 	"Answer true if we invert the horizontal direction in this control."
-	^ false! !
+	^ self valueOfProperty: #invertsX ifAbsent: [false]! !
 
-!XYControlMorph methodsFor: 'private' stamp: 'len 28/Apr/2026 17:35:36'!
+!XYControlMorph methodsFor: 'private' stamp: 'len 12/May/2026 14:25:23'!
 invertsY
 	"Answer true if we invert the vertical direction in this control."
-	^ false! !
+	^ self valueOfProperty: #invertsY ifAbsent: [false]! !
 
 !FilterControlMorph methodsFor: 'drawing' stamp: 'len 12/Feb/2026 05:45:25'!
 drawBPOn: aCanvas frequency: freq bandwidth: bandwidth color: curveColor fillColor: fillColor
@@ -11733,52 +11743,6 @@ wantsSteps
 invertsX
 	^ true! !
 
-!RollingWaveXYControlMorph methodsFor: 'drawing' stamp: 'len 30/Apr/2026 17:51:18'!
-drawOn: aCanvas
-	| step x y h pos delta y0 |
-	delta := 20.
-	step := self morphWidth / (samples size - delta) * 5.
-	(pos := currentPosition + delta) > samples size ifTrue: [pos := pos - samples size].
-	h := self morphHeight.
-	x := 0.
-	y := 1.0 - (samples at: pos) * h.
-	y0 := bipolar ifTrue: [h / 2.0] ifFalse: [h].
-	aCanvas strokeWidth: 1.5 color: Color veryLightGray dashedStrokeBits: 2r1110000 do:
-		[aCanvas moveTo: 0 @ y0; lineTo: self morphWidth @ y0].
-	aCanvas strokeWidth: 2.0 color: color do:
-		[aCanvas moveTo: x @ y.
-		5 - (pos \\ 5) to: samples size - delta - 5 by: 5 do: [:i|
-			x := x + step.
-			y := 1.0 - (samples at: pos + i \\ samples size + 1) * h.
-			aCanvas lineTo: x @ y]]! !
-
-!RollingWaveXYControlMorph methodsFor: 'initialization' stamp: 'len 30/Apr/2026 17:49:29'!
-defaultExtent
-	^ `128 @ 64`! !
-
-!RollingWaveXYControlMorph methodsFor: 'initialization' stamp: 'len 30/Apr/2026 18:03:11'!
-initialize
-	super initialize.
-	color := PatchMorph waveformColor3.
-	samples := Float32Array new: 64*5.
-	currentPosition := 1.
-	bipolar := true! !
-
-!RollingWaveXYControlMorph methodsFor: 'private' stamp: 'len 30/Apr/2026 17:53:38'!
-addSample: aNumber
-	| x |
-	currentPosition := currentPosition < samples size ifTrue: [currentPosition + 1] ifFalse: [1].
-	x := aNumber.
-	bipolar ifTrue: [x := x * 0.5 + 0.5].
-	x := x min: 1.0 max: 0.0.
-	samples at: currentPosition put: x.
-	self redrawNeeded! !
-
-!RollingWaveXYControlMorph methodsFor: 'private' stamp: 'len 30/Apr/2026 18:46:46'!
-bipolar: aBoolean
-	bipolar := aBoolean.
-	self redrawNeeded! !
-
 !StereoMatrixControlMorph methodsFor: 'initialization' stamp: 'len 26/Apr/2026 00:23:46'!
 balance: aControl
 	self controlY: aControl! !
@@ -11811,6 +11775,65 @@ drawOn: aCanvas
 	aCanvas
 		fillRectangle: (m0 @ 0.0 extent: extent x / 2.0 @ extent y) color: (midColor alpha: 0.5 * balance + 0.5);
 		fillRectangle: (s0 @ 0.0 extent: extent x / 2.0 @ extent y) color: (sideColor alpha: 1.0 - (0.5 * balance + 0.5))! !
+
+!StripChartXYControlMorph methodsFor: 'accessing' stamp: 'len 12/May/2026 15:03:29'!
+addSample: aNumber
+	| x |
+	(readPosition := readPosition + 1) > downsampleFactor ifTrue: [readPosition := 1].
+	readPosition = 1 ifFalse: [^ self].
+	x := aNumber.
+	bipolar ifTrue: [x := x * 0.5 + 0.5].
+	x := x min: 1.0 max: 0.0.
+	writePosition := writePosition < buffer size ifTrue: [writePosition + 1] ifFalse: [1].
+	buffer at: writePosition put: x.
+	self redrawNeeded! !
+
+!StripChartXYControlMorph methodsFor: 'accessing' stamp: 'len 12/May/2026 15:03:29'!
+bipolar: aBoolean
+	bipolar := aBoolean.
+	self redrawNeeded! !
+
+!StripChartXYControlMorph methodsFor: 'accessing' stamp: 'len 12/May/2026 15:04:18'!
+color: aColor
+	color := aColor.
+	self redrawNeeded! !
+
+!StripChartXYControlMorph methodsFor: 'initialization' stamp: 'len 12/May/2026 15:03:29'!
+defaultExtent
+	^`128 @ 64`! !
+
+!StripChartXYControlMorph methodsFor: 'initialization' stamp: 'len 12/May/2026 15:03:29'!
+initialize
+	super initialize.
+	color := PatchMorph waveformColor3.
+	buffer := Float32Array new: 64.
+	writePosition := 1.
+	readPosition := 0.
+	bipolar := true.
+	downsampleFactor := 5! !
+
+!StripChartXYControlMorph methodsFor: 'drawing' stamp: 'len 12/May/2026 15:03:29'!
+drawOn: aCanvas
+	| step x y h offset slack y0 |
+	slack := 5.
+	step := self morphWidth - 2.0 / (buffer size - slack).
+	(offset := writePosition + slack - 1) > buffer size ifTrue: [offset := offset - buffer size].
+	h := self morphHeight.
+	x := 1.0.
+	y := 1.0 - (buffer at: offset) * h.
+	y0 := bipolar ifTrue: [h / 2.0] ifFalse: [h].
+	aCanvas strokeWidth: 1.5 color: Color veryLightGray dashedStrokeBits: 2r1110000 do:
+		[aCanvas moveTo: 0 @ y0; lineTo: self morphWidth @ y0].
+	aCanvas strokeWidth: 2.0 color: color do:
+		[aCanvas moveTo: x @ y.
+		1 to: buffer size - slack do: [:i|
+			x := x + step.
+			y := 1.0 - (buffer at: offset + i \\ buffer size + 1) * h.
+			aCanvas lineTo: x @ y]]! !
+
+!StripChartXYControlMorph methodsFor: 'drawing' stamp: 'len 12/May/2026 15:03:29'!
+requiresVectorCanvas
+	^ true! !
 
 !VariableWaveXYControlMorph methodsFor: 'drawing' stamp: 'len 1/May/2026 22:03:56'!
 drawOn: aCanvas
@@ -12838,61 +12861,6 @@ stepTime
 wantsSteps
 	^ true! !
 
-!RollingWaveMorph methodsFor: 'accessing' stamp: 'len 30/Apr/2026 20:26:49'!
-addSample: aNumber
-	| x |
-	currentPosition := currentPosition < samples size ifTrue: [currentPosition + 1] ifFalse: [1].
-	x := aNumber.
-	bipolar ifTrue: [x := x * 0.5 + 0.5].
-	x := x min: 1.0 max: 0.0.
-	samples at: currentPosition put: x.
-	self redrawNeeded! !
-
-!RollingWaveMorph methodsFor: 'accessing' stamp: 'len 30/Apr/2026 18:46:54'!
-bipolar: aBoolean
-	bipolar := aBoolean.
-	self redrawNeeded! !
-
-!RollingWaveMorph methodsFor: 'accessing' stamp: 'len 23/Feb/2026 00:35:04'!
-color: aColor
-	color := aColor.
-	self redrawNeeded! !
-
-!RollingWaveMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:26:03'!
-defaultExtent
-	^`128 @ 64`! !
-
-!RollingWaveMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 14:51:31'!
-initialize
-	super initialize.
-	color := PatchMorph waveformColor3.
-	samples := Float32Array new: 64*5.
-	currentPosition := 1.
-	bipolar := true! !
-
-!RollingWaveMorph methodsFor: 'drawing' stamp: 'len 30/Apr/2026 20:27:16'!
-drawOn: aCanvas
-	| step x y h pos delta y0 |
-	delta := 20.
-	step := self morphWidth / (samples size - delta) * 5.
-	(pos := currentPosition + delta) > samples size ifTrue: [pos := pos - samples size].
-	h := self morphHeight.
-	x := 0.
-	y := 1.0 - (samples at: pos) * h.
-	y0 := bipolar ifTrue: [h / 2.0] ifFalse: [h].
-	aCanvas strokeWidth: 1.5 color: Color veryLightGray dashedStrokeBits: 2r1110000 do:
-		[aCanvas moveTo: 0 @ y0; lineTo: self morphWidth @ y0].
-	aCanvas strokeWidth: 2.0 color: color do:
-		[aCanvas moveTo: x @ y.
-		5 - (pos \\ 5) to: samples size - delta - 5 by: 5 do: [:i|
-			x := x + step.
-			y := 1.0 - (samples at: pos + i \\ samples size + 1) * h.
-			aCanvas lineTo: x @ y]]! !
-
-!RollingWaveMorph methodsFor: 'drawing' stamp: 'len 23/Feb/2026 00:34:47'!
-requiresVectorCanvas
-	^ true! !
-
 !SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026 22:40:54'!
 computeImage
 	| h canvas x y step waveform alphaColor |
@@ -13051,6 +13019,65 @@ initialize
 	color := Color white.
 	frequencyScale := #linear.
 	displayMode := #bars! !
+
+!StripChartMorph methodsFor: 'accessing' stamp: 'len 12/May/2026 14:58:18'!
+addSample: aNumber
+	| x |
+	(readPosition := readPosition + 1) > downsampleFactor ifTrue: [readPosition := 1].
+	readPosition = 1 ifFalse: [^ self].
+	x := aNumber.
+	bipolar ifTrue: [x := x * 0.5 + 0.5].
+	x := x min: 1.0 max: 0.0.
+	writePosition := writePosition < buffer size ifTrue: [writePosition + 1] ifFalse: [1].
+	buffer at: writePosition put: x.
+	self redrawNeeded! !
+
+!StripChartMorph methodsFor: 'accessing' stamp: 'len 30/Apr/2026 18:46:54'!
+bipolar: aBoolean
+	bipolar := aBoolean.
+	self redrawNeeded! !
+
+!StripChartMorph methodsFor: 'accessing' stamp: 'len 23/Feb/2026 00:35:04'!
+color: aColor
+	color := aColor.
+	self redrawNeeded! !
+
+!StripChartMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026 15:26:03'!
+defaultExtent
+	^`128 @ 64`! !
+
+!StripChartMorph methodsFor: 'initialization' stamp: 'len 12/May/2026 14:50:18'!
+initialize
+	super initialize.
+	color := PatchMorph waveformColor3.
+	buffer := Float32Array new: 64.
+	writePosition := 1.
+	readPosition := 0.
+	bipolar := true.
+	downsampleFactor := 5! !
+
+!StripChartMorph methodsFor: 'drawing' stamp: 'len 12/May/2026 14:56:16'!
+drawOn: aCanvas
+	| step x y h offset slack y0 |
+	slack := 5.
+	step := self morphWidth - 2.0 / (buffer size - slack).
+	(offset := writePosition + slack - 1) > buffer size ifTrue: [offset := offset - buffer size].
+	h := self morphHeight.
+	x := 1.0.
+	y := 1.0 - (buffer at: offset) * h.
+	y0 := bipolar ifTrue: [h / 2.0] ifFalse: [h].
+	aCanvas strokeWidth: 1.5 color: Color veryLightGray dashedStrokeBits: 2r1110000 do:
+		[aCanvas moveTo: 0 @ y0; lineTo: self morphWidth @ y0].
+	aCanvas strokeWidth: 2.0 color: color do:
+		[aCanvas moveTo: x @ y.
+		1 to: buffer size - slack do: [:i|
+			x := x + step.
+			y := 1.0 - (buffer at: offset + i \\ buffer size + 1) * h.
+			aCanvas lineTo: x @ y]]! !
+
+!StripChartMorph methodsFor: 'drawing' stamp: 'len 23/Feb/2026 00:34:47'!
+requiresVectorCanvas
+	^ true! !
 
 !WaterfallMorph methodsFor: 'drawing' stamp: 'len 4/Feb/2026 19:14:11'!
 drawOn: aCanvas

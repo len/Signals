@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 12 May 2026 at 5:31:00 pm'!
+'From Cuis7.7 [latest update: #7880] on 16 May 2026 at 5:22:35 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 564!
+!provides: 'Signals' 1 565!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -346,7 +346,7 @@ Multisample class
 
 !classDefinition: #Sample category: #'Signals-Samples'!
 TunedGenerator subclass: #Sample
-	instanceVariableNames: 'buffer rate loopEnd loopLength offset speed warp released position tailPosition increment incrementRatio label'
+	instanceVariableNames: 'buffer rate loopEnd loopLength offset speed warp released position tailPosition increment incrementDelta label'
 	classVariableNames: 'Library'
 	poolDictionaries: ''
 	category: 'Signals-Samples'!
@@ -1869,18 +1869,18 @@ Knobs are continuous controls with values that can vary within a range. Knobs ca
 !Toggle commentStamp: '<historical>' prior: 0!
 A toggle is a discrete control with only two possible values: true or false.!
 
-!Module commentStamp: 'len 29/Mar/2026 00:07:25' prior: 0!
-This is an abstract superclass for signal processing modules.
+!Module commentStamp: '<historical>' prior: 0!
+Abstract superclass for signal processing modules.
 
 A module has a list of controls (or parameters), that can be changed by the user via the UI or can be modulated by other modules. The controls of a module are created on initialization in #initializeControls.
 
 Modules can also have input and output sample buffers, and they process samples in blocks of fixed size. The default block size is 128 samples (2.9 ms at the default sampling rate of 44.1 kHz), which results in a control rate of 344 Hz. Before processing each block with the #tick message, the internal state of the module must be updated with the #update message.
 
-The playing loop for a patch of connected modules looks like this:
+The playing loop for a patch of connected modules with modulations must do this to process each block:
 1) Send #clear to each module to clear the control modulations for a new cycle;
-2) Iterate over the modules in order, and send #update followed by #tick to each one.
+2) Iterate over the modules in order, and send #update followed by #tick to each module.
 
-The message #update updates the internal state of the module depending on the controls, which could be modulated and could vary at any time. The message #tick processes one block of samples, reading from the input buffers and writing to the output buffers.!
+The message #update updates the internal state of the module depending on the current modulated values of the controls. The message #tick processes one block of samples, reading from the input buffers and writing to the output buffers.!
 
 !Amp commentStamp: '<historical>' prior: 0!
 An amplifier just multiplies the input signal by a gain parameter, typically modulated by an envolope. When the gain parameter changes, the actual gain is varied smoothly by sample to avoid clicks or zipper noise.!
@@ -1926,17 +1926,17 @@ This module receives a stereo signal from a bus.!
 !AudioOut commentStamp: '<historical>' prior: 0!
 This module takes a mono or stereo signal, applies volume level and pan, and sends it to a bus. The default output is the master bus (port 0).!
 
-!Generator commentStamp: '<historical>' prior: 0!
-A signal generator produces a stream of samples for a mono audio signal. It is similar to a Stream, but its values are 32-bit floats. See subclasses.!
+!Generator commentStamp: 'len 13/May/2026 17:57:56' prior: 0!
+Abstract superclass for audio signal generators such as oscillators, noise generators or samples. Generators have one audio output. See also Modulator.!
 
 !TunedGenerator commentStamp: '<historical>' prior: 0!
-A tuned generator is a signal generator with pitch, such as an oscillator. See subclasses.!
+Abstract superclass for audio signal generators with pitch, such as typical oscillators.!
 
 !Operator commentStamp: 'len 10/May/2026 00:45:43' prior: 0!
 An operator for classic FM synthesis (as in the Yamaha DX7, technically phase modulation). Essentially, an operator is a sine oscillator together with an amp, with an audio rate input for phase-modulation and feedback.!
 
-!Oscillator commentStamp: 'len 10/May/2026 00:46:11' prior: 0!
-Abstract superclass for simple oscillators that can be defined by a single phase accumulator.!
+!Oscillator commentStamp: '<historical>' prior: 0!
+Abstract superclass for oscillators that can be defined by a single phase accumulator.!
 
 !Pulse commentStamp: 'len 10/May/2026 19:22:58' prior: 0!
 This is a virtual analog oscillator. It generates a pulse wave applying PolyBLEP to prevent aliasing. This oscillator supports audio-rate pulse width modulation (PWM).
@@ -2031,8 +2031,8 @@ Parameters:
 State:
     - Sample counter until next impulse!
 
-!Modulator commentStamp: '<historical>' prior: 0!
-This a control signal generator that can be used to modulate the controls of other modules. Modulators have one control output.!
+!Modulator commentStamp: 'len 13/May/2026 17:58:08' prior: 0!
+Abstract superclass for control signal generators that can be used to modulate the controls of other modules. Modulators have one control output, and they trigger the event #output:. See also Generator.!
 
 !ControlIn commentStamp: '<historical>' prior: 0!
 This module produces a control signal from values received from an external source, for example MIDI CC messages.!
@@ -2721,9 +2721,9 @@ addFrequencyControl: aSymbol value: defaultValue
 addLogControl: aSymbol min: min max: max value: defaultValue
 	^ controls at: aSymbol put: ((Knob min: min max: max curve: #exp value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
 
-!Module methodsFor: 'initialization' stamp: 'len 9/May/2026 13:42:15'!
+!Module methodsFor: 'initialization' stamp: 'len 13/May/2026 17:42:17'!
 addPitchControl: aSymbol
-	^ self addPitchControl: aSymbol min: -48.0 max: 48.0 value: 0.0! !
+	^ self addPitchControl: aSymbol min: -48.0 "st" max: 48.0 "st" value: 0.0! !
 
 !Module methodsFor: 'initialization' stamp: 'len 9/May/2026 17:52:53'!
 addPitchControl: aSymbol min: min max: max value: defaultValue
@@ -4113,29 +4113,14 @@ setInputR: aBuffer
 next
 	^ 0.0! !
 
-!Generator methodsFor: 'processing' stamp: 'len 26/Jan/2026 11:07:53'!
-next: anInteger
-	| buffer |
-	buffer := Float32Array new: anInteger.
-	self read: buffer.
-	^ buffer! !
-
 !Generator methodsFor: 'processing' stamp: 'len 13/Mar/2026 14:23:37'!
 read: aBuffer
 	1 to: aBuffer size do: [:i| aBuffer at: i put: self next]! !
-
-!Generator methodsFor: 'processing' stamp: 'len 6/Oct/2025 19:42:00'!
-sample: anInteger
-	^ Sample buffer: (self next: anInteger)! !
 
 !Generator methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:14:54'!
 tick
 	output ifNil: [^ self].
 	self read: output! !
-
-!Generator methodsFor: 'processing' stamp: 'len 27/Oct/2025 15:10:00'!
-value
-	^ self next! !
 
 !Generator methodsFor: 'ui' stamp: 'len 26/Jan/2026 11:07:48'!
 bench
@@ -4149,24 +4134,6 @@ bench
 !Generator methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:45:22'!
 patchable
 	^ super patchable addAudioOutput: #setOutput:; yourself! !
-
-!Generator methodsFor: 'ui' stamp: 'len 3/Jan/2026 18:51:41'!
-playSampleCount: n into: anAudioBuffer startingAt: startIndex
-	| j x s |
-	j := 2 * startIndex - 1.
-	n timesRepeat:
-		[x := self value.
-		s := (anAudioBuffer at: j) + (x * 32767.0) asInteger.
-		s > 32767 ifTrue: [s := 32767].  "clipping!!"
-		s < -32767 ifTrue: [s := -32767].  "clipping!!"
-		anAudioBuffer at: j put: s.	
-		j := j + 1.
-		s := (anAudioBuffer at: j) + (x * 32767.0) asInteger.
-		s > 32767 ifTrue: [s := 32767].  "clipping!!"
-		s < -32767 ifTrue: [s := -32767].  "clipping!!"
-		anAudioBuffer at: j put: s.
-		j := j + 1].
-	^ n! !
 
 !Generator methodsFor: 'ui' stamp: 'len 26/Jan/2026 11:08:02'!
 timeProfile
@@ -4202,15 +4169,9 @@ setNote: aNumber
 panel
 	^​ ControlPanel new addTextualControl: (controls at: #pitch)! !
 
-!TunedGenerator methodsFor: 'ui' stamp: 'len 9/May/2026 13:43:00'!
+!TunedGenerator methodsFor: 'ui' stamp: 'len 13/May/2026 17:40:56'!
 patchable
-	| answer |
-	answer := PatchableMorph new model: self.
-	answer body addMorph: self panel.
-	answer
-		addControlInput: #pitch;
-		addAudioOutput: #setOutput:.
-	^ answer! !
+	^ super patchable addControlInput: #pitch; yourself! !
 
 !Operator methodsFor: 'controlling' stamp: 'len 24/Apr/2026 18:04:15'!
 gateOff
@@ -4224,7 +4185,7 @@ gateOn
 reset
 	phase := 0.0! !
 
-!Operator methodsFor: 'controlling' stamp: 'len 11/May/2026 15:45:59'!
+!Operator methodsFor: 'controlling' stamp: 'len 15/May/2026 17:24:58'!
 update
 	| targetIncrement |
 	super update.
@@ -4306,7 +4267,7 @@ setInputPM: aBuffer
 reset
 	phase := 0.0! !
 
-!Oscillator methodsFor: 'controlling' stamp: 'len 11/May/2026 15:45:59'!
+!Oscillator methodsFor: 'controlling' stamp: 'len 13/May/2026 18:11:14'!
 update
 	| targetIncrement |
 	super update.
@@ -4322,6 +4283,10 @@ initialize
 !Oscillator methodsFor: 'processing' stamp: 'len 21/Apr/2026 18:49:59'!
 advance
 	(phase := phase + (increment := increment * incrementRatio)) >= 1.0 ifTrue: [phase := phase - phase truncated]! !
+
+!Oscillator methodsFor: 'processing' stamp: 'len 13/May/2026 17:47:04'!
+next
+	^ self advance; peek! !
 
 !Pulse methodsFor: 'controlling' stamp: 'len 20/Apr/2026 18:13:19'!
 update
@@ -4339,15 +4304,14 @@ initializeControls
 	super initializeControls.
 	(self addControl: #width min: 0.0 max: 1.0 value: 0.5) printer: [:x| (x * 100.0) rounded printString, '%']! !
 
-!Pulse methodsFor: 'processing' stamp: 'len 10/May/2026 19:13:14'!
-next
-	self advance.
-	^ (phase pulse: increment width: width) * 0.577 "normalize amplitude to match perceived loudness with other oscillators"! !
-
 !Pulse methodsFor: 'processing' stamp: 'len 1/May/2026 23:16:29'!
 nextModulated: modulation
 	self advance.
 	^ (phase pulse: increment width: (width + modulation min: 0.98 max: 0.02)) * 0.577 "normalize amplitude to match perceived loudness with other oscillators"! !
+
+!Pulse methodsFor: 'processing' stamp: 'len 13/May/2026 17:47:26'!
+peek
+	^ (phase pulse: increment width: width) * 0.577 "normalize amplitude to match perceived loudness with other oscillators"! !
 
 !Pulse methodsFor: 'processing' stamp: 'len 1/May/2026 23:17:13'!
 read: aBuffer PWM: modulatorBuffer
@@ -4395,9 +4359,8 @@ initializeControls
 	super initializeControls.
 	self addControl: #shape min: 0.0 max: 1.0 value: 1.0! !
 
-!Saw methodsFor: 'processing' stamp: 'len 9/May/2026 19:48:26'!
-next
-	self advance.
+!Saw methodsFor: 'processing' stamp: 'len 13/May/2026 17:48:29'!
+peek
 	shape = 1.0 ifTrue: [^ phase saw: increment].
 	^ phase triangle: increment skew: shape! !
 
@@ -4434,13 +4397,10 @@ initializeControls
 	super initializeControls.
 	self addControl: #warp min: 0.0 max: 1.0 value: 0.0! !
 
-!Sine methodsFor: 'processing' stamp: 'len 22/Apr/2026 05:15:11'!
-next
-	| twoPi |
-	self advance.
-	twoPi := Float twoPi.
-	warp = 0.0 ifTrue: [^ (self * twoPi) sin].
-	^ (((phase * twoPi) sin * warp + phase) * twoPi) sin! !
+!Sine methodsFor: 'processing' stamp: 'len 13/May/2026 17:49:14'!
+peek
+	warp = 0.0 ifTrue: [^ (self * Float twoPi) sin].
+	^ (((phase * Float twoPi) sin * warp + phase) * Float twoPi) sin! !
 
 !Sine methodsFor: 'processing' stamp: 'len 22/Apr/2026 05:07:16'!
 read: aBuffer
@@ -4490,9 +4450,8 @@ initializeControls
 	super initializeControls.
 	self addControl: #shape min: 0.0 max: 1.0 value: 0.0! !
 
-!Triangle methodsFor: 'processing' stamp: 'len 21/Apr/2026 19:03:36'!
-next
-	self advance.
+!Triangle methodsFor: 'processing' stamp: 'len 13/May/2026 17:50:46'!
+peek
 	shape = 0.0 ifTrue: [^ phase triangle: increment].
 	^ (phase triangle: increment) * (1.0 - shape) + ((phase * Float twoPi) sin * shape)! !
 
@@ -4528,9 +4487,8 @@ initializeControls
 	super initializeControls.
 	self addChoiceControl: #wave options: #(1 2 3 4 5 6 7 8) value: 1! !
 
-!OPN methodsFor: 'processing' stamp: 'len 21/Apr/2026 18:54:33'!
-next
-	self advance.
+!OPN methodsFor: 'processing' stamp: 'len 13/May/2026 17:47:14'!
+peek
 	^ self wave: wave at: phase! !
 
 !OPN methodsFor: 'ui' stamp: 'len 9/May/2026 13:43:39'!
@@ -4582,11 +4540,10 @@ initializeControls
 	super initializeControls.
 	self addControl: #shape min: 0.0 max: 1.0 value: 0.0! !
 
-!TriSawPulse methodsFor: 'processing' stamp: 'len 21/Apr/2026 19:03:09'!
-next.
+!TriSawPulse methodsFor: 'processing' stamp: 'len 13/May/2026 17:46:09'!
+peek
 	"Answer a mix of two waves, depending on the shape parameter.
 	Normalize the amplitude of the pulse wave to match perceived loudness with the other wave shapes."
-	self advance.
 	shape = 0.0 ifTrue: [^ phase triangle: increment].
 	shape < 0.25 ifTrue: [^ (phase triangle: increment) * (0.25 - shape) + ((phase saw: increment) * shape) / 0.25].
 	shape = 0.25 ifTrue: [^ phase saw: increment].
@@ -5113,15 +5070,11 @@ panel
 "		addToggle: (controls at: #warp) label: 'Warp';"
 		addToggle: (controls at: #legato) label: 'Legato'! !
 
-!Multisample methodsFor: 'ui' stamp: 'len 9/May/2026 13:44:51'!
+!Multisample methodsFor: 'ui' stamp: 'len 13/May/2026 17:43:28'!
 patchable
 	| answer |
-	answer := PatchableMorph new model: self.
+	answer := super patchable.
 	label ifNotNil: [answer setTitle: label].
-	answer body addMorph: self panel.
-	answer
-		addControlInput: #pitch;
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !Multisample class methodsFor: 'class initialization' stamp: 'len 9/Apr/2026 19:46:11'!
@@ -5522,7 +5475,7 @@ setOffset: aNumber
 setSpeed: aNumber
 	self set: #speed to: aNumber! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 9/May/2026 13:45:00'!
+!Sample methodsFor: 'controlling' stamp: 'len 14/May/2026 15:55:10'!
 update
 	| targetIncrement |
 	super update.
@@ -5531,7 +5484,7 @@ update
 	warp := self get: #warp.
 	warp ifFalse: [targetIncrement := targetIncrement * speed abs].
 	increment ifNil: [increment := targetIncrement].
-	incrementRatio := ((targetIncrement / increment) ln / self class blockSize) exp! !
+	incrementDelta := (targetIncrement - increment) / self class blockSize! !
 
 !Sample methodsFor: 'copying' stamp: 'len 9/Apr/2026 23:09:22'!
 copy
@@ -5573,7 +5526,7 @@ mixTailInto: aBuffer
 					^ self]]].
 	tailPosition := nil! !
 
-!Sample methodsFor: 'processing' stamp: 'len 30/Apr/2026 18:51:01'!
+!Sample methodsFor: 'processing' stamp: 'len 14/May/2026 15:53:10'!
 read: aBuffer
 	| end |
 	position ifNil: [aBuffer atAllPut: 0.0. ^ self].
@@ -5586,7 +5539,7 @@ read: aBuffer
 		ifTrue: "forward:"
 			[1 to: aBuffer size do: [:i|
 				aBuffer at: i put: (buffer atLinear: position).
-				((position := position + (increment := increment * incrementRatio)) >= loopEnd and: [released not]) ifTrue:
+				((position := position + (increment := increment + incrementDelta)) >= loopEnd and: [released not]) ifTrue:
 					[position := position - loopLength + 1.0].
 				position < end ifFalse:
 					[released := true.
@@ -5597,7 +5550,7 @@ read: aBuffer
 			loopStart := loopEnd - loopLength + 1.0.
 			1 to: aBuffer size do: [:i|
 				aBuffer at: i put: (buffer atLinear: position).
-				((position := position - (increment := increment * incrementRatio)) <= loopStart and: [released not]) ifTrue:
+				((position := position - (increment := increment + incrementDelta)) <= loopStart and: [released not]) ifTrue:
 					[position := position + loopLength - 1.0].
 				position >= 1.0 ifFalse:
 					[released := true.
@@ -5670,7 +5623,7 @@ waveform
 		canvas line: x @ y to: x @ (h // 2) width: 1 color: Color black].
 	^ answer! !
 
-!Sample methodsFor: 'private' stamp: 'len 9/Apr/2026 23:09:22'!
+!Sample methodsFor: 'private' stamp: 'len 14/May/2026 15:54:56'!
 buffer: aFloatArray rate: aNumber
 	buffer := aFloatArray.
 	rate := aNumber.
@@ -5678,7 +5631,7 @@ buffer: aFloatArray rate: aNumber
 	loopEnd := buffer size.
 	loopLength := 0.
 	increment := 1.0.
-	incrementRatio := 1.0.
+	incrementDelta := 0.0.
 	self reset! !
 
 !Sample methodsFor: 'private' stamp: 'len 17/Feb/2026 19:03:05'!
@@ -6233,8 +6186,9 @@ initialize
 	super initialize.
 	modulations := IdentityDictionary new! !
 
-!Modulator methodsFor: 'modulation' stamp: 'len 27/Apr/2026 22:47:20'!
+!Modulator methodsFor: 'modulation' stamp: 'len 13/May/2026 00:02:06'!
 modulations
+	"Answer the dictionary of modulations that maps each target control to a modulation depth value."
 	^ modulations! !
 
 !Modulator methodsFor: 'modulation' stamp: 'len 27/Apr/2026 22:47:25'!
@@ -8843,15 +8797,15 @@ initialize
 	buffer := Float32Array new: 128.
 	readPosition := 1! !
 
-!Oscilloscope methodsFor: 'initialization' stamp: 'len 10/May/2026 22:09:25'!
+!Oscilloscope methodsFor: 'initialization' stamp: 'len 13/May/2026 14:07:04'!
 initializeControls
 	super initializeControls.
-	self addFrequencyControl: #frequency min: 20.0 "Hz" max: 4000.0 "4 kHz" value: 100.0 "Hz"! !
+	self addTimeControl: #time min: 0.00025 "0.25 ms, 4 kHz" max: 0.05 "50 ms, 20 Hz" value: 0.01 "10 ms, 100 Hz"! !
 
-!Oscilloscope methodsFor: 'processing' stamp: 'len 11/May/2026 01:05:53'!
+!Oscilloscope methodsFor: 'processing' stamp: 'len 13/May/2026 14:03:37'!
 scan
 	| step |
-	step := self class sampleRate / (self get: #frequency) / buffer size.
+	step := self class sampleRate * (self get: #time) / buffer size.
 	[readPosition <= input size and: [writePosition <= buffer size]]
 		whileTrue:
 			[buffer at: writePosition put: ((input atLinear: readPosition) min: 1.0 max: -1.0).
@@ -8880,9 +8834,9 @@ patchable
 	answer addAudioInput: #setInput:.
 	^ answer! !
 
-!Oscilloscope methodsFor: 'ui' stamp: 'len 12/May/2026 01:42:06'!
+!Oscilloscope methodsFor: 'ui' stamp: 'len 13/May/2026 14:03:03'!
 screen
-	^ OscilloscopeControlMorph new control: (controls at: #frequency); buffer: buffer! !
+	^ OscilloscopeControlMorph new control: (controls at: #time); buffer: buffer! !
 
 !Oscilloscope methodsFor: 'wiring' stamp: 'len 3/Apr/2026 00:17:56'!
 setInput: aBuffer
@@ -10738,6 +10692,16 @@ stepTime
 !OscilloscopeControlMorph methodsFor: 'stepping' stamp: 'len 12/May/2026 01:39:09'!
 wantsSteps
 	^ true! !
+
+!OscilloscopeControlMorph methodsFor: 'as yet unclassified' stamp: 'len 13/May/2026 14:13:14'!
+mouseScroll: anEvent localPosition: localEventPosition
+	"Switch left/right for this control, because in this way the scroll follows how the wave compresses or expands, feels more intuitive."
+	(anEvent direction = #down or: [anEvent direction = #right])
+		ifTrue:
+			[anEvent shiftPressed ifTrue: [control adjustFineUp] ifFalse: [control adjustUp]]
+		ifFalse:
+			[anEvent shiftPressed ifTrue: [control adjustFineDown] ifFalse: [control adjustDown]].
+	self wantsBalloon ifTrue: [self showBalloon]! !
 
 !PhaseOffsetControlMorph methodsFor: 'initialization' stamp: 'len 25/Apr/2026 15:37:01'!
 defaultExtent
@@ -12943,37 +12907,36 @@ spectrum: aBuffer
 	spectrum := aBuffer.
 	self redrawNeeded! !
 
-!SpectrumMorph methodsFor: 'drawing' stamp: 'len 11/May/2026 20:17:01'!
+!SpectrumMorph methodsFor: 'drawing' stamp: 'len 13/May/2026 14:26:17'!
 drawBars: bins on: aCanvas
-	| step x h n |
-	n := bins size asFloat.
-	step := self morphWidth / n.
+	| step x h |
+	step := self morphWidth / bins size asFloat.
 	h := self morphHeight.
 	x := 0.
 	1 to: bins size do: [:i|
 		| v y |
-		y := (1.0 - (v := bins at: i)) * h.
-		v := v min: 0.99 max: 0.1. "make it a bit more visible on black background"
-		aCanvas line: x@y to: x@h width: step color: (Viridis at: (v * Viridis size + 1.0) truncated).
+		(v := bins at: i) > 0.0 ifTrue:
+			[y := (1.0 - v) * h.
+			aCanvas line: x@y to: x@h width: step color: (Viridis at: (v * Viridis size + 1.0) truncated)].
 		x := x + step]! !
 
-!SpectrumMorph methodsFor: 'drawing' stamp: 'len 11/May/2026 20:17:26'!
+!SpectrumMorph methodsFor: 'drawing' stamp: 'len 13/May/2026 14:26:25'!
 drawLogBars: bins on: aCanvas
-	| step x h  |
+	| step x h |
 	step := self morphWidth / 20.0.
 	h := self morphHeight.
 	x := 0.
 	1 to: bins size do: [:i|
 		| v y |
 		y := (1.0 - (v := bins at: i)) * h.
-		v := v min: 0.99 max: 0.1. "make it a bit more visible on black background"
+		"v := v min: 0.99 max: 0.1." "make it a bit more visible on black background"
 		aCanvas fillRectangle: (x@y corner: x+step@h) color: (Viridis at: (v * Viridis size + 1.0) truncated).
 		x := x + step.
 		step := step * 0.95]! !
 
-!SpectrumMorph methodsFor: 'drawing' stamp: 'len 11/May/2026 20:17:46'!
+!SpectrumMorph methodsFor: 'drawing' stamp: 'len 13/May/2026 14:26:30'!
 drawLogOutline: bins on: aCanvas
-	| step  x y h |
+	| step x y h |
 	step := self morphWidth / 20.0.
 	h := self morphHeight.
 	y := 1.0 - (bins at: 1) * h.
@@ -12987,16 +12950,17 @@ drawLogOutline: bins on: aCanvas
 		y := y2.
 		step := step * 0.95]! !
 
-!SpectrumMorph methodsFor: 'drawing' stamp: 'len 11/May/2026 20:19:20'!
+!SpectrumMorph methodsFor: 'drawing' stamp: 'len 13/May/2026 14:20:01'!
 drawOn: aCanvas
-	spectrum ifNotNil: [:bins|
-		frequencyScale = #linear ifTrue:
-			[^ displayMode = #bars ifTrue: [self drawBars: bins on: aCanvas] ifFalse: [self drawOutline: bins on: aCanvas]].
-		displayMode = #bars ifTrue: [self drawLogBars: bins on: aCanvas] ifFalse: [self drawLogOutline: bins on: aCanvas]]! !
+	aCanvas fillRectangle: self localBounds color: Color black.
+	spectrum ifNil: [^ self].
+	frequencyScale = #linear ifTrue:
+		[^ displayMode = #bars ifTrue: [self drawBars: spectrum on: aCanvas] ifFalse: [self drawOutline: spectrum on: aCanvas]].
+	displayMode = #bars ifTrue: [self drawLogBars: spectrum on: aCanvas] ifFalse: [self drawLogOutline: spectrum on: aCanvas]! !
 
-!SpectrumMorph methodsFor: 'drawing' stamp: 'len 11/May/2026 20:18:10'!
+!SpectrumMorph methodsFor: 'drawing' stamp: 'len 13/May/2026 14:26:38'!
 drawOutline: bins on: aCanvas
-	| step  x y h |
+	| step x y h |
 	step := self morphWidth / bins size.
 	h := self morphHeight.
 	y := 1.0 - (bins at: 1) * h.
@@ -13890,10 +13854,10 @@ addAudioOutput: aSymbol label: labelString
 	outputsArea addMorph: pin.
 	^ pin! !
 
-!PatchableMorph methodsFor: 'building' stamp: 'len 5/May/2026 17:11:27'!
+!PatchableMorph methodsFor: 'building' stamp: 'len 14/May/2026 15:58:04'!
 addControlInput: aSymbol
 	| pin |
-	pin := ControlInputPinMorph new control: (model controls at: aSymbol ifAbsent: [^ self]); name: aSymbol asPlainString capitalized camelSeparatedWords.
+	pin := ControlInputPinMorph new control: (model controls at: aSymbol); name: aSymbol asPlainString capitalized camelSeparatedWords.
 	inputsArea addMorph: pin.
 	^ pin! !
 

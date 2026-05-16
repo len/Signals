@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 16 May 2026 at 5:22:35 pm'!
+'From Cuis7.7 [latest update: #7880] on 16 May 2026 at 6:08:25 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 565!
+!provides: 'Signals' 1 566!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -166,7 +166,7 @@ Crossover class
 
 !classDefinition: #SVF category: #'Signals-Filters'!
 Module subclass: #SVF
-	instanceVariableNames: 's1 s2 g r input outputLP outputHP outputBP outputBPN'
+	instanceVariableNames: 's1 s2 g r input inputFM outputLP outputHP outputBP outputBPN'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Filters'!
@@ -3789,11 +3789,12 @@ initializeControls
 	self addFrequencyControl: #frequency value: 1000.0.
 	self addControl: #Q min: 0.5 max: 20.0 value: 0.707! !
 
-!SVF methodsFor: 'processing' stamp: 'len 11/May/2026 17:01:48'!
+!SVF methodsFor: 'processing' stamp: 'len 16/May/2026 18:01:54'!
 tick
 	| gTarget gRatio rTarget rRatio |
 	(outputLP isNil and: [outputHP isNil and: [outputBP isNil and: [outputBPN isNil]]]) ifTrue: [^ self].
 	input ifNil: [^ self tickNoInput].
+	inputFM ifNotNil: [^ self tickFM].
 	gTarget := ((self get: #frequency) * Float pi / self class sampleRate) tan.
 	g ifNil: [g := gTarget].
 	rTarget := 1.0 / (self get: #Q).
@@ -3819,6 +3820,29 @@ tick
 		outputBPN ifNotNil: [outputBPN at: i put: bp * r]].
 	g := gTarget.
 	r := rTarget.
+	self snapToZero! !
+
+!SVF methodsFor: 'processing' stamp: 'len 16/May/2026 18:01:00'!
+tickFM
+	"This is almost 2x faster than the modulated version."
+	| f₀ ln2Times4 |
+	f₀ := (self get: #frequency) * Float pi / self class sampleRate.
+	r := 1.0 / (self get: #Q).
+	ln2Times4 := Float ln2 * 4.0.
+	1 to: input size do: [:i|
+		| gPlusR in hp bp lp |
+		g := (f₀ * ((inputFM at: i) * ln2Times4) exp) tan min: 15.0 max: 1.0e-4.
+		gPlusR := g + r.
+		in := input at: i.
+		hp := (in - (s1 * gPlusR) - s2) / (1.0 + (gPlusR * g)).
+		bp := g * hp + s1.
+		s1 := g * hp + bp.
+		lp := g * bp + s2.
+		s2 := g * bp + lp.
+		outputLP ifNotNil: [outputLP at: i put: lp].
+		outputHP ifNotNil: [outputHP at: i put: hp].
+		outputBP ifNotNil: [outputBP at: i put: bp].
+		outputBPN ifNotNil: [outputBPN at: i put: bp * r]].
 	self snapToZero! !
 
 !SVF methodsFor: 'processing' stamp: 'len 29/Apr/2026 19:35:14'!
@@ -3848,7 +3872,7 @@ tickStatic
 		outputBPN ifNotNil: [outputBPN at: i put: bp * r]].
 	self snapToZero! !
 
-!SVF methodsFor: 'ui' stamp: 'len 12/Apr/2026 03:59:37'!
+!SVF methodsFor: 'ui' stamp: 'len 16/May/2026 18:03:02'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -3857,6 +3881,7 @@ patchable
 		addAudioInput: #setInput:;
 		addControlInput: #frequency;
 		addControlInput: #Q;
+		addAudioInput: #setInputFM: label: 'FM';
 		addAudioOutput: #setOutputLP: label: 'LP';
 		addAudioOutput: #setOutputHP: label: 'HP';
 		addAudioOutput: #setOutputBP: label: 'BP';
@@ -3870,6 +3895,10 @@ screen
 !SVF methodsFor: 'wiring' stamp: 'len 30/Jan/2026 01:04:43'!
 setInput: aBuffer
 	input := aBuffer! !
+
+!SVF methodsFor: 'wiring' stamp: 'len 16/May/2026 18:00:08'!
+setInputFM: aBuffer
+	inputFM := aBuffer! !
 
 !SVF methodsFor: 'wiring' stamp: 'len 11/Jan/2026 20:46:39'!
 setOutputBP: aBuffer
@@ -4309,7 +4338,7 @@ nextModulated: modulation
 	self advance.
 	^ (phase pulse: increment width: (width + modulation min: 0.98 max: 0.02)) * 0.577 "normalize amplitude to match perceived loudness with other oscillators"! !
 
-!Pulse methodsFor: 'processing' stamp: 'len 13/May/2026 17:47:26'!
+!Pulse methodsFor: 'processing' stamp: 'len 16/May/2026 17:28:13'!
 peek
 	^ (phase pulse: increment width: width) * 0.577 "normalize amplitude to match perceived loudness with other oscillators"! !
 

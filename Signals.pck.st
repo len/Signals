@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 24 May 2026 at 10:22:14 pm'!
+'From Cuis7.7 [latest update: #7880] on 25 May 2026 at 6:40:38 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 567!
+!provides: 'Signals' 1 568!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -2934,19 +2934,19 @@ setInputRM: aBuffer
 setOutput: aBuffer
 	output := aBuffer! !
 
-!Compressor methodsFor: 'controlling' stamp: 'len 12/Mar/2026 18:25:02'!
+!Compressor methodsFor: 'controlling' stamp: 'len 25/May/2026 14:20:38'!
 reset
 	envelope := 0.0.
 	schpf reset.
 	rmslpf reset! !
 
-!Compressor methodsFor: 'controlling' stamp: 'len 11/May/2026 17:01:48'!
+!Compressor methodsFor: 'controlling' stamp: 'len 25/May/2026 14:20:38'!
 update
 	super update.
 	schpf snapToZero; frequency: (self get: #schpf) / self class sampleRate.
 	rmslpf snapToZero! !
 
-!Compressor methodsFor: 'initialization' stamp: 'len 19/Mar/2026 21:22:43'!
+!Compressor methodsFor: 'initialization' stamp: 'len 25/May/2026 14:20:38'!
 initialize
 	super initialize.
 	schpf := OnePole new frequency: 100.0 / self class sampleRate "100 hz".
@@ -2966,9 +2966,9 @@ initializeControls
 	self addVolumeControl: #knee min: 1.0 "0 dB" max: 4.0 "+12 dB" value: 2.0 "+6 dB".
 	self addVolumeControl: #makeup min: 0.25 "-12 dB" max: 16.0 "+24 dB" value: 1.0! !
 
-!Compressor methodsFor: 'processing' stamp: 'len 24/May/2026 22:16:27'!
+!Compressor methodsFor: 'processing' stamp: 'len 25/May/2026 18:40:13'!
 tick
-	| sc isPeak threshold ratio knee halfKnee α β makeup |
+	| sc isPeak threshold ratio knee kneeStart kneeEnd kneeWidth gainEnd α β makeup |
 	sc := inputSC ifNil: [inputL ifNil:
 		[outputL ifNotNil: [outputL atAllPut: 0.0].
 		outputR ifNotNil: [outputR atAllPut: 0.0].
@@ -2977,22 +2977,28 @@ tick
 	threshold := self get: #threshold.
 	ratio := self get: #ratio.
 	knee := self get: #knee.
-	halfKnee := knee / 2.0.
+	kneeStart := threshold / knee sqrt.
+	kneeEnd := threshold * knee sqrt.
+	kneeWidth := kneeEnd - kneeStart.
+	gainEnd := kneeEnd > 1.0e-12 ifTrue: [((kneeEnd - threshold) / ratio + threshold) / kneeEnd] ifFalse: [1.0].
 	α := 1.0 - (-1.0 / ((self get: #attack) * self class sampleRate)) exp.
 	β := 1.0 - (-1.0 / ((self get: #release) * self class sampleRate)) exp.
-	aux atAllPut: 1.0.
 	1 to: sc size do: [:i|
-		| x level slope gr t |
+		| x level slope envSafe t |
 		x := sc at: i.
 		x := x - (schpf value: x). "apply highpass filter to the sidechain to avoid bass pumping"
 		level := isPeak ifTrue: [x abs] ifFalse: [(rmslpf value: x squared) sqrt].
 		"program-dependent release, the release time depends on envelope and threshold:"
-		slope := level > envelope ifTrue: [α] ifFalse: [β / ((envelope - threshold) * 4.0 + 1.0)].
+		slope := level > envelope ifTrue: [α] ifFalse: [β / ((envelope - threshold max: 0.0) * 4.0 + 1.0)].
 		envelope := (level - envelope) * slope + envelope.
-		(gr := envelope - threshold) > halfKnee negated ifTrue:
-			[t := (gr + halfKnee) / knee min: 1.0. "0 at lower knee edge, 1 at upper"
-			t := t squared * (3.0 - (2.0 * t)). "smoothstep"
-			aux at: i put: 1.0 / ((((gr max: 0.0) / ratio + threshold) / envelope - 1.0) * t + 1.0)]].
+		(envSafe := envelope max: 1.0e-12) >= kneeEnd
+			ifTrue:
+				[aux at: i put: ((envSafe - threshold) / ratio + threshold) / envSafe]
+			ifFalse:
+				[envSafe > kneeStart ifTrue:
+					[t := (envSafe - kneeStart) / kneeWidth.
+					t := t * t * (3.0 - (2.0 * t)). "smoothstep interpolation factor"
+					aux at: i put: t * (gainEnd - 1.0) + 1.0]]].
 	aux *= (makeup := self get: #makeup).
 	(inputL notNil and: [outputL notNil]) ifTrue: [outputL replaceWith: inputL; *= aux].
 	(inputR notNil and: [outputR notNil]) ifTrue: [outputR replaceWith: inputR; *= aux].
@@ -3063,19 +3069,19 @@ setOutputL: aBuffer
 setOutputR: aBuffer
 	outputR := aBuffer! !
 
-!Gate methodsFor: 'controlling' stamp: 'len 12/Mar/2026 18:24:52'!
+!Gate methodsFor: 'controlling' stamp: 'len 25/May/2026 14:20:48'!
 reset
 	envelope := 0.0.
 	schpf reset.
 	rmslpf reset! !
 
-!Gate methodsFor: 'controlling' stamp: 'len 11/May/2026 17:02:05'!
+!Gate methodsFor: 'controlling' stamp: 'len 25/May/2026 14:20:48'!
 update
 	super update.
 	schpf snapToZero; frequency: (self get: #schpf) / self class sampleRate.
 	rmslpf snapToZero! !
 
-!Gate methodsFor: 'initialization' stamp: 'len 19/Mar/2026 21:29:26'!
+!Gate methodsFor: 'initialization' stamp: 'len 25/May/2026 14:20:48'!
 initialize
 	super initialize.
 	schpf := OnePole new frequency: 100.0 / self class sampleRate "100 hz".
@@ -3095,7 +3101,7 @@ initializeControls
 	(self addFrequencyControl: #schpf min: 20.0 max: 200.0 value: 100.0) label: 'SC HPF'.
 	self addVolumeControl: #knee min: 1.0 "0 dB" max: 4.0 "+12 dB" value: 2.0 "+6 dB"! !
 
-!Gate methodsFor: 'processing' stamp: 'len 19/Mar/2026 21:27:11'!
+!Gate methodsFor: 'processing' stamp: 'len 25/May/2026 14:43:41'!
 tick
 	| sc isPeak threshold α β |
 	sc := inputSC ifNil: [inputL ifNil:
@@ -3113,7 +3119,7 @@ tick
 		x := x - (schpf value: x). "apply highpass filter to the sidechain to avoid bass pumping"
 		level := isPeak ifTrue: [x abs] ifFalse: [(rmslpf value: x squared) sqrt].
 		"program-dependent release, the release time depends on envelope and threshold:"
-		slope := level > envelope ifTrue: [α] ifFalse: [β / ((envelope - threshold) * 4.0 + 1.0)].
+		slope := level > envelope ifTrue: [α] ifFalse: [β / ((envelope - threshold max: 0.0) * 4.0 + 1.0)].
 		envelope := (level - envelope) * slope + envelope.
 		(gr := envelope - threshold) > 0.0 ifTrue: [aux at: i put: 0.0]].
 	(inputL notNil and: [outputL notNil]) ifTrue: [outputL replaceWith: inputL; *= aux].
@@ -11412,21 +11418,13 @@ addGainReduction: aNumber
 defaultExtent
 	^`128 @ 64`! !
 
-!DynamicsActivityMorph methodsFor: 'as yet unclassified' stamp: 'len 19/May/2026 18:27:22'!
+!DynamicsActivityMorph methodsFor: 'as yet unclassified' stamp: 'len 25/May/2026 14:56:59'!
 drawOn: aCanvas
 	| step x y h offset slack |
 	slack := 5.
 	step := self morphWidth - 2.0 / (envelopeBuffer size - slack).
 	(offset := writePosition + slack - 1) > envelopeBuffer size ifTrue: [offset := offset - envelopeBuffer size].
 	h := self morphHeight.
-	x := 1.0.
-	y := 1.0 - (gainReductionBuffer at: offset) * h.
-	aCanvas strokeWidth: 2.0 color: PatchMorph waveformColor3 do:
-		[aCanvas moveTo: x @ y.
-		1 to: gainReductionBuffer size - slack do: [:i|
-			x := x + step.
-			y := 1.0 - (gainReductionBuffer at: offset + i \\ gainReductionBuffer size + 1) * h.
-			aCanvas lineTo: x @ y]].
 	x := 1.0.
 	aCanvas fillColor: Color lightGray do:
 		[aCanvas moveTo: x @ h.
@@ -11435,6 +11433,14 @@ drawOn: aCanvas
 			aCanvas lineTo: x @ y.
 			x := x + step].
 		aCanvas lineTo: x @ h; closePath].
+	x := 1.0.
+	y := 1.0 - (gainReductionBuffer at: offset) * h.
+	aCanvas strokeWidth: 1.5 color: PatchMorph waveformColor3 do:
+		[aCanvas moveTo: x @ y.
+		1 to: gainReductionBuffer size - slack do: [:i|
+			x := x + step.
+			y := 1.0 - (gainReductionBuffer at: offset + i \\ gainReductionBuffer size + 1) * h.
+			aCanvas lineTo: x @ y]].
 	y := 1.0 - control1 modulatedPosition * h.
 	aCanvas strokeWidth: 1.5 color: PatchMorph waveformColor dashedStrokeBits: 2r11110000 do:
 		[aCanvas moveTo: 1.0 @ y; lineTo: self morphWidth - 1.0 @ y].

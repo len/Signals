@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 26 May 2026 at 4:34:24 pm'!
+'From Cuis7.7 [latest update: #7880] on 26 May 2026 at 5:38:25 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 569!
+!provides: 'Signals' 1 570!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -67,7 +67,7 @@ Toggle class
 !classDefinition: #Module category: #'Signals-Kernel'!
 ActiveModel subclass: #Module
 	instanceVariableNames: 'controls'
-	classVariableNames: 'FadeIn FadeOut'
+	classVariableNames: 'Aux1 Aux2 FadeIn FadeOut'
 	poolDictionaries: ''
 	category: 'Signals-Kernel'!
 !classDefinition: 'Module class' category: #'Signals-Kernel'!
@@ -76,7 +76,7 @@ Module class
 
 !classDefinition: #Amp category: #'Signals-Dynamics'!
 Module subclass: #Amp
-	instanceVariableNames: 'input gain output inputRM envelope'
+	instanceVariableNames: 'input gain output inputRM'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Dynamics'!
@@ -86,7 +86,7 @@ Amp class
 
 !classDefinition: #Compressor category: #'Signals-Dynamics'!
 Module subclass: #Compressor
-	instanceVariableNames: 'schpf rmslpf envelope inputL inputR inputSC outputL outputR aux'
+	instanceVariableNames: 'schpf rmslpf envelope inputL inputR inputSC outputL outputR'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Dynamics'!
@@ -96,7 +96,7 @@ Compressor class
 
 !classDefinition: #Gate category: #'Signals-Dynamics'!
 Module subclass: #Gate
-	instanceVariableNames: 'schpf rmslpf envelope inputL inputR inputSC outputL outputR aux holdCount'
+	instanceVariableNames: 'schpf rmslpf envelope inputL inputR inputSC outputL outputR holdCount'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Dynamics'!
@@ -186,7 +186,7 @@ AudioIn class
 
 !classDefinition: #AudioOut category: #'Signals-IO'!
 Module subclass: #AudioOut
-	instanceVariableNames: 'buses level levelLeft levelRight targetLevelLeft targetLevelRight inputL inputR aux envelope meterLeftValue meterRightValue enabled'
+	instanceVariableNames: 'buses level levelLeft levelRight targetLevelLeft targetLevelRight inputL inputR meterLeftValue meterRightValue enabled'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-IO'!
@@ -676,7 +676,7 @@ BSF class
 
 !classDefinition: #EQ3 category: #'Signals-Filters'!
 Transform subclass: #EQ3
-	instanceVariableNames: 'lowPassLow highPassMid lowPassMid highPassHigh aux'
+	instanceVariableNames: 'lowPassLow highPassMid lowPassMid highPassHigh'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Filters'!
@@ -886,7 +886,7 @@ Mixer class
 
 !classDefinition: #Mixer4 category: #'Signals-Mix'!
 Module subclass: #Mixer4
-	instanceVariableNames: 'inputA inputB inputC inputD output aux'
+	instanceVariableNames: 'inputA inputB inputC inputD output'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Mix'!
@@ -906,7 +906,7 @@ Pan class
 
 !classDefinition: #StereoMatrix category: #'Signals-Mix'!
 Module subclass: #StereoMatrix
-	instanceVariableNames: 'inputA inputB outputL outputR aux'
+	instanceVariableNames: 'inputA inputB outputL outputR'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Mix'!
@@ -2748,6 +2748,10 @@ settings: aDictionary
 copy
 	^ self class new settings: self settings! !
 
+!Module methodsFor: 'initialization' stamp: 'len 26/May/2026 17:08:16'!
+addBipolarDepthControl: aSymbol value: defaultValue
+	^ (self addControl: aSymbol min: -1.0 max: 1.0 value: defaultValue) printer: [:x| (x * 100) truncated printString, '%']! !
+
 !Module methodsFor: 'initialization' stamp: 'len 18/Mar/2026 20:08:10'!
 addChoiceControl: aSymbol options: anArray value: defaultValue
 	^ controls at: aSymbol put: ((Choice options: anArray value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
@@ -2858,6 +2862,14 @@ patchable
 title
 	^ self class name camelSeparatedWords! !
 
+!Module class methodsFor: 'class initialization' stamp: 'len 26/May/2026 17:21:04'!
+initialize
+	super initialize.
+	Aux1 := Float32Array new: self blockSize.
+	Aux2 := Aux1 copy.
+	FadeIn := Aux1 copy fill: [:i| 1.0/128*i].
+	FadeOut := 1.0 - FadeIn! !
+
 !Module class methodsFor: 'constants' stamp: 'len 10/Mar/2026 15:07:52'!
 blockSize
 	"Answer the size of the input and output buffers.
@@ -2872,24 +2884,17 @@ controlRate
 sampleRate
 	^ AudioPlayer sampleRate! !
 
-!Module class methodsFor: 'as yet unclassified' stamp: 'len 3/May/2026 22:33:38'!
+!Amp methodsFor: 'initialization' stamp: 'len 26/May/2026 17:24:31'!
 initialize
 	super initialize.
-	FadeIn := (Float32Array new: 128) fill: [:i| 1.0/128*i].
-	FadeOut := 1.0 - FadeIn! !
-
-!Amp methodsFor: 'initialization' stamp: 'len 4/May/2026 18:42:04'!
-initialize
-	super initialize.
-	gain := 0.0.
-	envelope := Float32Array new: self class blockSize! !
+	gain := 0.0! !
 
 !Amp methodsFor: 'initialization' stamp: 'len 2/Dec/2025 23:42:00'!
 initializeControls
 	super initializeControls.
 	self addControl: #gain min: 0.0 max: 1.0 value: 0.0! !
 
-!Amp methodsFor: 'processing' stamp: 'len 4/May/2026 18:54:50'!
+!Amp methodsFor: 'processing' stamp: 'len 26/May/2026 17:21:26'!
 tick
 	| targetGain |
 	output ifNil: [^ self].
@@ -2901,8 +2906,8 @@ tick
 			[targetGain < 0.00001 "-100 dB"
 				ifTrue: [output *= gain; *= FadeOut]
 				ifFalse:
-					[envelope replaceWith: FadeOut; *= (gain / targetGain); += FadeIn; *= targetGain.
-					output *= envelope].
+					[Aux1 replaceWith: FadeOut; *= (gain / targetGain); += FadeIn; *= targetGain.
+					output *= Aux1].
 			gain := targetGain].
 	inputRM ifNotNil: [output *= inputRM]! !
 
@@ -2946,13 +2951,12 @@ update
 	schpf snapToZero; frequency: (self get: #schpf) / self class sampleRate.
 	rmslpf snapToZero! !
 
-!Compressor methodsFor: 'initialization' stamp: 'len 25/May/2026 14:20:38'!
+!Compressor methodsFor: 'initialization' stamp: 'len 26/May/2026 17:27:55'!
 initialize
 	super initialize.
 	schpf := OnePole new frequency: 100.0 / self class sampleRate "100 hz".
 	rmslpf := OnePole new time: 0.01 * self class sampleRate. "10 ms"
-	envelope := 0.0.
-	aux := Float32Array new: self class blockSize! !
+	envelope := 0.0! !
 
 !Compressor methodsFor: 'initialization' stamp: 'len 19/Mar/2026 21:33:55'!
 initializeControls
@@ -2966,13 +2970,14 @@ initializeControls
 	self addVolumeControl: #knee min: 1.0 "0 dB" max: 4.0 "+12 dB" value: 2.0 "+6 dB".
 	self addVolumeControl: #makeup min: 0.25 "-12 dB" max: 16.0 "+24 dB" value: 1.0! !
 
-!Compressor methodsFor: 'processing' stamp: 'len 25/May/2026 18:40:13'!
+!Compressor methodsFor: 'processing' stamp: 'len 26/May/2026 17:28:21'!
 tick
-	| sc isPeak threshold ratio knee kneeStart kneeEnd kneeWidth gainEnd α β makeup |
+	| sc aux isPeak threshold ratio knee kneeStart kneeEnd kneeWidth gainEnd α β makeup |
 	sc := inputSC ifNil: [inputL ifNil:
 		[outputL ifNotNil: [outputL atAllPut: 0.0].
 		outputR ifNotNil: [outputR atAllPut: 0.0].
 		^ self]].
+	aux := Aux1.
 	isPeak := (self get: #mode) = #peak. "if not peak, it's RMS"
 	threshold := self get: #threshold.
 	ratio := self get: #ratio.
@@ -3082,13 +3087,12 @@ update
 	schpf snapToZero; frequency: (self get: #schpf) / self class sampleRate.
 	rmslpf snapToZero! !
 
-!Gate methodsFor: 'initialization' stamp: 'len 26/May/2026 16:24:35'!
+!Gate methodsFor: 'initialization' stamp: 'len 26/May/2026 17:29:12'!
 initialize
 	super initialize.
 	schpf := OnePole new frequency: 100.0 / self class sampleRate "100 hz".
 	rmslpf := OnePole new time: 0.01 * self class sampleRate. "10 ms"
 	envelope := 0.0.
-	aux := Float32Array new: self class blockSize.
 	holdCount := 0! !
 
 !Gate methodsFor: 'initialization' stamp: 'len 26/May/2026 16:00:41'!
@@ -3103,13 +3107,14 @@ initializeControls
 	(self addFrequencyControl: #schpf min: 20.0 max: 200.0 value: 100.0) label: 'SC HPF'.
 	self addVolumeControl: #knee min: 1.0 "0 dB" max: 4.0 "+12 dB" value: 2.0 "+6 dB"! !
 
-!Gate methodsFor: 'processing' stamp: 'len 26/May/2026 16:20:39'!
+!Gate methodsFor: 'processing' stamp: 'len 26/May/2026 17:29:35'!
 tick
-	| sc isPeak threshold α β knee range holdSamples kneeStart kneeEnd kneeWidth |
+	| sc aux isPeak threshold α β knee range holdSamples kneeStart kneeEnd kneeWidth |
 	sc := inputSC ifNil: [inputL ifNil:
 		[outputL ifNotNil: [outputL atAllPut: 0.0].
 		outputR ifNotNil: [outputR atAllPut: 0.0].
 		^ self]].
+	aux := Aux1.
 	isPeak := (self get: #mode) = #peak. "if not peak, it's RMS"
 	threshold := self get: #threshold.
 	knee := self get: #knee.
@@ -4129,11 +4134,9 @@ update
 	pan < 0.0 ifTrue: [targetLevelRight := targetLevelRight * (pan * Float halfPi) cos].
 	pan > 0.0 ifTrue: [targetLevelLeft := targetLevelLeft * (pan * Float halfPi) cos]! !
 
-!AudioOut methodsFor: 'initialization' stamp: 'len 4/May/2026 18:47:14'!
+!AudioOut methodsFor: 'initialization' stamp: 'len 26/May/2026 17:22:55'!
 initialize
 	super initialize.
-	aux := Float32Array new: self class blockSize.
-	envelope := Float32Array new: self class blockSize.
 	level := levelLeft := levelRight := 0.001. "-60 dB"
 	meterLeftValue := meterRightValue := 0.0.
 	enabled := true! !
@@ -4145,12 +4148,14 @@ initializeControls
 	self addVolumeControl: #level min: 0.001 "-60 dB" max: 4.0 value: 0.5.
 	(self addControl: #pan min: -1.0 max: 1.0 value: 0.0) printer: [:x| x abs < 0.01 ifTrue: ['Center'] ifFalse: [(x abs * 100.0) rounded printString, '% ', (x < 0.0 ifTrue: ['L'] ifFalse: ['R'])]]! !
 
-!AudioOut methodsFor: 'processing' stamp: 'len 4/May/2026 18:54:19'!
+!AudioOut methodsFor: 'processing' stamp: 'len 26/May/2026 17:23:44'!
 tick
-	| bus |
+	| bus aux envelope |
 	inputL ifNil: [^ self].
 	(levelLeft = 0.0 and: [targetLevelLeft = 0.0 and: [levelRight = 0.0 and: [targetLevelRight = 0.0]]]) ifTrue: [^ self].
 	bus := buses at: (self get: #port) ifAbsentPut: [Bus new].
+	aux := Aux1.
+	envelope := Aux2.
 	meterLeftValue := meterLeftValue * 0.9 "dampen" max: (inputL rms max: inputL last abs).
 	inputR
 		ifNil:
@@ -7377,12 +7382,14 @@ initialize
 	delayLine1 := DelayLine new: maxLength.
 	delayLine2 := DelayLine new: maxLength.! !
 
-!PitchShifter methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:19:26'!
+!PitchShifter methodsFor: 'initialization' stamp: 'len 26/May/2026 17:08:52'!
 initializeControls
 	super initializeControls.
-	(self addControl: #shift min: -48.0 max: 48.0 value: 0.0) printer: #semitonesOffsetPrintString.
+	(self addControl: #pitch min: -48.0 max: 48.0 value: 0.0) printer: #semitonesOffsetPrintString.
 	self addTimeControl: #time min: 0.010 "10 ms" max: 0.160 "160 ms" value: 0.04 "40 ms".
-	self addTimeControl: #window min: 0.005 "5 ms" max: 0.080 "80 ms" value: 0.02 "20 ms"! !
+	self addTimeControl: #window min: 0.005 "5 ms" max: 0.080 "80 ms" value: 0.02 "20 ms".
+	self addBipolarDepthControl: #feedback value: 0.0.
+	self addDryWetControl: #mix value: 1.0! !
 
 !PitchShifter methodsFor: 'controlling' stamp: 'len 27/Jan/2026 02:04:52'!
 update
@@ -7715,10 +7722,9 @@ update
 	lowPassMid snapToZero.
 	highPassHigh snapToZero! !
 
-!EQ3 methodsFor: 'initialization' stamp: 'len 21/May/2026 17:28:43'!
+!EQ3 methodsFor: 'initialization' stamp: 'len 26/May/2026 17:34:59'!
 initialize
 	super initialize.
-	aux := Float32Array new: self class blockSize.
 	lowPassLow := Biquad new linkwitz_lp: 250.0 / self class sampleRate Q: 0.707.
 	highPassMid := Biquad new linkwitz_hp: 250.0 / self class sampleRate Q: 0.707.
 	lowPassMid := Biquad new linkwitz_lp: 2500.0 / self class sampleRate Q: 0.707.
@@ -7731,12 +7737,14 @@ initializeControls
 	self addVolumeControl: #mid min: 0.001 max: 2.0 value: 1.0.
 	self addVolumeControl: #high min: 0.001 max: 2.0 value: 1.0! !
 
-!EQ3 methodsFor: 'processing' stamp: 'len 29/Mar/2026 01:52:11'!
+!EQ3 methodsFor: 'processing' stamp: 'len 26/May/2026 17:35:24'!
 tick
+	| aux |
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	lowPassLow process: input into: output.
 	output *= (self get: #low).
+	aux := Aux1.
 	highPassMid process: input into: aux.
 	lowPassMid process: aux into: aux.
 	aux *= (self get: #mid).
@@ -8637,11 +8645,6 @@ setInputB: aBuffer
 setOutput: aBuffer
 	output := aBuffer! !
 
-!Mixer4 methodsFor: 'initialization' stamp: 'len 10/Feb/2026 20:12:43'!
-initialize
-	super initialize.
-	aux := Float32Array new: self class blockSize! !
-
 !Mixer4 methodsFor: 'initialization' stamp: 'len 10/Feb/2026 20:10:19'!
 initializeControls
 	super initializeControls.
@@ -8650,10 +8653,12 @@ initializeControls
 		addVolumeControl: #gainC value: 0.6;
 		addVolumeControl: #gainD value: 0.6! !
 
-!Mixer4 methodsFor: 'processing' stamp: 'len 12/Mar/2026 16:43:42'!
+!Mixer4 methodsFor: 'processing' stamp: 'len 26/May/2026 17:32:35'!
 tick
+	| aux |
 	output ifNil: [^ self].
 	output atAllPut: 0.0.
+	aux := Aux1.
 	inputA ifNotNil: [aux replaceWith: inputA; *= (self get: #gainA). output += aux].
 	inputB ifNotNil: [aux replaceWith: inputB; *= (self get: #gainB). output += aux].
 	inputC ifNotNil: [aux replaceWith: inputC; *= (self get: #gainC). output += aux].
@@ -8746,11 +8751,6 @@ setOutputL: aBuffer
 setOutputR: aBuffer
 	outputR := aBuffer! !
 
-!StereoMatrix methodsFor: 'initialization' stamp: 'len 27/Jan/2026 02:18:51'!
-initialize
-	super initialize.
-	aux := Float32Array new: self class blockSize! !
-
 !StereoMatrix methodsFor: 'initialization' stamp: 'len 27/Jan/2026 01:51:45'!
 initializeControls
 	super initializeControls.
@@ -8758,9 +8758,9 @@ initializeControls
 	self addControl: #balance min: -1.0 max: 1.0 value: 0.0
 ! !
 
-!StereoMatrix methodsFor: 'processing' stamp: 'len 13/Apr/2026 19:38:25'!
+!StereoMatrix methodsFor: 'processing' stamp: 'len 26/May/2026 17:33:14'!
 tick
-	| width balance |
+	| width balance aux |
 	(inputA isNil or: [inputB isNil]) ifTrue:
 		[outputL ifNotNil: [outputL atAllPut: 0.0].
 		outputR ifNotNil: [outputR atAllPut: 0.0].
@@ -8770,6 +8770,7 @@ tick
 	balance := self get: #balance.
 	outputL replaceWith: inputA; += inputB; *= ((1.0 + balance) * 0.5).
 	outputR replaceWith: outputL.
+	aux := Aux1.
 	aux replaceWith: inputA; -= inputB; *= ((1.0 - balance) * width * 0.5).
 	outputL += aux.
 	outputR -= aux! !

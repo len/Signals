@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 25 May 2026 at 6:40:38 pm'!
+'From Cuis7.7 [latest update: #7880] on 26 May 2026 at 4:34:24 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 568!
+!provides: 'Signals' 1 569!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -96,7 +96,7 @@ Compressor class
 
 !classDefinition: #Gate category: #'Signals-Dynamics'!
 Module subclass: #Gate
-	instanceVariableNames: 'schpf rmslpf envelope inputL inputR inputSC outputL outputR aux'
+	instanceVariableNames: 'schpf rmslpf envelope inputL inputR inputSC outputL outputR aux holdCount'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Dynamics'!
@@ -3069,9 +3069,10 @@ setOutputL: aBuffer
 setOutputR: aBuffer
 	outputR := aBuffer! !
 
-!Gate methodsFor: 'controlling' stamp: 'len 25/May/2026 14:20:48'!
+!Gate methodsFor: 'controlling' stamp: 'len 26/May/2026 16:24:45'!
 reset
 	envelope := 0.0.
+	holdCount := 0.
 	schpf reset.
 	rmslpf reset! !
 
@@ -3081,47 +3082,69 @@ update
 	schpf snapToZero; frequency: (self get: #schpf) / self class sampleRate.
 	rmslpf snapToZero! !
 
-!Gate methodsFor: 'initialization' stamp: 'len 25/May/2026 14:20:48'!
+!Gate methodsFor: 'initialization' stamp: 'len 26/May/2026 16:24:35'!
 initialize
 	super initialize.
 	schpf := OnePole new frequency: 100.0 / self class sampleRate "100 hz".
 	rmslpf := OnePole new time: 0.01 * self class sampleRate. "10 ms"
 	envelope := 0.0.
-	aux := Float32Array new: self class blockSize! !
+	aux := Float32Array new: self class blockSize.
+	holdCount := 0! !
 
-!Gate methodsFor: 'initialization' stamp: 'len 19/Mar/2026 21:33:45'!
+!Gate methodsFor: 'initialization' stamp: 'len 26/May/2026 16:00:41'!
 initializeControls
 	super initializeControls.
 	self addVolumeControl: #threshold value: 0.126.
 	self addTimeControl: #attack min: 0.0001 "0.1 ms" max: 0.1 "100 ms" value: 0.01 "10 ms".
 	self addTimeControl: #hold min: 0.0001 "0.1 ms" max: 0.1 "100 ms" value: 0.01 "10 ms".
 	self addTimeControl: #release min: 0.01 "10 ms" max: 1.5 "s" value: 0.1 "100 ms".
-	self addControl: #return min: 0.0 max: 1.0 value: 0.1.
+	self addVolumeControl: #range min: 0.0001 max: 1.0 value: 0.1.
 	self addChoiceControl: #mode options: #(peak rms) value: #peak.
 	(self addFrequencyControl: #schpf min: 20.0 max: 200.0 value: 100.0) label: 'SC HPF'.
 	self addVolumeControl: #knee min: 1.0 "0 dB" max: 4.0 "+12 dB" value: 2.0 "+6 dB"! !
 
-!Gate methodsFor: 'processing' stamp: 'len 25/May/2026 14:43:41'!
+!Gate methodsFor: 'processing' stamp: 'len 26/May/2026 16:20:39'!
 tick
-	| sc isPeak threshold α β |
+	| sc isPeak threshold α β knee range holdSamples kneeStart kneeEnd kneeWidth |
 	sc := inputSC ifNil: [inputL ifNil:
 		[outputL ifNotNil: [outputL atAllPut: 0.0].
 		outputR ifNotNil: [outputR atAllPut: 0.0].
 		^ self]].
 	isPeak := (self get: #mode) = #peak. "if not peak, it's RMS"
 	threshold := self get: #threshold.
+	knee := self get: #knee.
+	kneeStart := threshold / knee sqrt.
+	kneeEnd := threshold * knee sqrt.
+	kneeWidth := kneeEnd - kneeStart.
 	α := 1.0 - (-1.0 / ((self get: #attack) * self class sampleRate)) exp.
 	β := 1.0 - (-1.0 / ((self get: #release) * self class sampleRate)) exp.
+	holdSamples := ((self get: #hold) * self class sampleRate) rounded.
+	range := self get: #range.
 	aux atAllPut: 1.0.
 	1 to: sc size do: [:i|
-		| x level slope gr |
+		| x level slope envSafe t |
 		x := sc at: i.
 		x := x - (schpf value: x). "apply highpass filter to the sidechain to avoid bass pumping"
 		level := isPeak ifTrue: [x abs] ifFalse: [(rmslpf value: x squared) sqrt].
-		"program-dependent release, the release time depends on envelope and threshold:"
-		slope := level > envelope ifTrue: [α] ifFalse: [β / ((envelope - threshold max: 0.0) * 4.0 + 1.0)].
+		"envelope follower with hold stage:"
+		level > envelope
+			ifTrue:
+				[slope := α.
+				level >= kneeEnd ifTrue: [holdCount := holdSamples]]
+			ifFalse:
+				[(envelope <= kneeEnd and: [holdCount > 0])
+					ifTrue: [slope := 0.0. holdCount := holdCount - 1]
+					ifFalse: [slope := β / ((envelope - threshold max: 0.0) * 4.0 + 1.0)]].
 		envelope := (level - envelope) * slope + envelope.
-		(gr := envelope - threshold) > 0.0 ifTrue: [aux at: i put: 0.0]].
+		"gate state machine:"
+		(envSafe := envelope max: 1.0e-12) < kneeEnd ifTrue:
+			[envSafe > kneeStart
+				ifTrue:
+					[t := (envSafe - kneeStart) / kneeWidth.
+					t := t * t * (3.0 - (2.0 * t)).
+					aux at: i put: t * (1.0 - range) + range]
+				ifFalse:
+					[aux at: i put: range]]].
 	(inputL notNil and: [outputL notNil]) ifTrue: [outputL replaceWith: inputL; *= aux].
 	(inputR notNil and: [outputR notNil]) ifTrue: [outputR replaceWith: inputR; *= aux].
 	self triggerEvent: #envelope: with: envelope; triggerEvent: #gainReduction: with: aux last! !
@@ -3131,14 +3154,15 @@ panel
 	^​ ControlPanel new
 		addChoice: (controls at: #mode)! !
 
-!Gate methodsFor: 'ui' stamp: 'len 20/Mar/2026 19:15:49'!
+!Gate methodsFor: 'ui' stamp: 'len 26/May/2026 16:04:21'!
 panel2
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'Attack';
 		addSmallKnob: (controls at: #hold) label: 'Hold';
 		addSmallKnob: (controls at: #release) label: 'Release';
 		addSmallKnob: (controls at: #schpf) label: 'SC HPF';
-		addSmallKnob: (controls at: #knee) label: 'Knee'! !
+		addSmallKnob: (controls at: #knee) label: 'Knee';
+		addSmallKnob: (controls at: #range) label: 'Range'! !
 
 !Gate methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:11:52'!
 patchable
@@ -3154,12 +3178,12 @@ patchable
 		addAudioOutput: #setOutputR: label: 'R'.
 	^ answer! !
 
-!Gate methodsFor: 'ui' stamp: 'len 12/Apr/2026 03:58:27'!
+!Gate methodsFor: 'ui' stamp: 'len 26/May/2026 16:04:39'!
 screen
 	| answer |
 	answer := DynamicsActivityMorph new.
 	answer control1: (controls at: #threshold).
-	answer control2: (controls at: #return).
+	answer control2: (controls at: #range).
 	self when: #envelope: send: #addEnvelope: to: answer.
 	self when: #gainReduction: send: #addGainReduction: to: answer.
 	^ answer! !
@@ -11418,7 +11442,7 @@ addGainReduction: aNumber
 defaultExtent
 	^`128 @ 64`! !
 
-!DynamicsActivityMorph methodsFor: 'as yet unclassified' stamp: 'len 25/May/2026 14:56:59'!
+!DynamicsActivityMorph methodsFor: 'as yet unclassified' stamp: 'len 25/May/2026 23:10:19'!
 drawOn: aCanvas
 	| step x y h offset slack |
 	slack := 5.
@@ -11426,7 +11450,7 @@ drawOn: aCanvas
 	(offset := writePosition + slack - 1) > envelopeBuffer size ifTrue: [offset := offset - envelopeBuffer size].
 	h := self morphHeight.
 	x := 1.0.
-	aCanvas fillColor: Color lightGray do:
+	aCanvas fillColor: Color gray do:
 		[aCanvas moveTo: x @ h.
 		0 to: envelopeBuffer size - slack do: [:i|
 			y := 1.0 - (envelopeBuffer at: offset + i \\ envelopeBuffer size + 1) * h.
@@ -15823,9 +15847,9 @@ decibelsFSPrintString
 	self abs < 0.1 ifTrue: [^ '0 dBFS'].
 	^ (self positive ifTrue: ['+'] ifFalse: ['']), (self printStringFractionDigits: 1), ' dBFS'! !
 
-!Number methodsFor: '*signals' stamp: 'len 24/Jan/2026 15:56:54'!
+!Number methodsFor: '*signals' stamp: 'len 26/May/2026 16:27:24'!
 decibelsPrintString
-	self < -59.9 ifTrue: [^ '-∞ dB'].
+	self < -79.9 ifTrue: [^ '-∞ dB'].
 	self abs < 0.1 ifTrue: [^ '0 dB'].
 	^ (self positive ifTrue: ['+'] ifFalse: ['']), (self printStringFractionDigits: 1), ' dB'! !
 

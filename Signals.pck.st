@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 28 May 2026 at 7:06:41 pm'!
+'From Cuis7.7 [latest update: #7880] on 28 May 2026 at 10:03:45 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 571!
+!provides: 'Signals' 1 572!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -616,7 +616,7 @@ Phaser class
 
 !classDefinition: #PitchShifter category: #'Signals-FX'!
 Transform subclass: #PitchShifter
-	instanceVariableNames: 'delayLine phase increment lastOutput delay window feedback mix'
+	instanceVariableNames: 'delayLine phase increment lastOutput delay grain feedback mix lpf hpf'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
@@ -2118,8 +2118,8 @@ This is a classic flanger effect. It mixes the original signal with a copy delay
 !Phaser commentStamp: '<historical>' prior: 0!
 A phaser (phase shifter) splits a signal, shifts the phase of one path using all-pass filters, and recombines them to create a sweeping, "whooshing" swirling sound. This process creates notches and peaks in the frequency spectrum that move over time.!
 
-!PitchShifter commentStamp: 'len 28/May/2026 19:06:33' prior: 0!
-Time-domain pitch shifter based on a dual delay line (a delay line with two modulated taps with crossfading windows). This is the algorithm of the Eventide H3000 Ultra-Harmonizer.
+!PitchShifter commentStamp: '<historical>' prior: 0!
+Time-domain pitch shifter based on a dual delay line. This is essentially the algorithm of the Eventide H3000 Ultra-Harmonizer.
 
 Pitch-shifting is achieved by modulating a delay: the write pointer always advances at normal speed, but the read pointer advances faster (pitch up) or slower (pitch down). This causes discontinuities when the read pointer crosses the write pointer, but the discontinuities are hidden by crossfading between two taps on the same delay line with a phase offset of 180°.!
 
@@ -3464,10 +3464,10 @@ update
 	hsfL snapToZero; hs: 4000.0 / self class sampleRate Q: 0.707 gain: treble / trebleSpread. "4 kHz"
 	hsfR snapToZero; hs: 4000.0 / self class sampleRate Q: 0.707 gain: treble * trebleSpread. "4 kHz"! !
 
-!StereoEcho methodsFor: 'initialization' stamp: 'len 21/May/2026 17:28:12'!
+!StereoEcho methodsFor: 'initialization' stamp: 'len 28/May/2026 19:37:07'!
 initialize
 	super initialize.
-	delayLineL := DelayLine new: (self class sampleRate * 2) ceiling + 2.
+	delayLineL := DelayLine new: (self class sampleRate * 2) ceiling + 2. "max 2 s"
 	tapL := DelayTapC on: delayLineL.
 	delayLineR := DelayLine new: (self class sampleRate * 2) ceiling + 2.
 	tapR := DelayTapC on: delayLineR.
@@ -7191,10 +7191,10 @@ update
 	super update.
 	tap setDelayIncrement: (self get: #time) * self class sampleRate - tap delay / (self class sampleRate * 0.03) "slide over 30 ms"! !
 
-!Echo methodsFor: 'initialization' stamp: 'len 25/Mar/2026 15:58:18'!
+!Echo methodsFor: 'initialization' stamp: 'len 28/May/2026 19:36:49'!
 initialize
 	super initialize.
-	delayLine := DelayLine new: self class sampleRate ceiling.
+	delayLine := DelayLine new: self class sampleRate + 2. "max 1 s"
 	tap := DelayTapC on: delayLine! !
 
 !Echo methodsFor: 'initialization' stamp: 'len 14/Jan/2026 15:44:28'!
@@ -7370,51 +7370,76 @@ screen
 	self when: #lfo: send: #addSample: to: answer.
 	^ answer! !
 
-!PitchShifter methodsFor: 'initialization' stamp: 'len 28/May/2026 17:36:11'!
+!PitchShifter methodsFor: 'initialization' stamp: 'len 28/May/2026 21:42:51'!
 initialize
 	super initialize.
-	delayLine := DelayLine new: (self class sampleRate * 0.3) ceiling. "max 300 ms"
+	delayLine := DelayLine new: self class sampleRate + 2. "max 1 s"
+	lpf := OnePole new.
+	hpf := OnePole new frequency: 100.0 / self class sampleRate.  "fixed at 100 Hz"
 	self reset! !
 
-!PitchShifter methodsFor: 'initialization' stamp: 'len 28/May/2026 19:02:21'!
+!PitchShifter methodsFor: 'initialization' stamp: 'len 28/May/2026 21:54:37'!
 initializeControls
 	super initializeControls.
-	self addPitchControl: #pitch.
-	self addTimeControl: #delay min: 0.010 "10 ms" max: 0.160 "160 ms" value: 0.04 "40 ms".
-	self addTimeControl: #window min: 0.005 "5 ms" max: 0.080 "80 ms" value: 0.02 "20 ms".
+	self addPitchControl: #pitch min: -24.0 "st" max: 24.0 "st" value: 0.0. "2 octaves up/down"
+	self addTimeControl: #delay min: 0.010 "10 ms" max: 1.0 "1 s" value: 0.04 "40 ms".
+	self addTimeControl: #grain min: 0.005 "5 ms" max: 0.080 "80 ms" value: 0.02 "20 ms".
 	(self addControl: #feedback min: 0.0 max: 0.95 value: 0.0) printer: [:x| (x * 100) truncated printString, '%'].
+	self addFrequencyControl: #lp min: 500.0 "Hz" max: 20000.0 "Hz" value: 10000.0 "Hz".
 	self addDryWetControl: #mix value: 1.0! !
 
-!PitchShifter methodsFor: 'controlling' stamp: 'len 28/May/2026 17:18:28'!
+!PitchShifter methodsFor: 'controlling' stamp: 'len 28/May/2026 21:43:31'!
 reset
-	phase := increment := lastOutput := 0.0! !
+	phase := increment := lastOutput := 0.0.
+	delayLine reset.
+	lpf reset.
+	hpf reset! !
 
-!PitchShifter methodsFor: 'controlling' stamp: 'len 28/May/2026 18:56:35'!
+!PitchShifter methodsFor: 'controlling' stamp: 'len 28/May/2026 21:43:07'!
 update
 	super update.
 	delay := (self get: #delay) * self class sampleRate.
-	window := (self get: #window) * self class sampleRate.
-	increment := (1.0 - (self get: #pitch) semitonesToRatio) / window.
+	grain := (self get: #grain) * self class sampleRate.
+	increment := (1.0 - (self get: #pitch) semitonesToRatio) / grain.
 	feedback := self get: #feedback.
-	mix := self get: #mix! !
+	mix := self get: #mix.
+	lpf snapToZero; frequency: (self get: #lp) / self class sampleRate.
+	hpf snapToZero! !
 
-!PitchShifter methodsFor: 'processing' stamp: 'len 28/May/2026 18:56:16'!
+!PitchShifter methodsFor: 'processing' stamp: 'len 28/May/2026 21:56:18'!
 value: in
 	| phase2 |
+	lastOutput := lpf value: lastOutput.
+	lastOutput := lastOutput - (hpf value: lastOutput).
 	delayLine write: in + (lastOutput * feedback).
 	phase := phase + increment \\ 1.0.
 	phase2 := phase + 0.5 \\ 1.0.
-	lastOutput := (delayLine atCubic: phase * window + delay) * (phase * Float pi) sin + ((delayLine atCubic: phase2 * window + delay) * (phase2 * Float pi) sin).
+	lastOutput := (delayLine atCubic: phase * grain + delay) * (phase * Float pi) sin + ((delayLine atCubic: phase2 * grain + delay) * (phase2 * Float pi) sin).
 	^ lastOutput * mix + (in * (1.0 - mix))! !
 
-!PitchShifter methodsFor: 'ui' stamp: 'len 28/May/2026 18:09:13'!
+!PitchShifter methodsFor: 'ui' stamp: 'len 28/May/2026 21:47:24'!
 panel
 	^ ControlPanel new
-		addSmallKnob: (controls at: #pitch) label: 'Pitch';
+		addKnob: (controls at: #pitch) label: 'Pitch';
+		addKnob: (controls at: #feedback) label: 'FB';
+		addKnob: (controls at: #mix) label: 'Mix'! !
+
+!PitchShifter methodsFor: 'ui' stamp: 'len 28/May/2026 21:44:59'!
+panel2
+	^ ControlPanel new
 		addSmallKnob: (controls at: #delay) label: 'Delay';
-		addSmallKnob: (controls at: #window) label: 'Window';
-		addSmallKnob: (controls at: #feedback) label: 'FB';
-		addSmallKnob: (controls at: #mix) label: 'Mix'! !
+		addSmallKnob: (controls at: #grain) label: 'Grain';
+		addSmallKnob: (controls at: #lp) label: 'LP'! !
+
+!PitchShifter methodsFor: 'ui' stamp: 'len 28/May/2026 21:45:49'!
+patchable
+	| answer |
+	answer := super patchable.
+	answer flap addMorph: self panel2.
+	^ answer
+		addControlInput: #pitch;
+		addControlInput: #feedback;
+		yourself! !
 
 !Reverb methodsFor: 'controlling' stamp: 'len 27/Mar/2026 16:36:59'!
 reset
@@ -7503,10 +7528,10 @@ update
 	lsf snapToZero; ls: 120.0 / self class sampleRate Q: 0.707 gain: (self get: #bass). "120 Hz"
 	hsf snapToZero; hs: 4000.0 / self class sampleRate Q: 0.707 gain: (self get: #treble) "4 kHz"! !
 
-!TapeEcho methodsFor: 'initialization' stamp: 'len 21/May/2026 17:28:27'!
+!TapeEcho methodsFor: 'initialization' stamp: 'len 28/May/2026 19:36:10'!
 initialize
 	super initialize.
-	delayLine := DelayLine new: (self class sampleRate * 2) ceiling.
+	delayLine := DelayLine new: (self class sampleRate * 2) ceiling + 2. "max 2 s"
 	tap1 := DelayTapC on: delayLine.
 	tap2 := DelayTapC on: delayLine.
 	tap3 := DelayTapC on: delayLine.

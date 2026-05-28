@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 26 May 2026 at 5:38:25 pm'!
+'From Cuis7.7 [latest update: #7880] on 28 May 2026 at 7:06:41 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 570!
+!provides: 'Signals' 1 571!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -616,7 +616,7 @@ Phaser class
 
 !classDefinition: #PitchShifter category: #'Signals-FX'!
 Transform subclass: #PitchShifter
-	instanceVariableNames: 'delayLine1 delayLine2'
+	instanceVariableNames: 'delayLine phase increment lastOutput delay window feedback mix'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
@@ -2118,10 +2118,10 @@ This is a classic flanger effect. It mixes the original signal with a copy delay
 !Phaser commentStamp: '<historical>' prior: 0!
 A phaser (phase shifter) splits a signal, shifts the phase of one path using all-pass filters, and recombines them to create a sweeping, "whooshing" swirling sound. This process creates notches and peaks in the frequency spectrum that move over time.!
 
-!PitchShifter commentStamp: '<historical>' prior: 0!
-Time-domain pitch shifter based on two modulated delay lines with crossfading windows. This is the algorithm of the Eventide H3000 Ultra-Harmonizer.
+!PitchShifter commentStamp: 'len 28/May/2026 19:06:33' prior: 0!
+Time-domain pitch shifter based on a dual delay line (a delay line with two modulated taps with crossfading windows). This is the algorithm of the Eventide H3000 Ultra-Harmonizer.
 
-Pitch-shifting is achieved by modulating a delay line: the write pointer always advances at normal speed, but the read pointer advances faster (pitch up) or slower (pitch down). This causes discontinuities when the read pointer catches up or falls too far behind, but the discontinuities are hidden by crossfading between two delay lines running the same algorithm in parallel with a phase offset of 180°.!
+Pitch-shifting is achieved by modulating a delay: the write pointer always advances at normal speed, but the read pointer advances faster (pitch up) or slower (pitch down). This causes discontinuities when the read pointer crosses the write pointer, but the discontinuities are hidden by crossfading between two taps on the same delay line with a phase offset of 180°.!
 
 !Reverb commentStamp: '<historical>' prior: 0!
 This is a reverb effect based on Freeverb. It consists of 8 damped combs (lowpass feedback comb filters) in parallel followed by 4 Schroeder allpasses in series.!
@@ -2748,10 +2748,6 @@ settings: aDictionary
 copy
 	^ self class new settings: self settings! !
 
-!Module methodsFor: 'initialization' stamp: 'len 26/May/2026 17:08:16'!
-addBipolarDepthControl: aSymbol value: defaultValue
-	^ (self addControl: aSymbol min: -1.0 max: 1.0 value: defaultValue) printer: [:x| (x * 100) truncated printString, '%']! !
-
 !Module methodsFor: 'initialization' stamp: 'len 18/Mar/2026 20:08:10'!
 addChoiceControl: aSymbol options: anArray value: defaultValue
 	^ controls at: aSymbol put: ((Choice options: anArray value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
@@ -2788,7 +2784,7 @@ addLogControl: aSymbol min: min max: max value: defaultValue
 addLogDepthControl: aSymbol value: defaultValue
 	^ (self addLogControl: aSymbol min: 0.001 max: 1.0 value: defaultValue) printer: [:x| (x * 100 printStringFractionDigits: (x > 0.1 ifTrue: [0] ifFalse: [x > 0.01 ifTrue: [1] ifFalse: [2]])), '%']! !
 
-!Module methodsFor: 'initialization' stamp: 'len 13/May/2026 17:42:17'!
+!Module methodsFor: 'initialization' stamp: 'len 28/May/2026 19:02:19'!
 addPitchControl: aSymbol
 	^ self addPitchControl: aSymbol min: -48.0 "st" max: 48.0 "st" value: 0.0! !
 
@@ -4141,11 +4137,11 @@ initialize
 	meterLeftValue := meterRightValue := 0.0.
 	enabled := true! !
 
-!AudioOut methodsFor: 'initialization' stamp: 'len 18/Mar/2026 20:10:31'!
+!AudioOut methodsFor: 'initialization' stamp: 'len 28/May/2026 17:38:22'!
 initializeControls
 	super initializeControls.
 	self addChoiceControl: #port options: (0 to: 9) value: 0.
-	self addVolumeControl: #level min: 0.001 "-60 dB" max: 4.0 value: 0.5.
+	self addVolumeControl: #level min: 0.001 "-60 dB" max: 4.0 "+12 dB" value: 1.0 "0 dB".
 	(self addControl: #pan min: -1.0 max: 1.0 value: 0.0) printer: [:x| x abs < 0.01 ifTrue: ['Center'] ifFalse: [(x abs * 100.0) rounded printString, '% ', (x < 0.0 ifTrue: ['L'] ifFalse: ['R'])]]! !
 
 !AudioOut methodsFor: 'processing' stamp: 'len 26/May/2026 17:23:44'!
@@ -6763,18 +6759,18 @@ initializeControls
 	self addTimeControl: #release min: 0.01 "10 ms" max: 0.5 "500 ms" value: 0.1 "100 ms".
 	self addChoiceControl: #mode options: #(peak rms) value: #rms! !
 
-!EnvelopeFollower methodsFor: 'processing' stamp: 'len 20/May/2026 20:09:14'!
+!EnvelopeFollower methodsFor: 'processing' stamp: 'len 27/May/2026 17:03:26'!
 tick
 	| attack release level |
 	input ifNil: [^ self].
 	level := (self get: #mode) = #peak ifTrue: [input peak] ifFalse: [input rms].
-	envelope := (level > envelope
+	level > envelope
 		ifTrue:
 			[attack := (-1.0 / ((self get: #attack) * self class controlRate)) exp.
-			envelope * attack + (level * (1.0 - attack))]
+			envelope := envelope * attack + (level * (1.0 - attack))]
 		ifFalse:
 			[release := (-1.0 / ((self get: #release) * self class controlRate)) exp.
-			envelope * release + (level * (1.0 - release))]).
+			envelope := envelope * release + (level * (1.0 - release))].
 	envelope < 1.0e-8 "-160 dB" ifTrue: [envelope := 0.0].
 	self send: envelope! !
 
@@ -7374,33 +7370,51 @@ screen
 	self when: #lfo: send: #addSample: to: answer.
 	^ answer! !
 
-!PitchShifter methodsFor: 'initialization' stamp: 'len 26/Jan/2026 17:18:20'!
+!PitchShifter methodsFor: 'initialization' stamp: 'len 28/May/2026 17:36:11'!
 initialize
-	| maxLength |
 	super initialize.
-	maxLength := (self class sampleRate * 0.160) ceiling.
-	delayLine1 := DelayLine new: maxLength.
-	delayLine2 := DelayLine new: maxLength.! !
+	delayLine := DelayLine new: (self class sampleRate * 0.3) ceiling. "max 300 ms"
+	self reset! !
 
-!PitchShifter methodsFor: 'initialization' stamp: 'len 26/May/2026 17:08:52'!
+!PitchShifter methodsFor: 'initialization' stamp: 'len 28/May/2026 19:02:21'!
 initializeControls
 	super initializeControls.
-	(self addControl: #pitch min: -48.0 max: 48.0 value: 0.0) printer: #semitonesOffsetPrintString.
-	self addTimeControl: #time min: 0.010 "10 ms" max: 0.160 "160 ms" value: 0.04 "40 ms".
+	self addPitchControl: #pitch.
+	self addTimeControl: #delay min: 0.010 "10 ms" max: 0.160 "160 ms" value: 0.04 "40 ms".
 	self addTimeControl: #window min: 0.005 "5 ms" max: 0.080 "80 ms" value: 0.02 "20 ms".
-	self addBipolarDepthControl: #feedback value: 0.0.
+	(self addControl: #feedback min: 0.0 max: 0.95 value: 0.0) printer: [:x| (x * 100) truncated printString, '%'].
 	self addDryWetControl: #mix value: 1.0! !
 
-!PitchShifter methodsFor: 'controlling' stamp: 'len 27/Jan/2026 02:04:52'!
+!PitchShifter methodsFor: 'controlling' stamp: 'len 28/May/2026 17:18:28'!
+reset
+	phase := increment := lastOutput := 0.0! !
+
+!PitchShifter methodsFor: 'controlling' stamp: 'len 28/May/2026 18:56:35'!
 update
-"	window := self get: #window."
-	| delayIncrement delayTime length |
 	super update.
-	length := ((self get: #time) * self class sampleRate) rounded.
-	delayTime := length / 2.0.
-	delayIncrement := (self get: #shift) semitonesToRatio.
-	delayLine1 setLength: length; setDelay: delayTime; setDelayIncrement: delayIncrement.
-	delayLine1 setLength: length; setDelay: length - delayTime; setDelayIncrement: delayIncrement! !
+	delay := (self get: #delay) * self class sampleRate.
+	window := (self get: #window) * self class sampleRate.
+	increment := (1.0 - (self get: #pitch) semitonesToRatio) / window.
+	feedback := self get: #feedback.
+	mix := self get: #mix! !
+
+!PitchShifter methodsFor: 'processing' stamp: 'len 28/May/2026 18:56:16'!
+value: in
+	| phase2 |
+	delayLine write: in + (lastOutput * feedback).
+	phase := phase + increment \\ 1.0.
+	phase2 := phase + 0.5 \\ 1.0.
+	lastOutput := (delayLine atCubic: phase * window + delay) * (phase * Float pi) sin + ((delayLine atCubic: phase2 * window + delay) * (phase2 * Float pi) sin).
+	^ lastOutput * mix + (in * (1.0 - mix))! !
+
+!PitchShifter methodsFor: 'ui' stamp: 'len 28/May/2026 18:09:13'!
+panel
+	^ ControlPanel new
+		addSmallKnob: (controls at: #pitch) label: 'Pitch';
+		addSmallKnob: (controls at: #delay) label: 'Delay';
+		addSmallKnob: (controls at: #window) label: 'Window';
+		addSmallKnob: (controls at: #feedback) label: 'FB';
+		addSmallKnob: (controls at: #mix) label: 'Mix'! !
 
 !Reverb methodsFor: 'controlling' stamp: 'len 27/Mar/2026 16:36:59'!
 reset

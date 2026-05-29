@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 28 May 2026 at 10:03:45 pm'!
+'From Cuis7.7 [latest update: #7880] on 29 May 2026 at 9:01:40 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 572!
+!provides: 'Signals' 1 573!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -616,7 +616,7 @@ Phaser class
 
 !classDefinition: #PitchShifter category: #'Signals-FX'!
 Transform subclass: #PitchShifter
-	instanceVariableNames: 'delayLine phase increment lastOutput delay grain feedback mix lpf hpf'
+	instanceVariableNames: 'delayLine phase increment lastOutput delay delayIncrement grainSize grainSizeIncrement feedback mix lpf hpf'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
@@ -1022,16 +1022,6 @@ Module subclass: #OberheimSVF
 	category: 'Signals-VA Filters'!
 !classDefinition: 'OberheimSVF class' category: #'Signals-VA Filters'!
 OberheimSVF class
-	instanceVariableNames: ''!
-
-!classDefinition: #ControlOld category: #'Signals-Trash'!
-ActiveModel subclass: #ControlOld
-	instanceVariableNames: 'min max curve base modulation lastValue printer default label coarseStep fineStep'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Trash'!
-!classDefinition: 'ControlOld class' category: #'Signals-Trash'!
-ControlOld class
 	instanceVariableNames: ''!
 
 !classDefinition: #ControlPanel category: #'Signals-Morphic-Controls'!
@@ -2118,8 +2108,8 @@ This is a classic flanger effect. It mixes the original signal with a copy delay
 !Phaser commentStamp: '<historical>' prior: 0!
 A phaser (phase shifter) splits a signal, shifts the phase of one path using all-pass filters, and recombines them to create a sweeping, "whooshing" swirling sound. This process creates notches and peaks in the frequency spectrum that move over time.!
 
-!PitchShifter commentStamp: '<historical>' prior: 0!
-Time-domain pitch shifter based on a dual delay line. This is essentially the algorithm of the Eventide H3000 Ultra-Harmonizer.
+!PitchShifter commentStamp: 'len 29/May/2026 19:37:01' prior: 0!
+Time-domain pitch shifter based on a dual delay line. This is the classic "leapfrog" pitch shift algorithm of the Eventide H910 Harmonizer released in 1975, the one that "fucks with the fabric of time" (as Tony Visconti famously said during a conference call with David Bowie and Brian Eno). This implementation also includes some improvements of the following model H949, such as longer delay time, smooth equal-power crossfade and reverse mode, but it doesn't include the deglitch option of H949.
 
 Pitch-shifting is achieved by modulating a delay: the write pointer always advances at normal speed, but the read pointer advances faster (pitch up) or slower (pitch down). This causes discontinuities when the read pointer crosses the write pointer, but the discontinuities are hidden by crossfading between two taps on the same delay line with a phase offset of 180°.!
 
@@ -2290,11 +2280,6 @@ See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 Virtual analog model of the Oberheim state variable filter. It has low-pass, high-pass, band-pass and band-stop outputs. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section Figure 7.5.
 
 See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
-
-!ControlOld commentStamp: '<historical>' prior: 0!
-A control is a an abstraction based on the idea of a knob that changes a parameter.
-
-Controls can have different curves, e.g. linear (like a control to smoothly morph the wave shape of an oscillator) or logarithmic (like a volume or pitch knob). Controls have a 'base value' typically set by the user in the UI, and a 'modulated value' that depends on external modulations (for example modulation coming from an LFO or an envelope, simulating the action of a hand moving the knob).!
 
 !Bus commentStamp: '<historical>' prior: 0!
 A bus is just the sum of a number of audio signals (mono or stereo). It is used to mix a number of audio signals in order to process them together or send them to the audio output driver.!
@@ -2607,11 +2592,11 @@ initialize
 isBipolar
 	^ min = max negated! !
 
-!Knob methodsFor: 'private' stamp: 'len 8/Mar/2026 15:16:22'!
+!Knob methodsFor: 'private' stamp: 'len 29/May/2026 17:46:44'!
 curveAt: aNumber
 	"Maps values from [0,1] to [min,max]."
 	curve = #linear ifTrue: [^ aNumber * (max - min) + min].
-	curve = #exp ifTrue:
+	curve = #log ifTrue:
 		["min = 0.0 ifTrue: [^ aNumber < 0.1 ifTrue: [aNumber * max] ifFalse: [(max / 0.1 raisedTo: aNumber - 0.1 / 0.9) * 0.1]]."
 		^ (max / min raisedTo: aNumber) * min].
 	curve = #quadratic ifTrue:
@@ -2622,11 +2607,11 @@ curveAt: aNumber
 		^ aNumber squared * (max - min) + min].
 	self notYetImplemented! !
 
-!Knob methodsFor: 'private' stamp: 'len 8/Mar/2026 15:16:22'!
+!Knob methodsFor: 'private' stamp: 'len 29/May/2026 17:46:49'!
 curveInverseAt: aNumber
 	"Maps values from [min,max] to [0,1]."
 	curve = #linear ifTrue: [^ aNumber - min / (max - min)].
-	curve = #exp ifTrue:
+	curve = #log ifTrue:
 		["min = 0.0 ifTrue: [^ aNumber < (max * 0.1) ifTrue: [aNumber / max] ifFalse: [aNumber ln - 0.1 ln / (max ln - 0.1 ln)]]."
 		^ aNumber ln - min ln / (max ln - min ln)].
 	curve = #quadratic ifTrue:
@@ -2776,9 +2761,9 @@ addFrequencyControl: aSymbol min: min max: max value: defaultValue
 addFrequencyControl: aSymbol value: defaultValue
 	^ self addFrequencyControl: aSymbol min: 20.0 "Hz" max: 20000.0 "20 kHz" value: defaultValue! !
 
-!Module methodsFor: 'initialization' stamp: 'len 18/Mar/2026 18:05:42'!
+!Module methodsFor: 'initialization' stamp: 'len 29/May/2026 17:47:01'!
 addLogControl: aSymbol min: min max: max value: defaultValue
-	^ controls at: aSymbol put: ((Knob min: min max: max curve: #exp value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
+	^ controls at: aSymbol put: ((Knob min: min max: max curve: #log value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
 
 !Module methodsFor: 'initialization' stamp: 'len 23/May/2026 18:06:31'!
 addLogDepthControl: aSymbol value: defaultValue
@@ -7378,15 +7363,16 @@ initialize
 	hpf := OnePole new frequency: 100.0 / self class sampleRate.  "fixed at 100 Hz"
 	self reset! !
 
-!PitchShifter methodsFor: 'initialization' stamp: 'len 28/May/2026 21:54:37'!
+!PitchShifter methodsFor: 'initialization' stamp: 'len 29/May/2026 19:41:18'!
 initializeControls
 	super initializeControls.
 	self addPitchControl: #pitch min: -24.0 "st" max: 24.0 "st" value: 0.0. "2 octaves up/down"
 	self addTimeControl: #delay min: 0.010 "10 ms" max: 1.0 "1 s" value: 0.04 "40 ms".
-	self addTimeControl: #grain min: 0.005 "5 ms" max: 0.080 "80 ms" value: 0.02 "20 ms".
+	self addTimeControl: #grainSize min: 0.005 "5 ms" max: 0.5 "500 ms" value: 0.02 "20 ms".
 	(self addControl: #feedback min: 0.0 max: 0.95 value: 0.0) printer: [:x| (x * 100) truncated printString, '%'].
-	self addFrequencyControl: #lp min: 500.0 "Hz" max: 20000.0 "Hz" value: 10000.0 "Hz".
-	self addDryWetControl: #mix value: 1.0! !
+	self addFrequencyControl: #lowPass min: 500.0 "Hz" max: 20000.0 "Hz" value: 10000.0 "Hz".
+	self addDryWetControl: #mix value: 0.5.
+	self addToggleControl: #reverse value: false! !
 
 !PitchShifter methodsFor: 'controlling' stamp: 'len 28/May/2026 21:43:31'!
 reset
@@ -7395,26 +7381,34 @@ reset
 	lpf reset.
 	hpf reset! !
 
-!PitchShifter methodsFor: 'controlling' stamp: 'len 28/May/2026 21:43:07'!
+!PitchShifter methodsFor: 'controlling' stamp: 'len 29/May/2026 20:53:48'!
 update
+	| ratio targetDelay targetGrainSize |
 	super update.
-	delay := (self get: #delay) * self class sampleRate.
-	grain := (self get: #grain) * self class sampleRate.
-	increment := (1.0 - (self get: #pitch) semitonesToRatio) / grain.
+	targetDelay := (self get: #delay) * self class sampleRate.
+	delay ifNil: [delay := targetDelay].
+	delayIncrement := (targetDelay - delay) / self class blockSize.
+	targetGrainSize := (self get: #grainSize) * self class sampleRate.
+	grainSize ifNil: [grainSize := targetGrainSize].
+	grainSizeIncrement := (targetGrainSize - grainSize) / self class blockSize.
+	ratio := (self get: #pitch) semitonesToRatio.
+	increment := ((self get: #reverse) ifTrue: [1.0 + ratio] ifFalse: [1.0 - ratio]) / grainSize.
 	feedback := self get: #feedback.
 	mix := self get: #mix.
-	lpf snapToZero; frequency: (self get: #lp) / self class sampleRate.
+	lpf snapToZero; frequency: (self get: #lowPass) / self class sampleRate.
 	hpf snapToZero! !
 
-!PitchShifter methodsFor: 'processing' stamp: 'len 28/May/2026 21:56:18'!
+!PitchShifter methodsFor: 'processing' stamp: 'len 29/May/2026 20:54:33'!
 value: in
 	| phase2 |
+	delay := delay + delayIncrement.
+	grainSize := grainSize + grainSizeIncrement.
 	lastOutput := lpf value: lastOutput.
 	lastOutput := lastOutput - (hpf value: lastOutput).
 	delayLine write: in + (lastOutput * feedback).
 	phase := phase + increment \\ 1.0.
 	phase2 := phase + 0.5 \\ 1.0.
-	lastOutput := (delayLine atCubic: phase * grain + delay) * (phase * Float pi) sin + ((delayLine atCubic: phase2 * grain + delay) * (phase2 * Float pi) sin).
+	lastOutput := (delayLine atCubic: phase * grainSize + delay) * (phase * Float pi) sin + ((delayLine atCubic: phase2 * grainSize + delay) * (phase2 * Float pi) sin).
 	^ lastOutput * mix + (in * (1.0 - mix))! !
 
 !PitchShifter methodsFor: 'ui' stamp: 'len 28/May/2026 21:47:24'!
@@ -7424,12 +7418,13 @@ panel
 		addKnob: (controls at: #feedback) label: 'FB';
 		addKnob: (controls at: #mix) label: 'Mix'! !
 
-!PitchShifter methodsFor: 'ui' stamp: 'len 28/May/2026 21:44:59'!
+!PitchShifter methodsFor: 'ui' stamp: 'len 29/May/2026 19:47:35'!
 panel2
 	^ ControlPanel new
 		addSmallKnob: (controls at: #delay) label: 'Delay';
-		addSmallKnob: (controls at: #grain) label: 'Grain';
-		addSmallKnob: (controls at: #lp) label: 'LP'! !
+		addSmallKnob: (controls at: #grainSize) label: 'Grain';
+		addSmallKnob: (controls at: #lowPass) label: 'LP';
+		addToggle: (controls at: #reverse) label: '◀'! !
 
 !PitchShifter methodsFor: 'ui' stamp: 'len 28/May/2026 21:45:49'!
 patchable
@@ -10177,179 +10172,6 @@ setOutputHP: aBuffer
 setOutputLP: aBuffer
 	outputLP := aBuffer! !
 
-!ControlOld methodsFor: 'accessing' stamp: 'len 3/Mar/2026 19:31:13'!
-adjustBy: aNumber
-	self basePosition: base + aNumber! !
-
-!ControlOld methodsFor: 'accessing' stamp: 'len 28/Nov/2025 11:01:00'!
-basePosition
-	"Answer the base value of the receiver mapped to a number between 0.0 and 1.0."
-	^ base! !
-
-!ControlOld methodsFor: 'accessing' stamp: 'len 28/Nov/2025 11:01:00'!
-basePosition: aNumber
-	"Set the base value of the receiver from a number between 0.0 and 1.0."
-	base := aNumber min: 1.0 max: 0.0.
-	self changed: self baseValue! !
-
-!ControlOld methodsFor: 'accessing' stamp: 'len 28/Nov/2025 11:02:00'!
-baseValue
-	^ self valueFromPosition: base! !
-
-!ControlOld methodsFor: 'accessing' stamp: 'len 28/Nov/2025 11:04:00'!
-baseValue: anObject
-	self basePosition: (self positionFromValue: anObject)! !
-
-!ControlOld methodsFor: 'accessing' stamp: 'len 29/Jan/2026 18:42:54'!
-coarseStep
-	^ coarseStep! !
-
-!ControlOld methodsFor: 'accessing' stamp: 'len 29/Jan/2026 18:43:19'!
-coarseStep: aNumber
-	coarseStep := aNumber! !
-
-!ControlOld methodsFor: 'accessing' stamp: 'len 29/Jan/2026 18:43:04'!
-fineStep
-	^ fineStep! !
-
-!ControlOld methodsFor: 'accessing' stamp: 'len 29/Jan/2026 18:43:12'!
-fineStep: aNumber
-	fineStep := aNumber! !
-
-!ControlOld methodsFor: 'control and modulation' stamp: 'len 3/Oct/2025 00:43:00'!
-apply
-	| newValue |
-	(newValue := self value) = lastValue ifFalse: [lastValue := newValue. self changed: newValue]! !
-
-!ControlOld methodsFor: 'control and modulation' stamp: 'len 8/Dec/2025 18:05:22'!
-clear
-	"Clear modulation, preparing to compute it again." 
-	modulation := 0.0! !
-
-!ControlOld methodsFor: 'control and modulation' stamp: 'len 28/Sep/2025 14:13:00'!
-modulateBy: aNumber
-	modulation := modulation + aNumber! !
-
-!ControlOld methodsFor: 'control and modulation' stamp: 'len 29/Nov/2025 15:26:00'!
-modulatedPosition
-	"Answer the modulated value of the receiver mapped to a number between 0.0 and 1.0."
-	^ base + modulation min: 1.0 max: 0.0! !
-
-!ControlOld methodsFor: 'control and modulation' stamp: 'len 28/Nov/2025 11:02:00'!
-modulatedValue
-	^ self valueFromPosition: base + modulation! !
-
-!ControlOld methodsFor: 'control and modulation' stamp: 'len 30/Sep/2025 17:50:00'!
-modulation
-	^ modulation! !
-
-!ControlOld methodsFor: 'control and modulation' stamp: 'len 4/Dec/2025 14:43:58'!
-resetToDefault
-	self baseValue: default! !
-
-!ControlOld methodsFor: 'control and modulation' stamp: 'len 14/Oct/2025 15:06:00'!
-value
-	^ self modulatedValue! !
-
-!ControlOld methodsFor: 'initialization' stamp: 'len 29/Jan/2026 19:06:05'!
-initialize
-	super initialize.
-	lastValue := base := 0.0.
-	min := -1.0.
-	max := 1.0.
-	modulation := 0.0.
-	curve := #linear.
-	coarseStep := 1.0 / 128.0.
-	fineStep := coarseStep * 0.1! !
-
-!ControlOld methodsFor: 'printing' stamp: 'len 10/Mar/2026 16:23:07'!
-label
-	^ label! !
-
-!ControlOld methodsFor: 'printing' stamp: 'len 27/Jan/2026 16:28:29'!
-label: aString
-	label := aString! !
-
-!ControlOld methodsFor: 'printing' stamp: 'len 11/Dec/2025 16:22:16'!
-printOn: aStream
-	| v |
-	v := self value.
-	printer ifNotNil: [aStream nextPutAll: (printer value: v). ^ self].
-	v isNumber ifTrue: [v printOn: aStream fractionDigits: 2] ifFalse: [aStream print: v]! !
-
-!ControlOld methodsFor: 'printing' stamp: 'len 27/Jan/2026 16:34:37'!
-printedBaseValue
-	^ printer ifNil: [self baseValue printStringFractionDigits: 2] ifNotNil: [printer value: self baseValue]! !
-
-!ControlOld methodsFor: 'printing' stamp: 'len 27/Jan/2026 16:34:28'!
-printedBaseValueWithLabel
-	^ (label ifNil: [''] ifNotNil: [label, ': ']), self printedBaseValue! !
-
-!ControlOld methodsFor: 'printing' stamp: 'len 4/Dec/2025 14:41:33'!
-printer: aSymbol
-	printer := aSymbol! !
-
-!ControlOld methodsFor: 'testing' stamp: 'len 28/Sep/2025 02:03:00'!
-isBipolar
-	^ min = max negated! !
-
-!ControlOld methodsFor: 'private' stamp: 'len 16/Jan/2026 15:22:25'!
-curveAt: aNumber
-	"Maps values from [0,1] to [min,max]."
-	curve = #linear ifTrue: [^ aNumber * (max - min) + min].
-	curve = #exp ifTrue:
-		["min = 0.0 ifTrue: [^ aNumber < 0.1 ifTrue: [aNumber * max] ifFalse: [(max / 0.1 raisedTo: aNumber - 0.1 / 0.9) * 0.1]]."
-		^ (max / min raisedTo: aNumber) * min].
-	curve = #quadratic ifTrue:
-		[self isBipolar ifTrue: "Centered quadratic:"
-			[| x |
-			x := aNumber - 0.5.
-			^ x squared * 2.0 * (max - min) * x sign "+ (max - min / 2.0)"].
-		^ aNumber squared * (max - min) + min].
-	self notYetImplemented! !
-
-!ControlOld methodsFor: 'private' stamp: 'len 16/Jan/2026 15:29:48'!
-curveInverseAt: aNumber
-	"Maps values from [min,max] to [0,1]."
-	curve = #linear ifTrue: [^ aNumber - min / (max - min)].
-	curve = #exp ifTrue:
-		["min = 0.0 ifTrue: [^ aNumber < (max * 0.1) ifTrue: [aNumber / max] ifFalse: [aNumber ln - 0.1 ln / (max ln - 0.1 ln)]]."
-		^ aNumber ln - min ln / (max ln - min ln)].
-	curve = #quadratic ifTrue:
-		[self isBipolar ifTrue: "Centered quadratic:"
-			[^ (aNumber abs / 2.0 / (max - min)) sqrt * aNumber sign + 0.5].
-		^ ((aNumber - min) / (max - min)) sqrt].
-	self notYetImplemented! !
-
-!ControlOld methodsFor: 'private' stamp: 'len 19/Jan/2026 19:21:07'!
-positionFromValue: aNumber
-	| v |
-	v := aNumber.
-	v := v min: max max: min.
-	^ self curveInverseAt: v! !
-
-!ControlOld methodsFor: 'private' stamp: 'len 4/Dec/2025 14:42:40'!
-setMin: _min max: _max curve: aSymbol value: defaultValue
-	min := _min.
-	max := _max.
-	curve := aSymbol.
-	lastValue := defaultValue.
-	base := self positionFromValue: defaultValue.
-	modulation := 0.0.
-	default := defaultValue! !
-
-!ControlOld methodsFor: 'private' stamp: 'len 19/Jan/2026 19:21:26'!
-valueFromPosition: aNumber
-	^​ self curveAt: (aNumber min: 1.0 max: 0.0)! !
-
-!ControlOld class methodsFor: 'instance creation' stamp: 'len 14/Oct/2025 15:01:00'!
-min: min max: max curve: aSymbol value: defaultValue
-	^ self new setMin: min max: max curve: aSymbol value: defaultValue! !
-
-!ControlOld class methodsFor: 'instance creation' stamp: 'len 14/Oct/2025 15:02:00'!
-min: min max: max value: defaultValue
-	^ self min: min max: max curve: #linear value: defaultValue! !
-
 !ControlPanel methodsFor: 'building' stamp: 'len 18/Mar/2026 18:58:38'!
 addChoice: aControl
 	self addMorph: (ChoiceControlMorph new control: aControl)! !
@@ -12495,9 +12317,9 @@ control
 control: aControl
 	control := aControl! !
 
-!ControlInputPinMorph methodsFor: 'accessing' stamp: 'len 18/Jan/2026 03:27:45'!
+!ControlInputPinMorph methodsFor: 'accessing' stamp: 'len 29/May/2026 17:41:20'!
 defaultColor
-	^ Color veryLightGray! !
+	^ Color gray: 0.5! !
 
 !ControlInputPinMorph methodsFor: 'accessing' stamp: 'len 27/Apr/2026 04:17:03'!
 selector
@@ -12619,9 +12441,9 @@ step
 	self isConnected ifTrue: [self level:​ "buffer first abs" buffer rms].
 	super step! !
 
-!ControlOutputPinMorph methodsFor: 'accessing' stamp: 'len 18/Jan/2026 03:27:50'!
+!ControlOutputPinMorph methodsFor: 'accessing' stamp: 'len 29/May/2026 17:41:26'!
 defaultColor
-	^ Color veryLightGray! !
+	^ Color gray: 0.5! !
 
 !ControlOutputPinMorph methodsFor: 'accessing' stamp: 'len 27/Apr/2026 04:17:49'!
 selector

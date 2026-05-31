@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 29 May 2026 at 9:01:40 pm'!
+'From Cuis7.7 [latest update: #7880] on 1 June 2026 at 4:35:27 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 573!
+!provides: 'Signals' 1 575!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -20,7 +20,7 @@ SystemOrganization addCategory: #'Signals-Morphic-Widgets'!
 SystemOrganization addCategory: #'Signals-Morphic-Controls'!
 SystemOrganization addCategory: #'Signals-Morphic-Patches'!
 SystemOrganization addCategory: #'Signals-Morphic-Support'!
-SystemOrganization addCategory: #'Signals-Support'!
+SystemOrganization addCategory: 'Signals-Algorithms'!
 SystemOrganization addCategory: #'Signals-Trash'!
 
 
@@ -424,6 +424,26 @@ Modulator subclass: #ControlIn
 ControlIn class
 	instanceVariableNames: ''!
 
+!classDefinition: #Attenuator category: #'Signals-Modulation'!
+Modulator subclass: #Attenuator
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Modulation'!
+!classDefinition: 'Attenuator class' category: #'Signals-Modulation'!
+Attenuator class
+	instanceVariableNames: ''!
+
+!classDefinition: #Attenuverter category: #'Signals-Modulation'!
+Modulator subclass: #Attenuverter
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Modulation'!
+!classDefinition: 'Attenuverter class' category: #'Signals-Modulation'!
+Attenuverter class
+	instanceVariableNames: ''!
+
 !classDefinition: #Drift category: #'Signals-Modulation'!
 Modulator subclass: #Drift
 	instanceVariableNames: 'random lpf state'
@@ -576,7 +596,7 @@ Allpass class
 
 !classDefinition: #Comb category: #'Signals-FX'!
 Transform subclass: #Comb
-	instanceVariableNames: 'delayLine tap feedback damping x0'
+	instanceVariableNames: 'delayLine tap feedback damping lastOutput'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
@@ -586,7 +606,7 @@ Comb class
 
 !classDefinition: #Echo category: #'Signals-FX'!
 Transform subclass: #Echo
-	instanceVariableNames: 'delayLine tap'
+	instanceVariableNames: 'send return lastOutput delayLine tap lpf hpf feedback wet dry'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
@@ -616,7 +636,7 @@ Phaser class
 
 !classDefinition: #PitchShifter category: #'Signals-FX'!
 Transform subclass: #PitchShifter
-	instanceVariableNames: 'delayLine phase increment lastOutput delay delayIncrement grainSize grainSizeIncrement feedback mix lpf hpf'
+	instanceVariableNames: 'delayLine phase increment lastOutput delay delayIncrement grainSize grainSizeIncrement feedback wet dry lpf hpf'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
@@ -636,7 +656,7 @@ Reverb class
 
 !classDefinition: #TapeEcho category: #'Signals-FX'!
 Transform subclass: #TapeEcho
-	instanceVariableNames: 'delayLine tap1 tap2 tap3 level1 level2 level3 feedback mix wet dry lpf hpf lsf hsf'
+	instanceVariableNames: 'send return delayLine tap1 tap2 tap3 lastOutput level1 level2 level3 feedback wet dry lpf hpf lsf hsf'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
@@ -914,26 +934,6 @@ Module subclass: #StereoMatrix
 StereoMatrix class
 	instanceVariableNames: ''!
 
-!classDefinition: #Attenuator category: #'Signals-Trash'!
-Module subclass: #Attenuator
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Trash'!
-!classDefinition: 'Attenuator class' category: #'Signals-Trash'!
-Attenuator class
-	instanceVariableNames: ''!
-
-!classDefinition: #Attenuverter category: #'Signals-Trash'!
-Module subclass: #Attenuverter
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Trash'!
-!classDefinition: 'Attenuverter class' category: #'Signals-Trash'!
-Attenuverter class
-	instanceVariableNames: ''!
-
 !classDefinition: #DiodeLadder category: #'Signals-Trash'!
 Module subclass: #DiodeLadder
 	instanceVariableNames: 's1 s2 s3 s4 ρ G1 G2 G3 G4 γ k input outputLP4 outputLP3 outputLP2 outputLP1'
@@ -942,16 +942,6 @@ Module subclass: #DiodeLadder
 	category: 'Signals-Trash'!
 !classDefinition: 'DiodeLadder class' category: #'Signals-Trash'!
 DiodeLadder class
-	instanceVariableNames: ''!
-
-!classDefinition: #LogAttenuator category: #'Signals-Trash'!
-Module subclass: #LogAttenuator
-	instanceVariableNames: 'value'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Trash'!
-!classDefinition: 'LogAttenuator class' category: #'Signals-Trash'!
-LogAttenuator class
 	instanceVariableNames: ''!
 
 !classDefinition: #MoogLPF category: #'Signals-Trash'!
@@ -1674,6 +1664,196 @@ Morph subclass: #WireMorph
 WireMorph class
 	instanceVariableNames: ''!
 
+!classDefinition: #AllpassComb category: 'Signals-Algorithms'!
+Object subclass: #AllpassComb
+	instanceVariableNames: 'buffer position feedback'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Algorithms'!
+!classDefinition: 'AllpassComb class' category: 'Signals-Algorithms'!
+AllpassComb class
+	instanceVariableNames: ''!
+
+!classDefinition: #Biquad category: 'Signals-Algorithms'!
+Object subclass: #Biquad
+	instanceVariableNames: 'a0 a1 a2 b1 b2 x1 x2 y1 y2'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Algorithms'!
+!classDefinition: 'Biquad class' category: 'Signals-Algorithms'!
+Biquad class
+	instanceVariableNames: ''!
+
+!classDefinition: #BiquadTDF2 category: 'Signals-Algorithms'!
+Object subclass: #BiquadTDF2
+	instanceVariableNames: 'a0 a1 a2 b1 b2 s1 s2'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Algorithms'!
+!classDefinition: 'BiquadTDF2 class' category: 'Signals-Algorithms'!
+BiquadTDF2 class
+	instanceVariableNames: ''!
+
+!classDefinition: #DelayLine category: 'Signals-Algorithms'!
+Object subclass: #DelayLine
+	instanceVariableNames: 'buffer position'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Algorithms'!
+!classDefinition: 'DelayLine class' category: 'Signals-Algorithms'!
+DelayLine class
+	instanceVariableNames: ''!
+
+!classDefinition: #DelayTap category: 'Signals-Algorithms'!
+Object subclass: #DelayTap
+	instanceVariableNames: 'delayLine delay increment'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Algorithms'!
+!classDefinition: 'DelayTap class' category: 'Signals-Algorithms'!
+DelayTap class
+	instanceVariableNames: ''!
+
+!classDefinition: #DelayTapC category: 'Signals-Algorithms'!
+DelayTap subclass: #DelayTapC
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Algorithms'!
+!classDefinition: 'DelayTapC class' category: 'Signals-Algorithms'!
+DelayTapC class
+	instanceVariableNames: ''!
+
+!classDefinition: #DelayTapL category: 'Signals-Algorithms'!
+DelayTap subclass: #DelayTapL
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Algorithms'!
+!classDefinition: 'DelayTapL class' category: 'Signals-Algorithms'!
+DelayTapL class
+	instanceVariableNames: ''!
+
+!classDefinition: #DelayTapT1 category: 'Signals-Algorithms'!
+DelayTap subclass: #DelayTapT1
+	instanceVariableNames: 'x1 y1'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Algorithms'!
+!classDefinition: 'DelayTapT1 class' category: 'Signals-Algorithms'!
+DelayTapT1 class
+	instanceVariableNames: ''!
+
+!classDefinition: #DelayTapT2 category: 'Signals-Algorithms'!
+DelayTap subclass: #DelayTapT2
+	instanceVariableNames: 'x1 x2 y1 y2'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Algorithms'!
+!classDefinition: 'DelayTapT2 class' category: 'Signals-Algorithms'!
+DelayTapT2 class
+	instanceVariableNames: ''!
+
+!classDefinition: #FFT category: 'Signals-Algorithms'!
+Object subclass: #FFT
+	instanceVariableNames: 'nu n sinTable permTable realData imagData'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Algorithms'!
+!classDefinition: 'FFT class' category: 'Signals-Algorithms'!
+FFT class
+	instanceVariableNames: ''!
+
+!classDefinition: #FIR category: 'Signals-Algorithms'!
+Object subclass: #FIR
+	instanceVariableNames: 'coefficients state'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Algorithms'!
+!classDefinition: 'FIR class' category: 'Signals-Algorithms'!
+FIR class
+	instanceVariableNames: ''!
+
+!classDefinition: #IIR category: 'Signals-Algorithms'!
+Object subclass: #IIR
+	instanceVariableNames: 'numerators denominators stateIn stateOut'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Algorithms'!
+!classDefinition: 'IIR class' category: 'Signals-Algorithms'!
+IIR class
+	instanceVariableNames: ''!
+
+!classDefinition: #LagrangeOversampler2x category: 'Signals-Algorithms'!
+Object subclass: #LagrangeOversampler2x
+	instanceVariableNames: 'u0 u1 u2 u3 d0 d1 d2 d3'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Algorithms'!
+!classDefinition: 'LagrangeOversampler2x class' category: 'Signals-Algorithms'!
+LagrangeOversampler2x class
+	instanceVariableNames: ''!
+
+!classDefinition: #LowpassComb category: 'Signals-Algorithms'!
+Object subclass: #LowpassComb
+	instanceVariableNames: 'buffer position state feedback damp'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Algorithms'!
+!classDefinition: 'LowpassComb class' category: 'Signals-Algorithms'!
+LowpassComb class
+	instanceVariableNames: ''!
+
+!classDefinition: #MultiTapDelayLine category: 'Signals-Algorithms'!
+Object subclass: #MultiTapDelayLine
+	instanceVariableNames: 'buffer position delays gains mix'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Algorithms'!
+!classDefinition: 'MultiTapDelayLine class' category: 'Signals-Algorithms'!
+MultiTapDelayLine class
+	instanceVariableNames: ''!
+
+!classDefinition: #OnePole category: 'Signals-Algorithms'!
+Object subclass: #OnePole
+	instanceVariableNames: 'pole y'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Algorithms'!
+!classDefinition: 'OnePole class' category: 'Signals-Algorithms'!
+OnePole class
+	instanceVariableNames: ''!
+
+!classDefinition: #Polyphase13TapOversampler2x category: 'Signals-Algorithms'!
+Object subclass: #Polyphase13TapOversampler2x
+	instanceVariableNames: 'x1 x2 x3 x4 x5 x6 d1 d2 d3 d4 d5 d6 e1'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Algorithms'!
+!classDefinition: 'Polyphase13TapOversampler2x class' category: 'Signals-Algorithms'!
+Polyphase13TapOversampler2x class
+	instanceVariableNames: ''!
+
+!classDefinition: #STFT category: 'Signals-Algorithms'!
+Object subclass: #STFT
+	instanceVariableNames: 'fft window spectrum aux'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Algorithms'!
+!classDefinition: 'STFT class' category: 'Signals-Algorithms'!
+STFT class
+	instanceVariableNames: ''!
+
+!classDefinition: #WAVFileReader category: 'Signals-Algorithms'!
+Object subclass: #WAVFileReader
+	instanceVariableNames: 'stream channels bitsPerSample sampleRate leftSamples rightSamples loopStart loopEnd'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Algorithms'!
+!classDefinition: 'WAVFileReader class' category: 'Signals-Algorithms'!
+WAVFileReader class
+	instanceVariableNames: ''!
+
 !classDefinition: #Bus category: #'Signals-IO'!
 Object subclass: #Bus
 	instanceVariableNames: 'leftBuffer rightBuffer'
@@ -1682,196 +1862,6 @@ Object subclass: #Bus
 	category: 'Signals-IO'!
 !classDefinition: 'Bus class' category: #'Signals-IO'!
 Bus class
-	instanceVariableNames: ''!
-
-!classDefinition: #AllpassComb category: #'Signals-Support'!
-Object subclass: #AllpassComb
-	instanceVariableNames: 'buffer position feedback'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'AllpassComb class' category: #'Signals-Support'!
-AllpassComb class
-	instanceVariableNames: ''!
-
-!classDefinition: #Biquad category: #'Signals-Support'!
-Object subclass: #Biquad
-	instanceVariableNames: 'a0 a1 a2 b1 b2 x1 x2 y1 y2'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'Biquad class' category: #'Signals-Support'!
-Biquad class
-	instanceVariableNames: ''!
-
-!classDefinition: #BiquadTDF2 category: #'Signals-Support'!
-Object subclass: #BiquadTDF2
-	instanceVariableNames: 'a0 a1 a2 b1 b2 s1 s2'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'BiquadTDF2 class' category: #'Signals-Support'!
-BiquadTDF2 class
-	instanceVariableNames: ''!
-
-!classDefinition: #DelayLine category: #'Signals-Support'!
-Object subclass: #DelayLine
-	instanceVariableNames: 'buffer position'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'DelayLine class' category: #'Signals-Support'!
-DelayLine class
-	instanceVariableNames: ''!
-
-!classDefinition: #DelayTap category: #'Signals-Support'!
-Object subclass: #DelayTap
-	instanceVariableNames: 'delayLine delay increment'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'DelayTap class' category: #'Signals-Support'!
-DelayTap class
-	instanceVariableNames: ''!
-
-!classDefinition: #DelayTapC category: #'Signals-Support'!
-DelayTap subclass: #DelayTapC
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'DelayTapC class' category: #'Signals-Support'!
-DelayTapC class
-	instanceVariableNames: ''!
-
-!classDefinition: #DelayTapL category: #'Signals-Support'!
-DelayTap subclass: #DelayTapL
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'DelayTapL class' category: #'Signals-Support'!
-DelayTapL class
-	instanceVariableNames: ''!
-
-!classDefinition: #DelayTapT1 category: #'Signals-Support'!
-DelayTap subclass: #DelayTapT1
-	instanceVariableNames: 'x1 y1'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'DelayTapT1 class' category: #'Signals-Support'!
-DelayTapT1 class
-	instanceVariableNames: ''!
-
-!classDefinition: #DelayTapT2 category: #'Signals-Support'!
-DelayTap subclass: #DelayTapT2
-	instanceVariableNames: 'x1 x2 y1 y2'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'DelayTapT2 class' category: #'Signals-Support'!
-DelayTapT2 class
-	instanceVariableNames: ''!
-
-!classDefinition: #FFT category: #'Signals-Support'!
-Object subclass: #FFT
-	instanceVariableNames: 'nu n sinTable permTable realData imagData'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'FFT class' category: #'Signals-Support'!
-FFT class
-	instanceVariableNames: ''!
-
-!classDefinition: #FIR category: #'Signals-Support'!
-Object subclass: #FIR
-	instanceVariableNames: 'coefficients state'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'FIR class' category: #'Signals-Support'!
-FIR class
-	instanceVariableNames: ''!
-
-!classDefinition: #IIR category: #'Signals-Support'!
-Object subclass: #IIR
-	instanceVariableNames: 'numerators denominators stateIn stateOut'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'IIR class' category: #'Signals-Support'!
-IIR class
-	instanceVariableNames: ''!
-
-!classDefinition: #LagrangeOversampler2x category: #'Signals-Support'!
-Object subclass: #LagrangeOversampler2x
-	instanceVariableNames: 'u0 u1 u2 u3 d0 d1 d2 d3'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'LagrangeOversampler2x class' category: #'Signals-Support'!
-LagrangeOversampler2x class
-	instanceVariableNames: ''!
-
-!classDefinition: #LowpassComb category: #'Signals-Support'!
-Object subclass: #LowpassComb
-	instanceVariableNames: 'buffer position state feedback damp'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'LowpassComb class' category: #'Signals-Support'!
-LowpassComb class
-	instanceVariableNames: ''!
-
-!classDefinition: #MultiTapDelayLine category: #'Signals-Support'!
-Object subclass: #MultiTapDelayLine
-	instanceVariableNames: 'buffer position delays gains mix'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'MultiTapDelayLine class' category: #'Signals-Support'!
-MultiTapDelayLine class
-	instanceVariableNames: ''!
-
-!classDefinition: #OnePole category: #'Signals-Support'!
-Object subclass: #OnePole
-	instanceVariableNames: 'pole y'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'OnePole class' category: #'Signals-Support'!
-OnePole class
-	instanceVariableNames: ''!
-
-!classDefinition: #Polyphase13TapOversampler2x category: #'Signals-Support'!
-Object subclass: #Polyphase13TapOversampler2x
-	instanceVariableNames: 'x1 x2 x3 x4 x5 x6 d1 d2 d3 d4 d5 d6 e1'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'Polyphase13TapOversampler2x class' category: #'Signals-Support'!
-Polyphase13TapOversampler2x class
-	instanceVariableNames: ''!
-
-!classDefinition: #STFT category: #'Signals-Support'!
-Object subclass: #STFT
-	instanceVariableNames: 'fft window spectrum aux'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'STFT class' category: #'Signals-Support'!
-STFT class
-	instanceVariableNames: ''!
-
-!classDefinition: #WAVFileReader category: #'Signals-Support'!
-Object subclass: #WAVFileReader
-	instanceVariableNames: 'stream channels bitsPerSample sampleRate leftSamples rightSamples loopStart loopEnd'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Support'!
-!classDefinition: 'WAVFileReader class' category: #'Signals-Support'!
-WAVFileReader class
 	instanceVariableNames: ''!
 
 
@@ -1918,7 +1908,7 @@ This is a classic mono-to-stereo chorus effect. It mixes the original signal wit
 The ensemble effect is similar to chorus, but it mixes more delay taps (5 instead of 3) and the modulation of the delay times is decorrelated (each delay time is modulated independently with LFO speeds in inharmonic ratios).!
 
 !StereoEcho commentStamp: '<historical>' prior: 0!
-This is a stereo echo effect with feedback and ping pong mode.!
+This is a stereo echo effect with internal filtered feedback and ping pong mode.!
 
 !StereoReverb commentStamp: '<historical>' prior: 0!
 This is a reverb effect based on Freeverb. It consists of 8 damped combs (lowpass feedback comb filters) in parallel followed by 4 Schroeder allpasses in series.!
@@ -2057,6 +2047,12 @@ Abstract superclass for control signal generators that can be used to modulate t
 !ControlIn commentStamp: '<historical>' prior: 0!
 This module produces a control signal from values received from an external source, for example MIDI CC messages.!
 
+!Attenuator commentStamp: '<historical>' prior: 0!
+An attenuator scales a control signal by a positive number. It is typically used to control modulation depth.!
+
+!Attenuverter commentStamp: '<historical>' prior: 0!
+An attenuverter is similar to an attenuator, but it can also invert the polarity of the signal. It scales a control signal by a number that can be negative. When the knob is at 12 o'clock the resulting signal is 0, and bellow that it is inverted.!
+
 !Drift commentStamp: 'len 24/May/2026 19:43:29' prior: 0!
 This module generates a control signal that emulates analog drift.
 
@@ -2102,6 +2098,9 @@ Abstract superclass for unary transforms, i.e. modules with one audio input and 
 A feed-forward peak limiter with fast attack, adjustable release, and smoothed gain.
 Prevents signal peaks from exceeding a fixed ceiling without altering level below threshold.!
 
+!Echo commentStamp: '<historical>' prior: 0!
+This is a delay with feedback. By default it uses internal feedback, unless the optional 'send' output and 'return' input are connected. The optional send/return connections can be used for insert effects in the feedback loop, but they introduce a delay of 1 block.!
+
 !Flanger commentStamp: 'len 25/Mar/2026 21:09:44' prior: 0!
 This is a classic flanger effect. It mixes the original signal with a copy delayed by a very short time (~ 1 ms). An internal LFO modulates the delay time, creating sweeping comb filtering, which is also enhanced with feedback.!
 
@@ -2116,8 +2115,8 @@ Pitch-shifting is achieved by modulating a delay: the write pointer always advan
 !Reverb commentStamp: '<historical>' prior: 0!
 This is a reverb effect based on Freeverb. It consists of 8 damped combs (lowpass feedback comb filters) in parallel followed by 4 Schroeder allpasses in series.!
 
-!TapeEcho commentStamp: '<historical>' prior: 0!
-This is a 3-tap tape echo effect inspired by the Roland RE-201 Space Echo and other tape delays.!
+!TapeEcho commentStamp: 'len 1/Jun/2026 04:35:20' prior: 0!
+This is a 3-tap tape echo effect with feedback inspired by the Roland RE-201 Space Echo and other tape delays. It has optional send/return connections that can be used for insert effects in the feedback loop, but they introduce a delay of 1 block.!
 
 !Vibrato commentStamp: '<historical>' prior: 0!
 The vibrato effect is produced by passing the original signal through a delay line. An internal LFO modulates the delay time, creating periodic pitch variations (Doppler effect).!
@@ -2245,21 +2244,12 @@ After applying balance and width, the signal is decoded back to stereo:
 The module performs no dynamics processing or loudness compensation beyond the fixed −6 dB MS normalization; gain changes due to width or balance are explicit and intentional.
 !
 
-!Attenuator commentStamp: '<historical>' prior: 0!
-An attenuator scales a control signal by a positive number. It is typically used to control modulation depth.!
-
-!Attenuverter commentStamp: '<historical>' prior: 0!
-An attenuverter is similar to an attenuator, but it can also invert the polarity of the signal. It scales a control signal by a number that can be negative. When the knob is at 12 o'clock the resulting signal is 0, and bellow that it is inverted.!
-
 !DiodeLadder commentStamp: '<historical>' prior: 0!
 Virtual analog model of the 4th-order TB-303 diode ladder low-pass filter. This uses the Zero-Delay Feedback (ZDF) approach from Vadim Zavalishin's "The Art of VA Filter Design", and uses the Topology-Preserving Transform (TPT).
 
 See https://www.native-instruments.com/fileadmin/ni_media/downloads/pdf/VAFilterDesign_2.1.2.pdf
 
 See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
-
-!LogAttenuator commentStamp: '<historical>' prior: 0!
-An attenuator scales a control signal by a positive number. It is typically used to control modulation depth.!
 
 !MoogLPF commentStamp: 'len 2/Feb/2026 18:24:58' prior: 0!
 This is a low pass filter inspired by the classic Moog ladder filter. It's a low-pass 24 dB/oct (4 poles) resonant filter.
@@ -2280,9 +2270,6 @@ See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 Virtual analog model of the Oberheim state variable filter. It has low-pass, high-pass, band-pass and band-stop outputs. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section Figure 7.5.
 
 See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
-
-!Bus commentStamp: '<historical>' prior: 0!
-A bus is just the sum of a number of audio signals (mono or stereo). It is used to mix a number of audio signals in order to process them together or send them to the audio output driver.!
 
 !AllpassComb commentStamp: '<historical>' prior: 0!
 Schroeder allpass filter.!
@@ -2392,6 +2379,9 @@ Latency: This process introduces a fixed group delay of 6 samples at the base sa
 
 !STFT commentStamp: 'len 30/Mar/2026 18:12:16' prior: 0!
 This is the Short-Time Fourtier Transform (STFT).!
+
+!Bus commentStamp: '<historical>' prior: 0!
+A bus is just the sum of a number of audio signals (mono or stereo). It is used to mix a number of audio signals in order to process them together or send them to the audio output driver.!
 
 !Control methodsFor: 'accessing' stamp: 'len 8/Mar/2026 15:21:59'!
 basePosition
@@ -2733,6 +2723,18 @@ settings: aDictionary
 copy
 	^ self class new settings: self settings! !
 
+!Module methodsFor: 'initialization' stamp: 'len 30/May/2026 02:11:57'!
+addAmountControl: aSymbol min: min max: max value: defaultValue
+	^ (self addControl: aSymbol min: min max: max value: defaultValue) printer: [:x| (x * 100) rounded printString, '%']! !
+
+!Module methodsFor: 'initialization' stamp: 'len 30/May/2026 02:12:22'!
+addAmountControl: aSymbol value: defaultValue
+	^ self addAmountControl: aSymbol min: 0.0 max: 1.0 value: defaultValue! !
+
+!Module methodsFor: 'initialization' stamp: 'len 30/May/2026 02:12:37'!
+addBipolarAmountControl: aSymbol value: defaultValue
+	^ self addAmountControl: aSymbol min: -1.0 max: 1.0 value: defaultValue! !
+
 !Module methodsFor: 'initialization' stamp: 'len 18/Mar/2026 20:08:10'!
 addChoiceControl: aSymbol options: anArray value: defaultValue
 	^ controls at: aSymbol put: ((Choice options: anArray value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
@@ -2741,17 +2743,13 @@ addChoiceControl: aSymbol options: anArray value: defaultValue
 addControl: aSymbol min: min max: max value: defaultValue
 	^ controls at: aSymbol put: ((Knob min: min max: max value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
 
-!Module methodsFor: 'initialization' stamp: 'len 30/Apr/2026 18:06:44'!
-addDepthControl: aSymbol value: defaultValue
-	^ (self addControl: aSymbol min: 0.0 max: 1.0 value: defaultValue) printer: [:x| (x * 100) truncated printString, '%']! !
-
 !Module methodsFor: 'initialization' stamp: 'len 24/Feb/2026 23:52:11'!
 addDryWetControl: aSymbol
 	^ self addDryWetControl: aSymbol value: 1.0! !
 
-!Module methodsFor: 'initialization' stamp: 'len 24/Feb/2026 23:51:56'!
+!Module methodsFor: 'initialization' stamp: 'len 30/May/2026 02:15:38'!
 addDryWetControl: aSymbol value: defaultValue
-	^ (self addControl: aSymbol min: 0.0 max: 1.0 value: defaultValue) printer: [:x| (x * 100) truncated printString, '%']! !
+	^ self addAmountControl: aSymbol value: defaultValue! !
 
 !Module methodsFor: 'initialization' stamp: 'len 1/Feb/2026 15:45:37'!
 addFrequencyControl: aSymbol min: min max: max value: defaultValue
@@ -2761,13 +2759,21 @@ addFrequencyControl: aSymbol min: min max: max value: defaultValue
 addFrequencyControl: aSymbol value: defaultValue
 	^ self addFrequencyControl: aSymbol min: 20.0 "Hz" max: 20000.0 "20 kHz" value: defaultValue! !
 
+!Module methodsFor: 'initialization' stamp: 'len 30/May/2026 02:03:49'!
+addGainControl: aSymbol min: min max: max value: defaultValue
+	^ (self addLogControl: aSymbol min: min max: max value: defaultValue) printer: #linearToDecibelsPrintString! !
+
+!Module methodsFor: 'initialization' stamp: 'len 30/May/2026 02:04:05'!
+addGainControl: aSymbol value: defaultValue
+	^ self addGainControl: aSymbol min: 0.001 "-60 dB" max: 1.0 "0 dB" value: defaultValue! !
+
+!Module methodsFor: 'initialization' stamp: 'len 30/May/2026 02:09:51'!
+addLogAmountControl: aSymbol value: defaultValue
+	^ (self addLogControl: aSymbol min: 0.001 max: 1.0 value: defaultValue) printer: [:x| (x * 100 printStringFractionDigits: (x > 0.1 ifTrue: [0] ifFalse: [x > 0.01 ifTrue: [1] ifFalse: [2]])), '%']! !
+
 !Module methodsFor: 'initialization' stamp: 'len 29/May/2026 17:47:01'!
 addLogControl: aSymbol min: min max: max value: defaultValue
 	^ controls at: aSymbol put: ((Knob min: min max: max curve: #log value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
-
-!Module methodsFor: 'initialization' stamp: 'len 23/May/2026 18:06:31'!
-addLogDepthControl: aSymbol value: defaultValue
-	^ (self addLogControl: aSymbol min: 0.001 max: 1.0 value: defaultValue) printer: [:x| (x * 100 printStringFractionDigits: (x > 0.1 ifTrue: [0] ifFalse: [x > 0.01 ifTrue: [1] ifFalse: [2]])), '%']! !
 
 !Module methodsFor: 'initialization' stamp: 'len 28/May/2026 19:02:19'!
 addPitchControl: aSymbol
@@ -2788,14 +2794,6 @@ addTimeControl: aSymbol min: min max: max value: defaultValue
 !Module methodsFor: 'initialization' stamp: 'len 18/Mar/2026 20:08:48'!
 addToggleControl: aSymbol value: defaultValue
 	^ controls at: aSymbol put: ((Toggle value: defaultValue) label: aSymbol asPlainString capitalized camelSeparatedWords)! !
-
-!Module methodsFor: 'initialization' stamp: 'len 31/Jan/2026 03:42:37'!
-addVolumeControl: aSymbol min: min max: max value: defaultValue
-	^ (self addLogControl: aSymbol min: min max: max value: defaultValue) printer: #linearToDecibelsPrintString! !
-
-!Module methodsFor: 'initialization' stamp: 'len 31/Jan/2026 03:42:58'!
-addVolumeControl: aSymbol value: defaultValue
-	^ self addVolumeControl: aSymbol min: 0.001 max: 1.0 value: defaultValue! !
 
 !Module methodsFor: 'initialization' stamp: 'len 27/Apr/2026 22:51:28'!
 initialize
@@ -2939,17 +2937,17 @@ initialize
 	rmslpf := OnePole new time: 0.01 * self class sampleRate. "10 ms"
 	envelope := 0.0! !
 
-!Compressor methodsFor: 'initialization' stamp: 'len 19/Mar/2026 21:33:55'!
+!Compressor methodsFor: 'initialization' stamp: 'len 30/May/2026 02:04:05'!
 initializeControls
 	super initializeControls.
-	self addVolumeControl: #threshold value: 0.126.
+	self addGainControl: #threshold value: 0.126.
 	(self addLogControl: #ratio min: 1.0 max: 20.0 value: 4.0) printer: [:x| (x printStringFractionDigits: 1), ':1'].
 	self addTimeControl: #attack min: 0.0001 "0.1 ms" max: 0.1 "100 ms" value: 0.01 "10 ms".
 	self addTimeControl: #release min: 0.01 "10 ms" max: 1.5 "s" value: 0.1 "100 ms".
 	self addChoiceControl: #mode options: #(peak rms) value: #peak.
 	(self addFrequencyControl: #schpf min: 20.0 max: 200.0 value: 100.0) label: 'SC HPF'.
-	self addVolumeControl: #knee min: 1.0 "0 dB" max: 4.0 "+12 dB" value: 2.0 "+6 dB".
-	self addVolumeControl: #makeup min: 0.25 "-12 dB" max: 16.0 "+24 dB" value: 1.0! !
+	self addGainControl: #knee min: 1.0 "0 dB" max: 4.0 "+12 dB" value: 2.0 "+6 dB".
+	self addGainControl: #makeup min: 0.25 "-12 dB" max: 16.0 "+24 dB" value: 1.0! !
 
 !Compressor methodsFor: 'processing' stamp: 'len 26/May/2026 17:28:21'!
 tick
@@ -3076,17 +3074,17 @@ initialize
 	envelope := 0.0.
 	holdCount := 0! !
 
-!Gate methodsFor: 'initialization' stamp: 'len 26/May/2026 16:00:41'!
+!Gate methodsFor: 'initialization' stamp: 'len 30/May/2026 02:04:05'!
 initializeControls
 	super initializeControls.
-	self addVolumeControl: #threshold value: 0.126.
+	self addGainControl: #threshold value: 0.126.
 	self addTimeControl: #attack min: 0.0001 "0.1 ms" max: 0.1 "100 ms" value: 0.01 "10 ms".
 	self addTimeControl: #hold min: 0.0001 "0.1 ms" max: 0.1 "100 ms" value: 0.01 "10 ms".
 	self addTimeControl: #release min: 0.01 "10 ms" max: 1.5 "s" value: 0.1 "100 ms".
-	self addVolumeControl: #range min: 0.0001 max: 1.0 value: 0.1.
+	self addGainControl: #range min: 0.0001 max: 1.0 value: 0.1.
 	self addChoiceControl: #mode options: #(peak rms) value: #peak.
 	(self addFrequencyControl: #schpf min: 20.0 max: 200.0 value: 100.0) label: 'SC HPF'.
-	self addVolumeControl: #knee min: 1.0 "0 dB" max: 4.0 "+12 dB" value: 2.0 "+6 dB"! !
+	self addGainControl: #knee min: 1.0 "0 dB" max: 4.0 "+12 dB" value: 2.0 "+6 dB"! !
 
 !Gate methodsFor: 'processing' stamp: 'len 26/May/2026 17:29:35'!
 tick
@@ -3234,13 +3232,13 @@ initialize
 	lpfR := OnePole new.
 	self reset! !
 
-!Chorus methodsFor: 'initialization' stamp: 'len 5/May/2026 14:57:50'!
+!Chorus methodsFor: 'initialization' stamp: 'len 30/May/2026 02:20:07'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #time min: 0.005 "5 ms" max: 0.02 "20 ms" value: 0.01 "10 ms".
 	self addFrequencyControl: #speed min: 0.1 "Hz" max: 1.5 "Hz" value: 0.5 "Hz".
-	self addDepthControl: #depth value: 0.1.
-	self addControl: #width min: 0.0 max: 1.0 value: 1.0.
+	self addAmountControl: #depth value: 0.1.
+	self addAmountControl: #width min: 0.0 max: 1.0 value: 1.0.
 	self addFrequencyControl: #tone min: 2000.0 "2 kHz" max: 18000.0 "18 kHz" value: 8000.0. "8 kHz"
 	self addDryWetControl: #mix value: 0.5! !
 
@@ -3349,12 +3347,12 @@ initialize
 	lpfR := OnePole new.
 	self reset! !
 
-!Ensemble methodsFor: 'initialization' stamp: 'len 5/May/2026 14:57:57'!
+!Ensemble methodsFor: 'initialization' stamp: 'len 30/May/2026 02:06:43'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #time min: 0.015 "15 ms" max: 0.035 "35 ms" value: 0.02 "20 ms".
 	self addFrequencyControl: #speed min: 0.1 "Hz" max: 1.5 "Hz" value: 0.5 "Hz".
-	self addDepthControl: #depth value: 0.1.
+	self addAmountControl: #depth value: 0.1.
 	self addControl: #width min: 0.0 max: 1.0 value: 1.0.
 	self addFrequencyControl: #tone min: 2000.0 "2 kHz" max: 18000.0 "18 kHz" value: 6000.0. "6 kHz"
 	self addDryWetControl: #mix value: 0.5! !
@@ -3465,26 +3463,25 @@ initialize
 	lsfR := Biquad new.
 	hsfR := Biquad new! !
 
-!StereoEcho methodsFor: 'initialization' stamp: 'len 7/Mar/2026 16:08:59'!
+!StereoEcho methodsFor: 'initialization' stamp: 'len 30/May/2026 02:17:22'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #time min: 0.240 "240 ms" max: 2.0 "2 s" value: 0.5 "500 ms".
-	self addControl: #feedback min: 0.0 max: 1.0 value: 0.0.
+	self addAmountControl: #feedback value: 0.0.
 	self addControl: #width min: -1.0 max: 1.0 value: 0.0.
 	self addControl: #spread min: 0.0 max: 1.0 value: 0.5.
-	self addVolumeControl: #bass min: 0.4 max: 2.5 value: 1.0. "-8 dB to 8 dB"
-	self addVolumeControl: #treble min: 0.4 max: 2.5 value: 1.0. "-8 dB to 8 dB"
+	self addGainControl: #bass min: 0.4 max: 2.5 value: 1.0. "-8 dB to 8 dB"
+	self addGainControl: #treble min: 0.4 max: 2.5 value: 1.0. "-8 dB to 8 dB"
 	self addDryWetControl: #mix value: 0.5! !
 
-!StereoEcho methodsFor: 'processing' stamp: 'len 18/Apr/2026 19:40:20'!
+!StereoEcho methodsFor: 'processing' stamp: 'len 30/May/2026 15:41:21'!
 tick
-	| feedback θ wet dry width gain1 gain2 |
+	| feedback wet dry width gain1 gain2 |
 	outputL ifNil: [^ self].
 	inputL ifNil: [outputL atAllPut: 0.0. outputR ifNotNil: [outputR atAllPut: 0.0]. ^ self].
 	feedback := self get: #feedback.
-	θ := (self get: #mix) * Float pi / 2.0. "equal-power wet/dry mix"
-	wet := θ sin.
-	dry := θ cos.
+	wet := self get: #mix.
+	dry := 1.0 - wet.
 	width := self get: #width.
 	gain2 := width <= 0 ifTrue: [width * -0.5] ifFalse: [width].
 	gain1 := 1.0 - gain2.
@@ -3582,7 +3579,7 @@ initialize
 	combsR := #(1116 1188 1277 1356 1422 1491 1557 1617) collect: [:each| LowpassComb new: ((each + 23) * self class sampleRate / 44100.0) truncated].
 	allpassesR := #(556 441 341 225) collect: [:each| AllpassComb new: ((each + 23) * self class sampleRate / 44100.0) truncated]! !
 
-!StereoReverb methodsFor: 'initialization' stamp: 'len 23/May/2026 00:44:25'!
+!StereoReverb methodsFor: 'initialization' stamp: 'len 30/May/2026 16:19:07'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #predelay min: 0.0001 "0.1 ms" max: 0.15 "150 ms" value: 0.005 "5 ms".
@@ -3591,16 +3588,15 @@ initializeControls
 	self addControl: #width min: 0.0 max: 1.0 value: 1.0.
 	self addDryWetControl: #mix value: 0.5! !
 
-!StereoReverb methodsFor: 'processing' stamp: 'len 18/Apr/2026 19:37:03'!
+!StereoReverb methodsFor: 'processing' stamp: 'len 30/May/2026 16:21:33'!
 tick
-	| width width2 θ wet dry |
+	| width width2 wet dry |
 	outputL ifNil: [^ self].
 	inputL ifNil: [outputL atAllPut: 0.0. outputR ifNotNil: [outputR atAllPut: 0.0]. ^ self].
 	width := (self get: #width) / 2.0 + 0.5. "0 -> 0.5, 1 -> 1.0"
 	width2 := 1.0 - width. "0 -> 0.5, 1 -> 0.0"
-	θ := (self get: #mix) * Float pi / 2.0. "equal-power wet/dry mix"
-	wet := θ sin.
-	dry := θ cos.
+	wet := self get: #mix.
+	dry := 1.0 - wet.
 	1 to: inputL size do: [:i|
 		| inL inR delayed outL outR |
 		inL := inputL at: i.
@@ -3615,7 +3611,7 @@ tick
 		outputR
 			ifNil: [outputL at: i put: inL * dry + outL]
 			ifNotNil:
-				[outR:= 0.0.
+				[outR := 0.0.
 				combsR do: [:each| outR := (each value: delayed) + outR].
 				allpassesR do: [:each| outR := each value: outR].
 				outR := outR * wet.
@@ -3706,14 +3702,14 @@ initialize
 	flutterNoiseLPF1 := OnePole new.
 	flutterNoiseLPF2 := OnePole new! !
 
-!TapeWobble methodsFor: 'initialization' stamp: 'len 24/May/2026 15:56:45'!
+!TapeWobble methodsFor: 'initialization' stamp: 'len 30/May/2026 02:19:20'!
 initializeControls
 	super initializeControls.
 	self addFrequencyControl: #wowRate min: 0.05 "Hz" max: 2.0 "Hz" value: 0.25 "Hz".
 	self addTimeControl: #wowDepth min: 0.00001 "0.01 ms" max: 0.015 "15 ms" value: 0.002 "2 ms". "0 to ±30 cents at 0.5 Hz"
 	self addFrequencyControl: #flutterRate min: 3.0 "Hz" max: 15.0 "Hz" value: 6.0 "Hz".
 	self addTimeControl: #flutterDepth min: 0.00001 "0.01 ms" max: 0.001 "1 ms" value: 0.0001 "0.1 ms".
-	self addControl: #jitter min: 0.0 max: 1.0 value: 0.5! !
+	self addAmountControl: #jitter value: 0.5! !
 
 !TapeWobble methodsFor: 'processing' stamp: 'len 20/Apr/2026 22:14:52'!
 tick
@@ -3748,10 +3744,14 @@ patchable
 		addAudioOutput: #setOutputR: label: 'R';
 		yourself! !
 
-!TapeWobble methodsFor: 'ui' stamp: 'len 12/May/2026 15:19:36'!
+!TapeWobble methodsFor: 'ui' stamp: 'len 31/May/2026 16:00:49'!
 screen
 	| answer |
-	answer := StripChartXYControlMorph new morphExtent: 96 @ 32; controlX: (controls at: #wowRate); controlY: (controls at: #flutterRate).
+	answer := StripChartXYControlMorph new
+		morphExtent: 96 @ 32;
+		controlX: (controls at: #wowRate);
+		setProperty: #invertsX toValue: true;
+		controlY: (controls at: #flutterRate).
 	self when: #drift: send: #addSample: to: answer.
 	^ answer! !
 
@@ -4122,11 +4122,11 @@ initialize
 	meterLeftValue := meterRightValue := 0.0.
 	enabled := true! !
 
-!AudioOut methodsFor: 'initialization' stamp: 'len 28/May/2026 17:38:22'!
+!AudioOut methodsFor: 'initialization' stamp: 'len 30/May/2026 02:03:49'!
 initializeControls
 	super initializeControls.
 	self addChoiceControl: #port options: (0 to: 9) value: 0.
-	self addVolumeControl: #level min: 0.001 "-60 dB" max: 4.0 "+12 dB" value: 1.0 "0 dB".
+	self addGainControl: #level min: 0.001 "-60 dB" max: 4.0 "+12 dB" value: 1.0 "0 dB".
 	(self addControl: #pan min: -1.0 max: 1.0 value: 0.0) printer: [:x| x abs < 0.01 ifTrue: ['Center'] ifFalse: [(x abs * 100.0) rounded printString, '% ', (x < 0.0 ifTrue: ['L'] ifFalse: ['R'])]]! !
 
 !AudioOut methodsFor: 'processing' stamp: 'len 26/May/2026 17:23:44'!
@@ -4305,12 +4305,12 @@ initialize
 	self reset.
 	level := 1.0! !
 
-!Operator methodsFor: 'initialization' stamp: 'len 24/Apr/2026 15:26:22'!
+!Operator methodsFor: 'initialization' stamp: 'len 30/May/2026 02:08:04'!
 initializeControls
 	super initializeControls.
 	(self addControl: #ratio min: 0.25 max: 16.0 value: 1.0) printer: [:x| '×', (x printStringFractionDigits: 2)].
 	(self addControl: #level min: 0.0 max: 1.0 value: 1.0) printer: [:x| '±', (x printStringFractionDigits: 2)].
-	(self addControl: #feedback min: 0.0 max: 1.0 value: 0.0) printer: [:x| (x * 100.0) rounded printString, '%'].
+	self addAmountControl: #feedback value: 0.0.
 	self addToggleControl: #reset value: false! !
 
 !Operator methodsFor: 'processing' stamp: 'len 17/May/2026 14:46:01'!
@@ -4405,10 +4405,10 @@ initialize
 	super initialize.
 	width := 0.5! !
 
-!Pulse methodsFor: 'initialization' stamp: 'len 22/Jan/2026 04:16:00'!
+!Pulse methodsFor: 'initialization' stamp: 'len 30/May/2026 02:08:25'!
 initializeControls
 	super initializeControls.
-	(self addControl: #width min: 0.0 max: 1.0 value: 0.5) printer: [:x| (x * 100.0) rounded printString, '%']! !
+	self addAmountControl: #width value: 0.5! !
 
 !Pulse methodsFor: 'processing' stamp: 'len 1/May/2026 23:16:29'!
 nextModulated: modulation
@@ -4869,19 +4869,19 @@ initialize
 	released := true.
 	random := Random new! !
 
-!TonewheelOrgan methodsFor: 'initialization' stamp: 'len 14/Feb/2026 23:49:46'!
+!TonewheelOrgan methodsFor: 'initialization' stamp: 'len 30/May/2026 02:04:05'!
 initializeControls
 	super initializeControls.
-	self addVolumeControl: #'16''' value: 0.001.
-	self addVolumeControl: #'5¹/₃''' value: 0.001.
-	self addVolumeControl: #'8''' value: 0.001.
-	self addVolumeControl: #'4''' value: 0.001.
-	self addVolumeControl: #'2²/₃''' value: 0.001.
-	self addVolumeControl: #'2''' value: 0.001.
-	self addVolumeControl: #'1³/₅''' value: 0.001.
-	self addVolumeControl: #'1¹/₃''' value: 0.001.
-	self addVolumeControl: #'1''' value: 0.001.
-	self addVolumeControl: #click min: 0.001 max: 1.0 value: 0.6! !
+	self addGainControl: #'16''' value: 0.001.
+	self addGainControl: #'5¹/₃''' value: 0.001.
+	self addGainControl: #'8''' value: 0.001.
+	self addGainControl: #'4''' value: 0.001.
+	self addGainControl: #'2²/₃''' value: 0.001.
+	self addGainControl: #'2''' value: 0.001.
+	self addGainControl: #'1³/₅''' value: 0.001.
+	self addGainControl: #'1¹/₃''' value: 0.001.
+	self addGainControl: #'1''' value: 0.001.
+	self addGainControl: #click min: 0.001 max: 1.0 value: 0.6! !
 
 !TonewheelOrgan methodsFor: 'processing' stamp: 'len 14/Feb/2026 16:06:17'!
 next
@@ -4963,13 +4963,13 @@ initialize
 	released := true.
 	filter := OnePole new frequency: 6000.0 / self class sampleRate "6 kHz"! !
 
-!TransistorOrgan methodsFor: 'initialization' stamp: 'len 14/Feb/2026 23:50:05'!
+!TransistorOrgan methodsFor: 'initialization' stamp: 'len 30/May/2026 02:04:05'!
 initializeControls
 	super initializeControls.
-	self addVolumeControl: #'16''' value: 0.001.
-	self addVolumeControl: #'8''' value: 0.001.
-	self addVolumeControl: #'4''' value: 0.001.
-	self addVolumeControl: #'IV' value: 0.001! !
+	self addGainControl: #'16''' value: 0.001.
+	self addGainControl: #'8''' value: 0.001.
+	self addGainControl: #'4''' value: 0.001.
+	self addGainControl: #'IV' value: 0.001! !
 
 !TransistorOrgan methodsFor: 'processing' stamp: 'len 14/Feb/2026 17:15:23'!
 next
@@ -6345,6 +6345,60 @@ patchable
 setValues: anArray
 	values := anArray! !
 
+!Attenuator methodsFor: 'initialization' stamp: 'len 1/Jun/2026 00:51:57'!
+initializeControls
+	super initializeControls.
+	self addControl: #input min: -1.0 max: 1.0 value: 0.0.
+	self addAmountControl: #amount value: 0.0! !
+
+!Attenuator methodsFor: 'processing' stamp: 'len 1/Jun/2026 00:52:57'!
+tick
+	| value |
+	value := (controls at: #input) modulation.
+	value = 0.0 ifFalse: [self send: value * (self get: #amount)]! !
+
+!Attenuator methodsFor: 'ui' stamp: 'len 23/Apr/2026 17:34:17'!
+panel
+	^​ ControlPanel new addSmallKnob: (controls at: #amount)! !
+
+!Attenuator methodsFor: 'ui' stamp: 'len 1/Jun/2026 00:53:09'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self panel.
+	answer
+		addControlInput: #input label: 'In';
+		addControlInput: #amount;
+		addControlOutput.
+	^ answer! !
+
+!Attenuverter methodsFor: 'initialization' stamp: 'len 1/Jun/2026 00:57:18'!
+initializeControls
+	super initializeControls.
+	self addControl: #input min: -1.0 max: 1.0 value: 0.0.
+	self addBipolarAmountControl: #amount value: 0.0! !
+
+!Attenuverter methodsFor: 'processing' stamp: 'len 27/Apr/2026 22:20:32'!
+tick
+	| value |
+	value := (controls at: #input) modulation.
+	value = 0.0 ifFalse: [self send: value * (self get: #amount)]! !
+
+!Attenuverter methodsFor: 'ui' stamp: 'len 23/Apr/2026 17:34:43'!
+panel
+	^​ ControlPanel new addSmallKnob: (controls at: #amount)! !
+
+!Attenuverter methodsFor: 'ui' stamp: 'len 27/Apr/2026 22:20:43'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self panel.
+	answer
+		addControlInput: #input label: 'In';
+		addControlInput: #amount;
+		addControlOutput.
+	^ answer! !
+
 !Drift methodsFor: 'controlling' stamp: 'len 24/May/2026 16:07:18'!
 reset
 	lpf reset.
@@ -6535,11 +6589,11 @@ update
 	sustain := self get: #sustain.
 	release := (self get: #release) * rate! !
 
-!ADSR methodsFor: 'initialization' stamp: 'len 26/Mar/2026 15:08:58'!
+!ADSR methodsFor: 'initialization' stamp: 'len 30/May/2026 02:04:05'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #decay min: 0.001 max: 2.0 value: 0.5.
-	self addVolumeControl: #sustain value: 0.6.
+	self addGainControl: #sustain value: 0.6.
 	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0.
 	self addToggleControl: #legato value: false! !
 
@@ -6693,10 +6747,10 @@ update
 	sustain := self get: #sustain.
 	release := (self get: #release) * self class controlRate! !
 
-!ASR methodsFor: 'initialization' stamp: 'len 26/Mar/2026 15:09:10'!
+!ASR methodsFor: 'initialization' stamp: 'len 30/May/2026 02:04:05'!
 initializeControls
 	super initializeControls.
-	self addVolumeControl: #sustain value: 0.6.
+	self addGainControl: #sustain value: 0.6.
 	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0.
 	self addToggleControl: #legato value: false! !
 
@@ -6796,10 +6850,10 @@ initialize
 	super initialize.
 	note := 60.0! !
 
-!KeyTracker methodsFor: 'initialization' stamp: 'len 10/Feb/2026 16:59:54'!
+!KeyTracker methodsFor: 'initialization' stamp: 'len 30/May/2026 02:10:39'!
 initializeControls
 	super initializeControls.
-	(self addControl: #amount min: -1.0 max: 1.0 value: 0.0) printer: [:x| (x * 100.0) rounded printString, '%']! !
+	self addBipolarAmountControl: #amount value: 0.0! !
 
 !KeyTracker methodsFor: 'processing' stamp: 'len 26/Apr/2026 23:28:20'!
 tick
@@ -6948,10 +7002,10 @@ initialize
 	super initialize.
 	velocity := 0.0! !
 
-!VelocityTracker methodsFor: 'initialization' stamp: 'len 10/Feb/2026 17:03:46'!
+!VelocityTracker methodsFor: 'initialization' stamp: 'len 30/May/2026 02:10:51'!
 initializeControls
 	super initializeControls.
-	(self addControl: #amount min: -1.0 max: 1.0 value: 0.0) printer: [:x| (x * 100.0) rounded printString, '%']! !
+	self addBipolarAmountControl: #amount value: 0.0! !
 
 !VelocityTracker methodsFor: 'processing' stamp: 'len 26/Apr/2026 23:28:50'!
 tick
@@ -6977,12 +7031,12 @@ initialize
 	flutterNoiseLPF1 := OnePole new.
 	flutterNoiseLPF2 := OnePole new! !
 
-!Wobble methodsFor: 'initialization' stamp: 'len 23/May/2026 21:16:10'!
+!Wobble methodsFor: 'initialization' stamp: 'len 30/May/2026 02:09:51'!
 initializeControls
 	super initializeControls.
 	self addFrequencyControl: #rate min: 0.05 "Hz" max: 2.0 "Hz" value: 0.25 "Hz".
-	self addLogDepthControl: #flutter value: 0.1.
-	self addDepthControl: #jitter value: 0.5! !
+	self addLogAmountControl: #flutter value: 0.1.
+	self addAmountControl: #jitter value: 0.5! !
 
 !Wobble methodsFor: 'processing' stamp: 'len 23/May/2026 21:16:19'!
 tick
@@ -7069,10 +7123,10 @@ initialize
 	peak := 0.5.
 	gain := 1.0! !
 
-!Limiter methodsFor: 'initialization' stamp: 'len 10/Feb/2026 14:54:00'!
+!Limiter methodsFor: 'initialization' stamp: 'len 30/May/2026 02:03:49'!
 initializeControls
 	super initializeControls.
-	self addVolumeControl: #ceiling min: 0.5 "-12 dB" max: 1.0 value: 0.985.
+	self addGainControl: #ceiling min: 0.5 "-12 dB" max: 1.0 value: 0.985.
 	self addTimeControl: #release min: 0.005 "5 ms" max: 0.2 "200 ms" value: 0.05 "50 ms"! !
 
 !Limiter methodsFor: 'processing' stamp: 'len 10/Feb/2026 14:51:58'!
@@ -7117,11 +7171,11 @@ value: in
 	delayLine write: v.
 	^ y - (v * gain)! !
 
-!Comb methodsFor: 'controlling' stamp: 'len 26/Jan/2026 17:15:47'!
+!Comb methodsFor: 'controlling' stamp: 'len 30/May/2026 17:27:51'!
 reset
 	delayLine reset.
 	tap reset.
-	x0 := 0.0! !
+	lastOutput := 0.0! !
 
 !Comb methodsFor: 'controlling' stamp: 'len 26/Jan/2026 17:15:54'!
 update
@@ -7130,14 +7184,14 @@ update
 	feedback := self get: #feedback.
 	damping := self get: #damping! !
 
-!Comb methodsFor: 'initialization' stamp: 'len 25/Mar/2026 16:09:11'!
+!Comb methodsFor: 'initialization' stamp: 'len 30/May/2026 17:27:51'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (0.5 * self class sampleRate) ceiling.
 	tap := DelayTapT2 on: delayLine.
 	feedback := 0.0.
 	damping := 0.0.
-	x0 := 0.0! !
+	lastOutput := 0.0! !
 
 !Comb methodsFor: 'initialization' stamp: 'len 14/Jan/2026 15:37:45'!
 initializeControls
@@ -7146,17 +7200,17 @@ initializeControls
 	self addControl: #feedback min: 0.0 max: 0.999 value: 0.75.
 	self addControl: #damping min: 0.0 max: 0.5 value: 0.2! !
 
-!Comb methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:54:04'!
+!Comb methodsFor: 'processing' stamp: 'len 30/May/2026 17:27:51'!
 tick
 	super tick.
-	x0 abs < 1.0e-15 ifTrue: [x0 := 0.0]! !
+	lastOutput abs < 1.0e-15 ifTrue: [lastOutput := 0.0]! !
 
-!Comb methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:27:44'!
+!Comb methodsFor: 'processing' stamp: 'len 30/May/2026 17:27:51'!
 value: in
 	| out |
 	out := tap read.
-	x0 := out * damping + (x0 * (1.0 - damping)).
-	delayLine write: in + (x0 * feedback).
+	lastOutput := out * damping + (lastOutput * (1.0 - damping)).
+	delayLine write: in + (lastOutput * feedback).
 	^ out! !
 
 !Comb methodsFor: 'ui' stamp: 'len 27/Jan/2026 14:48:54'!
@@ -7166,37 +7220,84 @@ panel
 		addKnob: (controls at: #feedback) label: 'FB';
 		addKnob: (controls at: #damping) label: 'Damp'! !
 
-!Echo methodsFor: 'controlling' stamp: 'len 26/Jan/2026 17:17:04'!
+!Echo methodsFor: 'controlling' stamp: 'len 30/May/2026 17:19:21'!
 reset
 	delayLine reset.
-	tap reset! !
+	tap reset.
+	lpf reset.
+	hpf reset.
+	lastOutput := 0.0! !
 
-!Echo methodsFor: 'controlling' stamp: 'len 26/Jan/2026 17:17:11'!
+!Echo methodsFor: 'controlling' stamp: 'len 30/May/2026 17:19:04'!
 update
 	super update.
-	tap setDelayIncrement: (self get: #time) * self class sampleRate - tap delay / (self class sampleRate * 0.03) "slide over 30 ms"! !
+	tap setDelayIncrement: (self get: #time) * self class sampleRate - tap delay / (self class sampleRate * 0.03) "slide over 30 ms".
+	feedback := self get: #feedback.
+	wet := self get: #mix.
+	dry := 1.0 - wet.
+	lpf snapToZero; frequency: (self get: #damp) / self class sampleRate.
+	hpf snapToZero! !
 
-!Echo methodsFor: 'initialization' stamp: 'len 28/May/2026 19:36:49'!
+!Echo methodsFor: 'initialization' stamp: 'len 30/May/2026 17:19:45'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: self class sampleRate + 2. "max 1 s"
-	tap := DelayTapC on: delayLine! !
+	tap := DelayTapC on: delayLine.
+	lpf := OnePole new.
+	hpf := OnePole new frequency: 100.0 / self class sampleRate.  "fixed at 100 Hz"
+	self reset! !
 
-!Echo methodsFor: 'initialization' stamp: 'len 14/Jan/2026 15:44:28'!
+!Echo methodsFor: 'initialization' stamp: 'len 30/May/2026 17:22:00'!
 initializeControls
 	super initializeControls.
-	self addTimeControl: #time min: 0.001 "1 ms" max: 1.0 "1 s" value: 0.5 "500 ms"! !
+	self addTimeControl: #time min: 0.001 "1 ms" max: 1.0 "1 s" value: 0.5 "500 ms".
+	self addAmountControl: #feedback value: 0.0.
+	self addFrequencyControl: #damp min: 500.0 "Hz" max: 20000.0 "Hz" value: 10000.0 "Hz".
+	self addDryWetControl: #mix value: 0.5! !
 
-!Echo methodsFor: 'processing' stamp: 'len 26/Jan/2026 17:17:29'!
+!Echo methodsFor: 'processing' stamp: 'len 30/May/2026 21:05:05'!
+tick
+	(send isNil and: [return isNil]) ifTrue: [^ super tick].
+	output ifNil: [^ self].
+	input ifNil: [1 to: output size do: [:i| output at: i put: (self value: 0.0)]. ^ self].
+	1 to: input size do: [:i|
+		| in |
+		in := input at: i.
+		return ifNotNil: [lastOutput := return at: i].
+		output at: i put: (self value: (input at: i)).
+		send ifNotNil: [send at: i put: lastOutput]]! !
+
+!Echo methodsFor: 'processing' stamp: 'len 30/May/2026 19:59:32'!
 value: in
-	delayLine write: in.
-	^ tap read! !
+	lastOutput := lpf value: lastOutput.
+	lastOutput := (lastOutput - (hpf value: lastOutput)) snapToZero.
+	delayLine write: in + (lastOutput * feedback).
+	^ (lastOutput := tap read) * wet + (in * dry)! !
 
-!Echo methodsFor: 'ui' stamp: 'len 2/Feb/2026 15:33:21'!
+!Echo methodsFor: 'ui' stamp: 'len 30/May/2026 17:20:53'!
+panel
+	^​ ControlPanel new
+		addKnob: (controls at: #time) label: 'Time';
+		addKnob: (controls at: #feedback) label: 'FB';
+		addKnob: (controls at: #damp) label: 'Damp';
+		addKnob: (controls at: #mix) label: 'Mix'! !
+
+!Echo methodsFor: 'ui' stamp: 'len 30/May/2026 21:05:19'!
 patchable
 	^ super patchable
+		addAudioInput: #setReturn: label: 'Return';
+		addAudioOutput: #setSend: label: 'Send';
 		addControlInput: #time;
+		addControlInput: #feedback;
 		yourself! !
+
+!Echo methodsFor: 'wiring' stamp: 'len 30/May/2026 21:05:34'!
+setReturn: aBuffer
+	return := aBuffer! !
+
+!Echo methodsFor: 'wiring' stamp: 'len 30/May/2026 21:05:29'!
+setSend: aBuffer
+	send := aBuffer! !
 
 !Flanger methodsFor: 'controlling' stamp: 'len 27/Mar/2026 14:49:08'!
 reset
@@ -7227,12 +7328,12 @@ initialize
 	lpf := OnePole new.
 	self reset! !
 
-!Flanger methodsFor: 'initialization' stamp: 'len 30/Apr/2026 18:08:16'!
+!Flanger methodsFor: 'initialization' stamp: 'len 30/May/2026 02:06:43'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #time min: 0.0001 "0.1 ms" max: 0.01 "10 ms" value: 0.002 "2 ms".
 	self addFrequencyControl: #speed min: 0.05 "Hz" max: 2.0 "Hz" value: 0.1 "Hz".
-	self addDepthControl: #depth value: 0.1.
+	self addAmountControl: #depth value: 0.1.
 	self addControl: #feedback min: -0.8 max: 0.8 value: 0.5.
 	self addFrequencyControl: #tone min: 3000.0 "3 kHz" max: 18000.0 "18 kHz" value: 6000.0. "6 kHz"
 	self addDryWetControl: #mix value: 0.5! !
@@ -7294,11 +7395,11 @@ initialize
 	y1 := Float32Array new: 4.
 	self reset! !
 
-!Phaser methodsFor: 'initialization' stamp: 'len 30/Apr/2026 18:07:48'!
+!Phaser methodsFor: 'initialization' stamp: 'len 30/May/2026 02:06:43'!
 initializeControls
 	super initializeControls.
 	self addFrequencyControl: #speed min: 0.01 max: 20.0 value: 0.5.
-	self addDepthControl: #depth value: 0.1.
+	self addAmountControl: #depth value: 0.1.
 	self addControl: #feedback min: -0.7 max: 0.7 value: 0.5.
 	self addDryWetControl: #mix value: 0.5! !
 
@@ -7363,14 +7464,14 @@ initialize
 	hpf := OnePole new frequency: 100.0 / self class sampleRate.  "fixed at 100 Hz"
 	self reset! !
 
-!PitchShifter methodsFor: 'initialization' stamp: 'len 29/May/2026 19:41:18'!
+!PitchShifter methodsFor: 'initialization' stamp: 'len 31/May/2026 00:47:20'!
 initializeControls
 	super initializeControls.
 	self addPitchControl: #pitch min: -24.0 "st" max: 24.0 "st" value: 0.0. "2 octaves up/down"
-	self addTimeControl: #delay min: 0.010 "10 ms" max: 1.0 "1 s" value: 0.04 "40 ms".
+	self addTimeControl: #delay min: 0.001 "1 ms" max: 1.0 "1 s" value: 0.04 "40 ms".
 	self addTimeControl: #grainSize min: 0.005 "5 ms" max: 0.5 "500 ms" value: 0.02 "20 ms".
-	(self addControl: #feedback min: 0.0 max: 0.95 value: 0.0) printer: [:x| (x * 100) truncated printString, '%'].
-	self addFrequencyControl: #lowPass min: 500.0 "Hz" max: 20000.0 "Hz" value: 10000.0 "Hz".
+	self addAmountControl: #feedback min: 0.0 max: 0.95 value: 0.0.
+	self addFrequencyControl: #damp min: 500.0 "Hz" max: 20000.0 "Hz" value: 10000.0 "Hz".
 	self addDryWetControl: #mix value: 0.5.
 	self addToggleControl: #reverse value: false! !
 
@@ -7381,35 +7482,38 @@ reset
 	lpf reset.
 	hpf reset! !
 
-!PitchShifter methodsFor: 'controlling' stamp: 'len 29/May/2026 20:53:48'!
+!PitchShifter methodsFor: 'controlling' stamp: 'len 30/May/2026 17:18:16'!
 update
-	| ratio targetDelay targetGrainSize |
+	| ratio targetDelay targetGrainSize thirtyMsecs θ |
 	super update.
+	thirtyMsecs := self class sampleRate * 0.03.
 	targetDelay := (self get: #delay) * self class sampleRate.
 	delay ifNil: [delay := targetDelay].
-	delayIncrement := (targetDelay - delay) / self class blockSize.
+	delayIncrement := targetDelay - delay / thirtyMsecs.
 	targetGrainSize := (self get: #grainSize) * self class sampleRate.
 	grainSize ifNil: [grainSize := targetGrainSize].
-	grainSizeIncrement := (targetGrainSize - grainSize) / self class blockSize.
+	grainSizeIncrement := targetGrainSize - grainSize / thirtyMsecs.
 	ratio := (self get: #pitch) semitonesToRatio.
 	increment := ((self get: #reverse) ifTrue: [1.0 + ratio] ifFalse: [1.0 - ratio]) / grainSize.
 	feedback := self get: #feedback.
-	mix := self get: #mix.
-	lpf snapToZero; frequency: (self get: #lowPass) / self class sampleRate.
+	θ := (self get: #mix) * Float halfPi. "equal-power wet/dry mix"
+	wet := θ sin.
+	dry := θ cos.
+	lpf snapToZero; frequency: (self get: #damp) / self class sampleRate.
 	hpf snapToZero! !
 
-!PitchShifter methodsFor: 'processing' stamp: 'len 29/May/2026 20:54:33'!
+!PitchShifter methodsFor: 'processing' stamp: 'len 30/May/2026 15:43:17'!
 value: in
 	| phase2 |
 	delay := delay + delayIncrement.
 	grainSize := grainSize + grainSizeIncrement.
 	lastOutput := lpf value: lastOutput.
-	lastOutput := lastOutput - (hpf value: lastOutput).
+	lastOutput := (lastOutput - (hpf value: lastOutput)) snapToZero.
 	delayLine write: in + (lastOutput * feedback).
 	phase := phase + increment \\ 1.0.
 	phase2 := phase + 0.5 \\ 1.0.
 	lastOutput := (delayLine atCubic: phase * grainSize + delay) * (phase * Float pi) sin + ((delayLine atCubic: phase2 * grainSize + delay) * (phase2 * Float pi) sin).
-	^ lastOutput * mix + (in * (1.0 - mix))! !
+	^ lastOutput * wet + (in * dry)! !
 
 !PitchShifter methodsFor: 'ui' stamp: 'len 28/May/2026 21:47:24'!
 panel
@@ -7418,13 +7522,13 @@ panel
 		addKnob: (controls at: #feedback) label: 'FB';
 		addKnob: (controls at: #mix) label: 'Mix'! !
 
-!PitchShifter methodsFor: 'ui' stamp: 'len 29/May/2026 19:47:35'!
+!PitchShifter methodsFor: 'ui' stamp: 'len 30/May/2026 17:18:10'!
 panel2
 	^ ControlPanel new
 		addSmallKnob: (controls at: #delay) label: 'Delay';
 		addSmallKnob: (controls at: #grainSize) label: 'Grain';
-		addSmallKnob: (controls at: #lowPass) label: 'LP';
-		addToggle: (controls at: #reverse) label: '◀'! !
+		addSmallKnob: (controls at: #damp) label: 'Damp';
+		addMorph: (ToggleControlMorph new control: (controls at: #reverse); label: '◀'; setBalloonText: 'Reverse Mode')! !
 
 !PitchShifter methodsFor: 'ui' stamp: 'len 28/May/2026 21:45:49'!
 patchable
@@ -7443,17 +7547,16 @@ reset
 	combs do: [:each| each reset].
 	allpasses do: [:each| each reset]! !
 
-!Reverb methodsFor: 'controlling' stamp: 'len 21/May/2026 20:21:39'!
+!Reverb methodsFor: 'controlling' stamp: 'len 30/May/2026 15:43:45'!
 update
-	| feedback damp θ |
+	| feedback damp |
 	super update.
 	predelayTap setDelayIncrement: ((self get: #predelay) * self class sampleRate - predelayTap delay) / self class blockSize.
 	feedback := self get: #feedback.
 	damp := self get: #damp.
 	combs do: [:each| each snapToZero; feedback: feedback; damp: damp].
-	θ := (self get: #mix) * Float halfPi. "equal-power wet/dry mix"
-	wet := θ sin.
-	dry := θ cos! !
+	wet := self get: #mix.
+	dry := 1.0 - wet! !
 
 !Reverb methodsFor: 'initialization' stamp: 'len 25/Mar/2026 15:55:27'!
 initialize
@@ -7489,7 +7592,7 @@ panel
 		addKnob: (controls at: #damp) label: 'Damp';
 		addKnob: (controls at: #mix) label: 'Mix'! !
 
-!TapeEcho methodsFor: 'controlling' stamp: 'len 6/Mar/2026 22:26:12'!
+!TapeEcho methodsFor: 'controlling' stamp: 'len 1/Jun/2026 03:52:54'!
 reset
 	delayLine reset.
 	tap1 reset.
@@ -7498,11 +7601,12 @@ reset
 	lpf reset.
 	hpf reset.
 	lsf reset.
-	hsf reset! !
+	hsf reset.
+	lastOutput := 0.0! !
 
-!TapeEcho methodsFor: 'controlling' stamp: 'len 11/May/2026 17:01:48'!
+!TapeEcho methodsFor: 'controlling' stamp: 'len 30/May/2026 15:44:37'!
 update
-	| delay1 delay2 delay3 thirtyMsecs θ |
+	| delay1 delay2 delay3 thirtyMsecs |
 	super update.
 	thirtyMsecs := self class sampleRate * 0.03.
 	delay1 := (self get: #time) * self class sampleRate.
@@ -7515,15 +7619,14 @@ update
 	level2 := self get: #'2'.
 	level3 := self get: #'3'.
 	feedback := self get: #feedback.
-	θ := (self get: #mix) * Float pi / 2.0. "equal-power wet/dry mix"
-	wet := θ sin.
-	dry := θ cos.
+	wet := self get: #mix.
+	dry := 1.0 - wet.
 	lpf snapToZero.
 	hpf snapToZero.
 	lsf snapToZero; ls: 120.0 / self class sampleRate Q: 0.707 gain: (self get: #bass). "120 Hz"
 	hsf snapToZero; hs: 4000.0 / self class sampleRate Q: 0.707 gain: (self get: #treble) "4 kHz"! !
 
-!TapeEcho methodsFor: 'initialization' stamp: 'len 28/May/2026 19:36:10'!
+!TapeEcho methodsFor: 'initialization' stamp: 'len 1/Jun/2026 03:52:45'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: (self class sampleRate * 2) ceiling + 2. "max 2 s"
@@ -7533,31 +7636,44 @@ initialize
 	lpf := OnePole new frequency: 8000.0 / self class sampleRate. "8 kHz"
 	hpf := OnePole new frequency: 40.0 / self class sampleRate. "40 Hz"
 	lsf := Biquad new.
-	hsf := Biquad new! !
+	hsf := Biquad new.
+	self reset! !
 
-!TapeEcho methodsFor: 'initialization' stamp: 'len 3/Mar/2026 16:36:51'!
+!TapeEcho methodsFor: 'initialization' stamp: 'len 1/Jun/2026 03:52:22'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #time min: 0.240 "240 ms" max: 2.0 "2 s" value: 0.5 "500 ms".
-	self addControl: #feedback min: 0.0 max: 1.0 value: 0.0.
-	self addVolumeControl: #'1' value: 1.0.
-	self addVolumeControl: #'2' value: 0.001.
-	self addVolumeControl: #'3' value: 0.001.
-	self addVolumeControl: #bass min: 0.4 max: 2.5 value: 1.0. "-8 dB to 8 dB"
-	self addVolumeControl: #treble min: 0.4 max: 2.5 value: 1.0. "-8 dB to 8 dB"
+	self addAmountControl: #feedback value: 0.0.
+	self addGainControl: #'1' value: 1.0.
+	self addGainControl: #'2' value: 0.001.
+	self addGainControl: #'3' value: 0.001.
+	self addGainControl: #bass min: 0.4 "-8 dB" max: 2.5 "8 dB" value: 1.0 "0 dB".
+	self addGainControl: #treble min: 0.4 "-8 dB" max: 2.5 "8 dB" value: 1.0 "0 dB".
 	self addDryWetControl: #mix value: 0.5! !
 
-!TapeEcho methodsFor: 'processing' stamp: 'len 18/Apr/2026 19:42:59'!
+!TapeEcho methodsFor: 'processing' stamp: 'len 1/Jun/2026 03:56:08'!
+tick
+	(send isNil and: [return isNil]) ifTrue: [^ super tick].
+	output ifNil: [^ self].
+	input ifNil: [1 to: output size do: [:i| output at: i put: (self value: 0.0)]. ^ self].
+	1 to: input size do: [:i|
+		| in |
+		in := input at: i.
+		return ifNotNil: [lastOutput := return at: i].
+		output at: i put: (self value: (input at: i)).
+		send ifNotNil: [send at: i put: lastOutput]]! !
+
+!TapeEcho methodsFor: 'processing' stamp: 'len 1/Jun/2026 04:28:06'!
 value: in
 	| echos x |
+	x := ((lastOutput * feedback + in) * 1.1) tanh. "saturation"
+	x := lpf value: x - (hpf value: x). "lpf and hpf one-poles for bandwidth loss when writing to the tape"
+	delayLine write: x.
 	echos := 0.0.
 	level1 > 0.001 ifTrue: [echos := tap1 read * level1 + echos].
 	level2 > 0.001 ifTrue: [echos := tap2 read * level2 + echos].
 	level3 > 0.001 ifTrue: [echos := tap3 read * level3 + echos].
-	echos := hsf value: (lsf value: echos). "bass and treble shelves for the echos"
-	x := ((echos * feedback + in) * 1.5) tanh. "saturation"
-	x := lpf value: x - (hpf value: x). "lpf and hpf one-poles for bandwidth loss when writing to the tape"
-	delayLine write: x.
+	lastOutput := echos := hsf value: (lsf value: echos). "bass and treble shelves for the echos"
 	^ in * dry + (echos * wet)! !
 
 !TapeEcho methodsFor: 'ui' stamp: 'len 3/Mar/2026 16:39:40'!
@@ -7576,18 +7692,25 @@ panel2
 		addSmallKnob: (controls at: #treble) label: 'Treble';
 		addSmallKnob: (controls at: #mix) label: 'Mix'! !
 
-!TapeEcho methodsFor: 'ui' stamp: 'len 3/Mar/2026 16:38:33'!
+!TapeEcho methodsFor: 'ui' stamp: 'len 1/Jun/2026 03:49:57'!
 patchable
 	| answer |
-	answer := PatchableMorph new model: self.
-	answer body addMorph: self panel.
+	answer := super patchable.
 	answer flap addMorph: self panel2.
 	^ answer
-		addAudioInput: #setInput:;
-		addAudioOutput: #setOutput:;
+		addAudioInput: #setReturn: label: 'Return';
+		addAudioOutput: #setSend: label: 'Send';
 		addControlInput: #time;
 		addControlInput: #feedback;
 		yourself! !
+
+!TapeEcho methodsFor: 'wiring' stamp: 'len 1/Jun/2026 03:47:50'!
+setReturn: aBuffer
+	return := aBuffer! !
+
+!TapeEcho methodsFor: 'wiring' stamp: 'len 1/Jun/2026 03:47:43'!
+setSend: aBuffer
+	send := aBuffer! !
 
 !Vibrato methodsFor: 'controlling' stamp: 'len 27/Mar/2026 16:37:48'!
 reset
@@ -7615,12 +7738,12 @@ initialize
 	tap := DelayTapC on: delayLine.
 	self reset! !
 
-!Vibrato methodsFor: 'initialization' stamp: 'len 30/Apr/2026 18:07:06'!
+!Vibrato methodsFor: 'initialization' stamp: 'len 30/May/2026 02:06:43'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #time min: 0.002 "2 ms" max: 0.010 "10 ms" value: 0.005 "5 ms".
 	self addFrequencyControl: #speed min: 3.0 "Hz" max: 8.0 "Hz" value: 5.0 "Hz".
-	self addDepthControl: #depth value: 0.1! !
+	self addAmountControl: #depth value: 0.1! !
 
 !Vibrato methodsFor: 'processing' stamp: 'len 27/Mar/2026 15:04:04'!
 tick
@@ -7764,12 +7887,12 @@ initialize
 	lowPassMid := Biquad new linkwitz_lp: 2500.0 / self class sampleRate Q: 0.707.
 	highPassHigh := Biquad new linkwitz_hp: 2500.0 / self class sampleRate Q: 0.707! !
 
-!EQ3 methodsFor: 'initialization' stamp: 'len 31/Jan/2026 03:44:24'!
+!EQ3 methodsFor: 'initialization' stamp: 'len 30/May/2026 02:03:49'!
 initializeControls
 	super initializeControls.
-	self addVolumeControl: #low min: 0.001 max: 2.0 value: 1.0.
-	self addVolumeControl: #mid min: 0.001 max: 2.0 value: 1.0.
-	self addVolumeControl: #high min: 0.001 max: 2.0 value: 1.0! !
+	self addGainControl: #low min: 0.001 max: 2.0 value: 1.0.
+	self addGainControl: #mid min: 0.001 max: 2.0 value: 1.0.
+	self addGainControl: #high min: 0.001 max: 2.0 value: 1.0! !
 
 !EQ3 methodsFor: 'processing' stamp: 'len 26/May/2026 17:35:24'!
 tick
@@ -7813,29 +7936,29 @@ initialize
 	bell3 := Biquad new.
 	highShelf := Biquad new! !
 
-!EQ5 methodsFor: 'initialization' stamp: 'len 17/Mar/2026 15:43:36'!
+!EQ5 methodsFor: 'initialization' stamp: 'len 30/May/2026 02:03:49'!
 initializeControls
 	super initializeControls.
 	
 	(self addFrequencyControl: #f1 min: 20.0 max: 200.0 value: 80.0) label: 'Frequency'.
 	(self addControl: #q1 min: 0.4 max: 2.0 value: 0.707) label: 'Q'.
-	(self addVolumeControl: #g1 min: 1.0 / 16 max: 16.0 value: 1.0) label: 'Gain'.
+	(self addGainControl: #g1 min: 1.0 / 16 max: 16.0 value: 1.0) label: 'Gain'.
 
 	(self addFrequencyControl: #f2 min: 80.0 max: 800.0 value: 250.0) label: 'Frequency'.
 	(self addControl: #q2 min: 0.3 max: 10.0 value: 1.0) label: 'Q'.
-	(self addVolumeControl: #g2 min: 1.0 / 16 max: 16.0 value: 1.0) label: 'Gain'.
+	(self addGainControl: #g2 min: 1.0 / 16 max: 16.0 value: 1.0) label: 'Gain'.
 
 	(self addFrequencyControl: #f3 min: 200.0 max: 3000.0 value: 1000.0) label: 'Frequency'.
 	(self addControl: #q3 min: 0.3 max: 10.0 value: 1.0) label: 'Q'.
-	(self addVolumeControl: #g3 min: 1.0 / 16 max: 16.0 value: 1.0) label: 'Gain'.
+	(self addGainControl: #g3 min: 1.0 / 16 max: 16.0 value: 1.0) label: 'Gain'.
 
 	(self addFrequencyControl: #f4 min: 1000.0 max: 10000.0 value: 4000.0) label: 'Frequency'.
 	(self addControl: #q4 min: 0.4 max: 2.0 value: 1.0) label: 'Q'.
-	(self addVolumeControl: #g4 min: 1.0 / 16 max: 16.0 value: 1.0) label: 'Gain'.
+	(self addGainControl: #g4 min: 1.0 / 16 max: 16.0 value: 1.0) label: 'Gain'.
 
 	(self addFrequencyControl: #f5 min: 4000.0 max: 20000.0 value: 10000.0) label: 'Frequency'.
 	(self addControl: #q5 min: 0.4 max: 2.0 value: 0.707) label: 'Q'.
-	(self addVolumeControl: #g5 min: 1.0 / 16 max: 16.0 value: 1.0) label: 'Gain'! !
+	(self addGainControl: #g5 min: 1.0 / 16 max: 16.0 value: 1.0) label: 'Gain'! !
 
 !EQ5 methodsFor: 'processing' stamp: 'len 17/Mar/2026 15:36:55'!
 value: in
@@ -7974,12 +8097,12 @@ initialize
 	postlpf := OnePole new frequency: 18000.0 / self internalSampleRate. "18 khz"
 	dcblock := OnePole new frequency: 10.0 / self internalSampleRate "10 hz"! !
 
-!TubeSaturator methodsFor: 'initialization' stamp: 'len 13/Feb/2026 16:00:05'!
+!TubeSaturator methodsFor: 'initialization' stamp: 'len 30/May/2026 02:03:49'!
 initializeControls
 	super initializeControls.
-	self addVolumeControl: #drive min: 1.0 max: 16.0 value: 1.0.
+	self addGainControl: #drive min: 1.0 max: 16.0 value: 1.0.
 	self addFrequencyControl: #tone min: 8000.0 max: 14000.0 value: 10000.0. "8 to 14 khz"
-	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0! !
+	self addGainControl: #postgain min: 0.25 max: 4.0 value: 1.0! !
 
 !TubeSaturator methodsFor: 'processing' stamp: 'len 29/Apr/2026 19:44:35'!
 value: in
@@ -8028,12 +8151,12 @@ update
 	postgain := (self get: #postgain) * mix.
 	dry := 1.0 - mix! !
 
-!Waveshaper methodsFor: 'initialization' stamp: 'len 13/Feb/2026 16:32:41'!
+!Waveshaper methodsFor: 'initialization' stamp: 'len 30/May/2026 02:03:49'!
 initializeControls
 	super initializeControls.
-	self addVolumeControl: #pregain min: 1.0 max: 16.0 value: 1.0.
+	self addGainControl: #pregain min: 1.0 max: 16.0 value: 1.0.
 	self addQuadraticControl: #bias min: -0.5 max: 0.5 value: 0.0.
-	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0.
+	self addGainControl: #postgain min: 0.25 max: 4.0 value: 1.0.
 	self addDryWetControl: #mix! !
 
 !Waveshaper methodsFor: 'processing' stamp: 'len 13/Feb/2026 19:00:21'!
@@ -8124,11 +8247,11 @@ initialize
 	super initialize.
 	self reset! !
 
-!Korg35HPF methodsFor: 'initialization' stamp: 'len 3/Feb/2026 17:26:01'!
+!Korg35HPF methodsFor: 'initialization' stamp: 'len 30/May/2026 02:13:20'!
 initializeControls
 	super initializeControls.
 	self addFrequencyControl: #frequency value: 1000.0.
-	(self addControl: #resonance min: 0.0 max: 1.0 value: 0.1) printer: [:x| (x * 100.0) truncated printString, '%']! !
+	self addAmountControl: #resonance value: 0.1! !
 
 !Korg35HPF methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:54:14'!
 tick
@@ -8198,11 +8321,11 @@ initialize
 	super initialize.
 	self reset! !
 
-!Korg35LPF methodsFor: 'initialization' stamp: 'len 3/Feb/2026 17:26:08'!
+!Korg35LPF methodsFor: 'initialization' stamp: 'len 30/May/2026 02:13:33'!
 initializeControls
 	super initializeControls.
 	self addFrequencyControl: #frequency value: 1000.0.
-	(self addControl: #resonance min: 0.0 max: 1.0 value: 0.1) printer: [:x| (x * 100.0) truncated printString, '%']! !
+	self addAmountControl: #resonance value: 0.1! !
 
 !Korg35LPF methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:54:21'!
 tick
@@ -8364,13 +8487,13 @@ initialize
 	prehpf := OnePole new frequency: 4000.0 / self class sampleRate. "4 khz"
 	postlpf := OnePole new! !
 
-!TapeSaturator methodsFor: 'initialization' stamp: 'len 13/Feb/2026 15:48:51'!
+!TapeSaturator methodsFor: 'initialization' stamp: 'len 30/May/2026 02:03:49'!
 initializeControls
 	super initializeControls.
-	self addVolumeControl: #drive min: 1.0 max: 16.0 value: 1.0.
+	self addGainControl: #drive min: 1.0 max: 16.0 value: 1.0.
 	self addQuadraticControl: #bias min: -0.5 max: 0.5 value: 0.0.
 	self addControl: #tone min: -1.0 max: 1.0 value: 0.0.
-	self addVolumeControl: #postgain min: 0.25 max: 4.0 value: 1.0! !
+	self addGainControl: #postgain min: 0.25 max: 4.0 value: 1.0! !
 
 !TapeSaturator methodsFor: 'processing' stamp: 'len 8/Feb/2026 16:21:19'!
 value: in
@@ -8625,11 +8748,11 @@ setInputB: aBuffer
 setOutput: aBuffer
 	output := aBuffer! !
 
-!Mixer methodsFor: 'initialization' stamp: 'len 10/Feb/2026 20:19:43'!
+!Mixer methodsFor: 'initialization' stamp: 'len 30/May/2026 02:04:05'!
 initializeControls
 	super initializeControls.
-	self addVolumeControl: #gainA value: 0.6;
-		addVolumeControl: #gainB value: 0.6! !
+	self addGainControl: #gainA value: 0.6;
+		addGainControl: #gainB value: 0.6! !
 
 !Mixer methodsFor: 'processing' stamp: 'len 16/Apr/2026 01:48:15'!
 tick
@@ -8679,13 +8802,13 @@ setInputB: aBuffer
 setOutput: aBuffer
 	output := aBuffer! !
 
-!Mixer4 methodsFor: 'initialization' stamp: 'len 10/Feb/2026 20:10:19'!
+!Mixer4 methodsFor: 'initialization' stamp: 'len 30/May/2026 02:04:05'!
 initializeControls
 	super initializeControls.
-	self addVolumeControl: #gainA value: 0.6;
-		addVolumeControl: #gainB value: 0.6;
-		addVolumeControl: #gainC value: 0.6;
-		addVolumeControl: #gainD value: 0.6! !
+	self addGainControl: #gainA value: 0.6;
+		addGainControl: #gainB value: 0.6;
+		addGainControl: #gainC value: 0.6;
+		addGainControl: #gainD value: 0.6! !
 
 !Mixer4 methodsFor: 'processing' stamp: 'len 26/May/2026 17:32:35'!
 tick
@@ -8843,60 +8966,6 @@ setOutputL: aBuffer
 setOutputR: aBuffer
 	outputR := aBuffer! !
 
-!Attenuator methodsFor: 'initialization' stamp: 'len 27/Apr/2026 21:34:57'!
-initializeControls
-	super initializeControls.
-	self addControl: #input: min: -1.0 max: 1.0 value: 0.0.
-	(self addControl: #amount min: 0.0 max: 2.0 value: 0.0) printer: [:x| (x * 100.0) rounded printString, '%']! !
-
-!Attenuator methodsFor: 'processing' stamp: 'len 27/Apr/2026 21:35:08'!
-tick
-	| value |
-	value := (controls at: #input:) modulation.
-	value = 0.0 ifFalse: [self send: value * (self get: #amount)]! !
-
-!Attenuator methodsFor: 'ui' stamp: 'len 23/Apr/2026 17:34:17'!
-panel
-	^​ ControlPanel new addSmallKnob: (controls at: #amount)! !
-
-!Attenuator methodsFor: 'ui' stamp: 'len 27/Apr/2026 21:35:03'!
-patchable
-	| answer |
-	answer := PatchableMorph new model: self.
-	answer body addMorph: self panel.
-	answer
-		addControlInput: #input: label: 'In';
-		addControlInput: #amount;
-		addControlOutput.
-	^ answer! !
-
-!Attenuverter methodsFor: 'initialization' stamp: 'len 27/Apr/2026 22:20:26'!
-initializeControls
-	super initializeControls.
-	self addControl: #input min: -1.0 max: 1.0 value: 0.0.
-	(self addControl: #amount min: -2.0 max: 2.0 value: 0.0) printer: [:x| (x * 100.0) rounded printString, '%']! !
-
-!Attenuverter methodsFor: 'processing' stamp: 'len 27/Apr/2026 22:20:32'!
-tick
-	| value |
-	value := (controls at: #input) modulation.
-	value = 0.0 ifFalse: [self send: value * (self get: #amount)]! !
-
-!Attenuverter methodsFor: 'ui' stamp: 'len 23/Apr/2026 17:34:43'!
-panel
-	^​ ControlPanel new addSmallKnob: (controls at: #amount)! !
-
-!Attenuverter methodsFor: 'ui' stamp: 'len 27/Apr/2026 22:20:43'!
-patchable
-	| answer |
-	answer := PatchableMorph new model: self.
-	answer body addMorph: self panel.
-	answer
-		addControlInput: #input label: 'In';
-		addControlInput: #amount;
-		addControlOutput.
-	^ answer! !
-
 !DiodeLadder methodsFor: 'controlling' stamp: 'len 29/Jan/2026 03:00:39'!
 reset
 	s1 := s2 := s3 := s4 := 0.0! !
@@ -9036,40 +9105,6 @@ setOutputLP3: aBuffer
 setOutputLP4: aBuffer
 	outputLP4 := aBuffer! !
 
-!LogAttenuator methodsFor: 'controlling' stamp: 'len 3/Feb/2026 18:03:22'!
-input: aNumber
-	value := value + aNumber! !
-
-!LogAttenuator methodsFor: 'initialization' stamp: 'len 3/Feb/2026 18:03:22'!
-initialize
-	super initialize.
-	value := 0.0! !
-
-!LogAttenuator methodsFor: 'initialization' stamp: 'len 27/Apr/2026 04:26:38'!
-initializeControls
-	super initializeControls.
-	self addControl: #input: min: -1.0 max: 1.0 value: 0.0.
-	(self addLogControl: #amount min: 0.0001 max: 1.0 value: 0.01) printer: [:x| (x * 100.0 printStringFractionDigits: x log truncated negated) , '%']! !
-
-!LogAttenuator methodsFor: 'processing' stamp: 'len 26/Apr/2026 23:28:42'!
-tick
-	value = 0.0 ifFalse: [self send: value * (self get: #amount). value := 0.0]! !
-
-!LogAttenuator methodsFor: 'ui' stamp: 'len 23/Apr/2026 17:35:15'!
-panel
-	^​ ControlPanel new addSmallKnob: (controls at: #amount)! !
-
-!LogAttenuator methodsFor: 'ui' stamp: 'len 26/Apr/2026 23:23:10'!
-patchable
-	| answer |
-	answer := PatchableMorph new model: self.
-	answer body addMorph: self panel.
-	answer
-		addControlInput: #input: label: 'In';
-		addControlInput: #amount;
-		addControlOutput.
-	^ answer! !
-
 !MoogLPF methodsFor: 'controlling' stamp: 'len 22/Sep/2025 19:52:00'!
 reset
 	y0 := y1 := y2 := y3 := y4 := 0.0! !
@@ -9087,11 +9122,11 @@ initialize
 	super initialize.
 	self reset! !
 
-!MoogLPF methodsFor: 'initialization' stamp: 'len 3/Feb/2026 17:26:18'!
+!MoogLPF methodsFor: 'initialization' stamp: 'len 30/May/2026 02:14:04'!
 initializeControls
 	super initializeControls.
 	self addFrequencyControl: #frequency value: 1000.0.
-	(self addControl: #resonance min: 0.0 max: 1.0 value: 0.1) printer: [:x| (x * 100.0) truncated printString, '%']! !
+	self addAmountControl: #resonance value: 0.1! !
 
 !MoogLPF methodsFor: 'processing' stamp: 'len 11/May/2026 17:01:48'!
 tick
@@ -9991,11 +10026,11 @@ initialize
 	super initialize.
 	self reset! !
 
-!MoogLadder methodsFor: 'initialization' stamp: 'len 3/Feb/2026 17:26:23'!
+!MoogLadder methodsFor: 'initialization' stamp: 'len 30/May/2026 02:14:19'!
 initializeControls
 	super initializeControls.
 	self addFrequencyControl: #frequency value: 1000.0.
-	(self addControl: #resonance min: 0.0 max: 1.0 value: 0.1) printer: [:x| (x * 100.0) truncated printString, '%']! !
+	self addAmountControl: #resonance value: 0.1! !
 
 !MoogLadder methodsFor: 'processing' stamp: 'len 11/May/2026 17:01:48'!
 tick
@@ -10096,11 +10131,11 @@ initialize
 	super initialize.
 	self reset! !
 
-!OberheimSVF methodsFor: 'initialization' stamp: 'len 3/Feb/2026 17:26:33'!
+!OberheimSVF methodsFor: 'initialization' stamp: 'len 30/May/2026 02:15:00'!
 initializeControls
 	super initializeControls.
 	self addFrequencyControl: #frequency value: 1000.0.
-	(self addControl: #resonance min: 0.0 max: 1.0 value: 0.0) printer: [:x| (x * 100.0) truncated printString, '%']! !
+	self addAmountControl: #resonance value: 0.0! !
 
 !OberheimSVF methodsFor: 'processing' stamp: 'len 2/Feb/2026 16:17:27'!
 tick
@@ -14204,43 +14239,6 @@ mouseScroll: anEvent localPosition: localEventPosition
 	self adjustModulationDepthBy: ((anEvent direction = #up or: [anEvent direction = #right]) ifTrue: [step negated] ifFalse: [step]).
 	self showBalloon: self balloonText! !
 
-!Bus methodsFor: 'accessing' stamp: 'len 5/Mar/2026 14:43:08'!
-leftBuffer
-	^ leftBuffer! !
-
-!Bus methodsFor: 'accessing' stamp: 'len 5/Mar/2026 14:43:14'!
-rightBuffer
-	^ rightBuffer! !
-
-!Bus methodsFor: 'initialization' stamp: 'len 5/Mar/2026 14:43:59'!
-initialize
-	super initialize.
-	leftBuffer := Float32Array new: Module blockSize.
-	rightBuffer := Float32Array new: Module blockSize! !
-
-!Bus methodsFor: 'mixing' stamp: 'len 5/Mar/2026 14:46:42'!
-clear
-	leftBuffer atAllPut: 0.0.
-	rightBuffer atAllPut: 0.0! !
-
-!Bus methodsFor: 'mixing' stamp: 'len 5/Mar/2026 14:42:44'!
-mixInto: anAudioBuffer startingAt: startIndex
-	| j x s |
-	j := 2 * startIndex - 1.
-	1 to: leftBuffer size do: [:i|
-		(x := leftBuffer at: i) = 0.0 ifFalse:
-			[s := (anAudioBuffer at: j) + (x * 32767.0) asInteger.
-			s > 32767 ifTrue: [s := 32767].  "clipping!!"
-			s < -32767 ifTrue: [s := -32767].  "clipping!!"
-			anAudioBuffer at: j put: s].	
-		j := j + 1.
-		(x := rightBuffer at: i) = 0.0 ifFalse:
-			[s := (anAudioBuffer at: j) + (x * 32767.0) asInteger.
-			s > 32767 ifTrue: [s := 32767].  "clipping!!"
-			s < -32767 ifTrue: [s := -32767].  "clipping!!"
-			anAudioBuffer at: j put: s].	
-		j := j + 1]! !
-
 !AllpassComb methodsFor: 'accessing' stamp: 'len 5/Mar/2026 22:17:13'!
 feedback: aNumber
 	feedback := aNumber! !
@@ -15541,6 +15539,43 @@ readWaveChunk: chunkType
 
 	^ stream next: count  "return raw chunk data"
 ! !
+
+!Bus methodsFor: 'accessing' stamp: 'len 5/Mar/2026 14:43:08'!
+leftBuffer
+	^ leftBuffer! !
+
+!Bus methodsFor: 'accessing' stamp: 'len 5/Mar/2026 14:43:14'!
+rightBuffer
+	^ rightBuffer! !
+
+!Bus methodsFor: 'initialization' stamp: 'len 5/Mar/2026 14:43:59'!
+initialize
+	super initialize.
+	leftBuffer := Float32Array new: Module blockSize.
+	rightBuffer := Float32Array new: Module blockSize! !
+
+!Bus methodsFor: 'mixing' stamp: 'len 5/Mar/2026 14:46:42'!
+clear
+	leftBuffer atAllPut: 0.0.
+	rightBuffer atAllPut: 0.0! !
+
+!Bus methodsFor: 'mixing' stamp: 'len 5/Mar/2026 14:42:44'!
+mixInto: anAudioBuffer startingAt: startIndex
+	| j x s |
+	j := 2 * startIndex - 1.
+	1 to: leftBuffer size do: [:i|
+		(x := leftBuffer at: i) = 0.0 ifFalse:
+			[s := (anAudioBuffer at: j) + (x * 32767.0) asInteger.
+			s > 32767 ifTrue: [s := 32767].  "clipping!!"
+			s < -32767 ifTrue: [s := -32767].  "clipping!!"
+			anAudioBuffer at: j put: s].	
+		j := j + 1.
+		(x := rightBuffer at: i) = 0.0 ifFalse:
+			[s := (anAudioBuffer at: j) + (x * 32767.0) asInteger.
+			s > 32767 ifTrue: [s := 32767].  "clipping!!"
+			s < -32767 ifTrue: [s := -32767].  "clipping!!"
+			anAudioBuffer at: j put: s].	
+		j := j + 1]! !
 
 !SequenceableCollection methodsFor: '*signals' stamp: 'len 2/Oct/2025 21:40:00'!
 plot

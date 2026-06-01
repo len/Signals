@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 1 June 2026 at 4:35:27 am'!
+'From Cuis7.7 [latest update: #7880] on 2 June 2026 at 2:59:28 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 575!
+!provides: 'Signals' 1 576!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -604,9 +604,19 @@ Transform subclass: #Comb
 Comb class
 	instanceVariableNames: ''!
 
+!classDefinition: #Diffuser category: #'Signals-FX'!
+Transform subclass: #Diffuser
+	instanceVariableNames: 'allpasses'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-FX'!
+!classDefinition: 'Diffuser class' category: #'Signals-FX'!
+Diffuser class
+	instanceVariableNames: ''!
+
 !classDefinition: #Echo category: #'Signals-FX'!
 Transform subclass: #Echo
-	instanceVariableNames: 'send return lastOutput delayLine tap lpf hpf feedback wet dry'
+	instanceVariableNames: 'send return lastOutput delayLine tap tap2 tap3 level2 level3 lpf hpf feedback predrive postdrive wet dry'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-FX'!
@@ -652,16 +662,6 @@ Transform subclass: #Reverb
 	category: 'Signals-FX'!
 !classDefinition: 'Reverb class' category: #'Signals-FX'!
 Reverb class
-	instanceVariableNames: ''!
-
-!classDefinition: #TapeEcho category: #'Signals-FX'!
-Transform subclass: #TapeEcho
-	instanceVariableNames: 'send return delayLine tap1 tap2 tap3 lastOutput level1 level2 level3 feedback wet dry lpf hpf lsf hsf'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-FX'!
-!classDefinition: 'TapeEcho class' category: #'Signals-FX'!
-TapeEcho class
 	instanceVariableNames: ''!
 
 !classDefinition: #Vibrato category: #'Signals-FX'!
@@ -2099,7 +2099,9 @@ A feed-forward peak limiter with fast attack, adjustable release, and smoothed g
 Prevents signal peaks from exceeding a fixed ceiling without altering level below threshold.!
 
 !Echo commentStamp: '<historical>' prior: 0!
-This is a delay with feedback. By default it uses internal feedback, unless the optional 'send' output and 'return' input are connected. The optional send/return connections can be used for insert effects in the feedback loop, but they introduce a delay of 1 block.!
+This is a generic delay with feedback, 3 playheads, and send/return connections for insert effects.
+
+The delay time specifies the position of the main playhead, while the other two playheads are placed at ratios of 1/2 and 3/4. Only the main playhead is sent to feedback. If the send and return signals are connected, the feedback loop goes through the connections applying additional processing, introducing additional delay of 1 block in the feedback loop.!
 
 !Flanger commentStamp: 'len 25/Mar/2026 21:09:44' prior: 0!
 This is a classic flanger effect. It mixes the original signal with a copy delayed by a very short time (~ 1 ms). An internal LFO modulates the delay time, creating sweeping comb filtering, which is also enhanced with feedback.!
@@ -2114,9 +2116,6 @@ Pitch-shifting is achieved by modulating a delay: the write pointer always advan
 
 !Reverb commentStamp: '<historical>' prior: 0!
 This is a reverb effect based on Freeverb. It consists of 8 damped combs (lowpass feedback comb filters) in parallel followed by 4 Schroeder allpasses in series.!
-
-!TapeEcho commentStamp: 'len 1/Jun/2026 04:35:20' prior: 0!
-This is a 3-tap tape echo effect with feedback inspired by the Roland RE-201 Space Echo and other tape delays. It has optional send/return connections that can be used for insert effects in the feedback loop, but they introduce a delay of 1 block.!
 
 !Vibrato commentStamp: '<historical>' prior: 0!
 The vibrato effect is produced by passing the original signal through a delay line. An internal LFO modulates the delay time, creating periodic pitch variations (Doppler effect).!
@@ -5632,7 +5631,7 @@ mixTailInto: aBuffer
 					^ self]]].
 	tailPosition := nil! !
 
-!Sample methodsFor: 'processing' stamp: 'len 14/May/2026 15:53:10'!
+!Sample methodsFor: 'processing' stamp: 'len 1/Jun/2026 18:39:13'!
 read: aBuffer
 	| end |
 	position ifNil: [aBuffer atAllPut: 0.0. ^ self].
@@ -7220,6 +7219,39 @@ panel
 		addKnob: (controls at: #feedback) label: 'FB';
 		addKnob: (controls at: #damping) label: 'Damp'! !
 
+!Diffuser methodsFor: 'as yet unclassified' stamp: 'len 1/Jun/2026 18:13:05'!
+initialize
+	super initialize.
+	allpasses := #(556 441 341 225 "191 163 137 97") collect: [:each| AllpassComb new: (each * self class sampleRate / 44100.0) truncated]! !
+
+!Diffuser methodsFor: 'as yet unclassified' stamp: 'len 1/Jun/2026 17:16:51'!
+initializeControls
+	super initializeControls.
+	self addAmountControl: #feedback min: 0.0 max: 0.999 value: 0.5! !
+
+!Diffuser methodsFor: 'as yet unclassified' stamp: 'len 1/Jun/2026 17:16:18'!
+panel
+	^​ ControlPanel new
+		addKnob: (controls at: #feedback) label: 'FB'! !
+
+!Diffuser methodsFor: 'as yet unclassified' stamp: 'len 1/Jun/2026 17:11:53'!
+reset
+	allpasses do: [:each| each reset]! !
+
+!Diffuser methodsFor: 'as yet unclassified' stamp: 'len 1/Jun/2026 18:00:36'!
+update
+	| feedback |
+	super update.
+	feedback := self get: #feedback.
+	allpasses do: [:each| each feedback: feedback]! !
+
+!Diffuser methodsFor: 'as yet unclassified' stamp: 'len 1/Jun/2026 18:04:59'!
+value: in
+	| out |
+	out := in.
+	allpasses do: [:each| out := each value: out].
+	^ out / allpasses size! !
+
 !Echo methodsFor: 'controlling' stamp: 'len 30/May/2026 17:19:21'!
 reset
 	delayLine reset.
@@ -7228,31 +7260,48 @@ reset
 	hpf reset.
 	lastOutput := 0.0! !
 
-!Echo methodsFor: 'controlling' stamp: 'len 30/May/2026 17:19:04'!
+!Echo methodsFor: 'controlling' stamp: 'len 2/Jun/2026 02:21:27'!
 update
+	| delay delay2 delay3 thirtyMsecs |
 	super update.
-	tap setDelayIncrement: (self get: #time) * self class sampleRate - tap delay / (self class sampleRate * 0.03) "slide over 30 ms".
+	"set the delay times in musically useful ratios:"
+	delay := (self get: #time) * self class sampleRate.
+	delay2 := delay * 0.5. "1/2"
+	delay3 := delay * 0.75. "3/4"
+	thirtyMsecs := self class sampleRate * 0.03. "slide over 30 ms"
+	tap setDelayIncrement: delay - tap delay / thirtyMsecs.
+	tap2 setDelayIncrement: delay2 - tap2 delay / thirtyMsecs.
+	tap3 setDelayIncrement: delay3 - tap3 delay / thirtyMsecs.
+	level2 := self get: #'1/2'.
+	level3 := self get: #'3/4'.
 	feedback := self get: #feedback.
+	predrive := self get: #drive.
+	postdrive := 1.0 / predrive softclip.
 	wet := self get: #mix.
 	dry := 1.0 - wet.
 	lpf snapToZero; frequency: (self get: #damp) / self class sampleRate.
 	hpf snapToZero! !
 
-!Echo methodsFor: 'initialization' stamp: 'len 30/May/2026 17:19:45'!
+!Echo methodsFor: 'initialization' stamp: 'len 1/Jun/2026 20:44:32'!
 initialize
 	super initialize.
 	delayLine := DelayLine new: self class sampleRate + 2. "max 1 s"
 	tap := DelayTapC on: delayLine.
+	tap2 := DelayTapC on: delayLine.
+	tap3 := DelayTapC on: delayLine.
 	lpf := OnePole new.
-	hpf := OnePole new frequency: 100.0 / self class sampleRate.  "fixed at 100 Hz"
+	hpf := OnePole new frequency: 80.0 / self class sampleRate.  "fixed at 80 Hz"
 	self reset! !
 
-!Echo methodsFor: 'initialization' stamp: 'len 30/May/2026 17:22:00'!
+!Echo methodsFor: 'initialization' stamp: 'len 2/Jun/2026 00:53:48'!
 initializeControls
 	super initializeControls.
 	self addTimeControl: #time min: 0.001 "1 ms" max: 1.0 "1 s" value: 0.5 "500 ms".
 	self addAmountControl: #feedback value: 0.0.
-	self addFrequencyControl: #damp min: 500.0 "Hz" max: 20000.0 "Hz" value: 10000.0 "Hz".
+	self addFrequencyControl: #damp min: 500.0 "Hz" max: 20000.0 "Hz" value: 8000.0 "Hz".
+	self addGainControl: #'3/4' min: 0.01 "-40 dB" max: 1.0 "0 dB" value: 0.01.
+	self addGainControl: #'1/2' min: 0.01 "-40 dB" max: 1.0 "0 dB" value: 0.01.
+	self addGainControl: #drive min: 1.0 max: 8.0 value: 1.0.
 	self addDryWetControl: #mix value: 0.5! !
 
 !Echo methodsFor: 'processing' stamp: 'len 30/May/2026 21:05:05'!
@@ -7267,24 +7316,39 @@ tick
 		output at: i put: (self value: (input at: i)).
 		send ifNotNil: [send at: i put: lastOutput]]! !
 
-!Echo methodsFor: 'processing' stamp: 'len 30/May/2026 19:59:32'!
+!Echo methodsFor: 'processing' stamp: 'len 2/Jun/2026 02:41:17'!
 value: in
+	| out |
+	lastOutput := lastOutput - (hpf value: lastOutput).
 	lastOutput := lpf value: lastOutput.
-	lastOutput := (lastOutput - (hpf value: lastOutput)) snapToZero.
-	delayLine write: in + (lastOutput * feedback).
-	^ (lastOutput := tap read) * wet + (in * dry)! !
+	predrive = 1.0 ifFalse: [lastOutput := (​lastOutput * predrive) softclip * postdrive].
+	delayLine write: lastOutput * feedback + in.
+	out := lastOutput := tap read. "only the main playhead is sent to feedback"
+	level2 > 0.01 ifTrue: [out := tap2 read * level2 + out].
+	level3 > 0.01 ifTrue: [out := tap3 read * level3 + out].
+	^ in * dry + (out * wet)! !
 
-!Echo methodsFor: 'ui' stamp: 'len 30/May/2026 17:20:53'!
+!Echo methodsFor: 'ui' stamp: 'len 1/Jun/2026 20:34:28'!
 panel
 	^​ ControlPanel new
 		addKnob: (controls at: #time) label: 'Time';
 		addKnob: (controls at: #feedback) label: 'FB';
-		addKnob: (controls at: #damp) label: 'Damp';
-		addKnob: (controls at: #mix) label: 'Mix'! !
+		addSmallVerticalSlider: (controls at: #'1/2') label: '¹/₂';
+		addSmallVerticalSlider: (controls at: #'3/4') label: '³/₄'! !
 
-!Echo methodsFor: 'ui' stamp: 'len 30/May/2026 21:05:19'!
+!Echo methodsFor: 'ui' stamp: 'len 1/Jun/2026 20:34:19'!
+panel2
+	^ ControlPanel new
+		addSmallKnob: (controls at: #damp) label: 'Damp';
+		addSmallKnob: (controls at: #drive) label: 'Drive';
+		addSmallKnob: (controls at: #mix) label: 'Mix'! !
+
+!Echo methodsFor: 'ui' stamp: 'len 1/Jun/2026 20:34:50'!
 patchable
-	^ super patchable
+	| answer |
+	answer := super patchable.
+	answer flap addMorph: self panel2.
+	^ answer
 		addAudioInput: #setReturn: label: 'Return';
 		addAudioOutput: #setSend: label: 'Send';
 		addControlInput: #time;
@@ -7591,126 +7655,6 @@ panel
 		addKnob: (controls at: #feedback) label: 'FB';
 		addKnob: (controls at: #damp) label: 'Damp';
 		addKnob: (controls at: #mix) label: 'Mix'! !
-
-!TapeEcho methodsFor: 'controlling' stamp: 'len 1/Jun/2026 03:52:54'!
-reset
-	delayLine reset.
-	tap1 reset.
-	tap2 reset.
-	tap3 reset.
-	lpf reset.
-	hpf reset.
-	lsf reset.
-	hsf reset.
-	lastOutput := 0.0! !
-
-!TapeEcho methodsFor: 'controlling' stamp: 'len 30/May/2026 15:44:37'!
-update
-	| delay1 delay2 delay3 thirtyMsecs |
-	super update.
-	thirtyMsecs := self class sampleRate * 0.03.
-	delay1 := (self get: #time) * self class sampleRate.
-	delay2 := delay1 / 2.0.
-	delay3 := delay1 / 3.0.
-	tap1 setDelayIncrement: delay1 - tap1 delay / thirtyMsecs. "slide over 30 ms"
-	tap2 setDelayIncrement: delay2 - tap2 delay / thirtyMsecs.
-	tap3 setDelayIncrement: delay3 - tap3 delay / thirtyMsecs.
-	level1 := self get: #'1'.
-	level2 := self get: #'2'.
-	level3 := self get: #'3'.
-	feedback := self get: #feedback.
-	wet := self get: #mix.
-	dry := 1.0 - wet.
-	lpf snapToZero.
-	hpf snapToZero.
-	lsf snapToZero; ls: 120.0 / self class sampleRate Q: 0.707 gain: (self get: #bass). "120 Hz"
-	hsf snapToZero; hs: 4000.0 / self class sampleRate Q: 0.707 gain: (self get: #treble) "4 kHz"! !
-
-!TapeEcho methodsFor: 'initialization' stamp: 'len 1/Jun/2026 03:52:45'!
-initialize
-	super initialize.
-	delayLine := DelayLine new: (self class sampleRate * 2) ceiling + 2. "max 2 s"
-	tap1 := DelayTapC on: delayLine.
-	tap2 := DelayTapC on: delayLine.
-	tap3 := DelayTapC on: delayLine.
-	lpf := OnePole new frequency: 8000.0 / self class sampleRate. "8 kHz"
-	hpf := OnePole new frequency: 40.0 / self class sampleRate. "40 Hz"
-	lsf := Biquad new.
-	hsf := Biquad new.
-	self reset! !
-
-!TapeEcho methodsFor: 'initialization' stamp: 'len 1/Jun/2026 03:52:22'!
-initializeControls
-	super initializeControls.
-	self addTimeControl: #time min: 0.240 "240 ms" max: 2.0 "2 s" value: 0.5 "500 ms".
-	self addAmountControl: #feedback value: 0.0.
-	self addGainControl: #'1' value: 1.0.
-	self addGainControl: #'2' value: 0.001.
-	self addGainControl: #'3' value: 0.001.
-	self addGainControl: #bass min: 0.4 "-8 dB" max: 2.5 "8 dB" value: 1.0 "0 dB".
-	self addGainControl: #treble min: 0.4 "-8 dB" max: 2.5 "8 dB" value: 1.0 "0 dB".
-	self addDryWetControl: #mix value: 0.5! !
-
-!TapeEcho methodsFor: 'processing' stamp: 'len 1/Jun/2026 03:56:08'!
-tick
-	(send isNil and: [return isNil]) ifTrue: [^ super tick].
-	output ifNil: [^ self].
-	input ifNil: [1 to: output size do: [:i| output at: i put: (self value: 0.0)]. ^ self].
-	1 to: input size do: [:i|
-		| in |
-		in := input at: i.
-		return ifNotNil: [lastOutput := return at: i].
-		output at: i put: (self value: (input at: i)).
-		send ifNotNil: [send at: i put: lastOutput]]! !
-
-!TapeEcho methodsFor: 'processing' stamp: 'len 1/Jun/2026 04:28:06'!
-value: in
-	| echos x |
-	x := ((lastOutput * feedback + in) * 1.1) tanh. "saturation"
-	x := lpf value: x - (hpf value: x). "lpf and hpf one-poles for bandwidth loss when writing to the tape"
-	delayLine write: x.
-	echos := 0.0.
-	level1 > 0.001 ifTrue: [echos := tap1 read * level1 + echos].
-	level2 > 0.001 ifTrue: [echos := tap2 read * level2 + echos].
-	level3 > 0.001 ifTrue: [echos := tap3 read * level3 + echos].
-	lastOutput := echos := hsf value: (lsf value: echos). "bass and treble shelves for the echos"
-	^ in * dry + (echos * wet)! !
-
-!TapeEcho methodsFor: 'ui' stamp: 'len 3/Mar/2026 16:39:40'!
-panel
-	^ ControlPanel new
-		addKnob: (controls at: #time) label: 'Time';
-		addKnob: (controls at: #feedback) label: 'FB';
-		addSmallVerticalSlider: (controls at: #'1') label: '1';
-		addSmallVerticalSlider: (controls at: #'2') label: '2';
-		addSmallVerticalSlider: (controls at: #'3') label: '3'! !
-
-!TapeEcho methodsFor: 'ui' stamp: 'len 3/Mar/2026 16:38:10'!
-panel2
-	^ ControlPanel new
-		addSmallKnob: (controls at: #bass) label: 'Bass';
-		addSmallKnob: (controls at: #treble) label: 'Treble';
-		addSmallKnob: (controls at: #mix) label: 'Mix'! !
-
-!TapeEcho methodsFor: 'ui' stamp: 'len 1/Jun/2026 03:49:57'!
-patchable
-	| answer |
-	answer := super patchable.
-	answer flap addMorph: self panel2.
-	^ answer
-		addAudioInput: #setReturn: label: 'Return';
-		addAudioOutput: #setSend: label: 'Send';
-		addControlInput: #time;
-		addControlInput: #feedback;
-		yourself! !
-
-!TapeEcho methodsFor: 'wiring' stamp: 'len 1/Jun/2026 03:47:50'!
-setReturn: aBuffer
-	return := aBuffer! !
-
-!TapeEcho methodsFor: 'wiring' stamp: 'len 1/Jun/2026 03:47:43'!
-setSend: aBuffer
-	send := aBuffer! !
 
 !Vibrato methodsFor: 'controlling' stamp: 'len 27/Mar/2026 16:37:48'!
 reset
@@ -15708,6 +15652,10 @@ rms
 softclip
 	1 to: self size do: [:i| self at: i put: (self at: i) softclip]! !
 
+!Float32Array methodsFor: '*signals' stamp: 'len 2/Jun/2026 02:28:15'!
+tanhclip
+	1 to: self size do: [:i| self at: i put: (self at: i) tanh]! !
+
 !CharacterSequence methodsFor: '*signals' stamp: 'len 27/Jan/2026 14:36:17'!
 camelSeparatedWords
 	| r w ch |
@@ -15805,10 +15753,10 @@ ratioToCents
 ratioToSemitones
 	^ 12.0 * (self log: 2)! !
 
-!Number methodsFor: '*signals' stamp: 'len 28/Nov/2025 12:54:00'!
+!Number methodsFor: '*signals' stamp: 'len 1/Jun/2026 22:12:25'!
 secondsPrintString
 	self abs < 0.01 ifTrue: [^ (self * 1000.0 printStringFractionDigits: 1), ' ms'].
-	self abs < 1.0 ifTrue: [^ (self * 1000.0) asInteger printString, ' ms'].
+	self abs < 1.0 ifTrue: [^ (self * 1000.0) asInteger printString, ' ms / ', (self * 60.0 printStringFractionDigits: 1), ' rpm'].
 	^ (self printStringFractionDigits: 1), ' s'! !
 
 !Number methodsFor: '*signals' stamp: 'len 22/Apr/2026 21:17:12'!

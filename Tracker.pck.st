@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 11 May 2026 at 4:12:00 pm'!
+'From Cuis7.7 [latest update: #7880] on 2 June 2026 at 2:59:15 am'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 27!
+!provides: 'Tracker' 1 28!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!

@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 2 June 2026 at 2:59:28 am'!
+'From Cuis7.7 [latest update: #7880] on 2 June 2026 at 3:14:38 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 576!
+!provides: 'Signals' 1 577!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -5555,12 +5555,12 @@ rate: aNumber
 gateOff
 	released := true! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 15/Apr/2026 21:50:24'!
+!Sample methodsFor: 'controlling' stamp: 'len 2/Jun/2026 14:56:07'!
 gateOn
 	(self isUnreleased and: [self get: #legato]) ifTrue: [increment := nil. ^ self].
 	tailPosition := position.
 	position := (buffer size - 1) * offset + 1.0.
-	(self get: #speed) < 0.0 ifTrue: [position := buffer size - position + 1].
+"	(self get: #speed) < 0.0 ifTrue: [position := buffer size - position + 1]."
 	released := false! !
 
 !Sample methodsFor: 'controlling' stamp: 'len 25/Mar/2026 19:46:09'!
@@ -5580,7 +5580,7 @@ setOffset: aNumber
 setSpeed: aNumber
 	self set: #speed to: aNumber! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 14/May/2026 15:55:10'!
+!Sample methodsFor: 'controlling' stamp: 'len 2/Jun/2026 15:13:59'!
 update
 	| targetIncrement |
 	super update.
@@ -5631,7 +5631,7 @@ mixTailInto: aBuffer
 					^ self]]].
 	tailPosition := nil! !
 
-!Sample methodsFor: 'processing' stamp: 'len 1/Jun/2026 18:39:13'!
+!Sample methodsFor: 'processing' stamp: 'len 2/Jun/2026 15:13:41'!
 read: aBuffer
 	| end |
 	position ifNil: [aBuffer atAllPut: 0.0. ^ self].
@@ -5652,7 +5652,7 @@ read: aBuffer
 					^ self]]]
 		ifFalse: "backwards:"
 			[| loopStart |
-			loopStart := loopEnd - loopLength + 1.0.
+			loopStart := loopLength > 0 ifTrue: [loopEnd - loopLength + 1.0] ifFalse: [1.0].
 			1 to: aBuffer size do: [:i|
 				aBuffer at: i put: (buffer atLinear: position).
 				((position := position - (increment := increment + incrementDelta)) <= loopStart and: [released not]) ifTrue:

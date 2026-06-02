@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 2 June 2026 at 3:14:38 pm'!
+'From Cuis7.7 [latest update: #7880] on 2 June 2026 at 8:00:53 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 577!
+!provides: 'Signals' 1 578!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -542,6 +542,16 @@ Modulator subclass: #LFO
 	category: 'Signals-Modulation'!
 !classDefinition: 'LFO class' category: #'Signals-Modulation'!
 LFO class
+	instanceVariableNames: ''!
+
+!classDefinition: #Quantizer category: #'Signals-Modulation'!
+Modulator subclass: #Quantizer
+	instanceVariableNames: 'scale'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Modulation'!
+!classDefinition: 'Quantizer class' category: #'Signals-Modulation'!
+Quantizer class
 	instanceVariableNames: ''!
 
 !classDefinition: #VelocityTracker category: #'Signals-Modulation'!
@@ -2088,6 +2098,9 @@ The 'mode' control determines the behaviour on gate-on:
 	∙ Hold: hold the value at each gate-on (internally it is free-running).
 !
 
+!Quantizer commentStamp: '<historical>' prior: 0!
+A quantizer snaps a control signal to a musical scale.!
+
 !Wobble commentStamp: '<historical>' prior: 0!
 This module generates a control signal that emulates the wow and flutter of tape.!
 
@@ -3269,12 +3282,14 @@ tick
 				outputL at: i put: in + ((lpfL value: mid + side) * wet).
 				outputR at: i put: in + ((lpfR value: mid - side) * wet)]]! !
 
-!Chorus methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:12:39'!
+!Chorus methodsFor: 'ui' stamp: 'len 2/Jun/2026 15:43:05'!
 patchable
 	^ super patchable
 		addAudioInput: #setInput:;
 		addAudioOutput: #setOutputL: label: 'L/M';
 		addAudioOutput: #setOutputR: label: 'R';
+		addControlInput: #speed;
+		addControlInput: #depth;
 		yourself! !
 
 !Chorus methodsFor: 'wiring' stamp: 'len 26/Jan/2026 22:14:23'!
@@ -3389,12 +3404,14 @@ tick
 				outputL at: i put: in + ((lpfL value: outL * width + (outR * width2)) * wet).
 				outputR at: i put: in + ((lpfR value: outR * width + (outL * width2)) * wet)]]! !
 
-!Ensemble methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:12:47'!
+!Ensemble methodsFor: 'ui' stamp: 'len 2/Jun/2026 15:43:45'!
 patchable
 	^ super patchable
 		addAudioInput: #setInput:;
 		addAudioOutput: #setOutputL: label: 'L/M';
 		addAudioOutput: #setOutputR: label: 'R';
+		addControlInput: #speed;
+		addControlInput: #depth;
 		yourself! !
 
 !Ensemble methodsFor: 'wiring' stamp: 'len 26/Mar/2026 15:45:20'!
@@ -6344,56 +6361,56 @@ patchable
 setValues: anArray
 	values := anArray! !
 
-!Attenuator methodsFor: 'initialization' stamp: 'len 1/Jun/2026 00:51:57'!
+!Attenuator methodsFor: 'initialization' stamp: 'len 2/Jun/2026 16:59:17'!
 initializeControls
 	super initializeControls.
-	self addControl: #input min: -1.0 max: 1.0 value: 0.0.
+	self addControl: #in min: -1.0 max: 1.0 value: 0.0.
 	self addAmountControl: #amount value: 0.0! !
 
-!Attenuator methodsFor: 'processing' stamp: 'len 1/Jun/2026 00:52:57'!
+!Attenuator methodsFor: 'processing' stamp: 'len 2/Jun/2026 16:59:25'!
 tick
 	| value |
-	value := (controls at: #input) modulation.
+	value := (controls at: #in) modulation.
 	value = 0.0 ifFalse: [self send: value * (self get: #amount)]! !
 
 !Attenuator methodsFor: 'ui' stamp: 'len 23/Apr/2026 17:34:17'!
 panel
 	^​ ControlPanel new addSmallKnob: (controls at: #amount)! !
 
-!Attenuator methodsFor: 'ui' stamp: 'len 1/Jun/2026 00:53:09'!
+!Attenuator methodsFor: 'ui' stamp: 'len 2/Jun/2026 16:58:34'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
 	answer
-		addControlInput: #input label: 'In';
+		addControlInput: #in;
 		addControlInput: #amount;
 		addControlOutput.
 	^ answer! !
 
-!Attenuverter methodsFor: 'initialization' stamp: 'len 1/Jun/2026 00:57:18'!
+!Attenuverter methodsFor: 'initialization' stamp: 'len 2/Jun/2026 16:59:35'!
 initializeControls
 	super initializeControls.
-	self addControl: #input min: -1.0 max: 1.0 value: 0.0.
+	self addControl: #in min: -1.0 max: 1.0 value: 0.0.
 	self addBipolarAmountControl: #amount value: 0.0! !
 
-!Attenuverter methodsFor: 'processing' stamp: 'len 27/Apr/2026 22:20:32'!
+!Attenuverter methodsFor: 'processing' stamp: 'len 2/Jun/2026 16:59:29'!
 tick
 	| value |
-	value := (controls at: #input) modulation.
+	value := (controls at: #in) modulation.
 	value = 0.0 ifFalse: [self send: value * (self get: #amount)]! !
 
 !Attenuverter methodsFor: 'ui' stamp: 'len 23/Apr/2026 17:34:43'!
 panel
 	^​ ControlPanel new addSmallKnob: (controls at: #amount)! !
 
-!Attenuverter methodsFor: 'ui' stamp: 'len 27/Apr/2026 22:20:43'!
+!Attenuverter methodsFor: 'ui' stamp: 'len 2/Jun/2026 16:58:40'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
 	answer
-		addControlInput: #input label: 'In';
+		addControlInput: #in;
 		addControlInput: #amount;
 		addControlOutput.
 	^ answer! !
@@ -6988,6 +7005,60 @@ screen
 	self when: #output: send: #addSample: to: answer.
 	^ answer! !
 
+!Quantizer methodsFor: 'controlling' stamp: 'len 2/Jun/2026 18:18:08'!
+update
+	| selectedScale |
+	super update.
+	selectedScale := self get: #scale.
+	selectedScale = #Chromatic ifTrue: [scale := #(0 1 2 3 4 5 6 7 8 9 10 11). ^ self].
+	selectedScale = #Major ifTrue: [scale := #(0 2 4 5 7 9 11). ^ self].
+	selectedScale = #Minor ifTrue: [scale := #(0 2 3 5 7 8 10). ^ self].
+	selectedScale = #'Major Pentatonic' ifTrue: [scale := #(0 2 4 7 9). ^ self].
+	selectedScale = #'Minor Pentatonic' ifTrue: [scale := #(0 3 5 7 10). ^ self].
+	selectedScale = #Blues ifTrue: [scale := #(0 3 5 6 7 10). ^ self].
+	selectedScale = #'Whole Tone' ifTrue: [scale := #(0 2 4 6 8 10). ^ self].
+	selectedScale = #Diminished ifTrue: [scale := #(0 1 3 4 6 7 9 10). ^ self].
+	selectedScale = #Augmented ifTrue: [scale := #(0 3 4 7 8 11). ^ self].
+	selectedScale = #Dorian ifTrue: [scale := #(0 2 3 5 7 9 10). ^ self].
+	selectedScale = #Phrygian ifTrue: [scale := #(0 1 3 5 7 8 10). ^ self].
+	selectedScale = #Lydian ifTrue: [scale := #(0 2 4 6 7 9 11). ^ self].
+	selectedScale = #Mixolydian ifTrue: [scale := #(0 2 4 5 7 9 10). ^ self].
+	selectedScale = #Locrian ifTrue: [scale := #(0 1 3 5 6 8 10). ^ self].
+	selectedScale = #'Major Triad' ifTrue: [scale := #(0 4 7). ^ self].
+	selectedScale = #'Minor Triad' ifTrue: [scale := #(0 3 7). ^ self].
+	selectedScale = #Octave ifTrue: [scale := #(0). ^ self].
+	self error: 'unknown scale name'! !
+
+!Quantizer methodsFor: 'initialization' stamp: 'len 2/Jun/2026 18:17:53'!
+initializeControls
+	super initializeControls.
+	self addControl: #in min: -1.0 max: 1.0 value: 0.0.
+	self addChoiceControl: #scale options: #(Chromatic Major Minor #'Major Pentatonic' #'Minor Pentatonic' Blues #'Whole Tone' Diminished Augmented Dorian Phrygian Lydian Mixolydian Locrian #'Major Triad' #'Minor Triad' Octave) value: #Chromatic! !
+
+!Quantizer methodsFor: 'processing' stamp: 'len 2/Jun/2026 16:59:04'!
+tick
+	| value interval octave |
+	value := (controls at: #in) modulation.
+	value = 0.0 ifTrue: [^ self].
+	value := value * 48.0.
+	octave := value // 12.0.
+	interval := value \\ 12.0.
+	self send: 12 * octave + (scale detectMin: [:each| (each - interval) abs]) / 48.0! !
+
+!Quantizer methodsFor: 'ui' stamp: 'len 2/Jun/2026 16:57:10'!
+panel
+	^​ ControlPanel new addMorph: (ChoiceControlMorph new control: (controls at: #scale))! !
+
+!Quantizer methodsFor: 'ui' stamp: 'len 2/Jun/2026 16:58:45'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self panel.
+	answer
+		addControlInput: #in;
+		addControlOutput.
+	^ answer! !
+
 !VelocityTracker methodsFor: 'controlling' stamp: 'len 7/Mar/2026 18:51:28'!
 adjustVelocityBy: aNumber
 	velocity := velocity + aNumber min: 1.0 max: 0.0! !
@@ -7427,7 +7498,7 @@ panel
 		addSmallKnob: (controls at: #tone) label: 'Tone';
 		addSmallKnob: (controls at: #mix) label: 'Mix'! !
 
-!Flanger methodsFor: 'ui' stamp: 'len 30/Apr/2026 16:28:41'!
+!Flanger methodsFor: 'ui' stamp: 'len 2/Jun/2026 15:40:47'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -7435,7 +7506,9 @@ patchable
 	answer flap addMorph: self panel.
 	answer
 		addAudioInput: #setInput:;
-		addAudioOutput: #setOutput:.
+		addAudioOutput: #setOutput:;
+		addControlInput: #depth;
+		addControlInput: #feedback.
 	^ answer! !
 
 !Flanger methodsFor: 'ui' stamp: 'len 12/May/2026 15:19:36'!
@@ -7502,7 +7575,7 @@ panel
 		addSmallKnob: (controls at: #feedback) label: 'FB';
 		addSmallKnob: (controls at: #mix) label: 'Mix'! !
 
-!Phaser methodsFor: 'ui' stamp: 'len 30/Apr/2026 16:26:40'!
+!Phaser methodsFor: 'ui' stamp: 'len 2/Jun/2026 15:39:56'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -7510,7 +7583,9 @@ patchable
 	answer flap addMorph: self panel.
 	answer
 		addAudioInput: #setInput:;
-		addAudioOutput: #setOutput:.
+		addAudioOutput: #setOutput:;
+		addControlInput: #depth;
+		addControlInput: #feedback.
 	^ answer! !
 
 !Phaser methodsFor: 'ui' stamp: 'len 12/May/2026 15:19:36'!
@@ -7704,7 +7779,7 @@ panel
 		addTextualControl: (controls at: #speed);
 		addTextualControl: (controls at: #depth)! !
 
-!Vibrato methodsFor: 'ui' stamp: 'len 30/Apr/2026 16:32:09'!
+!Vibrato methodsFor: 'ui' stamp: 'len 2/Jun/2026 15:41:56'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -7712,7 +7787,9 @@ patchable
 	answer flap addMorph: self panel.
 	answer
 		addAudioInput: #setInput:;
-		addAudioOutput: #setOutput:.
+		addAudioOutput: #setOutput:;
+		addControlInput: #speed;
+		addControlInput: #depth.
 	^ answer! !
 
 !Vibrato methodsFor: 'ui' stamp: 'len 12/May/2026 15:19:36'!
@@ -15702,9 +15779,9 @@ decibelsPrintString
 decibelsToLinear
 	^ 10.0 raisedTo: self / 20.0! !
 
-!Number methodsFor: '*signals' stamp: 'len 28/Nov/2025 12:51:00'!
+!Number methodsFor: '*signals' stamp: 'len 2/Jun/2026 15:16:58'!
 hertzPrintString
-	self < 5.0 ifTrue: [^ (self printStringFractionDigits: 2), ' Hz'].
+	self < 5.0 ifTrue: [^ (self printStringFractionDigits: 2), ' Hz / ', (60 / self printStringFractionDigits: 1), ' rpm'].
 	self < 100.0 ifTrue: [^ (self printStringFractionDigits: 1), ' Hz'].
 	self < 1000.0 ifTrue: [^ self asInteger printString, ' Hz'].
 	^ ((self / 1000.0) printStringFractionDigits: 1), ' kHz'! !

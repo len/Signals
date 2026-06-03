@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 3 June 2026 at 5:09:06 pm'!
+'From Cuis7.7 [latest update: #7880] on 3 June 2026 at 7:16:42 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 579!
+!provides: 'Signals' 1 580!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -26,7 +26,7 @@ SystemOrganization addCategory: #'Signals-Trash'!
 
 !classDefinition: #Control category: #'Signals-Kernel'!
 ActiveModel subclass: #Control
-	instanceVariableNames: 'min max curve coarseStep fineStep base modulation lastValue printer default label'
+	instanceVariableNames: 'base modulation lastValue min max curve coarseStep fineStep printer default label'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Kernel'!
@@ -1826,7 +1826,7 @@ Bus class
 
 
 !Control commentStamp: '<historical>' prior: 0!
-A control is a an abstraction of a knob or slider that changes a parameter that can vary continuously within a range. Controls can have different curves, e.g. linear (like a control to smoothly morph the wave shape of an oscillator) or logarithmic (like a volume or pitch knob).
+A control is a an abstraction that models a knob or slider that can vary a parameter continuously within a range. Controls can use different curves, e.g. linear (like a control to smoothly morph the wave shape of an oscillator) or logarithmic (like a volume or pitch knob).
 
 Controls have a 'base value' typically set by the user in the UI, and a 'modulated value' that depends on external modulations (for example modulation from an LFO or an envelope, simulating the action of a hand moving the knob).!
 
@@ -3510,13 +3510,15 @@ panel
 		addKnob: (controls at: #width) label: 'Width';
 		addKnob: (controls at: #mix) label: 'Mix'! !
 
-!StereoReverb methodsFor: 'ui' stamp: 'len 12/Apr/2026 18:13:13'!
+!StereoReverb methodsFor: 'ui' stamp: 'len 3/Jun/2026 18:12:03'!
 patchable
 	^ super patchable
 		addAudioInput: #setInputL: label: 'L/M';
 		addAudioInput: #setInputR: label: 'R';
 		addAudioOutput: #setOutputL: label: 'L/M';
 		addAudioOutput: #setOutputR: label: 'R';
+		addControlInput: #feedback;
+		addControlInput: #damp;
 		yourself! !
 
 !StereoReverb methodsFor: 'wiring' stamp: 'len 7/Mar/2026 16:14:28'!
@@ -7837,6 +7839,14 @@ panel
 		addKnob: (controls at: #feedback) label: 'FB';
 		addKnob: (controls at: #damp) label: 'Damp';
 		addKnob: (controls at: #mix) label: 'Mix'! !
+
+!Reverb methodsFor: 'ui' stamp: 'len 3/Jun/2026 18:10:51'!
+patchable
+	^ super patchable
+		addControlInput: #feedback;
+		addControlInput: #damp;
+		addControlInput: #mix;
+		yourself! !
 
 !Vibrato methodsFor: 'controlling' stamp: 'len 27/Mar/2026 16:37:48'!
 reset

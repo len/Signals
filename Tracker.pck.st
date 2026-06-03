@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 2 June 2026 at 2:59:15 am'!
+'From Cuis7.7 [latest update: #7880] on 3 June 2026 at 7:16:46 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 28!
+!provides: 'Tracker' 1 29!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -539,8 +539,9 @@ fitAllPatchesToInstrumentEditorBounds
 	bounds := instrumentEditor localBounds insetBy: 8.
 	model instruments do: [:each| each patch fitTo: bounds]! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 9/Apr/2026 15:35:47'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 3/Jun/2026 19:00:30'!
 openProject
+	model isPlaying ifTrue: [model stop].
 	self request: 'Project name' initialAnswer: '' do: [:name|
 		(self class package packageDirectory / 'data' / 'projects' // (name, '.song')) readStreamDo: [:s| model readFrom: s binary].
 		model label: name.
@@ -1724,7 +1725,7 @@ playTrigger
 	trigger isNoteOn ifTrue: [self noteOn: trigger note glide: trigger glide] ifFalse: [trigger isNoteOff ifTrue: [self noteOff]].
 	trigger := nil! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 28/Mar/2026 21:31:10'!
+!Instrument methodsFor: 'playing' stamp: 'len 3/Jun/2026 18:44:54'!
 recomputeModules
 	| currentModules buses |
 	currentModules := patch modules.
@@ -1733,8 +1734,8 @@ recomputeModules
 	velocityReceivers := currentModules select: [:any| any respondsTo: #setVelocity:].
 	gateReceivers := currentModules select: [:any| any respondsTo: #gateOn].
 	samples := currentModules select: [:each| (each isMemberOf: Sample) or: [each isMemberOf: Multisample]].
-	buses := track tracker buses.
 	audioOutput := nil.
+	buses := track tracker buses.
 	currentModules do: [:each|
 		(each isMemberOf: ControlIn)
 			ifTrue: [each setValues: controlValues]
@@ -1747,11 +1748,9 @@ recomputeModules
 							each port = 0 ifTrue: [audioOutput := each]]]]].
 	^ currentModules! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 3/Apr/2026 16:51:33'!
+!Instrument methodsFor: 'playing' stamp: 'len 3/Jun/2026 18:45:14'!
 reset
-	| currentModules |
-	currentModules := modules ifNil: [self recomputeModules].
-	currentModules do: [:each| each reset]! !
+	(modules ifNil: [^ self]) do: [:each| each reset]! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 6/Jan/2026 16:00:00'!
 scheduleRecompute
@@ -2397,7 +2396,7 @@ isPlaying
 loop: aBoolean
 	loop := aBoolean! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 18/Apr/2026 17:47:14'!
+!Tracker methodsFor: 'playing' stamp: 'len 3/Jun/2026 18:58:40'!
 play
 	self isPlaying ifTrue: [^ self].
 	playStartPattern := 1.
@@ -2409,6 +2408,8 @@ play
 	playheadLine := cursorLine - 1.
 	ticksToLine := 0.
 	buses keys do: [:each| each = 0 ifFalse: [buses removeKey: each]]. "remove all buses except the master"
+	"if playing from the begining, reset all modules (for reproducibility):"
+	(playheadPattern = 1 and: [playheadLine = 0]) ifTrue: [instruments do: [:each| each reset]].
 	Smalltalk garbageCollect. "just in case, to make a GC less likely during playback"
 	AudioPlayer startPlaying: self.
 	self triggerEvent: #playheadChanged.

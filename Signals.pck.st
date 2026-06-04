@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 3 June 2026 at 7:16:42 pm'!
+'From Cuis7.7 [latest update: #7880] on 4 June 2026 at 3:27:28 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 580!
+!provides: 'Signals' 1 581!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1412,6 +1412,16 @@ BoxMorph subclass: #PlotMorph
 	category: 'Signals-Morphic-Widgets'!
 !classDefinition: 'PlotMorph class' category: #'Signals-Morphic-Widgets'!
 PlotMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #QuantizerScaleMorph category: #'Signals-Morphic-Widgets'!
+BoxMorph subclass: #QuantizerScaleMorph
+	instanceVariableNames: 'selectedKeys playingNote'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Widgets'!
+!classDefinition: 'QuantizerScaleMorph class' category: #'Signals-Morphic-Widgets'!
+QuantizerScaleMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #RollingMeterMorph category: #'Signals-Morphic-Widgets'!
@@ -7082,30 +7092,36 @@ screen
 shapeOptions
 	^ #(Sine Triangle Square Rise Fall Random)! !
 
+!Quantizer methodsFor: 'accessing' stamp: 'len 3/Jun/2026 20:05:12'!
+intervals: anArray
+	intervals := anArray.
+	self triggerEvent: #intervalsChanged: with: intervals! !
+
 !Quantizer methodsFor: 'accessing' stamp: 'len 3/Jun/2026 16:14:51'!
 scale
 	^ scale! !
 
-!Quantizer methodsFor: 'accessing' stamp: 'len 3/Jun/2026 16:15:52'!
+!Quantizer methodsFor: 'accessing' stamp: 'len 3/Jun/2026 22:37:33'!
 scale: aSymbol
 	scale := aSymbol.
-	scale = #Chromatic ifTrue: [intervals := #(0 1 2 3 4 5 6 7 8 9 10 11). ^ self].
-	scale = #Major ifTrue: [intervals := #(0 2 4 5 7 9 11). ^ self].
-	scale = #Minor ifTrue: [intervals := #(0 2 3 5 7 8 10). ^ self].
-	scale = #'Major Pentatonic' ifTrue: [intervals := #(0 2 4 7 9). ^ self].
-	scale = #'Minor Pentatonic' ifTrue: [intervals := #(0 3 5 7 10). ^ self].
-	scale = #Blues ifTrue: [intervals := #(0 3 5 6 7 10). ^ self].
-	scale = #'Whole Tone' ifTrue: [intervals := #(0 2 4 6 8 10). ^ self].
-	scale = #Diminished ifTrue: [intervals := #(0 1 3 4 6 7 9 10). ^ self].
-	scale = #Augmented ifTrue: [intervals := #(0 3 4 7 8 11). ^ self].
-	scale = #Dorian ifTrue: [intervals := #(0 2 3 5 7 9 10). ^ self].
-	scale = #Phrygian ifTrue: [intervals := #(0 1 3 5 7 8 10). ^ self].
-	scale = #Lydian ifTrue: [intervals := #(0 2 4 6 7 9 11). ^ self].
-	scale = #Mixolydian ifTrue: [intervals := #(0 2 4 5 7 9 10). ^ self].
-	scale = #Locrian ifTrue: [intervals := #(0 1 3 5 6 8 10). ^ self].
-	scale = #'Major Triad' ifTrue: [intervals := #(0 4 7). ^ self].
-	scale = #'Minor Triad' ifTrue: [intervals := #(0 3 7). ^ self].
-	scale = #Octave ifTrue: [intervals := #(0). ^ self].
+	scale = #Chromatic ifTrue: [^ self intervals:​ #(0 1 2 3 4 5 6 7 8 9 10 11)].
+	scale = #Major ifTrue: [^ self intervals: #(0 2 4 5 7 9 11)].
+	scale = #Minor ifTrue: [^ self intervals: #(0 2 3 5 7 8 10)].
+	scale = #'Major Pentatonic' ifTrue: [^ self intervals: #(0 2 4 7 9)].
+	scale = #'Minor Pentatonic' ifTrue: [^ self intervals: #(0 3 5 7 10)].
+	scale = #Blues ifTrue: [^ self intervals: #(0 3 5 6 7 10)].
+	scale = #'Whole Tone' ifTrue: [^ self intervals: #(0 2 4 6 8 10)].
+	scale = #Diminished ifTrue: [^ self intervals: #(0 1 3 4 6 7 9 10)].
+	scale = #Augmented ifTrue: [^ self intervals: #(0 3 4 7 8 11)].
+	scale = #Dorian ifTrue: [^ self intervals: #(0 2 3 5 7 9 10)].
+	scale = #Phrygian ifTrue: [^ self intervals: #(0 1 3 5 7 8 10)].
+	scale = #Lydian ifTrue: [^ self intervals: #(0 2 4 6 7 9 11)].
+	scale = #Mixolydian ifTrue: [^ self intervals: #(0 2 4 5 7 9 10)].
+	scale = #Locrian ifTrue: [^ self intervals: #(0 1 3 5 6 8 10)].
+	scale = #'Major Triad' ifTrue: [^ self intervals: #(0 4 7)].
+	scale = #'Minor Triad' ifTrue: [^ self intervals: #(0 3 7)].
+	scale = #Octave ifTrue: [^ self intervals: #(0)].
+	scale = #None ifTrue: [^ self intervals: #()].
 	self error: 'unknown scale name'! !
 
 !Quantizer methodsFor: 'initialization' stamp: 'len 3/Jun/2026 16:16:17'!
@@ -7118,7 +7134,7 @@ initializeControls
 	super initializeControls.
 	self addControl: #in min: -1.0 max: 1.0 value: 0.0! !
 
-!Quantizer methodsFor: 'processing' stamp: 'len 3/Jun/2026 02:23:25'!
+!Quantizer methodsFor: 'processing' stamp: 'len 3/Jun/2026 22:37:03'!
 tick
 	| value interval octave |
 	value := (controls at: #in) modulation.
@@ -7126,7 +7142,7 @@ tick
 	value := value * 48.0.
 	octave := value // 12.0.
 	interval := value \\ 12.0.
-	self send: 12 * octave + (intervals detectMin: [:each| (each - interval) abs]) / 48.0! !
+	self send: 12 * octave + ((intervals ifEmpty: [^ self]) detectMin: [:each| (each - interval) abs]) / 48.0! !
 
 !Quantizer methodsFor: 'serialization' stamp: 'len 3/Jun/2026 16:17:34'!
 settings
@@ -7137,15 +7153,18 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #scale ifPresent: [:aSymbol| self scale: aSymbol]! !
 
-!Quantizer methodsFor: 'ui' stamp: 'len 3/Jun/2026 16:14:24'!
+!Quantizer methodsFor: 'ui' stamp: 'len 3/Jun/2026 22:37:56'!
 panel
-	^​ ControlPanel new addMorph: (PluggableChoiceMorph new options: #(Chromatic Major Minor #'Major Pentatonic' #'Minor Pentatonic' Blues #'Whole Tone' Diminished Augmented Dorian Phrygian Lydian Mixolydian Locrian #'Major Triad' #'Minor Triad' Octave); model: self; getter: #scale; setter: #scale:)! !
+	^​ ControlPanel new addMorph: (PluggableChoiceMorph new options: #(Chromatic Major Minor #'Major Pentatonic' #'Minor Pentatonic' Blues #'Whole Tone' Diminished Augmented Dorian Phrygian Lydian Mixolydian Locrian #'Major Triad' #'Minor Triad' Octave None); model: self; getter: #scale; setter: #scale:)! !
 
-!Quantizer methodsFor: 'ui' stamp: 'len 2/Jun/2026 16:58:45'!
+!Quantizer methodsFor: 'ui' stamp: 'len 4/Jun/2026 02:17:53'!
 patchable
-	| answer |
+	| answer keys |
 	answer := PatchableMorph new model: self.
-	answer body addMorph: self panel.
+	keys := QuantizerScaleMorph new intervals: intervals.
+	self when: #intervalsChanged: send: #intervals: to: keys.
+	answer body addMorph: keys.
+	answer flap addMorph: self panel.
 	answer
 		addControlInput: #in;
 		addControlOutput.
@@ -12914,6 +12933,90 @@ plot: aBlockOrCollection color: aColor
 !PlotMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 15:48:51'!
 requiresVectorCanvas
 	^ true ! !
+
+!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:08:33'!
+blackKeyHeight
+	^ self morphHeight * 0.65! !
+
+!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:08:17'!
+blackKeyWidth
+	^ self whiteKeyWidth / 1.62! !
+
+!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Jun/2026 02:34:56'!
+defaultExtent
+	^`128@48`! !
+
+!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 22:11:15'!
+drawOn: aCanvas
+	| w h whiteKeyWidth blackKeyWidth blackKeyHeight color selectedColor selectedRadius x |
+	w := self morphWidth.
+	h := self morphHeight.
+	whiteKeyWidth := self whiteKeyWidth.
+	color := Color white.
+	selectedColor := Color black.
+	selectedRadius := whiteKeyWidth / 5.0.
+	#(1 3 5 6 8 10 12) withIndexDo: [:key :i|
+		x := i - 1 * whiteKeyWidth.
+		aCanvas fillRectangle: (x @ 0 extent: whiteKeyWidth @ h) color: color.
+		(selectedKeys at: key) ifTrue: [aCanvas fillColor: selectedColor do: [aCanvas circleCenter: x + (whiteKeyWidth / 2.0) @ (h * 0.8) radius: selectedRadius]]].
+	blackKeyWidth := self blackKeyWidth.
+	blackKeyHeight := self blackKeyHeight.
+	color := Color black.
+	selectedColor := Color white.
+	selectedRadius := blackKeyWidth / 4.0.
+	#(2 4) withIndexDo: [:key :i|
+		x := i * whiteKeyWidth - (blackKeyWidth / 2.0).
+		aCanvas fillRectangle: (x @ 0 extent: blackKeyWidth @ blackKeyHeight) color: color.
+		(selectedKeys at: key) ifTrue: [aCanvas fillColor: selectedColor do: [aCanvas circleCenter: x + (blackKeyWidth / 2.0) @ (h * 0.45) radius: selectedRadius]]].
+	#(7 9 11) withIndexDo: [:key :i|
+		x := i + 3 * whiteKeyWidth - (blackKeyWidth / 2.0).
+		aCanvas fillRectangle: (x @ 0 extent: blackKeyWidth @ blackKeyHeight) color: color.
+		(selectedKeys at: key) ifTrue: [aCanvas fillColor: selectedColor do: [aCanvas circleCenter: x + (blackKeyWidth / 2.0) @ (h * 0.45) radius: selectedRadius]]]! !
+
+!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 20:58:27'!
+handlesMouseDown: anEvent
+	^ true
+! !
+
+!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:05:32'!
+initialize
+	super initialize.
+	selectedKeys := Array new: 12 withAll: false! !
+
+!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:05:32'!
+intervals: anArray
+	selectedKeys atAllPut: false.
+	anArray do: [:i| selectedKeys at: i+1 put: true].
+	self redrawNeeded! !
+
+!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:44:43'!
+mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
+	| offset key r |
+	offset := localEventPosition x / self morphWidth * 7.0.
+	key := #(1 3 5 6 8 10 12) at: offset truncated + 1.
+	localEventPosition y > self blackKeyHeight ifTrue: [^ self toggleKey: key].
+	r := self blackKeyWidth / self whiteKeyWidth.
+	(offset between: 1.0 - r and: 1.0 + r) ifTrue: [^ self toggleKey: 2].
+	(offset between: 2.0 - r and: 2.0 + r) ifTrue: [^ self toggleKey: 4].
+	(offset between: 4.0 - r and: 4.0 + r) ifTrue: [^ self toggleKey: 7].
+	(offset between: 5.0 - r and: 5.0 + r) ifTrue: [^ self toggleKey: 9].
+	(offset between: 6.0 - r and: 6.0 + r) ifTrue: [^ self toggleKey: 11].
+	^ self toggleKey: key! !
+
+!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 22:12:32'!
+playingNote: anInteger
+	playingNote = anInteger ifTrue: [^ self].
+	playingNote := anInteger.
+	self redrawNeeded! !
+
+!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:37:48'!
+toggleKey: key
+	selectedKeys at: key put: (selectedKeys at: key) not.
+	self redrawNeeded! !
+
+!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:07:43'!
+whiteKeyWidth
+	^ self morphWidth / 7.0! !
 
 !RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 8/Mar/2026 21:35:37'!
 color: aColor

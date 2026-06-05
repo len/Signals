@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 4 June 2026 at 3:27:28 pm'!
+'From Cuis7.9 [latest update: #7983] on 5 June 2026 at 11:17:07 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 581!
+!provides: 'Signals' 1 582!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -20,7 +20,7 @@ SystemOrganization addCategory: #'Signals-Morphic-Widgets'!
 SystemOrganization addCategory: #'Signals-Morphic-Controls'!
 SystemOrganization addCategory: #'Signals-Morphic-Patches'!
 SystemOrganization addCategory: #'Signals-Morphic-Support'!
-SystemOrganization addCategory: 'Signals-Algorithms'!
+SystemOrganization addCategory: #'Signals-Algorithms'!
 SystemOrganization addCategory: #'Signals-Trash'!
 
 
@@ -516,7 +516,7 @@ LFO class
 
 !classDefinition: #Quantizer category: #'Signals-Modulation'!
 Modulator subclass: #Quantizer
-	instanceVariableNames: 'scale intervals'
+	instanceVariableNames: 'intervals fixedIntervals mode color'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Modulation'!
@@ -1414,14 +1414,14 @@ BoxMorph subclass: #PlotMorph
 PlotMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #QuantizerScaleMorph category: #'Signals-Morphic-Widgets'!
-BoxMorph subclass: #QuantizerScaleMorph
-	instanceVariableNames: 'selectedKeys playingNote'
+!classDefinition: #QuantizerKeyboardMorph category: #'Signals-Morphic-Widgets'!
+BoxMorph subclass: #QuantizerKeyboardMorph
+	instanceVariableNames: 'modeKeys fixedKeys playingNote'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Widgets'!
-!classDefinition: 'QuantizerScaleMorph class' category: #'Signals-Morphic-Widgets'!
-QuantizerScaleMorph class
+!classDefinition: 'QuantizerKeyboardMorph class' category: #'Signals-Morphic-Widgets'!
+QuantizerKeyboardMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #RollingMeterMorph category: #'Signals-Morphic-Widgets'!
@@ -1634,193 +1634,193 @@ Morph subclass: #WireMorph
 WireMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #AllpassComb category: 'Signals-Algorithms'!
+!classDefinition: #AllpassComb category: #'Signals-Algorithms'!
 Object subclass: #AllpassComb
 	instanceVariableNames: 'buffer position feedback'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Algorithms'!
-!classDefinition: 'AllpassComb class' category: 'Signals-Algorithms'!
+!classDefinition: 'AllpassComb class' category: #'Signals-Algorithms'!
 AllpassComb class
 	instanceVariableNames: ''!
 
-!classDefinition: #Biquad category: 'Signals-Algorithms'!
+!classDefinition: #Biquad category: #'Signals-Algorithms'!
 Object subclass: #Biquad
 	instanceVariableNames: 'a0 a1 a2 b1 b2 x1 x2 y1 y2'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Algorithms'!
-!classDefinition: 'Biquad class' category: 'Signals-Algorithms'!
+!classDefinition: 'Biquad class' category: #'Signals-Algorithms'!
 Biquad class
 	instanceVariableNames: ''!
 
-!classDefinition: #BiquadTDF2 category: 'Signals-Algorithms'!
+!classDefinition: #BiquadTDF2 category: #'Signals-Algorithms'!
 Object subclass: #BiquadTDF2
 	instanceVariableNames: 'a0 a1 a2 b1 b2 s1 s2'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Algorithms'!
-!classDefinition: 'BiquadTDF2 class' category: 'Signals-Algorithms'!
+!classDefinition: 'BiquadTDF2 class' category: #'Signals-Algorithms'!
 BiquadTDF2 class
 	instanceVariableNames: ''!
 
-!classDefinition: #DelayLine category: 'Signals-Algorithms'!
+!classDefinition: #DelayLine category: #'Signals-Algorithms'!
 Object subclass: #DelayLine
 	instanceVariableNames: 'buffer position'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Algorithms'!
-!classDefinition: 'DelayLine class' category: 'Signals-Algorithms'!
+!classDefinition: 'DelayLine class' category: #'Signals-Algorithms'!
 DelayLine class
 	instanceVariableNames: ''!
 
-!classDefinition: #DelayTap category: 'Signals-Algorithms'!
+!classDefinition: #DelayTap category: #'Signals-Algorithms'!
 Object subclass: #DelayTap
 	instanceVariableNames: 'delayLine delay increment'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Algorithms'!
-!classDefinition: 'DelayTap class' category: 'Signals-Algorithms'!
+!classDefinition: 'DelayTap class' category: #'Signals-Algorithms'!
 DelayTap class
 	instanceVariableNames: ''!
 
-!classDefinition: #DelayTapC category: 'Signals-Algorithms'!
+!classDefinition: #DelayTapC category: #'Signals-Algorithms'!
 DelayTap subclass: #DelayTapC
 	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Algorithms'!
-!classDefinition: 'DelayTapC class' category: 'Signals-Algorithms'!
+!classDefinition: 'DelayTapC class' category: #'Signals-Algorithms'!
 DelayTapC class
 	instanceVariableNames: ''!
 
-!classDefinition: #DelayTapL category: 'Signals-Algorithms'!
+!classDefinition: #DelayTapL category: #'Signals-Algorithms'!
 DelayTap subclass: #DelayTapL
 	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Algorithms'!
-!classDefinition: 'DelayTapL class' category: 'Signals-Algorithms'!
+!classDefinition: 'DelayTapL class' category: #'Signals-Algorithms'!
 DelayTapL class
 	instanceVariableNames: ''!
 
-!classDefinition: #DelayTapT1 category: 'Signals-Algorithms'!
+!classDefinition: #DelayTapT1 category: #'Signals-Algorithms'!
 DelayTap subclass: #DelayTapT1
 	instanceVariableNames: 'x1 y1'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Algorithms'!
-!classDefinition: 'DelayTapT1 class' category: 'Signals-Algorithms'!
+!classDefinition: 'DelayTapT1 class' category: #'Signals-Algorithms'!
 DelayTapT1 class
 	instanceVariableNames: ''!
 
-!classDefinition: #DelayTapT2 category: 'Signals-Algorithms'!
+!classDefinition: #DelayTapT2 category: #'Signals-Algorithms'!
 DelayTap subclass: #DelayTapT2
 	instanceVariableNames: 'x1 x2 y1 y2'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Algorithms'!
-!classDefinition: 'DelayTapT2 class' category: 'Signals-Algorithms'!
+!classDefinition: 'DelayTapT2 class' category: #'Signals-Algorithms'!
 DelayTapT2 class
 	instanceVariableNames: ''!
 
-!classDefinition: #FFT category: 'Signals-Algorithms'!
+!classDefinition: #FFT category: #'Signals-Algorithms'!
 Object subclass: #FFT
 	instanceVariableNames: 'nu n sinTable permTable realData imagData'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Algorithms'!
-!classDefinition: 'FFT class' category: 'Signals-Algorithms'!
+!classDefinition: 'FFT class' category: #'Signals-Algorithms'!
 FFT class
 	instanceVariableNames: ''!
 
-!classDefinition: #FIR category: 'Signals-Algorithms'!
+!classDefinition: #FIR category: #'Signals-Algorithms'!
 Object subclass: #FIR
 	instanceVariableNames: 'coefficients state'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Algorithms'!
-!classDefinition: 'FIR class' category: 'Signals-Algorithms'!
+!classDefinition: 'FIR class' category: #'Signals-Algorithms'!
 FIR class
 	instanceVariableNames: ''!
 
-!classDefinition: #IIR category: 'Signals-Algorithms'!
+!classDefinition: #IIR category: #'Signals-Algorithms'!
 Object subclass: #IIR
 	instanceVariableNames: 'numerators denominators stateIn stateOut'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Algorithms'!
-!classDefinition: 'IIR class' category: 'Signals-Algorithms'!
+!classDefinition: 'IIR class' category: #'Signals-Algorithms'!
 IIR class
 	instanceVariableNames: ''!
 
-!classDefinition: #LagrangeOversampler2x category: 'Signals-Algorithms'!
+!classDefinition: #LagrangeOversampler2x category: #'Signals-Algorithms'!
 Object subclass: #LagrangeOversampler2x
 	instanceVariableNames: 'u0 u1 u2 u3 d0 d1 d2 d3'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Algorithms'!
-!classDefinition: 'LagrangeOversampler2x class' category: 'Signals-Algorithms'!
+!classDefinition: 'LagrangeOversampler2x class' category: #'Signals-Algorithms'!
 LagrangeOversampler2x class
 	instanceVariableNames: ''!
 
-!classDefinition: #LowpassComb category: 'Signals-Algorithms'!
+!classDefinition: #LowpassComb category: #'Signals-Algorithms'!
 Object subclass: #LowpassComb
 	instanceVariableNames: 'buffer position state feedback damp'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Algorithms'!
-!classDefinition: 'LowpassComb class' category: 'Signals-Algorithms'!
+!classDefinition: 'LowpassComb class' category: #'Signals-Algorithms'!
 LowpassComb class
 	instanceVariableNames: ''!
 
-!classDefinition: #MultiTapDelayLine category: 'Signals-Algorithms'!
+!classDefinition: #MultiTapDelayLine category: #'Signals-Algorithms'!
 Object subclass: #MultiTapDelayLine
 	instanceVariableNames: 'buffer position delays gains mix'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Algorithms'!
-!classDefinition: 'MultiTapDelayLine class' category: 'Signals-Algorithms'!
+!classDefinition: 'MultiTapDelayLine class' category: #'Signals-Algorithms'!
 MultiTapDelayLine class
 	instanceVariableNames: ''!
 
-!classDefinition: #OnePole category: 'Signals-Algorithms'!
+!classDefinition: #OnePole category: #'Signals-Algorithms'!
 Object subclass: #OnePole
 	instanceVariableNames: 'pole y'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Algorithms'!
-!classDefinition: 'OnePole class' category: 'Signals-Algorithms'!
+!classDefinition: 'OnePole class' category: #'Signals-Algorithms'!
 OnePole class
 	instanceVariableNames: ''!
 
-!classDefinition: #Polyphase13TapOversampler2x category: 'Signals-Algorithms'!
+!classDefinition: #Polyphase13TapOversampler2x category: #'Signals-Algorithms'!
 Object subclass: #Polyphase13TapOversampler2x
 	instanceVariableNames: 'x1 x2 x3 x4 x5 x6 d1 d2 d3 d4 d5 d6 e1'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Algorithms'!
-!classDefinition: 'Polyphase13TapOversampler2x class' category: 'Signals-Algorithms'!
+!classDefinition: 'Polyphase13TapOversampler2x class' category: #'Signals-Algorithms'!
 Polyphase13TapOversampler2x class
 	instanceVariableNames: ''!
 
-!classDefinition: #STFT category: 'Signals-Algorithms'!
+!classDefinition: #STFT category: #'Signals-Algorithms'!
 Object subclass: #STFT
 	instanceVariableNames: 'fft window spectrum aux'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Algorithms'!
-!classDefinition: 'STFT class' category: 'Signals-Algorithms'!
+!classDefinition: 'STFT class' category: #'Signals-Algorithms'!
 STFT class
 	instanceVariableNames: ''!
 
-!classDefinition: #WAVFileReader category: 'Signals-Algorithms'!
+!classDefinition: #WAVFileReader category: #'Signals-Algorithms'!
 Object subclass: #WAVFileReader
 	instanceVariableNames: 'stream channels bitsPerSample sampleRate leftSamples rightSamples loopStart loopEnd'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Algorithms'!
-!classDefinition: 'WAVFileReader class' category: 'Signals-Algorithms'!
+!classDefinition: 'WAVFileReader class' category: #'Signals-Algorithms'!
 WAVFileReader class
 	instanceVariableNames: ''!
 
@@ -6380,13 +6380,13 @@ initialize
 	lpf := OnePole new.
 	self reset! !
 
-!Drift methodsFor: 'initialization' stamp: 'len 24/May/2026 19:48:01'!
+!Drift methodsFor: 'initialization' stamp: 'len 5/Jun/2026 20:34:02'!
 initializeControls
 	super initializeControls.
-	self addTimeControl: #wander min: 0.5 "500 ms" max: 120.0 "2 m" value: 4.0 "s".
-	self addTimeControl: #lag min: 0.0001 "0.1 ms" max: 2.0 "s" value: 0.5! !
+	self addTimeControl: #time min: 0.5 "500 ms" max: 120.0 "2 m" value: 4.0 "s".
+	self addTimeControl: #slew min: 0.001 "1 ms" max: 2.0 "s" value: 0.5! !
 
-!Drift methodsFor: 'processing' stamp: 'len 24/May/2026 19:54:37'!
+!Drift methodsFor: 'processing' stamp: 'len 5/Jun/2026 20:35:59'!
 tick
 	|  decay noiseAmp u1 u2 gaussianNoise |
 	"Box-Muller transform (uniform distribution to normal distribution):"
@@ -6394,30 +6394,37 @@ tick
 	u2 := random next.
 	gaussianNoise := (-2.0 * u1 ln) sqrt * (Float twoPi * u2) cos.
 	"Exact Ornstein-Uhlenbeck discretization.
-	decay drives mean-reversion; as rate → 0, decay → 1 (frozen), as rate → ∞, decay → 0 (white noise)."
-	decay := (-1.0 / ((self get: #wander) * self class controlRate)) exp.
-	"Noise amplitude chosen so stationary std = 1, regardless of rate."
+	decay drives mean-reversion; as time → 0, decay → 1 (frozen), as time → ∞, decay → 0 (white noise)."
+	decay := (-1.0 / ((self get: #time) * self class controlRate)) exp.
+	"Noise amplitude chosen so stationary std = 1, regardless of drift time."
 	noiseAmp := (1.0 - (decay * decay)) sqrt.
 	state := (state * decay) + (noiseAmp * gaussianNoise).
 	"One-pole output smoother:"
-	lpf time: (self get: #lag) * self class controlRate.
+	lpf time: (self get: #slew) * self class controlRate.
 	self send: (lpf value: state)! !
 
-!Drift methodsFor: 'ui' stamp: 'len 24/May/2026 19:52:02'!
+!Drift methodsFor: 'ui' stamp: 'len 5/Jun/2026 20:37:28'!
+panel
+	^ ControlPanel new
+		addSmallKnob: (controls at: #time) label: 'Time';
+		addSmallKnob: (controls at: #slew) label: 'Slew'! !
+
+!Drift methodsFor: 'ui' stamp: 'len 4/Jun/2026 17:35:34'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
+	answer flap addMorph: self panel.
 	answer addControlOutput.
 	^ answer! !
 
-!Drift methodsFor: 'ui' stamp: 'len 24/May/2026 19:55:07'!
+!Drift methodsFor: 'ui' stamp: 'len 5/Jun/2026 20:37:11'!
 screen
 	| answer |
 	answer := StripChartXYControlMorph new
 		morphExtent: 96 @ 32;
-		controlX: (controls at: #wander);
-		controlY: (controls at: #lag).
+		controlX: (controls at: #time);
+		controlY: (controls at: #slew).
 	self when: #output: send: #addSample: to: answer.
 	^ answer! !
 
@@ -7092,49 +7099,42 @@ screen
 shapeOptions
 	^ #(Sine Triangle Square Rise Fall Random)! !
 
-!Quantizer methodsFor: 'accessing' stamp: 'len 3/Jun/2026 20:05:12'!
-intervals: anArray
-	intervals := anArray.
-	self triggerEvent: #intervalsChanged: with: intervals! !
+!Quantizer methodsFor: 'accessing' stamp: 'len 5/Jun/2026 20:57:24'!
+fixedIntervals: aCollection
+	fixedIntervals := aCollection.
+	color := nil "to trigger update"! !
 
-!Quantizer methodsFor: 'accessing' stamp: 'len 3/Jun/2026 16:14:51'!
-scale
-	^ scale! !
+!Quantizer methodsFor: 'controlling' stamp: 'len 5/Jun/2026 21:25:27'!
+update
+	| newMode newColor modeIntervals harmonicOrder orderedIntervals |
+	super update.
+	newMode := self get: #mode.
+	newColor := self get: #color.
+	(mode = newMode and: [color = newColor]) ifTrue: [^ self].
+	mode := newMode.
+	color := newColor.
+	modeIntervals := #((0 1 3 5 6 8 10) (0 1 3 5 7 8 10) (0 2 3 5 7 8 10) (0 2 3 5 7 9 10) (0 2 4 5 7 9 10) (0 2 4 5 7 9 11) (0 2 4 6 7 9 11)) at: (newMode * 6.0) rounded + 1.
+	harmonicOrder := #(0 7 5 4 9 3 8 2 10 11 1 6). "from least to most disonant"
+	orderedIntervals := harmonicOrder select: [:each| modeIntervals includes: each].
+	modeIntervals := orderedIntervals first: (orderedIntervals size * newColor) ceiling.
+	self triggerEvent: #modeIntervalsChanged: with: modeIntervals.
+	intervals := fixedIntervals, (modeIntervals reject: [:each| fixedIntervals includes: each])! !
 
-!Quantizer methodsFor: 'accessing' stamp: 'len 3/Jun/2026 22:37:33'!
-scale: aSymbol
-	scale := aSymbol.
-	scale = #Chromatic ifTrue: [^ self intervals:​ #(0 1 2 3 4 5 6 7 8 9 10 11)].
-	scale = #Major ifTrue: [^ self intervals: #(0 2 4 5 7 9 11)].
-	scale = #Minor ifTrue: [^ self intervals: #(0 2 3 5 7 8 10)].
-	scale = #'Major Pentatonic' ifTrue: [^ self intervals: #(0 2 4 7 9)].
-	scale = #'Minor Pentatonic' ifTrue: [^ self intervals: #(0 3 5 7 10)].
-	scale = #Blues ifTrue: [^ self intervals: #(0 3 5 6 7 10)].
-	scale = #'Whole Tone' ifTrue: [^ self intervals: #(0 2 4 6 8 10)].
-	scale = #Diminished ifTrue: [^ self intervals: #(0 1 3 4 6 7 9 10)].
-	scale = #Augmented ifTrue: [^ self intervals: #(0 3 4 7 8 11)].
-	scale = #Dorian ifTrue: [^ self intervals: #(0 2 3 5 7 9 10)].
-	scale = #Phrygian ifTrue: [^ self intervals: #(0 1 3 5 7 8 10)].
-	scale = #Lydian ifTrue: [^ self intervals: #(0 2 4 6 7 9 11)].
-	scale = #Mixolydian ifTrue: [^ self intervals: #(0 2 4 5 7 9 10)].
-	scale = #Locrian ifTrue: [^ self intervals: #(0 1 3 5 6 8 10)].
-	scale = #'Major Triad' ifTrue: [^ self intervals: #(0 4 7)].
-	scale = #'Minor Triad' ifTrue: [^ self intervals: #(0 3 7)].
-	scale = #Octave ifTrue: [^ self intervals: #(0)].
-	scale = #None ifTrue: [^ self intervals: #()].
-	self error: 'unknown scale name'! !
-
-!Quantizer methodsFor: 'initialization' stamp: 'len 3/Jun/2026 16:16:17'!
+!Quantizer methodsFor: 'initialization' stamp: 'len 5/Jun/2026 18:01:53'!
 initialize
 	super initialize.
-	self scale: #Chromatic! !
+	fixedIntervals := #()! !
 
-!Quantizer methodsFor: 'initialization' stamp: 'len 3/Jun/2026 16:16:25'!
+!Quantizer methodsFor: 'initialization' stamp: 'len 5/Jun/2026 18:27:33'!
 initializeControls
 	super initializeControls.
-	self addControl: #in min: -1.0 max: 1.0 value: 0.0! !
+	self addControl: #in min: -1.0 max: 1.0 value: 0.0.
+	(self addControl: #mode min: 0.0 max: 1.0 value: 0.0)
+		coarseStep: 1.0 / 14.0;
+		printer: [:x| #(Locrian Phrygian Aeolian Dorian Mixolydian Ionian Lydian) at: (x*6.0) rounded + 1].
+	self addAmountControl: #color value: 0.0! !
 
-!Quantizer methodsFor: 'processing' stamp: 'len 3/Jun/2026 22:37:03'!
+!Quantizer methodsFor: 'processing' stamp: 'len 5/Jun/2026 18:00:16'!
 tick
 	| value interval octave |
 	value := (controls at: #in) modulation.
@@ -7144,29 +7144,35 @@ tick
 	interval := value \\ 12.0.
 	self send: 12 * octave + ((intervals ifEmpty: [^ self]) detectMin: [:each| (each - interval) abs]) / 48.0! !
 
-!Quantizer methodsFor: 'serialization' stamp: 'len 3/Jun/2026 16:17:34'!
+!Quantizer methodsFor: 'serialization' stamp: 'len 5/Jun/2026 18:03:03'!
 settings
-	^ super settings at: #scale put: scale; yourself! !
+	^ super settings at: #fixedIntervals put: fixedIntervals; yourself! !
 
-!Quantizer methodsFor: 'serialization' stamp: 'len 3/Jun/2026 16:17:07'!
+!Quantizer methodsFor: 'serialization' stamp: 'len 5/Jun/2026 18:02:39'!
 settings: aDictionary
 	super settings: aDictionary.
-	aDictionary at: #scale ifPresent: [:aSymbol| self scale: aSymbol]! !
+	aDictionary at: #fixedIntervals ifPresent: [:anArray| fixedIntervals := anArray]! !
 
-!Quantizer methodsFor: 'ui' stamp: 'len 3/Jun/2026 22:37:56'!
+!Quantizer methodsFor: 'ui' stamp: 'len 5/Jun/2026 20:59:47'!
 panel
-	^​ ControlPanel new addMorph: (PluggableChoiceMorph new options: #(Chromatic Major Minor #'Major Pentatonic' #'Minor Pentatonic' Blues #'Whole Tone' Diminished Augmented Dorian Phrygian Lydian Mixolydian Locrian #'Major Triad' #'Minor Triad' Octave None); model: self; getter: #scale; setter: #scale:)! !
+	^​ ControlPanel new
+		addTextualControl: (controls at: #mode);
+		addTextualControl: (controls at: #color)! !
 
-!Quantizer methodsFor: 'ui' stamp: 'len 4/Jun/2026 02:17:53'!
+!Quantizer methodsFor: 'ui' stamp: 'len 5/Jun/2026 18:09:24'!
 patchable
 	| answer keys |
 	answer := PatchableMorph new model: self.
-	keys := QuantizerScaleMorph new intervals: intervals.
-	self when: #intervalsChanged: send: #intervals: to: keys.
+	keys := QuantizerKeyboardMorph new.
+	keys when: #fixedIntervalsChanged: send: #fixedIntervals: to: self.
+	self when: #modeIntervalsChanged: send: #modeIntervals: to: keys.
+	self when: #output: send: #quantizedPitch: to: keys.
 	answer body addMorph: keys.
 	answer flap addMorph: self panel.
 	answer
 		addControlInput: #in;
+		addControlInput: #mode;
+		addControlInput: #color;
 		addControlOutput.
 	^ answer! !
 
@@ -12934,31 +12940,37 @@ plot: aBlockOrCollection color: aColor
 requiresVectorCanvas
 	^ true ! !
 
-!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:08:33'!
+!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:08:33'!
 blackKeyHeight
 	^ self morphHeight * 0.65! !
 
-!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:08:17'!
+!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:08:17'!
 blackKeyWidth
 	^ self whiteKeyWidth / 1.62! !
 
-!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Jun/2026 02:34:56'!
+!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Jun/2026 02:34:56'!
 defaultExtent
 	^`128@48`! !
 
-!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 22:11:15'!
+!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jun/2026 19:55:09'!
 drawOn: aCanvas
-	| w h whiteKeyWidth blackKeyWidth blackKeyHeight color selectedColor selectedRadius x |
+	| w h whiteKeyWidth blackKeyWidth blackKeyHeight color selectedColor selectedRadius x playingColor playingPitchClass fixedColor |
 	w := self morphWidth.
 	h := self morphHeight.
 	whiteKeyWidth := self whiteKeyWidth.
 	color := Color white.
+	fixedColor := Color redCathode.
 	selectedColor := Color black.
 	selectedRadius := whiteKeyWidth / 5.0.
+	playingNote ifNotNil: [:note|
+		playingPitchClass := note \\ 12 + 1.
+		playingColor := Color okl: 0.7 c: 0.4 h: (#(0 7 5 4 9 3 8 2 10 11 1 6) indexOf: playingPitchClass - 1) - 1 / 12.0 * 270.0 + 20.0 \\ 360.
+		"playingColor := Color okl: 0.7 c: 0.4 h: playingPitchClass / 12.0 * 270.0 \\ 360"].
 	#(1 3 5 6 8 10 12) withIndexDo: [:key :i|
 		x := i - 1 * whiteKeyWidth.
-		aCanvas fillRectangle: (x @ 0 extent: whiteKeyWidth @ h) color: color.
-		(selectedKeys at: key) ifTrue: [aCanvas fillColor: selectedColor do: [aCanvas circleCenter: x + (whiteKeyWidth / 2.0) @ (h * 0.8) radius: selectedRadius]]].
+		aCanvas fillRectangle: (x @ 0 extent: whiteKeyWidth @ h) color: (key = playingPitchClass ifTrue: [playingColor] ifFalse: [color]).
+		(modeKeys at: key) ifTrue: [aCanvas fillColor: selectedColor do: [aCanvas circleCenter: x + (whiteKeyWidth / 2.0) @ (h * 0.8) radius: selectedRadius]].
+		(fixedKeys at: key) ifTrue: [aCanvas fillColor: fixedColor do: [aCanvas circleCenter: x + (whiteKeyWidth / 2.0) @ (h * 0.8) radius: selectedRadius]]].
 	blackKeyWidth := self blackKeyWidth.
 	blackKeyHeight := self blackKeyHeight.
 	color := Color black.
@@ -12966,30 +12978,32 @@ drawOn: aCanvas
 	selectedRadius := blackKeyWidth / 4.0.
 	#(2 4) withIndexDo: [:key :i|
 		x := i * whiteKeyWidth - (blackKeyWidth / 2.0).
-		aCanvas fillRectangle: (x @ 0 extent: blackKeyWidth @ blackKeyHeight) color: color.
-		(selectedKeys at: key) ifTrue: [aCanvas fillColor: selectedColor do: [aCanvas circleCenter: x + (blackKeyWidth / 2.0) @ (h * 0.45) radius: selectedRadius]]].
+		aCanvas fillRectangle: (x @ 0 extent: blackKeyWidth @ blackKeyHeight) color: (key = playingPitchClass ifTrue: [playingColor] ifFalse: [color]).
+		(modeKeys at: key) ifTrue: [aCanvas fillColor: selectedColor do: [aCanvas circleCenter: x + (blackKeyWidth / 2.0) @ (h * 0.45) radius: selectedRadius]].
+		(fixedKeys at: key) ifTrue: [aCanvas fillColor: fixedColor do: [aCanvas circleCenter: x + (blackKeyWidth / 2.0) @ (h * 0.45) radius: selectedRadius]]].
 	#(7 9 11) withIndexDo: [:key :i|
 		x := i + 3 * whiteKeyWidth - (blackKeyWidth / 2.0).
-		aCanvas fillRectangle: (x @ 0 extent: blackKeyWidth @ blackKeyHeight) color: color.
-		(selectedKeys at: key) ifTrue: [aCanvas fillColor: selectedColor do: [aCanvas circleCenter: x + (blackKeyWidth / 2.0) @ (h * 0.45) radius: selectedRadius]]]! !
+		aCanvas fillRectangle: (x @ 0 extent: blackKeyWidth @ blackKeyHeight) color: (key = playingPitchClass ifTrue: [playingColor] ifFalse: [color]).
+		(modeKeys at: key) ifTrue: [aCanvas fillColor: selectedColor do: [aCanvas circleCenter: x + (blackKeyWidth / 2.0) @ (h * 0.45) radius: selectedRadius]].
+		(fixedKeys at: key) ifTrue: [aCanvas fillColor: fixedColor do: [aCanvas circleCenter: x + (blackKeyWidth / 2.0) @ (h * 0.45) radius: selectedRadius]]]! !
 
-!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 20:58:27'!
+!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 20:58:27'!
 handlesMouseDown: anEvent
 	^ true
 ! !
 
-!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:05:32'!
+!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jun/2026 18:13:10'!
 initialize
 	super initialize.
-	selectedKeys := Array new: 12 withAll: false! !
+	fixedKeys := Array new: 12 withAll: false.
+	modeKeys := fixedKeys copy! !
 
-!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:05:32'!
-intervals: anArray
-	selectedKeys atAllPut: false.
-	anArray do: [:i| selectedKeys at: i+1 put: true].
+!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jun/2026 18:19:21'!
+modeIntervals: anArray
+	modeKeys := (0 to: 11) collect: [:each| anArray includes: each].
 	self redrawNeeded! !
 
-!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:44:43'!
+!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:44:43'!
 mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
 	| offset key r |
 	offset := localEventPosition x / self morphWidth * 7.0.
@@ -13003,18 +13017,21 @@ mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
 	(offset between: 6.0 - r and: 6.0 + r) ifTrue: [^ self toggleKey: 11].
 	^ self toggleKey: key! !
 
-!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 22:12:32'!
-playingNote: anInteger
-	playingNote = anInteger ifTrue: [^ self].
-	playingNote := anInteger.
+!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jun/2026 02:10:32'!
+quantizedPitch: aNumber
+	| newPlayingNote |
+	newPlayingNote := (aNumber * 48.0) rounded.
+	playingNote = newPlayingNote ifTrue: [^ self].
+	playingNote := newPlayingNote.
 	self redrawNeeded! !
 
-!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:37:48'!
+!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jun/2026 18:11:52'!
 toggleKey: key
-	selectedKeys at: key put: (selectedKeys at: key) not.
+	fixedKeys at: key put: (fixedKeys at: key) not.
+	self triggerEvent: #fixedIntervalsChanged: with: ((0 to: 11) select: [:each| (fixedKeys at: each+1)]).
 	self redrawNeeded! !
 
-!QuantizerScaleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:07:43'!
+!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:07:43'!
 whiteKeyWidth
 	^ self morphWidth / 7.0! !
 

@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7880] on 3 June 2026 at 7:16:46 pm'!
+'From Cuis7.9 [latest update: #7983] on 5 June 2026 at 11:15:41 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 29!
+!provides: 'Tracker' 1 30!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -302,7 +302,7 @@ windowLabel
 closeIcon
 	^ self cancelIcon! !
 
-!DarkerTheme methodsFor: 'initialization' stamp: 'len 11/Apr/2026 12:42:56'!
+!DarkerTheme methodsFor: 'initialization' stamp: 'Install-Tracker 4/Jun/2026 16:16:51'!
 initialize
 	super initialize.
 "
@@ -325,8 +325,7 @@ initialize
 		at: #italicsInShout put: true;
 		at: #shoutInWorkspaces put: true;
 		at: #optionalButtons put: false;
-		at: #showAnnotations put: true;
-		at: #usePreDebugWindow put: false.
+		at: #showAnnotations put: true.
 
 	PreferenceSet defaultFontSize: 18.
 
@@ -393,10 +392,6 @@ scrollbarShowButtons
 !DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
 scrollbarThickness
 	^ 16! !
-
-!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
-useTaskbar
-	^false! !
 
 !DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
 useUniformColors
@@ -629,15 +624,15 @@ defaultColor
 widgetsColor: aColor
 	^ self! !
 
-!TrackerWindow methodsFor: 'as yet unclassified' stamp: 'len 11/Apr/2026 12:51:09'!
-delete
-	model stop.
-	super delete! !
-
-!TrackerWindow methodsFor: 'as yet unclassified' stamp: 'len 19/Apr/2026 16:54:47'!
+!TrackerWindow methodsFor: 'private' stamp: 'len 19/Apr/2026 16:54:47'!
 ensureCursorVisible
 	patternEditor owner scrollToMakeVisible: (patternEditor externalizeBoundingRectOf: patternEditor activeBounds).
 	sequencer owner scrollToMakeVisible: (sequencer externalizeBoundingRectOf: sequencer activeBounds)! !
+
+!TrackerWindow methodsFor: 'open/close' stamp: 'len 11/Apr/2026 12:51:09'!
+delete
+	model stop.
+	super delete! !
 
 !InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Jan/2026 16:24:19'!
 clipboardCopy
@@ -1168,12 +1163,12 @@ handleInputKey: anEvent
 		^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 4/Apr/2026 18:44:07'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 5/Jun/2026 23:13:43'!
 handleKeyStroke: anEvent
 	(anEvent secondaryModifierPressed and: [self handleOptionHotkey: anEvent]) ifTrue: [^ true].
 	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue: [^ true].
 	(anEvent shiftPressed and: [anEvent isArrow]) ifTrue: [self handleSelectionKey: anEvent. ^ true].
-	anEvent isReturnKey ifTrue: [tracker stop; loop: anEvent secondaryModifierPressed not. self playSelection. ^ true].
+	anEvent isReturnKey ifTrue: [tracker stop; loop: anEvent secondaryModifierPressed. self playSelection. ^ true].
 	anEvent isNavigation ifTrue: [self handleNavigationKey: anEvent. ^ true].
 	anEvent keyCharacter = $\ ifTrue:
 		[anEvent wasHandled: true.
@@ -2431,17 +2426,17 @@ playFrom: startPattern line: startLine to: endPattern line: endLine tracks: trac
 	self triggerEvent: #playheadChanged.
 	self triggerEvent: #playingStatusChanged! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 14/Mar/2026 18:24:05'!
-playLineIfFinished: aBlock
+!Tracker methodsFor: 'playing' stamp: 'len 5/Jun/2026 23:09:44'!
+playLine
 	| pattern mask ticksPerLine ticksSwing |
 	"Advance playhead:"
 	playheadLine := playheadLine + 1.
 	(playheadPattern = playEndPattern and: [playheadLine > playEndLine]) ifTrue:
-		[loop ifTrue: [playheadPattern := playStartPattern. playheadLine := playStartLine] ifFalse: [^ aBlock value]].
+		[loop ifTrue: [playheadPattern := playStartPattern. playheadLine := playStartLine] ifFalse: [playheadLine := playheadLine - 1. ^ self]].
 	playheadLine > (sequence at: playheadPattern) key length ifTrue:
 		[playheadPattern < playEndPattern
 			ifTrue: [playheadLine := 1. playheadPattern := playheadPattern + 1]
-			ifFalse: [loop ifTrue: [playheadPattern := playStartPattern. playheadLine := playStartLine] ifFalse: [^ aBlock value]]].
+			ifFalse: [loop ifTrue: [playheadPattern := playStartPattern. playheadLine := playStartLine] ifFalse: [^ self]]].
 	"Notify playhead change and update cursor if following playhead:"
 	self triggerEvent: #playheadChanged.
 	followPlayhead ifTrue:
@@ -2461,7 +2456,7 @@ playLineIfFinished: aBlock
 	(playheadLine \\ pattern lpb) even ifTrue: [ticksSwing := ticksSwing negated].
 	ticksToLine := ticksToLine + ticksSwing! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 9/Mar/2026 17:23:40'!
+!Tracker methodsFor: 'playing' stamp: 'len 5/Jun/2026 23:10:00'!
 playSampleCount: n into: anAudioBuffer startingAt: startIndex
 	| blockSize i masterGain mask masterBus |
 	blockSize := Module blockSize.
@@ -2471,7 +2466,7 @@ playSampleCount: n into: anAudioBuffer startingAt: startIndex
 	mask := self playingMask.
 	masterBus := buses at: 0.
 	n // blockSize timesRepeat:
-		[ticksToLine > 0 ifTrue: [ticksToLine := ticksToLine - 1] ifFalse: [self playLineIfFinished: [self triggerEvent: #playingStatusChanged. ^ i - startIndex]. mask := self playingMask].
+		[ticksToLine > 0 ifTrue: [ticksToLine := ticksToLine - 1] ifFalse: [self playLine. mask := self playingMask].
 		buses do: [:each| each clear].
 		mask withIndexDo: [:enabled :trackIndex| enabled ifTrue: [(tracks at: trackIndex) tick]].
 		masterBus leftBuffer *= masterGain.

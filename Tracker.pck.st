@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 5 June 2026 at 11:15:41 pm'!
+'From Cuis7.9 [latest update: #7983] on 7 June 2026 at 10:05:44 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 30!
+!provides: 'Tracker' 1 31!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -1163,12 +1163,12 @@ handleInputKey: anEvent
 		^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 5/Jun/2026 23:13:43'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 5/Jun/2026 23:24:43'!
 handleKeyStroke: anEvent
 	(anEvent secondaryModifierPressed and: [self handleOptionHotkey: anEvent]) ifTrue: [^ true].
 	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue: [^ true].
 	(anEvent shiftPressed and: [anEvent isArrow]) ifTrue: [self handleSelectionKey: anEvent. ^ true].
-	anEvent isReturnKey ifTrue: [tracker stop; loop: anEvent secondaryModifierPressed. self playSelection. ^ true].
+	anEvent isReturnKey ifTrue: [tracker isPlaying ifTrue: [tracker stop] ifFalse: [tracker loop: anEvent secondaryModifierPressed. self playSelection]. ^ true].
 	anEvent isNavigation ifTrue: [self handleNavigationKey: anEvent. ^ true].
 	anEvent keyCharacter = $\ ifTrue:
 		[anEvent wasHandled: true.

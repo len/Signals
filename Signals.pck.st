@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 5 June 2026 at 11:17:07 pm'!
+'From Cuis7.9 [latest update: #7983] on 8 June 2026 at 3:52:01 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 582!
+!provides: 'Signals' 1 583!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -516,8 +516,8 @@ LFO class
 
 !classDefinition: #Quantizer category: #'Signals-Modulation'!
 Modulator subclass: #Quantizer
-	instanceVariableNames: 'intervals fixedIntervals mode color'
-	classVariableNames: ''
+	instanceVariableNames: 'pitchClasses color allowedPitchClasses'
+	classVariableNames: 'Scales'
 	poolDictionaries: ''
 	category: 'Signals-Modulation'!
 !classDefinition: 'Quantizer class' category: #'Signals-Modulation'!
@@ -1114,6 +1114,16 @@ ControlMorph subclass: #PulseWidthControlMorph
 PulseWidthControlMorph class
 	instanceVariableNames: ''!
 
+!classDefinition: #QuantizerControlMorph category: #'Signals-Morphic-Controls'!
+ControlMorph subclass: #QuantizerControlMorph
+	instanceVariableNames: 'selectedKeys playingNote'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'QuantizerControlMorph class' category: #'Signals-Morphic-Controls'!
+QuantizerControlMorph class
+	instanceVariableNames: ''!
+
 !classDefinition: #SliderControlMorph category: #'Signals-Morphic-Controls'!
 ControlMorph subclass: #SliderControlMorph
 	instanceVariableNames: ''
@@ -1152,6 +1162,16 @@ ControlMorph subclass: #TextualControlMorph
 	category: 'Signals-Morphic-Controls'!
 !classDefinition: 'TextualControlMorph class' category: #'Signals-Morphic-Controls'!
 TextualControlMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #LabeledTextualControlMorph category: #'Signals-Morphic-Controls'!
+TextualControlMorph subclass: #LabeledTextualControlMorph
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'LabeledTextualControlMorph class' category: #'Signals-Morphic-Controls'!
+LabeledTextualControlMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #VariableWaveControlMorph category: #'Signals-Morphic-Controls'!
@@ -1412,16 +1432,6 @@ BoxMorph subclass: #PlotMorph
 	category: 'Signals-Morphic-Widgets'!
 !classDefinition: 'PlotMorph class' category: #'Signals-Morphic-Widgets'!
 PlotMorph class
-	instanceVariableNames: ''!
-
-!classDefinition: #QuantizerKeyboardMorph category: #'Signals-Morphic-Widgets'!
-BoxMorph subclass: #QuantizerKeyboardMorph
-	instanceVariableNames: 'modeKeys fixedKeys playingNote'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Widgets'!
-!classDefinition: 'QuantizerKeyboardMorph class' category: #'Signals-Morphic-Widgets'!
-QuantizerKeyboardMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #RollingMeterMorph category: #'Signals-Morphic-Widgets'!
@@ -4041,7 +4051,7 @@ initializeControls
 	self addGainControl: #level min: 0.001 "-60 dB" max: 4.0 "+12 dB" value: 1.0 "0 dB".
 	(self addControl: #pan min: -1.0 max: 1.0 value: 0.0) printer: [:x| x abs < 0.01 ifTrue: ['Center'] ifFalse: [(x abs * 100.0) rounded printString, '% ', (x < 0.0 ifTrue: ['L'] ifFalse: ['R'])]]! !
 
-!AudioOut methodsFor: 'processing' stamp: 'len 3/Jun/2026 02:13:21'!
+!AudioOut methodsFor: 'processing' stamp: 'len 6/Jun/2026 23:37:13'!
 tick
 	| bus aux envelope |
 	inputL ifNil: [^ self].
@@ -4050,6 +4060,7 @@ tick
 	aux := Aux1.
 	envelope := Aux2.
 	meterLeftValue := meterLeftValue * 0.9 "dampen" max: (inputL rms max: inputL last abs).
+	"process the right channel first, using the left input if the right input is not connected:"
 	inputR
 		ifNil:
 			[meterRightValue := meterLeftValue.
@@ -4057,7 +4068,6 @@ tick
 		ifNotNil:
 			[meterRightValue := meterRightValue * 0.9 max: (inputR rms max: inputR last abs).
 			aux replaceWith: inputR].
-	"Apply levels:"
 	levelRight = targetLevelRight
 		ifTrue: [aux *= levelRight]
 		ifFalse:
@@ -4068,6 +4078,7 @@ tick
 					aux *= envelope].
 			levelRight := targetLevelRight].
 	bus rightBuffer += aux.
+	"process the left/mono channel:"
 	aux replaceWith: inputL.
 	levelLeft = targetLevelLeft
 		ifTrue: [aux *= levelLeft]
@@ -7099,82 +7110,130 @@ screen
 shapeOptions
 	^ #(Sine Triangle Square Rise Fall Random)! !
 
-!Quantizer methodsFor: 'accessing' stamp: 'len 5/Jun/2026 20:57:24'!
-fixedIntervals: aCollection
-	fixedIntervals := aCollection.
+!Quantizer methodsFor: 'accessing' stamp: 'len 7/Jun/2026 19:58:49'!
+pitchClasses: aCollection
+	pitchClasses := aCollection.
 	color := nil "to trigger update"! !
 
-!Quantizer methodsFor: 'controlling' stamp: 'len 5/Jun/2026 21:25:27'!
+!Quantizer methodsFor: 'controlling' stamp: 'len 7/Jun/2026 20:15:46'!
 update
-	| newMode newColor modeIntervals harmonicOrder orderedIntervals |
+	| newColor harmonicOrder threshold |
 	super update.
-	newMode := self get: #mode.
-	newColor := self get: #color.
-	(mode = newMode and: [color = newColor]) ifTrue: [^ self].
-	mode := newMode.
+	(newColor := self get: #color) = color ifTrue: [^ self].
 	color := newColor.
-	modeIntervals := #((0 1 3 5 6 8 10) (0 1 3 5 7 8 10) (0 2 3 5 7 8 10) (0 2 3 5 7 9 10) (0 2 4 5 7 9 10) (0 2 4 5 7 9 11) (0 2 4 6 7 9 11)) at: (newMode * 6.0) rounded + 1.
 	harmonicOrder := #(0 7 5 4 9 3 8 2 10 11 1 6). "from least to most disonant"
-	orderedIntervals := harmonicOrder select: [:each| modeIntervals includes: each].
-	modeIntervals := orderedIntervals first: (orderedIntervals size * newColor) ceiling.
-	self triggerEvent: #modeIntervalsChanged: with: modeIntervals.
-	intervals := fixedIntervals, (modeIntervals reject: [:each| fixedIntervals includes: each])! !
+	threshold := color * 12.0.
+	allowedPitchClasses := pitchClasses select: [:each| (harmonicOrder indexOf: each) <= threshold]! !
 
-!Quantizer methodsFor: 'initialization' stamp: 'len 5/Jun/2026 18:01:53'!
+!Quantizer methodsFor: 'initialization' stamp: 'len 7/Jun/2026 19:57:28'!
 initialize
 	super initialize.
-	fixedIntervals := #()! !
+	pitchClasses := #(0 2 4 5 7 9 11)! !
 
-!Quantizer methodsFor: 'initialization' stamp: 'len 5/Jun/2026 18:27:33'!
+!Quantizer methodsFor: 'initialization' stamp: 'len 7/Jun/2026 23:51:58'!
 initializeControls
 	super initializeControls.
 	self addControl: #in min: -1.0 max: 1.0 value: 0.0.
-	(self addControl: #mode min: 0.0 max: 1.0 value: 0.0)
-		coarseStep: 1.0 / 14.0;
-		printer: [:x| #(Locrian Phrygian Aeolian Dorian Mixolydian Ionian Lydian) at: (x*6.0) rounded + 1].
-	self addAmountControl: #color value: 0.0! !
+	self addAmountControl: #color value: 1.0! !
 
-!Quantizer methodsFor: 'processing' stamp: 'len 5/Jun/2026 18:00:16'!
+!Quantizer methodsFor: 'processing' stamp: 'len 7/Jun/2026 20:00:37'!
 tick
-	| value interval octave |
+	| value octave pitchClass |
 	value := (controls at: #in) modulation.
 	value = 0.0 ifTrue: [^ self].
 	value := value * 48.0.
 	octave := value // 12.0.
-	interval := value \\ 12.0.
-	self send: 12 * octave + ((intervals ifEmpty: [^ self]) detectMin: [:each| (each - interval) abs]) / 48.0! !
+	pitchClass := value \\ 12.0.
+	self send: 12.0 * octave + ((allowedPitchClasses ifEmpty: [^ self]) detectMin: [:each| (each - pitchClass) abs]) / 48.0! !
 
-!Quantizer methodsFor: 'serialization' stamp: 'len 5/Jun/2026 18:03:03'!
+!Quantizer methodsFor: 'serialization' stamp: 'len 7/Jun/2026 20:00:56'!
 settings
-	^ super settings at: #fixedIntervals put: fixedIntervals; yourself! !
+	^ super settings at: #pitchClasses put: pitchClasses; yourself! !
 
-!Quantizer methodsFor: 'serialization' stamp: 'len 5/Jun/2026 18:02:39'!
+!Quantizer methodsFor: 'serialization' stamp: 'len 7/Jun/2026 20:00:51'!
 settings: aDictionary
 	super settings: aDictionary.
-	aDictionary at: #fixedIntervals ifPresent: [:anArray| fixedIntervals := anArray]! !
+	aDictionary at: #pitchClasses ifPresent: [:anArray| pitchClasses := anArray]! !
 
-!Quantizer methodsFor: 'ui' stamp: 'len 5/Jun/2026 20:59:47'!
-panel
-	^​ ControlPanel new
-		addTextualControl: (controls at: #mode);
-		addTextualControl: (controls at: #color)! !
-
-!Quantizer methodsFor: 'ui' stamp: 'len 5/Jun/2026 18:09:24'!
+!Quantizer methodsFor: 'ui' stamp: 'len 7/Jun/2026 21:43:00'!
 patchable
 	| answer keys |
 	answer := PatchableMorph new model: self.
-	keys := QuantizerKeyboardMorph new.
-	keys when: #fixedIntervalsChanged: send: #fixedIntervals: to: self.
-	self when: #modeIntervalsChanged: send: #modeIntervals: to: keys.
+	keys := QuantizerControlMorph new control: (controls at: #color).
+	keys pitchClasses: pitchClasses.
+	keys when: #pitchClassesChanged: send: #pitchClasses: to: self.
 	self when: #output: send: #quantizedPitch: to: keys.
 	answer body addMorph: keys.
-	answer flap addMorph: self panel.
 	answer
 		addControlInput: #in;
-		addControlInput: #mode;
 		addControlInput: #color;
 		addControlOutput.
 	^ answer! !
+
+!Quantizer class methodsFor: 'class initialization' stamp: 'len 7/Jun/2026 19:32:49'!
+initialize
+	super initialize.
+	Scales := OrderedDictionary new addAll:
+		{#Locrian -> #(0 1 3 5 6 8 10).
+		#Phrygian -> #(0 1 3 5 7 8 10).
+		#Minor -> #(0 2 3 5 7 8 10). "Aeolian / Natural Minor scale"
+		#Dorian -> #(0 2 3 5 7 9 10).
+		#Mixolydian -> #(0 2 4 5 7 9 10).
+		#Major -> #(0 2 4 5 7 9 11). "Ionian / Major scale"
+		#Lydian -> #(0 2 4 6 7 9 11).
+		#'Melodic Minor' -> #(0 2 3 5 7 9 11). "Melodic Minor / Jazz Minor / Ionian ♭3 / Dorian ♯7"
+		#'Phrygian Dominant' -> #(0 1 4 5 7 8 10). "Phrygian Dominant / Phrygian ♯3 / Freygish"
+		#'Harmonic Minor' -> #(0 2 3 5 7 8 11). "Harmonic Minor / Aeolian ♯7"
+		#'Augmented Major' -> #(0 2 4 5 8 9 11). "Ionian ♯5 / Augmented Major"
+		#'Harmonic Major' -> #(0 2 4 5 7 8 11). "Harmonic Major / Ionian ♭6"
+		#'Octatonic' -> #(0 1 3 4 6 7 9 10).
+		#'Whole Tone' -> #(0 2 4 6 8 10)}! !
+
+!Quantizer class methodsFor: 'class initialization' stamp: 'len 7/Jun/2026 19:25:28'!
+initialize2
+	super initialize.
+	Scales := OrderedDictionary new
+		at: #Diatonic put:
+			{#Locrian -> #(0 1 3 5 6 8 10).
+			#Phrygian -> #(0 1 3 5 7 8 10).
+			#Aeolian -> #(0 2 3 5 7 8 10). "Aeolian / Natural Minor scale"
+			#Dorian -> #(0 2 3 5 7 9 10).
+			#Mixolydian -> #(0 2 4 5 7 9 10).
+			#Ionian -> #(0 2 4 5 7 9 11). "Ionian / Major scale"
+			#Lydian -> #(0 2 4 6 7 9 11)};
+		at: #'Melodic Minor' put:
+			{#'Altered' -> #(0 1 3 4 6 8 10). "Altered / Super Locrian / Locrian ♭5"
+			#'Locrian ♯2' -> #(0 2 3 5 6 8 10). "Locrian ♯2 / Half-Diminished"
+			#'Dorian ♭2' -> #(0 1 3 5 7 9 10). "Dorian ♭2 / Phrygian ♯6"
+			#'Mixolydian ♭6' -> #(0 2 4 5 7 8 10). "Mixolydian ♭6 / Aeolian Dominant / Hindu scale"
+			#'Melodic Minor' -> #(0 2 3 5 7 9 11). "Melodic Minor / Jazz Minor / Ionian ♭3 / Dorian ♯7"
+			#'Lydian Dominant' -> #(0 2 4 6 7 9 10). "Lydian Dominant / Lydian ♭7 / Acoustic / Mixolydian ♯4 / Overtone scale"
+			#'Lydian Augmented' -> #(0 2 4 6 8 9 11)}; "Lydian Augmented / Lydian ♯5"
+		at: #'Harmonic Minor' put:
+			{#Ultralocrian -> #(0 1 3 4 6 8 9). "Ultralocrian / Altered Diminished"
+			#'Phrygian Dominant' -> #(0 1 4 5 7 8 10). "Phrygian Dominant / Phrygian ♯3 / Freygish"
+			#'Locrian ♯6' -> #(0 1 3 5 6 9 10). "Locrian ♯6"
+			#'Harmonic Minor' -> #(0 2 3 5 7 8 11). "Harmonic Minor / Aeolian ♯7"
+			#'Dorian ♯4' -> #(0 2 3 6 7 9 11). "Dorian ♯4 / Romanian Minor / Ukranian Dorian"
+			#'Lydian ♯2' -> #(0 3 4 6 7 9 11). "Lydian ♯2"
+			#'Augmented Major' -> #(0 2 4 5 8 9 11)}; "Ionian ♯5 / Augmented Major"
+		at: #'Harmonic Major' put:
+			{#'Locrian Diminished' -> #(0 1 3 5 6 8 9). "Locrian ♭♭7 / Locrian Diminished"
+			#'Phrygian ♭4' -> #(0 1 3 4 7 8 10). "Phrygian ♭4 / Altered ♯5"
+			#'Mixolydian ♭2' -> #(0 1 4 5 7 9 10). "Mixolydian ♭2"
+			#'Dorian ♭5' -> #(0 2 3 5 6 9 11). "Dorian ♭5"
+			#'Lydian ♭3' -> #(0 2 3 6 7 9 11). "Lydian ♭3 / Melodic Minor ♯4"
+			#'Harmonic Major' -> #(0 2 4 5 7 8 11). "Harmonic Major / Ionian ♭6"
+			#'Lydian Augmented ♯2' -> #(0 3 4 6 8 9 11)}; "Lydian Augmented ♯2 / Lydian ♯2 ♯5"
+		at: #'Octatonic' put:
+			{#'Half-Whole' -> #(0 1 3 4 6 7 9 10).
+			#'Whole-Half' -> #(0 2 3 5 6 8 9 11)};
+		at: #'Hexatonic' put:
+			{#'Augmented' -> #(0 3 4 7 8 11).
+			#'Inverted Augmented' -> #(0 1 4 5 8 9)};
+		at: #'Whole Tone' put:
+			{#'Whole Tone' -> #(0 2 4 6 8 10)};
+		yourself! !
 
 !VelocityTracker methodsFor: 'controlling' stamp: 'len 7/Mar/2026 18:51:28'!
 adjustVelocityBy: aNumber
@@ -10415,6 +10474,10 @@ addKnob: aControl
 addKnob: aControl label: labelString
 	self addMorph: ((KnobControlMorph control: aControl) withLabel: labelString)! !
 
+!ControlPanel methodsFor: 'building' stamp: 'len 7/Jun/2026 20:24:31'!
+addLabeledTextualControl: aControl
+	self addMorph: (LabeledTextualControlMorph new control: aControl)! !
+
 !ControlPanel methodsFor: 'building' stamp: 'len 12/Mar/2026 17:50:35'!
 addRow
 	| row |
@@ -10798,10 +10861,9 @@ defaultFontSize
 defaultLabelFontSize
 	^ (FontFamily defaultPointSize * 0.6) truncated! !
 
-!ControlMorph methodsFor: 'initialization' stamp: 'len 3/Jun/2026 17:00:16'!
+!ControlMorph methodsFor: 'initialization' stamp: 'len 7/Jun/2026 20:26:26'!
 initialize
 	super initialize.
-	self control:​ Control new.
 	color := self defaultColor! !
 
 !ControlMorph class methodsFor: 'instance creation' stamp: 'len 4/Nov/2025 15:49:00'!
@@ -10959,6 +11021,100 @@ defaultExtent
 initialize
 	super initialize.
 	color := PatchMorph waveformColor! !
+
+!QuantizerControlMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:08:33'!
+blackKeyHeight
+	^ self morphHeight * 0.65! !
+
+!QuantizerControlMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:08:17'!
+blackKeyWidth
+	^ self whiteKeyWidth / 1.62! !
+
+!QuantizerControlMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Jun/2026 02:34:56'!
+defaultExtent
+	^`128@48`! !
+
+!QuantizerControlMorph methodsFor: 'as yet unclassified' stamp: 'len 8/Jun/2026 00:31:34'!
+drawOn: aCanvas
+	| w h whiteKeyWidth blackKeyWidth blackKeyHeight keyColor selectedColor selectedRadius x playingColor playingKey playingOctave allowedColor harmonicOrder threshold |
+	w := self morphWidth.
+	h := self morphHeight.
+	whiteKeyWidth := self whiteKeyWidth.
+	keyColor := Color white.
+	harmonicOrder := #(0 7 5 4 9 3 8 2 10 11 1 6). "from least to most disonant"
+	threshold := control value * 12.0.
+	allowedColor := Color redCathode.
+	selectedColor := Color black.
+	selectedRadius := whiteKeyWidth / 5.0.
+	playingNote ifNotNil: [:note|
+		playingKey := note \\ 12 + 1.
+		playingOctave := note // 12 + 4.
+		playingColor := Color okl: 0.6 + (0.2 * playingOctave / 10.0) c: 0.4 h: (#(0 7 5 4 9 3 8 2 10 11 1 6) indexOf: playingKey - 1) - 1 / 12.0 * 270.0 + 20.0 \\ 360.
+		"playingColor := Color okl: 0.7 c: 0.4 h: playingPitchClass / 12.0 * 270.0 \\ 360"].
+	#(1 3 5 6 8 10 12) withIndexDo: [:key :i|
+		x := i - 1 * whiteKeyWidth.
+		aCanvas fillRectangle: (x @ 0 extent: whiteKeyWidth @ h) color: (key = playingKey ifTrue: [playingColor] ifFalse: [keyColor]).
+		(selectedKeys at: key) ifTrue: [aCanvas fillColor: ((harmonicOrder indexOf: key - 1) <= threshold ifTrue: [allowedColor] ifFalse: [selectedColor]) do: [aCanvas circleCenter: x + (whiteKeyWidth / 2.0) @ (h * 0.8) radius: selectedRadius]]].
+	blackKeyWidth := self blackKeyWidth.
+	blackKeyHeight := self blackKeyHeight.
+	keyColor := Color black.
+	selectedColor := Color white.
+	selectedRadius := blackKeyWidth / 4.0.
+	#(2 4) withIndexDo: [:key :i|
+		x := i * whiteKeyWidth - (blackKeyWidth / 2.0).
+		aCanvas fillRectangle: (x @ 0 extent: blackKeyWidth @ blackKeyHeight) color: (key = playingKey ifTrue: [playingColor] ifFalse: [keyColor]).
+		(selectedKeys at: key) ifTrue: [aCanvas fillColor: ((harmonicOrder indexOf: key - 1) <= threshold ifTrue: [allowedColor] ifFalse: [selectedColor]) do: [aCanvas circleCenter: x + (blackKeyWidth / 2.0) @ (h * 0.45) radius: selectedRadius]]].
+	#(7 9 11) withIndexDo: [:key :i|
+		x := i + 3 * whiteKeyWidth - (blackKeyWidth / 2.0).
+		aCanvas fillRectangle: (x @ 0 extent: blackKeyWidth @ blackKeyHeight) color: (key = playingKey ifTrue: [playingColor] ifFalse: [keyColor]).
+		(selectedKeys at: key) ifTrue: [aCanvas fillColor: ((harmonicOrder indexOf: key - 1) <= threshold ifTrue: [allowedColor] ifFalse: [selectedColor]) do: [aCanvas circleCenter: x + (blackKeyWidth / 2.0) @ (h * 0.45) radius: selectedRadius]]]! !
+
+!QuantizerControlMorph methodsFor: 'as yet unclassified' stamp: 'len 8/Jun/2026 00:05:43'!
+handlesMouseDown: anEvent
+	^ true! !
+
+!QuantizerControlMorph methodsFor: 'as yet unclassified' stamp: 'len 7/Jun/2026 20:05:36'!
+initialize
+	super initialize.
+	selectedKeys := Array new: 12 withAll: false! !
+
+!QuantizerControlMorph methodsFor: 'as yet unclassified' stamp: 'len 8/Jun/2026 00:19:28'!
+mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
+	| offset key r |
+	offset := localEventPosition x / self morphWidth * 7.0.
+	key := #(1 3 5 6 8 10 12) at: offset truncated + 1.
+	localEventPosition y > self blackKeyHeight ifTrue: [^ self toggleKey: key].
+	r := self blackKeyWidth / self whiteKeyWidth.
+	(offset between: 1.0 - r and: 1.0 + r) ifTrue: [^ self toggleKey: 2].
+	(offset between: 2.0 - r and: 2.0 + r) ifTrue: [^ self toggleKey: 4].
+	(offset between: 4.0 - r and: 4.0 + r) ifTrue: [^ self toggleKey: 7].
+	(offset between: 5.0 - r and: 5.0 + r) ifTrue: [^ self toggleKey: 9].
+	(offset between: 6.0 - r and: 6.0 + r) ifTrue: [^ self toggleKey: 11].
+	self toggleKey: key! !
+
+!QuantizerControlMorph methodsFor: 'as yet unclassified' stamp: 'len 7/Jun/2026 20:14:41'!
+pitchClasses: anArray
+	selectedKeys := (0 to: 11) collect: [:each| anArray includes: each].
+	playingNote := nil.
+	self redrawNeeded! !
+
+!QuantizerControlMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jun/2026 02:10:32'!
+quantizedPitch: aNumber
+	| newPlayingNote |
+	newPlayingNote := (aNumber * 48.0) rounded.
+	playingNote = newPlayingNote ifTrue: [^ self].
+	playingNote := newPlayingNote.
+	self redrawNeeded! !
+
+!QuantizerControlMorph methodsFor: 'as yet unclassified' stamp: 'len 7/Jun/2026 20:05:36'!
+toggleKey: key
+	selectedKeys at: key put: (selectedKeys at: key) not.
+	self triggerEvent: #pitchClassesChanged: with: ((0 to: 11) select: [:each| (selectedKeys at: each+1)]).
+	self redrawNeeded! !
+
+!QuantizerControlMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:07:43'!
+whiteKeyWidth
+	^ self morphWidth / 7.0! !
 
 !SliderControlMorph methodsFor: 'drawing' stamp: 'len 13/Feb/2026 19:59:57'!
 drawHorizontalOn: aCanvas
@@ -11119,16 +11275,15 @@ stepTime
 wantsSteps
 	^ true! !
 
-!TextualControlMorph methodsFor: 'accessing' stamp: 'len 1/Dec/2025 15:21:00'!
+!TextualControlMorph methodsFor: 'accessing' stamp: 'len 7/Jun/2026 20:22:11'!
 control: aControl
 	super control: aControl.
-	contents := control printedBaseValue! !
+	self updateContents! !
 
-!TextualControlMorph methodsFor: 'dependency mechanism' stamp: 'len 1/Dec/2025 12:10:00'!
+!TextualControlMorph methodsFor: 'dependency mechanism' stamp: 'len 7/Jun/2026 20:21:47'!
 update: anObject
 	super update: anObject.
-	contents := control printedBaseValue.
-	self morphExtent: extent "will grow if necessary, depending on minimumExtent"! !
+	self updateContents! !
 
 !TextualControlMorph methodsFor: 'drawing' stamp: 'len 19/Jan/2026 20:08:35'!
 drawOn: aCanvas
@@ -11154,6 +11309,16 @@ initialize
 	super initialize.
 	font := FontFamily defaultFamilyPointSize: self defaultFontSize.
 	contents := ''! !
+
+!TextualControlMorph methodsFor: 'private' stamp: 'len 7/Jun/2026 20:21:57'!
+updateContents
+	contents := control printedBaseValue.
+	self morphExtent: extent "will grow if necessary, depending on minimumExtent"! !
+
+!LabeledTextualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 7/Jun/2026 20:24:04'!
+updateContents
+	contents := control printedBaseValueWithLabel.
+	self morphExtent: extent "will grow if necessary, depending on minimumExtent"! !
 
 !VariableWaveControlMorph methodsFor: 'accessing' stamp: 'len 3/May/2026 14:43:18'!
 waveBlock: aBlock
@@ -12939,101 +13104,6 @@ plot: aBlockOrCollection color: aColor
 !PlotMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Feb/2026 15:48:51'!
 requiresVectorCanvas
 	^ true ! !
-
-!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:08:33'!
-blackKeyHeight
-	^ self morphHeight * 0.65! !
-
-!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:08:17'!
-blackKeyWidth
-	^ self whiteKeyWidth / 1.62! !
-
-!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Jun/2026 02:34:56'!
-defaultExtent
-	^`128@48`! !
-
-!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jun/2026 19:55:09'!
-drawOn: aCanvas
-	| w h whiteKeyWidth blackKeyWidth blackKeyHeight color selectedColor selectedRadius x playingColor playingPitchClass fixedColor |
-	w := self morphWidth.
-	h := self morphHeight.
-	whiteKeyWidth := self whiteKeyWidth.
-	color := Color white.
-	fixedColor := Color redCathode.
-	selectedColor := Color black.
-	selectedRadius := whiteKeyWidth / 5.0.
-	playingNote ifNotNil: [:note|
-		playingPitchClass := note \\ 12 + 1.
-		playingColor := Color okl: 0.7 c: 0.4 h: (#(0 7 5 4 9 3 8 2 10 11 1 6) indexOf: playingPitchClass - 1) - 1 / 12.0 * 270.0 + 20.0 \\ 360.
-		"playingColor := Color okl: 0.7 c: 0.4 h: playingPitchClass / 12.0 * 270.0 \\ 360"].
-	#(1 3 5 6 8 10 12) withIndexDo: [:key :i|
-		x := i - 1 * whiteKeyWidth.
-		aCanvas fillRectangle: (x @ 0 extent: whiteKeyWidth @ h) color: (key = playingPitchClass ifTrue: [playingColor] ifFalse: [color]).
-		(modeKeys at: key) ifTrue: [aCanvas fillColor: selectedColor do: [aCanvas circleCenter: x + (whiteKeyWidth / 2.0) @ (h * 0.8) radius: selectedRadius]].
-		(fixedKeys at: key) ifTrue: [aCanvas fillColor: fixedColor do: [aCanvas circleCenter: x + (whiteKeyWidth / 2.0) @ (h * 0.8) radius: selectedRadius]]].
-	blackKeyWidth := self blackKeyWidth.
-	blackKeyHeight := self blackKeyHeight.
-	color := Color black.
-	selectedColor := Color white.
-	selectedRadius := blackKeyWidth / 4.0.
-	#(2 4) withIndexDo: [:key :i|
-		x := i * whiteKeyWidth - (blackKeyWidth / 2.0).
-		aCanvas fillRectangle: (x @ 0 extent: blackKeyWidth @ blackKeyHeight) color: (key = playingPitchClass ifTrue: [playingColor] ifFalse: [color]).
-		(modeKeys at: key) ifTrue: [aCanvas fillColor: selectedColor do: [aCanvas circleCenter: x + (blackKeyWidth / 2.0) @ (h * 0.45) radius: selectedRadius]].
-		(fixedKeys at: key) ifTrue: [aCanvas fillColor: fixedColor do: [aCanvas circleCenter: x + (blackKeyWidth / 2.0) @ (h * 0.45) radius: selectedRadius]]].
-	#(7 9 11) withIndexDo: [:key :i|
-		x := i + 3 * whiteKeyWidth - (blackKeyWidth / 2.0).
-		aCanvas fillRectangle: (x @ 0 extent: blackKeyWidth @ blackKeyHeight) color: (key = playingPitchClass ifTrue: [playingColor] ifFalse: [color]).
-		(modeKeys at: key) ifTrue: [aCanvas fillColor: selectedColor do: [aCanvas circleCenter: x + (blackKeyWidth / 2.0) @ (h * 0.45) radius: selectedRadius]].
-		(fixedKeys at: key) ifTrue: [aCanvas fillColor: fixedColor do: [aCanvas circleCenter: x + (blackKeyWidth / 2.0) @ (h * 0.45) radius: selectedRadius]]]! !
-
-!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 20:58:27'!
-handlesMouseDown: anEvent
-	^ true
-! !
-
-!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jun/2026 18:13:10'!
-initialize
-	super initialize.
-	fixedKeys := Array new: 12 withAll: false.
-	modeKeys := fixedKeys copy! !
-
-!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jun/2026 18:19:21'!
-modeIntervals: anArray
-	modeKeys := (0 to: 11) collect: [:each| anArray includes: each].
-	self redrawNeeded! !
-
-!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:44:43'!
-mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
-	| offset key r |
-	offset := localEventPosition x / self morphWidth * 7.0.
-	key := #(1 3 5 6 8 10 12) at: offset truncated + 1.
-	localEventPosition y > self blackKeyHeight ifTrue: [^ self toggleKey: key].
-	r := self blackKeyWidth / self whiteKeyWidth.
-	(offset between: 1.0 - r and: 1.0 + r) ifTrue: [^ self toggleKey: 2].
-	(offset between: 2.0 - r and: 2.0 + r) ifTrue: [^ self toggleKey: 4].
-	(offset between: 4.0 - r and: 4.0 + r) ifTrue: [^ self toggleKey: 7].
-	(offset between: 5.0 - r and: 5.0 + r) ifTrue: [^ self toggleKey: 9].
-	(offset between: 6.0 - r and: 6.0 + r) ifTrue: [^ self toggleKey: 11].
-	^ self toggleKey: key! !
-
-!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jun/2026 02:10:32'!
-quantizedPitch: aNumber
-	| newPlayingNote |
-	newPlayingNote := (aNumber * 48.0) rounded.
-	playingNote = newPlayingNote ifTrue: [^ self].
-	playingNote := newPlayingNote.
-	self redrawNeeded! !
-
-!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jun/2026 18:11:52'!
-toggleKey: key
-	fixedKeys at: key put: (fixedKeys at: key) not.
-	self triggerEvent: #fixedIntervalsChanged: with: ((0 to: 11) select: [:each| (fixedKeys at: each+1)]).
-	self redrawNeeded! !
-
-!QuantizerKeyboardMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026 21:07:43'!
-whiteKeyWidth
-	^ self morphWidth / 7.0! !
 
 !RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 8/Mar/2026 21:35:37'!
 color: aColor
@@ -16253,4 +16323,5 @@ Supersaw initialize!
 Multisample initialize!
 Sample initialize!
 Wavetable initialize!
+Quantizer initialize!
 Spectrogram initialize!

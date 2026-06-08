@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 7 June 2026 at 10:05:44 pm'!
+'From Cuis7.9 [latest update: #7983] on 8 June 2026 at 3:50:07 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 31!
+!provides: 'Tracker' 1 32!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -29,8 +29,8 @@ TrackerWindow class
 
 !classDefinition: #InstrumentEditorMorph category: #'Tracker-Morphic'!
 ZoomerMorph subclass: #InstrumentEditorMorph
-	instanceVariableNames: 'tracker clipboard'
-	classVariableNames: ''
+	instanceVariableNames: 'tracker'
+	classVariableNames: 'ClipboardBuffer'
 	poolDictionaries: ''
 	category: 'Tracker-Morphic'!
 !classDefinition: 'InstrumentEditorMorph class' category: #'Tracker-Morphic'!
@@ -49,8 +49,8 @@ MultitrackMeterMorph class
 
 !classDefinition: #PatternEditorMorph category: #'Tracker-Morphic'!
 BoxMorph subclass: #PatternEditorMorph
-	instanceVariableNames: 'tracker cursorPosition font labelFont labelMonoFont editStep showCursor pauseBlinking clipboard selectionLineStart selectionTrackStart'
-	classVariableNames: 'FXColors'
+	instanceVariableNames: 'tracker cursorPosition font labelFont labelMonoFont editStep showCursor pauseBlinking selectionLineStart selectionTrackStart showFXColumns'
+	classVariableNames: 'ClipboardBuffer FXColors'
 	poolDictionaries: ''
 	category: 'Tracker-Morphic'!
 !classDefinition: 'PatternEditorMorph class' category: #'Tracker-Morphic'!
@@ -634,22 +634,22 @@ delete
 	model stop.
 	super delete! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Jan/2026 16:24:19'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 15:28:14'!
 clipboardCopy
 	(self activeHand keyboardFocus ifNil: [^ self])
-		withAllOwnersDo: [:each| (each isKindOf: PatchableMorph) ifTrue: [clipboard := each model copy. ^ self]]! !
+		withAllOwnersDo: [:each| (each isKindOf: PatchableMorph) ifTrue: [ClipboardBuffer := each model copy. ^ self]]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Jan/2026 16:23:50'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 15:28:18'!
 clipboardCut
 	(self activeHand keyboardFocus ifNil: [^ self])
-		withAllOwnersDo: [:each| (each isKindOf: PatchableMorph) ifTrue: [clipboard := each model copy. each delete. ^ self]]! !
+		withAllOwnersDo: [:each| (each isKindOf: PatchableMorph) ifTrue: [ClipboardBuffer := each model copy. each delete. ^ self]]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 18/Feb/2026 17:29:51'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 15:28:05'!
 clipboardPaste
 	| patch |
-	clipboard ifNil: [^ self].
+	ClipboardBuffer ifNil: [^ self].
 	patch := self patch ifNil: [^ self].
-	patch addMorph: clipboard copy patchable position: ((patch internalizeFromWorld: self activeHand morphPosition))! !
+	patch addMorph: ClipboardBuffer copy patchable position: ((patch internalizeFromWorld: self activeHand morphPosition))! !
 
 !InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 19/Apr/2026 22:52:50'!
 duplicateInstrument
@@ -841,12 +841,12 @@ adjustFontSizeBy: anInteger
 	font := font family atPointSize: (pointSizes atPin: (pointSizes indexOf: font pointSize) + anInteger).
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026 16:13:28'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 15:28:57'!
 clipboardCopy
 	| pattern |
-	selectionLineStart ifNil: [clipboard := {{(tracker selectedTrigger ifNil: [^ self]) copy}}. ^ self].
+	selectionLineStart ifNil: [ClipboardBuffer := {{(tracker selectedTrigger ifNil: [^ self]) copy}}. ^ self].
 	pattern := tracker selectedPattern.
-	clipboard := ((selectionLineStart min: tracker cursorLine) to: (selectionLineStart max: tracker cursorLine))
+	ClipboardBuffer := ((selectionLineStart min: tracker cursorLine) to: (selectionLineStart max: tracker cursorLine))
 		collect: [:i|
 			((selectionTrackStart min: tracker cursorTrack) to: (selectionTrackStart max: tracker cursorTrack)) 				collect: [:k| pattern track: k at: i]]! !
 
@@ -854,14 +854,14 @@ clipboardCopy
 clipboardCut
 	self clipboardCopy; selectionDelete! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 22/Feb/2026 22:16:31'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 15:28:49'!
 clipboardPaste
 	| i0 k0 pattern |
 	selectionLineStart := selectionTrackStart := nil.
 	pattern := tracker selectedPattern.
 	k0 := tracker cursorTrack - 1.
 	i0 := tracker cursorLine - 1.
-	(clipboard ifNil: [^ self]) withIndexDo: [:line :i|
+	(ClipboardBuffer ifNil: [^ self]) withIndexDo: [:line :i|
 		line withIndexDo: [:trigger :k|
 			(k0 + k <= tracker tracks size and: [i0 + i <= pattern length])
 				ifTrue: [pattern track: k0 + k at: i0 + i put: trigger copy]]].
@@ -951,6 +951,12 @@ setPatternLength
 	tracker isPlaying ifTrue: [^ self].
 	self request: 'Pattern length' initialAnswer: tracker selectedPattern length printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| tracker setSelectedPatternLength: s asNumber. self redrawNeeded]! !
 
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 15:46:35'!
+toggleShowFXColumns
+	showFXColumns := showFXColumns not.
+	cursorPosition := cursorPosition min: self tracksMaxPosition.
+	self redrawNeeded! !
+
 !PatternEditorMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 16:56:46'!
 activeBounds
 	"Answer a subrectangle of the bounds of the receiver that should preferably be kept visible inside a scroller.
@@ -985,7 +991,7 @@ drawOn: aCanvas
 	self drawCursorOn: aCanvas.
 	self drawPatternOn: aCanvas! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 26/Apr/2026 22:49:01'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Jun/2026 15:37:15'!
 drawPatternOn: aCanvas
 	| lineSpacing charWidth y unsetColor noteColor velocityColor pattern endLine middle startLine darkColor lightColor xLeft xRight beatColor trackWidth |
 	pattern := tracker selectedPattern.
@@ -1045,12 +1051,13 @@ drawPatternOn: aCanvas
 				aCanvas drawString: s at: x @ y font: font color: c.
 				x := charWidth * 2.5 + x]
 			effectsDo: [:fx|
-				fx
-					ifNil: [aCanvas drawString: '···' at: x @ y font: font color: unsetColor]
-					ifNotNil: [:v| | cmd |
-						cmd := v bitShift: -8.
-						aCanvas drawString: (Character codePoint: cmd) asString, ((v bitAnd: 16rFF) printStringBase: 16 nDigits: 2) at: x @ y font: font color: (FXColors at: cmd ifAbsent: [unsetColor])].
-				x := charWidth * 3.5 + x]
+				showFXColumns ifTrue:
+					[fx
+						ifNil: [aCanvas drawString: '···' at: x @ y font: font color: unsetColor]
+						ifNotNil: [:v| | cmd |
+							cmd := v bitShift: -8.
+							aCanvas drawString: (Character codePoint: cmd) asString, ((v bitAnd: 16rFF) printStringBase: 16 nDigits: 2) at: x @ y font: font color: (FXColors at: cmd ifAbsent: [unsetColor])].
+					x := charWidth * 3.5 + x]]
 			emptyTriggersDo:
 				["aCanvas image: emptyTriggerImage at: x @ y.
 				x := trackWidth + x"
@@ -1060,10 +1067,11 @@ drawPatternOn: aCanvas
 				x := charWidth * 3.5 + x.
 				aCanvas drawString: '··' at: x @ y font: font color: unsetColor.
 				x := charWidth * 2.5 + x.
-				aCanvas drawString: '···' at: x @ y font: font color: unsetColor.
-				x := charWidth * 3.5 + x.
-				aCanvas drawString: '···' at: x @ y font: font color: unsetColor.
-				x := charWidth * 3.5 + x].
+				showFXColumns ifTrue:
+					[aCanvas drawString: '···' at: x @ y font: font color: unsetColor.
+					x := charWidth * 3.5 + x.
+					aCanvas drawString: '···' at: x @ y font: font color: unsetColor.
+					x := charWidth * 3.5 + x]].
 		y := y + lineSpacing]! !
 
 !PatternEditorMorph methodsFor: 'drawing' stamp: 'len 11/Mar/2026 15:11:42'!
@@ -1102,15 +1110,17 @@ drawTracksOn: aCanvas
 		x := x + (charWidth/2.0)].
 	aCanvas fillRectangle: (x @ 0 corner: extent x @ headerLineWidth) color: Color darkGray! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 7/Feb/2026 19:18:41'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Jun/2026 15:39:56'!
 tracksWidthInCharacters
-	^ 15! !
+	^ showFXColumns ifTrue: [15] ifFalse: [8]! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Mar/2026 19:17:43'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 8/Jun/2026 15:44:13'!
 handleCommandHotkey: anEvent
 	"Font size:"
 	anEvent keyCharacter = $- ifTrue: [self adjustFontSizeBy: -1. ^ true].
 	anEvent keyCharacter = $= ifTrue: [self adjustFontSizeBy: 1. ^ true].
+	"Show/hide FX columns:"
+	anEvent keyCharacter = $' ifTrue: [self toggleShowFXColumns. ^ true].
 	"Pattern properties:"
 	anEvent keyCharacter = $l ifTrue: [self setPatternLength. ^ true].
 	anEvent keyCharacter = $b ifTrue: [self setPatternLPB. ^ true].
@@ -1249,7 +1259,7 @@ minimumExtent
 	n := tracker tracks size.
 	^ (font widthOf: $X) * (n * (self tracksWidthInCharacters + 0.5) + 4.5) @ (font lineSpacing * 16)! !
 
-!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 9/Apr/2026 15:22:54'!
+!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 8/Jun/2026 15:49:20'!
 initialize
 	super initialize.
 "	font := FontFamily familyName: 'impulseBig' pointSize: 18."
@@ -1259,7 +1269,8 @@ initialize
 	labelMonoFont := font.
 	editStep := 1.
 	showCursor := true.
-	pauseBlinking := false! !
+	pauseBlinking := false.
+	showFXColumns := true! !
 
 !PatternEditorMorph methodsFor: 'initialization' stamp: 'len 14/Mar/2026 18:36:21'!
 setTracker: aTracker
@@ -1317,9 +1328,9 @@ stopBlinking
 		self redrawNeeded
 		"textCursorRect ifNotNil: [ :r | self invalidateLocalRect: r ]"]! !
 
-!PatternEditorMorph methodsFor: 'private' stamp: 'len 20/Dec/2025 20:21:18'!
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 8/Jun/2026 15:38:58'!
 tracksMaxPosition
-	^ 11! !
+	^ showFXColumns ifTrue: [11] ifFalse: [5]! !
 
 !PatternEditorMorph methodsFor: 'private' stamp: 'len 9/Mar/2026 19:07:27'!
 updateCursor

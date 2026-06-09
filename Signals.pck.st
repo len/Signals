@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 9 June 2026 at 11:32:02 pm'!
+'From Cuis7.9 [latest update: #7983] on 10 June 2026 at 2:03:02 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 585!
+!provides: 'Signals' 1 586!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -15991,12 +15991,13 @@ noteToName
 	midiKey := self rounded.
 	^ (#('C‐' 'C♯' 'D‐' 'D♯' 'E‐' 'F‐' 'F♯' 'G‐' 'G♯' 'A‐' 'A♯' 'B‐') at: (midiKey \\ 12) + 1) , (#('N' '0' '1' '2' '3' '4' '5' '6' '7' '8' '9') at: (midiKey // 12) + 1)! !
 
-!Number methodsFor: '*signals' stamp: 'len 9/Jun/2026 22:47:18'!
+!Number methodsFor: '*signals' stamp: 'len 10/Jun/2026 00:55:28'!
 noteToNameModulo: n
 	"Return a note name corresponding to the closest MIDI key, for tuning systems with an octave divided in n intervals. The answer is always 3 characters long."
-	| relativeMidiKey |
+	| relativeMidiKey degree |
 	relativeMidiKey := self rounded - 60.
-	^ (relativeMidiKey \\ n printStringBase: 10 length: 2 padded: true), (#('ₙ' '₀' '₁' '₂' '₃' '₄' '₅' '₆' '₇' '₈' '₉') at: (relativeMidiKey // n) + 6 ifAbsent: ['?'])! !
+	degree := relativeMidiKey \\ n.
+	^ (degree < 10 ifTrue: [' ', degree printString] ifFalse: [degree printString]), (#('ₙ' '₀' '₁' '₂' '₃' '₄' '₅' '₆' '₇' '₈' '₉') at: (relativeMidiKey // n) + 6 ifAbsent: ['?'])! !
 
 !Number methodsFor: '*signals' stamp: 'len 13/Oct/2025 15:56:00'!
 ratioToCents

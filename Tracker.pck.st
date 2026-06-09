@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 9 June 2026 at 11:33:05 pm'!
+'From Cuis7.9 [latest update: #7983] on 10 June 2026 at 2:03:06 am'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 35!
+!provides: 'Tracker' 1 36!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -129,7 +129,7 @@ Trigger class
 
 !classDefinition: #Tuning category: #'Tracker-Kernel'!
 Object subclass: #Tuning
-	instanceVariableNames: 'degrees label'
+	instanceVariableNames: 'intervals label'
 	classVariableNames: 'Library'
 	poolDictionaries: ''
 	category: 'Tracker-Kernel'!
@@ -2060,12 +2060,12 @@ muted
 muted: aBoolean
 	muted := aBoolean! !
 
-!Track methodsFor: 'accessing' stamp: 'len 9/Jun/2026 23:03:36'!
+!Track methodsFor: 'accessing' stamp: 'len 10/Jun/2026 02:00:35'!
 noteStringFrom: note
 	"Answer a string to represent the given MIDI note, depending on the tuning of this track."
 	note ifNil: [^ '···'].
 	note = -1 ifTrue: [^ 'OFF'].
-	^ note noteToNameModulo: (tuning ifNil: [^ note noteToName]) degrees size! !
+	^ note noteToNameModulo: (tuning ifNil: [^ note noteToName]) intervals size! !
 
 !Track methodsFor: 'accessing' stamp: 'len 17/Dec/2025 16:44:47'!
 soloed
@@ -2900,48 +2900,44 @@ isReverse
 transposeBy: semitones
 	self isNoteOn ifTrue: [note := note + semitones min: 127 max: 0]! !
 
-!Tuning methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 23:22:31'!
-asJson
-	^ OrderedDictionary new
-		at: #label put: label;
-		at: #degrees put: degrees;
-		yourself! !
+!Tuning methodsFor: 'accessing' stamp: 'len 10/Jun/2026 02:00:32'!
+intervals
+	^ intervals! !
 
-!Tuning methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 19:01:16'!
-degrees
-	^ degrees! !
-
-!Tuning methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 17:27:00'!
-degrees: anArray
-	degrees := anArray asFloat32Array! !
-
-!Tuning methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 18:47:48'!
+!Tuning methodsFor: 'accessing' stamp: 'len 9/Jun/2026 18:47:48'!
 label
 	^ label! !
 
-!Tuning methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 18:48:00'!
-label: aString
-	label := aString! !
-
-!Tuning methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 17:22:53'!
+!Tuning methodsFor: 'accessing' stamp: 'len 10/Jun/2026 01:56:38'!
 map: midiKey
 	| cents degree octave relativeNote |
 	relativeNote := midiKey - 60.0.
-	octave := relativeNote // degrees size.
-	degree := relativeNote \\ degrees size.
-	cents := octave * degrees last + (degree < 1.0 ifTrue: [degrees first * degree] ifFalse: [degrees atLinear: degree]).
+	octave := relativeNote // intervals size.
+	degree := relativeNote \\ intervals size.
+	cents := octave * intervals last + (degree < 1.0 ifTrue: [intervals first * degree] ifFalse: [intervals atLinear: degree]).
 	^ (60 noteToHertz * (2.0 raisedTo: cents / 1200.0)) hertzToNote! !
 
-!Tuning methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 18:57:00'!
-ratios: anArray
-	^ self degrees: (anArray collect: [:each| (each log: 2.0) * 1200.0]) sorted! !
+!Tuning methodsFor: 'serialization' stamp: 'len 10/Jun/2026 02:00:43'!
+asJson
+	^ OrderedDictionary new
+		at: #label put: label;
+		at: #intervals put: intervals;
+		yourself! !
 
-!Tuning methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 23:23:05'!
+!Tuning methodsFor: 'serialization' stamp: 'len 10/Jun/2026 02:00:48'!
 readFromJson: json
 	label := json at: #label.
-	degrees := (json at: #degrees) asFloat32Array! !
+	intervals := (json at: #intervals) asFloat32Array! !
 
-!Tuning class methodsFor: 'accessing' stamp: 'len 9/Jun/2026 22:14:43'!
+!Tuning methodsFor: 'private' stamp: 'len 10/Jun/2026 01:56:45'!
+intervals: anArray
+	intervals := anArray asFloat32Array! !
+
+!Tuning methodsFor: 'private' stamp: 'len 9/Jun/2026 18:48:00'!
+label: aString
+	label := aString! !
+
+!Tuning class methodsFor: 'library' stamp: 'len 9/Jun/2026 22:14:43'!
 library
 	^ Library! !
 
@@ -2951,21 +2947,29 @@ initialize
 	Library := OrderedCollection new.
 	Library addAll: {self edo: 7. self edo: 19. self edo: 22. self edo: 31. self fiveLimitJustIntonation. self pythagorean. self harmonic: 8}! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026 18:56:37'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 01:59:43'!
 edo: anInteger
-	^ self new degrees: ((1 to: anInteger) collect: [:i| 1200.0 * i / anInteger]); label: anInteger printString, '-EDO'! !
+	^ self label: anInteger printString, '-EDO' intervals: ((1 to: anInteger) collect: [:i| 1200.0 * i / anInteger])! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026 18:57:16'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 01:57:28'!
 fiveLimitJustIntonation
-	^ self new ratios: {16/15. 9/8. 6/5. 5/4. 4/3. 45/32. 3/2. 8/5. 5/3. 9/5. 15/8. 2/1}; label: '5-Limit JI'! !
+	^ self label: '5-Limit JI' ratios: {16/15. 9/8. 6/5. 5/4. 4/3. 45/32. 3/2. 8/5. 5/3. 9/5. 15/8. 2/1}! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026 18:57:29'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 01:59:10'!
 harmonic: n
-	^ self new ratios: ((n to: n*2) collect: [:m| m / n]); label: 'Harmonic ', n printString! !
+	^ self label: 'Harmonic ', n printString ratios: ((n to: n*2) collect: [:m| m / n])! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026 18:57:39'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 01:58:37'!
+label: aString intervals: anArray
+	^ self new label: aString; intervals: anArray! !
+
+!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 01:58:52'!
+label: aString ratios: aCollection
+	^ self label: aString intervals: (aCollection collect: [:each| (each log: 2.0) * 1200.0]) sorted! !
+
+!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 01:59:22'!
 pythagorean
-	^ self new ratios: {256/243. 9/8. 32/27. 81/64. 4/3. 1024/729. 3/2. 128/81. 27/16. 16/9. 243/128. 2/1}; label: 'Pythagorean'! !
+	^ self label: 'Pythagorean' ratios: {256/243. 9/8. 32/27. 81/64. 4/3. 1024/729. 3/2. 128/81. 27/16. 16/9. 243/128. 2/1}! !
 DarkerTheme initialize!
 PatternEditorMorph initialize!
 Tuning initialize!

@@ -15,7 +15,7 @@ The following are some of the features of Signals:
 * digital filters based on biquads and SVF
 * virtual analog filters
 * wave shapers (decimator, overdrive, tape/tube saturation, wavefolder, etc)
-* effects (reverbs, delays, flanger, phaser, chorus, etc)
+* effects (reverbs, delays, flanger, phaser, chorus, pitch shifter, etc)
 * visualizations (oscilloscope, spectrogram, spectrum analyzer, vectorscope)
 * modules to mix and pan, stereo widening, compressor, limiter, EQ, etc
 * internal oversampling when needed (typically in modules with nonlinearities that are more susceptible to aliasing)
@@ -23,6 +23,7 @@ The following are some of the features of Signals:
 * multiple approaches to control by modulation modules (envelopes, LFOs) or by tracker sequencing
 * audio routing through buses (send effects, etc)
 * portamento and legato support
+* microtuning with arbitrary tuning systems per track
 * all code in pure Smalltalk, and available all the time for browsing or modification while running (lively environment)
 
 ### Smalltalk
@@ -47,9 +48,9 @@ Finally, open a FileList, go to Signals/data/projects/ and choose any of the exa
 On the screenshot above you can see an open tracker window. At the top there is the "instrument editor" that contains a patch of modules connected by wires (an instrument, or possibly an effect or other kind of audio processing patch). Each module morph contains controls (like knobs, sliders, a wave, etc) that can be changed with mouse scroll or the arrow keys (with shift pressed to do fine adjustments). The instrument editor is fully zoomable, you can zoom in/out with Cmd-mouse-scroll and pan by mouse-dragging the background. The instrument editor shows the patch for the instrument at current cursor position in the pattern editor below it; you have to move the cursor to see the different patches, or enter a new instrument number to create a new empty patch.
 
 At the bottom left there is the "sequencer" or "arranger", that contains the list of patterns to be played. And at the bottom right the "pattern editor" that shows the current pattern and allows you to edit the triggers (notes and effect commands, like a typical tracker). Each track contains the following columns: instrument number, note, velocity, fx1 and fx2. The following are the fx commands currently implemented:
-* Cxy set velocity to x (0 = 0.0, F = 1.0) after (y+1)/16th of a line
-* Rxx retrigger every (xx+1)/256th of a line
-* Gxx glide to note at speed xx in 1/16th of a line
+* Cxy set velocity to x (0 = 0.0, F = 1.0) after (y+1)/16 of a line (0 = 1/16 of a line, F = 1 line)
+* Rxx retrigger every (xx+1)/256 of a line (00 = 1/16 of a line, FF = 16 lines)
+* Gxx glide to note in (xx+1)/16 of a line (00 = 1/16 of a line, FF = 16 lines)
 * Lxx set instrument volume level to xx (00 = 0.0, FF = 1.0)
 * Pxx set instrument pan (00 = left, 80 = center, FF = right)
 * Ixx / Oxx adjust volume level up/down
@@ -58,9 +59,9 @@ At the bottom left there is the "sequencer" or "arranger", that contains the lis
 * +xx / -xx adjust velocity up/down
 * Sxx set sample offset
 * <xx / >xx set speed to xx and play backwards / forward
-* 0xx to 9xx set control input (00 = 0.0, 7F = 1.0, 80 = -1.0)
+* 0xx to 9xx set control input
 * Fxx set BPM to xx
-* Qxx delay trigger by xx/256th of a line
+* Qxx delay trigger by (xx+1)/256 of a line (00 = 1/256 of a line, FF = 1 line)
 * Yxx set the probability of playing the trigger (00 = never, FF = always)
 
 ### Hotkeys and keyboard mapping
@@ -79,17 +80,19 @@ Pattern editor:
 * Opt-Up/Down go to previous/next pattern in the sequence
 * Shift-Opt-Up/Down move current pattern to the previous/next position in the sequence
 * ]/[ transpose trigger or selection one octave up/down
-* }/{ transpose trigger or selection one semitone up/down
+* }/{ transpose trigger or selection one note up/down
 * Cmd-[/] change octave for entering notes with the computer keyboard
 * Cmd-f set tracker BPM
 * Cmd-g set tracker swing
 * Cmd-l set pattern length
-* Cmd-b set LPB (lines per beat)
+* Cmd-b set pattern LPB (lines per beat)
+* Cmd-u set track tuning system (default 12-TET)
 * Cmd-r rename instrument
 * Cmd-o and Cmd-s open and save a project (the whole song)
 * Cmd-i and Cmd-e import and export an instrument
 * Cmd-j toggle the lower pane (the pattern editor and sequencer)
 * Cmd-+/- increase/decrease pattern editor font size
+* Cmd-' show/hide FX columns
 
 Instrument editor:
 

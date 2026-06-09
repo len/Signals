@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 9 June 2026 at 2:57:52 pm'!
+'From Cuis7.9 [latest update: #7983] on 9 June 2026 at 11:32:02 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 584!
+!provides: 'Signals' 1 585!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -386,7 +386,7 @@ Modulator class
 
 !classDefinition: #ControlIn category: #'Signals-IO'!
 Modulator subclass: #ControlIn
-	instanceVariableNames: 'values port lastValue'
+	instanceVariableNames: 'values port lastValue bipolar'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-IO'!
@@ -6281,6 +6281,14 @@ send: aNumber
 patchable
 	^ super patchable addControlOutput; yourself! !
 
+!ControlIn methodsFor: 'accessing' stamp: 'len 9/Jun/2026 21:31:18'!
+bipolar
+	^ bipolar! !
+
+!ControlIn methodsFor: 'accessing' stamp: 'len 9/Jun/2026 21:31:29'!
+bipolar: aBoolean
+	bipolar := aBoolean! !
+
 !ControlIn methodsFor: 'accessing' stamp: 'len 3/Jun/2026 02:14:12'!
 port
 	^ port! !
@@ -6289,15 +6297,17 @@ port
 port: anInteger
 	port := anInteger! !
 
-!ControlIn methodsFor: 'initialization' stamp: 'len 3/Jun/2026 02:14:01'!
+!ControlIn methodsFor: 'initialization' stamp: 'len 9/Jun/2026 21:31:41'!
 initialize
 	super initialize.
 	port := 0.
+	bipolar := false.
 	lastValue := 0.0! !
 
-!ControlIn methodsFor: 'processing' stamp: 'len 3/Jun/2026 02:15:38'!
+!ControlIn methodsFor: 'processing' stamp: 'len 9/Jun/2026 21:38:46'!
 tick
 	lastValue := values at: port + 1.
+	bipolar ifTrue: [lastValue := lastValue * 255.0 / 128.0 - 1.0].
 	lastValue = 0.0 ifFalse: [self send: lastValue]! !
 
 !ControlIn methodsFor: 'serialization' stamp: 'len 3/Jun/2026 02:16:11'!
@@ -6309,12 +6319,13 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #port ifPresent: [:anInteger| port := anInteger]! !
 
-!ControlIn methodsFor: 'ui' stamp: 'len 3/Jun/2026 02:15:22'!
+!ControlIn methodsFor: 'ui' stamp: 'len 9/Jun/2026 21:31:07'!
 patchable
 	| answer screen |
 	answer := PatchableMorph new model: self.
 	screen := ControlPanel new gap: 0;
 		addMorph: (PluggableChoiceMorph new color: PatchMorph waveformColor3; options: (0 to: 9); model: self; getter: #port; setter: #port:);
+		addMorph: (PluggableToggleMorph new label: '±'; model: self; getter: #bipolar; setter: #bipolar:);
 		addMorph: (RollingMeterMorph new color: PatchMorph waveformColor3; meterBlock: [lastValue]).
 	answer body addMorph: screen.
 	answer addControlOutput.
@@ -15979,6 +15990,13 @@ noteToName
 	| midiKey |
 	midiKey := self rounded.
 	^ (#('C‐' 'C♯' 'D‐' 'D♯' 'E‐' 'F‐' 'F♯' 'G‐' 'G♯' 'A‐' 'A♯' 'B‐') at: (midiKey \\ 12) + 1) , (#('N' '0' '1' '2' '3' '4' '5' '6' '7' '8' '9') at: (midiKey // 12) + 1)! !
+
+!Number methodsFor: '*signals' stamp: 'len 9/Jun/2026 22:47:18'!
+noteToNameModulo: n
+	"Return a note name corresponding to the closest MIDI key, for tuning systems with an octave divided in n intervals. The answer is always 3 characters long."
+	| relativeMidiKey |
+	relativeMidiKey := self rounded - 60.
+	^ (relativeMidiKey \\ n printStringBase: 10 length: 2 padded: true), (#('ₙ' '₀' '₁' '₂' '₃' '₄' '₅' '₆' '₇' '₈' '₉') at: (relativeMidiKey // n) + 6 ifAbsent: ['?'])! !
 
 !Number methodsFor: '*signals' stamp: 'len 13/Oct/2025 15:56:00'!
 ratioToCents

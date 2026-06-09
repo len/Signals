@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 9 June 2026 at 6:21:40 pm'!
+'From Cuis7.9 [latest update: #7983] on 9 June 2026 at 11:33:05 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 34!
+!provides: 'Tracker' 1 35!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -79,7 +79,7 @@ TrackerBarMorph class
 
 !classDefinition: #Instrument category: #'Tracker-Kernel'!
 Object subclass: #Instrument
-	instanceVariableNames: 'label patch modules noteReceivers velocityReceivers gateReceivers samples audioOutput controlValues note noteIncrement glideTicks track trigger tuning'
+	instanceVariableNames: 'label patch modules noteReceivers velocityReceivers gateReceivers samples audioOutput controlValues note noteIncrement glideTicks track trigger'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Tracker-Kernel'!
@@ -99,7 +99,7 @@ Pattern class
 
 !classDefinition: #Track category: #'Tracker-Kernel'!
 Object subclass: #Track
-	instanceVariableNames: 'tracker color muted soloed instrument ticksToTrigger trigger'
+	instanceVariableNames: 'tracker color muted soloed instrument ticksToTrigger trigger tuning'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Tracker-Kernel'!
@@ -129,8 +129,8 @@ Trigger class
 
 !classDefinition: #Tuning category: #'Tracker-Kernel'!
 Object subclass: #Tuning
-	instanceVariableNames: 'degrees'
-	classVariableNames: ''
+	instanceVariableNames: 'degrees label'
+	classVariableNames: 'Library'
 	poolDictionaries: ''
 	category: 'Tracker-Kernel'!
 !classDefinition: 'Tuning class' category: #'Tracker-Kernel'!
@@ -961,6 +961,15 @@ setPatternLength
 	tracker isPlaying ifTrue: [^ self].
 	self request: 'Pattern length' initialAnswer: tracker selectedPattern length printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| tracker setSelectedPatternLength: s asNumber. self redrawNeeded]! !
 
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 9/Jun/2026 22:55:50'!
+setTrackTuning
+	| menu |
+	menu := MenuMorph new.
+	menu add: '12-TET' target: tracker action: #setSelectedTrackTuning: argument: nil.
+	menu addLine.
+	Tuning library do: [:each| menu add: each label target: tracker action: #setSelectedTrackTuning: argument: each].
+	menu invokeModal! !
+
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 19:13:37'!
 toggleShowFXColumns
 	showFXColumns := showFXColumns not.
@@ -1001,7 +1010,7 @@ drawOn: aCanvas
 	self drawCursorOn: aCanvas.
 	self drawPatternOn: aCanvas! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Jun/2026 19:30:47'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 9/Jun/2026 23:03:57'!
 drawPatternOn: aCanvas
 	| lineSpacing charWidth y unsetColor noteColor velocityColor pattern endLine middle startLine darkColor lightColor xLeft xRight beatColor trackWidth |
 	pattern := tracker selectedPattern.
@@ -1036,7 +1045,7 @@ drawPatternOn: aCanvas
 			aCanvas fillRectangle: (st0 - 1 * trackWidth + (charWidth * 2.5) @ ((sl0 - startLine) * lineSpacing + y) extent: (trackWidth * (st1 - st0) + trackWidth - (charWidth * 0.5)) @ (lineSpacing * (sl1 - sl0) + lineSpacing)) color: self class selectionColor]].
 	"Draw lines:"
 	startLine to: endLine do: [:i|
-		| s c x |
+		| s c x k |
 		"Draw line offsets at left and right, and highlight lines at beats:"
 		i - 1 \\ pattern lpb = 0
 			ifTrue: [i = tracker cursorLine ifFalse: [aCanvas fillRectangle: (0@y extent: extent x @ lineSpacing) color: beatColor]. c := lightColor]
@@ -1045,6 +1054,7 @@ drawPatternOn: aCanvas
 		aCanvas drawString: s at: xLeft @ y font: font color: c.
 		aCanvas drawString: s at: xRight @ y font: font color: c.
 		"Draw triggers:"
+		k := 0.
 		x := charWidth * 2.5.
 		pattern
 			line: i
@@ -1053,7 +1063,8 @@ drawPatternOn: aCanvas
 				aCanvas drawString: s at: x @ y font: font color: c.
 				x := charWidth * 2.5 + x]
 			noteDo: [:note|
-				note ifNil: [s := '···'. c := unsetColor] ifNotNil: [:v| s := self noteStringFrom: v. c := noteColor].
+				k := k + 1.
+				note ifNil: [s := '···'. c := unsetColor] ifNotNil: [:v| s := (tracker tracks at: k) noteStringFrom: v. c := noteColor].
 				aCanvas drawString: s at: x @ y font: font color: c.
 				x := charWidth * 3.5 + x]
 			velocityDo: [:velocity|
@@ -1071,6 +1082,7 @@ drawPatternOn: aCanvas
 			emptyTriggersDo:
 				["aCanvas image: emptyTriggerImage at: x @ y.
 				x := trackWidth + x"
+				k := k + 1.
 				aCanvas drawString: '··' at: x @ y font: font color: unsetColor.
 				x := charWidth * 2.5 + x.
 				aCanvas drawString: '···' at: x @ y font: font color: unsetColor.
@@ -1124,7 +1136,7 @@ drawTracksOn: aCanvas
 trackWidthInCharacters
 	^ showFXColumns ifTrue: [15] ifFalse: [8]! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 8/Jun/2026 15:44:13'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 9/Jun/2026 22:18:38'!
 handleCommandHotkey: anEvent
 	"Font size:"
 	anEvent keyCharacter = $- ifTrue: [self adjustFontSizeBy: -1. ^ true].
@@ -1134,6 +1146,8 @@ handleCommandHotkey: anEvent
 	"Pattern properties:"
 	anEvent keyCharacter = $l ifTrue: [self setPatternLength. ^ true].
 	anEvent keyCharacter = $b ifTrue: [self setPatternLPB. ^ true].
+	"Tuning:"
+	anEvent keyCharacter = $u ifTrue: [self setTrackTuning. ^ true].
 	"Clipboard:"
 	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
 	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
@@ -1303,12 +1317,6 @@ lastColumnPosition
 !PatternEditorMorph methodsFor: 'private' stamp: 'len 8/Jun/2026 19:13:37'!
 lastPosition
 	^ showFXColumns ifTrue: [11] ifFalse: [5]! !
-
-!PatternEditorMorph methodsFor: 'private' stamp: 'len 11/May/2026 15:46:33'!
-noteStringFrom: note
-	note ifNil: [^ '···'].
-	note = -1 ifTrue: [^ 'OFF'].
-	^ note noteToName! !
 
 !PatternEditorMorph methodsFor: 'private' stamp: 'len 9/Jan/2026 15:22:29'!
 onBlinkCursor
@@ -1583,7 +1591,7 @@ update
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 11/May/2026 15:46:33'!
+!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 9/Jun/2026 22:01:43'!
 drawOn: aCanvas
 	| color |
 	aCanvas fillRectangle: (0 @ 0 extent: extent) color: Color darkGray.
@@ -1594,6 +1602,7 @@ drawOn: aCanvas
 		drawString: (tracker bpm printStringFractionDigits: 1), ' BPM ⇄ ', (tracker swing * 100) truncated printString, '%' at: 32 @ 2 font: font color: color;
 		drawString: '↧' at: 240 @ 3 font: font color: (tracker followPlayhead ifTrue: [color] ifFalse: [Color lightGray]);
 		drawString: tracker inputCenterKey noteToName at: 280 @ 3 font: font color: color.
+	tracker selectedTrack tuning ifNotNil: [:aTuning| aCanvas drawString: aTuning label at: 340 @ 3 font: font color: color].
 "	tracker selectedInstrumentNumber ifNotNil: [:instrumentNumber|
 		patchLabel := (instrumentNumber printStringBase: 16 nDigits: 2), ' ', (tracker selectedInstrument ifNil: ['EMPTY'] ifNotNil: [:anInstrument| anInstrument label ifNil: ['']]).
 		aCanvas drawString: patchLabel at: (extent x - 4 - (font widthOfString: patchLabel)) @ 2 font: font color: color]"! !
@@ -1611,15 +1620,18 @@ initialize
 	super initialize.
 	font := FontFamily defaultFamilyPointSize: 15! !
 
-!TrackerBarMorph methodsFor: 'initialization' stamp: 'len 15/Mar/2026 15:02:29'!
+!TrackerBarMorph methodsFor: 'initialization' stamp: 'len 9/Jun/2026 23:07:59'!
 setTracker: aTracker
 	tracker := aTracker.
 	tracker
 		when: #playingStatusChanged send: #redrawNeeded to: self;
-		when: #bpmChanged send: #redrawNeeded to: self;
-		when: #swingChanged send: #redrawNeeded to: self;
+		when: #tempoChanged send: #redrawNeeded to: self; "BPM or swing changed"
 		when: #followPlayheadChanged send: #redrawNeeded to: self;
-		when: #inputCenterKeyChanged send: #redrawNeeded to: self! !
+		when: #inputCenterKeyChanged send: #redrawNeeded to: self.
+	"for updating the tuning status:"
+	tracker
+		when: #tracksChanged send: #redrawNeeded to: self;
+		when: #cursorChanged send: #redrawNeeded to: self! !
 
 !Instrument methodsFor: 'accessing' stamp: 'len 28/Dec/2025 15:47:17'!
 label
@@ -1687,7 +1699,7 @@ adjustVelocityBy: aNumber
 gateOn
 	gateReceivers do: [:each| each gateOn]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 8/Jun/2026 21:43:30'!
+!Instrument methodsFor: 'playing' stamp: 'len 9/Jun/2026 21:36:58'!
 handleFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
@@ -1695,7 +1707,7 @@ handleFX: anInteger
 	v := anInteger bitAnd: 16rFF.
 	command = 82 "R (retrigger)" ifTrue: [track scheduleTrigger: (trigger copy velocity: nil) after: v + 1 / 256.0 * track tracker tpl. ^ self].
 	command = 76 "L (volume level)" ifTrue: [self setLevel:​ v / 255.0. ^ self].
-	command = 80 "P (pan)" ifTrue: [self setPan: v / 255.0 * 2.0 - 1.0. ^ self].
+	command = 80 "P (pan)" ifTrue: [self setPan: v / 256.0 * 2.0 - 1.0. ^ self].
 	command = 73 "I (volume level up)" ifTrue: [self adjustLevelBy: v / 255.0].
 	command = 79 "O (volume level down)" ifTrue: [self adjustLevelBy: v / -255.0].
 	command = 74 "J (pan left)" ifTrue: [self adjustPanBy: v / -255.0].
@@ -1709,8 +1721,7 @@ handleFX: anInteger
 	command = 60 "< (speed backwards)" ifTrue: [self setSpeed: v / -255.0. ^ self].
 	command = 62 "> (speed forward)" ifTrue: [self setSpeed: v / 255.0. ^ self].
 	"Control change commands:"
-	(command between: 48 and: 57) "0 to 9" ifTrue: "map 0 to 0.0, 7F to 1.0 and 80 to -1.0:"
-		[controlValues at: command - 47 put: (v < 128 ifTrue: [v / 127.0] ifFalse: [v - 128 / 128.0])].
+	(command between: 48 and: 57) "0 to 9" ifTrue: [controlValues at: command - 47 put: v / 255.0. ^ self].
 	"Global commands:"
 	command = 70 "F (set bpm)" ifTrue: [track tracker bpm: (v max: 1). ^ self]! !
 
@@ -1724,10 +1735,10 @@ noteOff
 noteOn: midiKey
 	self noteOn: midiKey glide: 0! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 9/Jun/2026 18:15:24'!
+!Instrument methodsFor: 'playing' stamp: 'len 9/Jun/2026 21:54:18'!
 noteOn: midiKey glide: glide
 	| targetNote |
-	targetNote := tuning ifNil: [midiKey] ifNotNil: [tuning map: midiKey].
+	targetNote := track tuning ifNil: [midiKey] ifNotNil: [: aTuning| aTuning map: midiKey].
 	(glide > 0 and: [note notNil])
 		ifTrue:
 			[glideTicks := (glide / 16.0 * track tracker tpl) truncated.
@@ -2049,6 +2060,13 @@ muted
 muted: aBoolean
 	muted := aBoolean! !
 
+!Track methodsFor: 'accessing' stamp: 'len 9/Jun/2026 23:03:36'!
+noteStringFrom: note
+	"Answer a string to represent the given MIDI note, depending on the tuning of this track."
+	note ifNil: [^ '···'].
+	note = -1 ifTrue: [^ 'OFF'].
+	^ note noteToNameModulo: (tuning ifNil: [^ note noteToName]) degrees size! !
+
 !Track methodsFor: 'accessing' stamp: 'len 17/Dec/2025 16:44:47'!
 soloed
 	^ soloed! !
@@ -2060,6 +2078,14 @@ soloed: aBoolean
 !Track methodsFor: 'accessing' stamp: 'len 26/Feb/2026 17:20:51'!
 tracker
 	^ tracker! !
+
+!Track methodsFor: 'accessing' stamp: 'len 9/Jun/2026 21:56:04'!
+tuning
+	^ tuning! !
+
+!Track methodsFor: 'accessing' stamp: 'len 9/Jun/2026 21:56:12'!
+tuning: aTuning
+	tuning := aTuning! !
 
 !Track methodsFor: 'initialization' stamp: 'len 26/Feb/2026 17:36:32'!
 initialize
@@ -2083,14 +2109,14 @@ playTrigger
 	instrument ifNotNil: [instrument scheduleTrigger: trigger].
 	trigger := nil! !
 
-!Track methodsFor: 'playing' stamp: 'len 10/Mar/2026 15:27:52'!
+!Track methodsFor: 'playing' stamp: 'len 9/Jun/2026 21:47:27'!
 scheduleTrigger: aTrigger
 	"Schedule aTrigger to play either immediatly if delay = 0, or after the number of ticks required by the delay.
-	The delay is specified by a Qxx command, where xx specifies the delay in steps of 1/255th the duration of a line."
-	| delay |
-	(delay := aTrigger delay) = 0
+	The delay is specified by a Qxx command, where xx specifies the delay in steps of 1/256th the duration of a line."
+	| triggerDelay |
+	(triggerDelay := aTrigger delay) = 0
 		ifTrue: [self scheduleTrigger: aTrigger after: 0]
-		ifFalse: [self scheduleTrigger: aTrigger after: delay / 256.0 * tracker tpl]! !
+		ifFalse: [self scheduleTrigger: aTrigger after: triggerDelay / 256.0 * tracker tpl]! !
 
 !Track methodsFor: 'playing' stamp: 'len 26/Feb/2026 23:30:14'!
 scheduleTrigger: aTrigger after: ticks
@@ -2103,14 +2129,29 @@ tick
 	trigger ifNotNil: [ticksToTrigger > 0 ifTrue: [ticksToTrigger := ticksToTrigger - 1] ifFalse: [self playTrigger]].
 	instrument ifNotNil: [instrument tick]! !
 
+!Track methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 23:23:45'!
+asJson
+	| answer |
+	(answer := OrderedDictionary new)
+		at: #muted put: muted;
+		at: #soloed put: soloed.
+	tuning ifNotNil: [:aTuning| answer at: #tuning put: aTuning asJson].
+	^ answer! !
+
+!Track methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 23:24:44'!
+readFromJson: json
+	muted := json at: #muted.
+	soloed := json at: #soloed.
+	json at: #tuning ifPresent: [:tuningJson| tuning := Tuning new readFromJson: tuningJson]! !
+
 !Tracker methodsFor: 'accessing' stamp: 'len 16/Dec/2025 17:27:25'!
 bpm
 	^ bpm! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 3/Jan/2026 02:48:36'!
+!Tracker methodsFor: 'accessing' stamp: 'len 9/Jun/2026 22:11:33'!
 bpm: anInteger
 	bpm := anInteger.
-	self triggerEvent: #bpmChanged! !
+	self triggerEvent: #tempoChanged! !
 
 !Tracker methodsFor: 'accessing' stamp: 'len 5/Mar/2026 15:36:52'!
 buses
@@ -2175,10 +2216,10 @@ sequenceUniquePatterns
 swing
 	^ swing! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 10/Feb/2026 01:41:03'!
+!Tracker methodsFor: 'accessing' stamp: 'len 9/Jun/2026 22:11:08'!
 swing: aNumber
 	swing := aNumber min: 1.0 max: 0.0.
-	self triggerEvent: #swingChanged! !
+	self triggerEvent: #tempoChanged! !
 
 !Tracker methodsFor: 'accessing' stamp: 'len 14/Mar/2026 18:24:45'!
 tpl
@@ -2532,7 +2573,7 @@ toggleFollowPlayhead
 	followPlayhead := followPlayhead not.
 	self triggerEvent: #followPlayheadChanged! !
 
-!Tracker methodsFor: 'serialization' stamp: 'len 14/Mar/2026 18:34:45'!
+!Tracker methodsFor: 'serialization' stamp: 'len 9/Jun/2026 23:25:53'!
 asJsonWithBuffers: bufferList
 	| uniquePatterns |
 	uniquePatterns := self sequenceUniquePatterns.
@@ -2540,7 +2581,7 @@ asJsonWithBuffers: bufferList
 		at: #bpm put: bpm;
 		at: #swing put: swing;
 		at: #level put: level;
-		at: #tracks put: tracks size;
+		at: #tracks put: (tracks collect: [:each| each asJson]);
 		at: #sequence put: (self sequence collect: [:each|
 			OrderedDictionary new
 				at: #pattern put: (uniquePatterns indexOf: each key);
@@ -2560,9 +2601,9 @@ readFrom: aStream
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 
-!Tracker methodsFor: 'serialization' stamp: 'len 28/Apr/2026 22:42:08'!
+!Tracker methodsFor: 'serialization' stamp: 'len 9/Jun/2026 23:30:40'!
 readFromJson: json buffers: bufferList
-	| uniquePatterns |
+	| uniquePatterns tracksJson |
 	bpm := json at: #bpm.
 	swing := json at: #swing.
 	level := json at: #level.
@@ -2573,8 +2614,11 @@ readFromJson: json buffers: bufferList
 	playheadLine := 0.
 	sequence := #().
 	tracks := #().
-	anyTrackSoloed := false.
-	(json at: #tracks) timesRepeat: [self addTrack].
+	(tracksJson := json at: #tracks) isInteger
+		ifTrue: [tracksJson timesRepeat: [self addTrack]]
+		ifFalse: [tracksJson size timesRepeat: [self addTrack].
+			tracksJson with: tracks do: [:trackJson :track| track readFromJson: trackJson]].
+	anyTrackSoloed := tracks anySatisfy: [:any| any soloed].
 	uniquePatterns := (json at: #patterns) collect: [:each| Pattern new readFromJson: each].
 	sequence := (json at: #sequence) collect: [:each| (uniquePatterns at: (each at: #pattern)) -> (each at: #mask)].
 	instruments := Dictionary new.
@@ -2589,9 +2633,9 @@ writeOn: aStream
 	bufferList do: [:each| each writeOn: aStream].
 	json jsonWriteOn: aStream! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 7/Jan/2026 02:44:14'!
+!Tracker methodsFor: 'tracks' stamp: 'len 9/Jun/2026 23:19:44'!
 addTrack
-	self insertTrack: tracks size + 1! !
+	^ self insertTrack: tracks size + 1! !
 
 !Tracker methodsFor: 'tracks' stamp: 'len 9/Jan/2026 15:08:32'!
 anyTrackSoloed
@@ -2641,6 +2685,11 @@ selectedMask
 !Tracker methodsFor: 'tracks' stamp: 'len 1/Jan/2026 15:35:44'!
 selectedTrack
 	^ tracks at: cursorTrack! !
+
+!Tracker methodsFor: 'tracks' stamp: 'len 9/Jun/2026 22:13:47'!
+setSelectedTrackTuning: aTuningOrNil
+	self selectedTrack tuning: aTuningOrNil.
+	self triggerEvent: #tracksChanged "perhaps we could have a more precise event for this like #tuningChanged"! !
 
 !Tracker methodsFor: 'tracks' stamp: 'len 22/Feb/2026 19:50:00'!
 swapTrack: anInteger with: anotherInteger
@@ -2851,9 +2900,28 @@ isReverse
 transposeBy: semitones
 	self isNoteOn ifTrue: [note := note + semitones min: 127 max: 0]! !
 
+!Tuning methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 23:22:31'!
+asJson
+	^ OrderedDictionary new
+		at: #label put: label;
+		at: #degrees put: degrees;
+		yourself! !
+
+!Tuning methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 19:01:16'!
+degrees
+	^ degrees! !
+
 !Tuning methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 17:27:00'!
 degrees: anArray
 	degrees := anArray asFloat32Array! !
+
+!Tuning methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 18:47:48'!
+label
+	^ label! !
+
+!Tuning methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 18:48:00'!
+label: aString
+	label := aString! !
 
 !Tuning methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 17:22:53'!
 map: midiKey
@@ -2864,28 +2932,40 @@ map: midiKey
 	cents := octave * degrees last + (degree < 1.0 ifTrue: [degrees first * degree] ifFalse: [degrees atLinear: degree]).
 	^ (60 noteToHertz * (2.0 raisedTo: cents / 1200.0)) hertzToNote! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026 18:04:24'!
-cambodia
-	^ self new degrees: #(178.0 356.0 508.0 663.0 848.0 1024.0 1210.0)! !
-
-!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026 17:41:00'!
-edo: anInteger
-	^ self new degrees: ((1 to: anInteger) collect: [:i| 1200.0 * i / anInteger])! !
-
-!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026 17:53:26'!
-fiveLimitJustIntonation
-	^ self ratios: {16/15. 9/8. 6/5. 5/4. 4/3. 45/32. 3/2. 8/5. 5/3. 9/5. 15/8. 2/1}! !
-
-!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026 17:58:42'!
-harmonic: n
-	^ self ratios: ((n to: n*2) collect: [:m| m / n])! !
-
-!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026 17:52:10'!
-pythagorean
-	^ self ratios: {256/243. 9/8. 32/27. 81/64. 4/3. 1024/729. 3/2. 128/81. 27/16. 16/9. 243/128. 2/1}! !
-
-!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026 17:59:00'!
+!Tuning methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 18:57:00'!
 ratios: anArray
-	^ self new degrees: (anArray collect: [:each| (each log: 2.0) * 1200.0]) sorted! !
+	^ self degrees: (anArray collect: [:each| (each log: 2.0) * 1200.0]) sorted! !
+
+!Tuning methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 23:23:05'!
+readFromJson: json
+	label := json at: #label.
+	degrees := (json at: #degrees) asFloat32Array! !
+
+!Tuning class methodsFor: 'accessing' stamp: 'len 9/Jun/2026 22:14:43'!
+library
+	^ Library! !
+
+!Tuning class methodsFor: 'class initialization' stamp: 'len 9/Jun/2026 22:16:40'!
+initialize
+	super initialize.
+	Library := OrderedCollection new.
+	Library addAll: {self edo: 7. self edo: 19. self edo: 22. self edo: 31. self fiveLimitJustIntonation. self pythagorean. self harmonic: 8}! !
+
+!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026 18:56:37'!
+edo: anInteger
+	^ self new degrees: ((1 to: anInteger) collect: [:i| 1200.0 * i / anInteger]); label: anInteger printString, '-EDO'! !
+
+!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026 18:57:16'!
+fiveLimitJustIntonation
+	^ self new ratios: {16/15. 9/8. 6/5. 5/4. 4/3. 45/32. 3/2. 8/5. 5/3. 9/5. 15/8. 2/1}; label: '5-Limit JI'! !
+
+!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026 18:57:29'!
+harmonic: n
+	^ self new ratios: ((n to: n*2) collect: [:m| m / n]); label: 'Harmonic ', n printString! !
+
+!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026 18:57:39'!
+pythagorean
+	^ self new ratios: {256/243. 9/8. 32/27. 81/64. 4/3. 1024/729. 3/2. 128/81. 27/16. 16/9. 243/128. 2/1}; label: 'Pythagorean'! !
 DarkerTheme initialize!
 PatternEditorMorph initialize!
+Tuning initialize!

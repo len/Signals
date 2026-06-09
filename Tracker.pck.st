@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 8 June 2026 at 3:50:07 pm'!
+'From Cuis7.9 [latest update: #7983] on 9 June 2026 at 2:59:14 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 32!
+!provides: 'Tracker' 1 33!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -867,20 +867,20 @@ clipboardPaste
 				ifTrue: [pattern track: k0 + k at: i0 + i put: trigger copy]]].
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 19/Apr/2026 02:54:19'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 19:15:17'!
 moveCursorColumnLeft
 	cursorPosition <= 2
 		ifTrue:
 			[tracker cursorTrack = 1 ifTrue: [^ self].
-			cursorPosition := self tracksMaxPosition - 2.
+			cursorPosition := self lastColumnPosition.
 			tracker moveCursorTrackLeft]
 		ifFalse:
 			[cursorPosition := #(1 1 1 3 3 4 4 4 6 6 6) at: cursorPosition].
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 19/Apr/2026 02:54:27'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 19:14:56'!
 moveCursorColumnRight
-	cursorPosition >= (self tracksMaxPosition - 2)
+	cursorPosition >= self lastColumnPosition
 		ifTrue:
 			[tracker cursorTrack = tracker tracks size ifTrue: [^ self].
 			cursorPosition := 1.
@@ -889,20 +889,20 @@ moveCursorColumnRight
 			[cursorPosition := #(3 3 4 6 6 9 9 9) at: cursorPosition].
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 19/Apr/2026 02:54:40'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 19:13:37'!
 moveCursorLeft
 	cursorPosition = 1
 		ifTrue:
 			[tracker cursorTrack = 1 ifTrue: [^ self].
-			cursorPosition := self tracksMaxPosition.
+			cursorPosition := self lastPosition.
 			tracker moveCursorTrackLeft]
 		ifFalse:
 			[cursorPosition := cursorPosition - 1].
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 19/Apr/2026 02:54:45'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 19:13:37'!
 moveCursorRight
-	cursorPosition = self tracksMaxPosition
+	cursorPosition = self lastPosition
 		ifTrue:
 			[tracker cursorTrack = tracker tracks size ifTrue: [^ self].
 			cursorPosition := 1.
@@ -951,13 +951,13 @@ setPatternLength
 	tracker isPlaying ifTrue: [^ self].
 	self request: 'Pattern length' initialAnswer: tracker selectedPattern length printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| tracker setSelectedPatternLength: s asNumber. self redrawNeeded]! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 15:46:35'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 19:13:37'!
 toggleShowFXColumns
 	showFXColumns := showFXColumns not.
-	cursorPosition := cursorPosition min: self tracksMaxPosition.
+	cursorPosition := cursorPosition min: self lastPosition.
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 16:56:46'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Jun/2026 19:30:47'!
 activeBounds
 	"Answer a subrectangle of the bounds of the receiver that should preferably be kept visible inside a scroller.
 	We use the bounds of the currently selected trigger, so when we move the cursor the current trigger is kept visible."
@@ -965,10 +965,10 @@ activeBounds
 	lineSpacing := font lineSpacing.
 	charWidth := font widthOf: $X.
 	y := self morphHeight / 2.0.
-	x := (self tracksWidthInCharacters + 0.5) * (tracker cursorTrack - 1) + 2.5.
-	^​ x * charWidth @ y extent: self tracksWidthInCharacters * charWidth @ lineSpacing! !
+	x := (self trackWidthInCharacters + 0.5) * (tracker cursorTrack - 1) + 2.5.
+	^​ x * charWidth @ y extent: self trackWidthInCharacters * charWidth @ lineSpacing! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 1/Mar/2026 14:29:42'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Jun/2026 19:30:47'!
 drawCursorOn: aCanvas
 	| lineSpacing charWidth cursorWidth x y cursorRect |
 	lineSpacing := font lineSpacing.
@@ -976,7 +976,7 @@ drawCursorOn: aCanvas
 	y := self morphHeight / 2.0.
 	aCanvas fillRectangle: (0 @ y extent: self morphWidth @ lineSpacing) color: (Color white alpha: 0.1).
 	cursorWidth := cursorPosition = 3 ifTrue: [3] ifFalse: [1].
-	x := (self tracksWidthInCharacters + 0.5) * (tracker cursorTrack - 1) + 2.5 + cursorPosition - 1.
+	x := (self trackWidthInCharacters + 0.5) * (tracker cursorTrack - 1) + 2.5 + cursorPosition - 1.
 	cursorPosition > 2 ifTrue: [x := x + 0.5].
 	cursorPosition > 3 ifTrue: [x := x + 2.5].
 	cursorPosition > 5 ifTrue: [x := x + 0.5].
@@ -991,13 +991,13 @@ drawOn: aCanvas
 	self drawCursorOn: aCanvas.
 	self drawPatternOn: aCanvas! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Jun/2026 15:37:15'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Jun/2026 19:30:47'!
 drawPatternOn: aCanvas
 	| lineSpacing charWidth y unsetColor noteColor velocityColor pattern endLine middle startLine darkColor lightColor xLeft xRight beatColor trackWidth |
 	pattern := tracker selectedPattern.
 	lineSpacing := font lineSpacing.
 	charWidth := font widthOf: $X.
-	trackWidth := charWidth * (self tracksWidthInCharacters + 0.5).
+	trackWidth := charWidth * (self trackWidthInCharacters + 0.5).
 	unsetColor := self class unsetColor.
 	noteColor := Color white.
 	velocityColor := self class velocityColor.
@@ -1074,11 +1074,11 @@ drawPatternOn: aCanvas
 					x := charWidth * 3.5 + x]].
 		y := y + lineSpacing]! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 11/Mar/2026 15:11:42'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Jun/2026 19:30:47'!
 drawTracksOn: aCanvas
 	| color textColor charWidth trackWidth x mask headerLineWidth maxTrackLabelWidth fittingTrackLabel |
 	charWidth := font widthOf: $X.
-	trackWidth := charWidth * self tracksWidthInCharacters.
+	trackWidth := charWidth * self trackWidthInCharacters.
 	maxTrackLabelWidth := trackWidth - (labelMonoFont widthOfString: 'SM') - 2.
 	headerLineWidth := 7.5. "originally was charWidth/2.0, but we don't want to change with the font size"
 	x := charWidth * 2.5.
@@ -1110,8 +1110,8 @@ drawTracksOn: aCanvas
 		x := x + (charWidth/2.0)].
 	aCanvas fillRectangle: (x @ 0 corner: extent x @ headerLineWidth) color: Color darkGray! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Jun/2026 15:39:56'!
-tracksWidthInCharacters
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Jun/2026 19:30:47'!
+trackWidthInCharacters
 	^ showFXColumns ifTrue: [15] ifFalse: [8]! !
 
 !PatternEditorMorph methodsFor: 'events' stamp: 'len 8/Jun/2026 15:44:13'!
@@ -1238,11 +1238,11 @@ keyStroke: anEvent
 	(self handleKeyStroke: anEvent) ifTrue: [anEvent wasHandled: true. ^ self].
 	^ super keyStroke: anEvent! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 15:33:19'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 8/Jun/2026 19:30:47'!
 mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
 	| charWidth trackWidth x |
 	charWidth := font widthOf: $X.
-	trackWidth := charWidth * self tracksWidthInCharacters + (charWidth/2.0).
+	trackWidth := charWidth * self trackWidthInCharacters + (charWidth/2.0).
 	x := localEventPosition x - (charWidth * 2.5).
 	x < 0.0 ifTrue: [^ self].
 	tracker setCursorTrack: (x / trackWidth) truncated + 1.
@@ -1253,11 +1253,11 @@ keyboardFocusChange: aBoolean
 	aBoolean ifTrue: [self startBlinking] ifFalse: [self stopBlinking].
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'geometry' stamp: 'len 7/Feb/2026 19:19:15'!
+!PatternEditorMorph methodsFor: 'geometry' stamp: 'len 8/Jun/2026 19:30:47'!
 minimumExtent
 	| n |
 	n := tracker tracks size.
-	^ (font widthOf: $X) * (n * (self tracksWidthInCharacters + 0.5) + 4.5) @ (font lineSpacing * 16)! !
+	^ (font widthOf: $X) * (n * (self trackWidthInCharacters + 0.5) + 4.5) @ (font lineSpacing * 16)! !
 
 !PatternEditorMorph methodsFor: 'initialization' stamp: 'len 8/Jun/2026 15:49:20'!
 initialize
@@ -1285,6 +1285,14 @@ setTracker: aTracker
 !PatternEditorMorph methodsFor: 'private' stamp: 'len 31/Dec/2025 01:25:06'!
 headerHeight
 	^ labelFont lineSpacing + 8! !
+
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 8/Jun/2026 19:14:37'!
+lastColumnPosition
+	^ self lastPosition - (showFXColumns ifTrue: [2] ifFalse: [1])! !
+
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 8/Jun/2026 19:13:37'!
+lastPosition
+	^ showFXColumns ifTrue: [11] ifFalse: [5]! !
 
 !PatternEditorMorph methodsFor: 'private' stamp: 'len 11/May/2026 15:46:33'!
 noteStringFrom: note
@@ -1327,10 +1335,6 @@ stopBlinking
 		[showCursor := false.
 		self redrawNeeded
 		"textCursorRect ifNotNil: [ :r | self invalidateLocalRect: r ]"]! !
-
-!PatternEditorMorph methodsFor: 'private' stamp: 'len 8/Jun/2026 15:38:58'!
-tracksMaxPosition
-	^ showFXColumns ifTrue: [11] ifFalse: [5]! !
 
 !PatternEditorMorph methodsFor: 'private' stamp: 'len 9/Mar/2026 19:07:27'!
 updateCursor
@@ -1673,32 +1677,32 @@ adjustVelocityBy: aNumber
 gateOn
 	gateReceivers do: [:each| each gateOn]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 24/Mar/2026 01:54:14'!
+!Instrument methodsFor: 'playing' stamp: 'len 8/Jun/2026 21:43:30'!
 handleFX: anInteger
-	| command |
+	| command v |
 	command := anInteger bitShift: -8.
 	command = 67 "C (cut velocity)" ifTrue: [track scheduleTrigger: (Trigger new velocity: ((anInteger bitShift: -4) bitAnd: 16rF) / 15.0) after: (anInteger bitAnd: 16rF) + 1 / 16.0 * track tracker tpl. ^ self].
-	command = 82 "R (retrigger)" ifTrue: [track scheduleTrigger: (trigger copy velocity: nil) after: (anInteger bitAnd: 16rFF) + 1 / 256.0 * track tracker tpl. ^ self].
-	command = 76 "L (volume level)" ifTrue: [self setLevel:​ (anInteger bitAnd: 16rFF) / 255.0. ^ self].
-	command = 80 "P (pan)" ifTrue: [self setPan:  (anInteger bitAnd: 16rFF) / 255.0 * 2.0 - 1.0. ^ self].
-	command = 73 "I (volume level up)" ifTrue: [self adjustLevelBy: (anInteger bitAnd: 16rFF) / 255.0].
-	command = 79 "O (volume level down)" ifTrue: [self adjustLevelBy: (anInteger bitAnd: 16rFF) / -255.0].
-	command = 74 "J (pan left)" ifTrue: [self adjustPanBy: (anInteger bitAnd: 16rFF) / -255.0].
-	command = 75 "K (pan right)" ifTrue: [self adjustPanBy: (anInteger bitAnd: 16rFF) / 255.0].
-	command = 85 "U (pitch up)" ifTrue: [self adjustNoteBy: (anInteger bitAnd: 16rFF) / 255.0].
-	command = 68 "D (pitch down)" ifTrue: [self adjustNoteBy: (anInteger bitAnd: 16rFF) / -255.0].
-	command = 43 "+ (velocity up)" ifTrue: [self adjustVelocityBy: (anInteger bitAnd: 16rFF) / 255.0].
-	command = 45 "- (velocity down)" ifTrue: [self adjustVelocityBy: (anInteger bitAnd: 16rFF) / -255.0].
+	v := anInteger bitAnd: 16rFF.
+	command = 82 "R (retrigger)" ifTrue: [track scheduleTrigger: (trigger copy velocity: nil) after: v + 1 / 256.0 * track tracker tpl. ^ self].
+	command = 76 "L (volume level)" ifTrue: [self setLevel:​ v / 255.0. ^ self].
+	command = 80 "P (pan)" ifTrue: [self setPan: v / 255.0 * 2.0 - 1.0. ^ self].
+	command = 73 "I (volume level up)" ifTrue: [self adjustLevelBy: v / 255.0].
+	command = 79 "O (volume level down)" ifTrue: [self adjustLevelBy: v / -255.0].
+	command = 74 "J (pan left)" ifTrue: [self adjustPanBy: v / -255.0].
+	command = 75 "K (pan right)" ifTrue: [self adjustPanBy: v / 255.0].
+	command = 85 "U (pitch up)" ifTrue: [self adjustNoteBy: v / 255.0].
+	command = 68 "D (pitch down)" ifTrue: [self adjustNoteBy: v / -255.0].
+	command = 43 "+ (velocity up)" ifTrue: [self adjustVelocityBy: v / 255.0].
+	command = 45 "- (velocity down)" ifTrue: [self adjustVelocityBy: v / -255.0].
 	"Sample commands:"
-	command = 83 "S (sample offset)" ifTrue: [self setOffset: (anInteger bitAnd: 16rFF) / 255.0. ^ self].
-	command = 60 "< (speed backwards)" ifTrue: [self setSpeed: (anInteger bitAnd: 16rFF) / -255.0. ^ self].
-	command = 62 "> (speed forward)" ifTrue: [self setSpeed: (anInteger bitAnd: 16rFF) / 255.0. ^ self].
+	command = 83 "S (sample offset)" ifTrue: [self setOffset: v / 255.0. ^ self].
+	command = 60 "< (speed backwards)" ifTrue: [self setSpeed: v / -255.0. ^ self].
+	command = 62 "> (speed forward)" ifTrue: [self setSpeed: v / 255.0. ^ self].
 	"Control change commands:"
 	(command between: 48 and: 57) "0 to 9" ifTrue: "map 0 to 0.0, 7F to 1.0 and 80 to -1.0:"
-		[| v |
-		controlValues at: command - 47 put: ((v := anInteger bitAnd: 16rFF) < 128 ifTrue: [v / 127.0] ifFalse: [v - 128 / 128.0])].
+		[controlValues at: command - 47 put: (v < 128 ifTrue: [v / 127.0] ifFalse: [v - 128 / 128.0])].
 	"Global commands:"
-	command = 70 "F (set bpm)" ifTrue: [track tracker bpm: ((anInteger bitAnd: 16rFF) max: 1). ^ self]! !
+	command = 70 "F (set bpm)" ifTrue: [track tracker bpm: (v max: 1). ^ self]! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 24/Mar/2026 01:47:37'!
 noteOff
@@ -1722,13 +1726,13 @@ noteOn: midiKey glide: glide
 			note := midiKey].
 	self setNote: note; gateOn! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 24/Apr/2026 02:06:30'!
+!Instrument methodsFor: 'playing' stamp: 'len 9/Jun/2026 14:49:46'!
 playTrigger
-	trigger isNoteOn ifTrue: [self setVelocity: 1.0; setOffset: 0.0; setSpeed: 1.0].
-	trigger velocity ifNotNil: [:vel| self setVelocity: (vel / 255.0) squared].
+	trigger isNoteOn ifTrue: [self setVelocity: 1.0; setOffset: (trigger isReverse ifTrue: [1.0] ifFalse: [self setSpeed: 1.0. 0.0])].
+	trigger velocity ifNotNil: [:vel| self setVelocity: (vel / 255.0) squared]. "quadratic curve for velocity"
 	trigger fx1 ifNotNil: [:fx| self handleFX: fx].
 	trigger fx2 ifNotNil: [:fx| self handleFX: fx].
-	trigger isNoteOn ifTrue: [self noteOn: trigger note glide: trigger glide] ifFalse: [trigger isNoteOff ifTrue: [self noteOff]].
+	trigger isNoteOn ifTrue: [self noteOn: trigger note + trigger pitchShift glide: trigger glide] ifFalse: [trigger isNoteOff ifTrue: [self noteOff]].
 	trigger := nil! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 3/Jun/2026 18:44:54'!
@@ -2765,6 +2769,21 @@ note
 note: anInteger
 	note := anInteger! !
 
+!Trigger methodsFor: 'accessing' stamp: 'len 9/Jun/2026 14:54:05'!
+pitchShift
+	"If the receiver has any Uxx or Dxx pitch shift effects, answer the shift in semitones. Otherwise answer 0."
+	| answer cmd |
+	answer := 0.0.
+	fx1 ifNotNil:
+		[(cmd := fx1 bitShift: -8) = 85 "Uxx (pitch up)"
+			ifTrue: [answer := (fx1 bitAnd: 16rFF) / 255.0 + answer]
+			ifFalse: [cmd = 68 "Dxx (pitch down)" ifTrue: [answer := (fx1 bitAnd: 16rFF) / -255.0 + answer]]].
+	fx2 ifNotNil:
+		[(cmd := fx2 bitShift: -8) = 85 "Uxx (pitch up)"
+			ifTrue: [answer := (fx2 bitAnd: 16rFF) / 255.0 + answer]
+			ifFalse: [cmd = 68 "Dxx (pitch down)" ifTrue: [answer := (fx2 bitAnd: 16rFF) / -255.0 + answer]]].
+	^ answer! !
+
 !Trigger methodsFor: 'accessing' stamp: 'len 9/Mar/2026 17:28:01'!
 probability
 	"Answer the probability for this trigger, i.e. the parameter of the effect command Yxx."
@@ -2810,6 +2829,11 @@ isNoteOff
 !Trigger methodsFor: 'testing' stamp: 'len 18/Feb/2026 23:28:26'!
 isNoteOn
 	^ note notNil and: [note >= 0]! !
+
+!Trigger methodsFor: 'testing' stamp: 'len 9/Jun/2026 14:43:58'!
+isReverse
+	"Answer true if the receiver has an effect <xx to play a sample backwards."
+	^ (fx1 notNil and: [(fx1 bitShift: -8) = 60]) or: [fx2 notNil and: [(fx2 bitShift: -8) = 60]]! !
 
 !Trigger methodsFor: 'transformations' stamp: 'len 24/Feb/2026 01:25:15'!
 transposeBy: semitones

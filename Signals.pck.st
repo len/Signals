@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 8 June 2026 at 3:52:01 pm'!
+'From Cuis7.9 [latest update: #7983] on 9 June 2026 at 2:57:52 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 583!
+!provides: 'Signals' 1 584!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -5035,14 +5035,14 @@ adjustVelocityBy: aNumber
 gateOff
 	sample ifNotNil: [sample gateOff]! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 3/Jun/2026 03:10:05'!
+!Multisample methodsFor: 'controlling' stamp: 'len 9/Jun/2026 03:06:00'!
 gateOn
 	| closestKey speedFactor samplesByVelocity |
 	sample ifNotNil: [(legato and: [sample isUnreleased]) ifTrue: [^ self]].
 	closestKey := keymap keys detectMin: [:x| (x - note) abs].
 	samplesByVelocity := keymap at: closestKey.
 	(tailSample := sample) ifNotNil: [tailSample gateOn "to setup the tail position"].
-	sample := (samplesByVelocity at: ((velocity sqrt * (samplesByVelocity size - 1)) truncated + 1 min: samplesByVelocity size)) copy.
+	sample := (samplesByVelocity atPin: (velocity sqrt * (samplesByVelocity size - 1)) truncated + 1) copy.
 	sample controls at: #pitch put: (controls at: #pitch).
 	sample controls at: #speed put: (controls at: #speed).
 	speedFactor := 60 noteToHertz / closestKey noteToHertz.
@@ -5522,12 +5522,11 @@ warp: aBoolean
 gateOff
 	released := true! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 3/Jun/2026 03:04:09'!
+!Sample methodsFor: 'controlling' stamp: 'len 9/Jun/2026 03:43:59'!
 gateOn
 	(legato and: [self isUnreleased]) ifTrue: [increment := nil. ^ self].
 	tailPosition := position.
 	position := (buffer size - 1) * offset + 1.0.
-"	(self get: #speed) < 0.0 ifTrue: [position := buffer size - position + 1]."
 	released := false! !
 
 !Sample methodsFor: 'controlling' stamp: 'len 25/Mar/2026 19:46:09'!
@@ -6455,10 +6454,6 @@ stage
 value
 	^ value! !
 
-!EG methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:27:39'!
-adjustNoteBy: aNumber
-	^ self! !
-
 !EG methodsFor: 'controlling' stamp: 'len 7/Mar/2026 18:51:07'!
 adjustVelocityBy: aNumber
 	velocity := velocity + aNumber min: 1.0 max: 0.0! !
@@ -6985,10 +6980,6 @@ shape
 !LFO methodsFor: 'accessing' stamp: 'len 3/Jun/2026 16:36:21'!
 shape: aSymbol
 	shape := aSymbol! !
-
-!LFO methodsFor: 'controlling' stamp: 'len 19/Mar/2026 02:28:26'!
-adjustNoteBy: aNumber
-	^ self! !
 
 !LFO methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:21:00'!
 gateOff
@@ -13991,6 +13982,10 @@ allowsMorphDrop
 !PatchMorph methodsFor: 'events' stamp: 'len 9/Feb/2026 21:08:22'!
 allowsSubmorphDrag
 	^ true! !
+
+!PatchMorph methodsFor: 'events' stamp: 'len 8/Jun/2026 19:28:40'!
+handlesMouseDown: aMouseButtonEvent
+	^ aMouseButtonEvent mouseButton2Pressed! !
 
 !PatchMorph methodsFor: 'geometry services' stamp: 'len 18/Nov/2025 22:52:00'!
 fullIncludesPixel: aPoint

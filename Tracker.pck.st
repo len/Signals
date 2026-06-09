@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 9 June 2026 at 2:59:14 pm'!
+'From Cuis7.9 [latest update: #7983] on 9 June 2026 at 6:21:40 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 33!
+!provides: 'Tracker' 1 34!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -79,7 +79,7 @@ TrackerBarMorph class
 
 !classDefinition: #Instrument category: #'Tracker-Kernel'!
 Object subclass: #Instrument
-	instanceVariableNames: 'label patch modules noteReceivers velocityReceivers gateReceivers samples audioOutput controlValues note noteIncrement glideTicks track trigger'
+	instanceVariableNames: 'label patch modules noteReceivers velocityReceivers gateReceivers samples audioOutput controlValues note noteIncrement glideTicks track trigger tuning'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Tracker-Kernel'!
@@ -125,6 +125,16 @@ Object subclass: #Trigger
 	category: 'Tracker-Kernel'!
 !classDefinition: 'Trigger class' category: #'Tracker-Kernel'!
 Trigger class
+	instanceVariableNames: ''!
+
+!classDefinition: #Tuning category: #'Tracker-Kernel'!
+Object subclass: #Tuning
+	instanceVariableNames: 'degrees'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Tracker-Kernel'!
+!classDefinition: 'Tuning class' category: #'Tracker-Kernel'!
+Tuning class
 	instanceVariableNames: ''!
 
 
@@ -1714,25 +1724,27 @@ noteOff
 noteOn: midiKey
 	self noteOn: midiKey glide: 0! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 24/Mar/2026 01:58:06'!
+!Instrument methodsFor: 'playing' stamp: 'len 9/Jun/2026 18:15:24'!
 noteOn: midiKey glide: glide
+	| targetNote |
+	targetNote := tuning ifNil: [midiKey] ifNotNil: [tuning map: midiKey].
 	(glide > 0 and: [note notNil])
 		ifTrue:
 			[glideTicks := (glide / 16.0 * track tracker tpl) truncated.
-			noteIncrement := midiKey - note / glideTicks asFloat.
+			noteIncrement := targetNote - note / glideTicks asFloat.
 			note := note + noteIncrement]
 		ifFalse:
 			[glideTicks := 0.
-			note := midiKey].
+			note := targetNote].
 	self setNote: note; gateOn! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 9/Jun/2026 14:49:46'!
+!Instrument methodsFor: 'playing' stamp: 'len 9/Jun/2026 18:09:51'!
 playTrigger
 	trigger isNoteOn ifTrue: [self setVelocity: 1.0; setOffset: (trigger isReverse ifTrue: [1.0] ifFalse: [self setSpeed: 1.0. 0.0])].
 	trigger velocity ifNotNil: [:vel| self setVelocity: (vel / 255.0) squared]. "quadratic curve for velocity"
 	trigger fx1 ifNotNil: [:fx| self handleFX: fx].
 	trigger fx2 ifNotNil: [:fx| self handleFX: fx].
-	trigger isNoteOn ifTrue: [self noteOn: trigger note + trigger pitchShift glide: trigger glide] ifFalse: [trigger isNoteOff ifTrue: [self noteOff]].
+	trigger isNoteOn ifTrue: [self noteOn: trigger note + trigger noteShift glide: trigger glide] ifFalse: [trigger isNoteOff ifTrue: [self noteOff]].
 	trigger := nil! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 3/Jun/2026 18:44:54'!
@@ -2769,8 +2781,8 @@ note
 note: anInteger
 	note := anInteger! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 9/Jun/2026 14:54:05'!
-pitchShift
+!Trigger methodsFor: 'accessing' stamp: 'len 9/Jun/2026 18:09:25'!
+noteShift
 	"If the receiver has any Uxx or Dxx pitch shift effects, answer the shift in semitones. Otherwise answer 0."
 	| answer cmd |
 	answer := 0.0.
@@ -2838,5 +2850,42 @@ isReverse
 !Trigger methodsFor: 'transformations' stamp: 'len 24/Feb/2026 01:25:15'!
 transposeBy: semitones
 	self isNoteOn ifTrue: [note := note + semitones min: 127 max: 0]! !
+
+!Tuning methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 17:27:00'!
+degrees: anArray
+	degrees := anArray asFloat32Array! !
+
+!Tuning methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 17:22:53'!
+map: midiKey
+	| cents degree octave relativeNote |
+	relativeNote := midiKey - 60.0.
+	octave := relativeNote // degrees size.
+	degree := relativeNote \\ degrees size.
+	cents := octave * degrees last + (degree < 1.0 ifTrue: [degrees first * degree] ifFalse: [degrees atLinear: degree]).
+	^ (60 noteToHertz * (2.0 raisedTo: cents / 1200.0)) hertzToNote! !
+
+!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026 18:04:24'!
+cambodia
+	^ self new degrees: #(178.0 356.0 508.0 663.0 848.0 1024.0 1210.0)! !
+
+!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026 17:41:00'!
+edo: anInteger
+	^ self new degrees: ((1 to: anInteger) collect: [:i| 1200.0 * i / anInteger])! !
+
+!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026 17:53:26'!
+fiveLimitJustIntonation
+	^ self ratios: {16/15. 9/8. 6/5. 5/4. 4/3. 45/32. 3/2. 8/5. 5/3. 9/5. 15/8. 2/1}! !
+
+!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026 17:58:42'!
+harmonic: n
+	^ self ratios: ((n to: n*2) collect: [:m| m / n])! !
+
+!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026 17:52:10'!
+pythagorean
+	^ self ratios: {256/243. 9/8. 32/27. 81/64. 4/3. 1024/729. 3/2. 128/81. 27/16. 16/9. 243/128. 2/1}! !
+
+!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026 17:59:00'!
+ratios: anArray
+	^ self new degrees: (anArray collect: [:each| (each log: 2.0) * 1200.0]) sorted! !
 DarkerTheme initialize!
 PatternEditorMorph initialize!

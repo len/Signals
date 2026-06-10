@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 10 June 2026 at 2:03:06 am'!
+'From Cuis7.9 [latest update: #7983] on 10 June 2026 at 5:12:54 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 36!
+!provides: 'Tracker' 1 37!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -50,7 +50,7 @@ MultitrackMeterMorph class
 !classDefinition: #PatternEditorMorph category: #'Tracker-Morphic'!
 BoxMorph subclass: #PatternEditorMorph
 	instanceVariableNames: 'tracker cursorPosition font labelFont labelMonoFont editStep showCursor pauseBlinking selectionLineStart selectionTrackStart showFXColumns'
-	classVariableNames: 'ClipboardBuffer FXColors'
+	classVariableNames: 'ClipboardBuffer FXColors TrackColors'
 	poolDictionaries: ''
 	category: 'Tracker-Morphic'!
 !classDefinition: 'PatternEditorMorph class' category: #'Tracker-Morphic'!
@@ -99,7 +99,7 @@ Pattern class
 
 !classDefinition: #Track category: #'Tracker-Kernel'!
 Object subclass: #Track
-	instanceVariableNames: 'tracker color muted soloed instrument ticksToTrigger trigger tuning'
+	instanceVariableNames: 'tracker muted soloed instrument ticksToTrigger trigger tuning'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Tracker-Kernel'!
@@ -129,7 +129,7 @@ Trigger class
 
 !classDefinition: #Tuning category: #'Tracker-Kernel'!
 Object subclass: #Tuning
-	instanceVariableNames: 'intervals label'
+	instanceVariableNames: 'intervals label degreeNames'
 	classVariableNames: 'Library'
 	poolDictionaries: ''
 	category: 'Tracker-Kernel'!
@@ -138,13 +138,13 @@ Tuning class
 	instanceVariableNames: ''!
 
 
-!Trigger commentStamp: 'len 11/Apr/2026 18:17:22' prior: 0!
+!Trigger commentStamp: '<historical>' prior: 0!
 A trigger is a cell in a pattern. It can contain any of the following (optional) parameters: an instrument number, a note to play, a velocity value, and two effect commands.
 
 Commands:
-∙ Cxy set velocity to x (0.0 to 1.0) after (y+1)/16th of a line
-∙ Rxx retrigger every (xx+1)/256th of a line
-∙ Gxx glide to note at speed xx in 1/16th of a line
+∙ Cxy set velocity to x (0.0 to 1.0) after (y+1)/16 of a line (0 = 1/16 of a line, F = 1 line)
+∙ Rxx retrigger every (xx+1)/256 of a line (00 = 1/256 of a line, FF = 1 line)
+∙ Gxx glide to note in (xx+1)/16 lines (00 = 1/16 of a line, FF = 16 lines)
 ∙ Lxx set instrument volume level to xx (0.0 to 1.0)
 ∙ Pxx set instrument pan (00 = left, 80 = center, FF = right)
 ∙ Ixx / Oxx adjust volume level up/down
@@ -153,9 +153,9 @@ Commands:
 ∙ +xx / -xx adjust velocity up/down
 ∙ Sxx set sample offset
 ∙ <xx / >xx set speed to xx and play backwards / forward
-∙ 0xx to 9xx set control input (00 = 0.0, 7F = 1.0, 80 = -1.0)
+∙ 0xx to 9xx set control input
 ∙ Fxx set BPM to xx
-∙ Qxx delay trigger by xx/256th of a line
+∙ Qxx delay trigger by xx/256 of a line (00 = no delay, 01 = 1/256 of a line, FF = almost a line)
 ∙ Yxx set the probability of playing the trigger (00 = never, FF = always)
 !
 
@@ -1010,7 +1010,7 @@ drawOn: aCanvas
 	self drawCursorOn: aCanvas.
 	self drawPatternOn: aCanvas! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 9/Jun/2026 23:03:57'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 10/Jun/2026 17:11:10'!
 drawPatternOn: aCanvas
 	| lineSpacing charWidth y unsetColor noteColor velocityColor pattern endLine middle startLine darkColor lightColor xLeft xRight beatColor trackWidth |
 	pattern := tracker selectedPattern.
@@ -1064,7 +1064,7 @@ drawPatternOn: aCanvas
 				x := charWidth * 2.5 + x]
 			noteDo: [:note|
 				k := k + 1.
-				note ifNil: [s := '···'. c := unsetColor] ifNotNil: [:v| s := (tracker tracks at: k) noteStringFrom: v. c := noteColor].
+				note ifNil: [s := '···'. c := unsetColor] ifNotNil: [:v| s := v = -1 ifTrue: ['OFF'] ifFalse: [(tracker tracks at: k) noteStringFrom: v]. c := noteColor].
 				aCanvas drawString: s at: x @ y font: font color: c.
 				x := charWidth * 3.5 + x]
 			velocityDo: [:velocity|
@@ -1364,7 +1364,7 @@ updateTracks
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 9/Apr/2026 15:27:57'!
+!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 10/Jun/2026 17:03:13'!
 initialize
 	"
 	self initialize
@@ -1373,6 +1373,7 @@ initialize
 	"Load the monospaced font we need for the pattern editor:"
 	(FontFamily availableFamilies includesKey: 'JetBrains Mono NL') ifFalse:
 		[TrueTypeFontFamily readAllTrueTypeFontsIn: DirectoryEntry trueTypeFontsDirectory / 'JetBrainsMono'].
+	TrackColors := (1 to: 13) collect: [:i| Color okl: 0.7 c: 0.4 h: (137.5 / 5) * i \\ 360.0].
 	FXColors := Array new: 256 withAll: self unsetColor.
 	"Controls:"
 	'0123456789' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 80)].
@@ -1394,6 +1395,10 @@ cursorColor
 !PatternEditorMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026 20:07:38'!
 selectionColor
 	^ self cursorColor alpha: 0.4! !
+
+!PatternEditorMorph class methodsFor: 'colors' stamp: 'len 10/Jun/2026 17:03:41'!
+trackColor: anInteger
+	^ TrackColors atWrap: anInteger! !
 
 !PatternEditorMorph class methodsFor: 'colors' stamp: 'len 9/Mar/2026 17:13:37'!
 unsetColor
@@ -2020,17 +2025,13 @@ line: anInteger instrumentDo: instrumentBlock noteDo: noteBlock velocityDo: velo
 new: anInteger
 	^ self new initialize: anInteger! !
 
-!Track methodsFor: 'accessing' stamp: 'len 20/Feb/2026 19:56:55'!
+!Track methodsFor: 'accessing' stamp: 'len 10/Jun/2026 16:51:13'!
 backgroundColor
-	^ color lightnessAndChromaBy: 0.25! !
+	^ self color lightnessAndChromaBy: 0.25! !
 
-!Track methodsFor: 'accessing' stamp: 'len 27/Dec/2025 23:23:03'!
+!Track methodsFor: 'accessing' stamp: 'len 10/Jun/2026 17:04:08'!
 color
-	^ color! !
-
-!Track methodsFor: 'accessing' stamp: 'len 27/Dec/2025 23:22:55'!
-color: aColor
-	color := aColor! !
+	^ PatternEditorMorph trackColor: (tracker tracks indexOf: self)! !
 
 !Track methodsFor: 'accessing' stamp: 'len 9/Jan/2026 15:09:05'!
 enabled
@@ -2060,12 +2061,10 @@ muted
 muted: aBoolean
 	muted := aBoolean! !
 
-!Track methodsFor: 'accessing' stamp: 'len 10/Jun/2026 02:00:35'!
+!Track methodsFor: 'accessing' stamp: 'len 10/Jun/2026 17:11:16'!
 noteStringFrom: note
 	"Answer a string to represent the given MIDI note, depending on the tuning of this track."
-	note ifNil: [^ '···'].
-	note = -1 ifTrue: [^ 'OFF'].
-	^ note noteToNameModulo: (tuning ifNil: [^ note noteToName]) intervals size! !
+	^ (tuning ifNil: [^ note noteToName]) noteStringFrom: note! !
 
 !Track methodsFor: 'accessing' stamp: 'len 17/Dec/2025 16:44:47'!
 soloed
@@ -2129,7 +2128,7 @@ tick
 	trigger ifNotNil: [ticksToTrigger > 0 ifTrue: [ticksToTrigger := ticksToTrigger - 1] ifFalse: [self playTrigger]].
 	instrument ifNotNil: [instrument tick]! !
 
-!Track methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 23:23:45'!
+!Track methodsFor: 'serialization' stamp: 'len 9/Jun/2026 23:23:45'!
 asJson
 	| answer |
 	(answer := OrderedDictionary new)
@@ -2138,7 +2137,7 @@ asJson
 	tuning ifNotNil: [:aTuning| answer at: #tuning put: aTuning asJson].
 	^ answer! !
 
-!Track methodsFor: 'as yet unclassified' stamp: 'len 9/Jun/2026 23:24:44'!
+!Track methodsFor: 'serialization' stamp: 'len 9/Jun/2026 23:24:44'!
 readFromJson: json
 	muted := json at: #muted.
 	soloed := json at: #soloed.
@@ -2654,12 +2653,10 @@ deleteTrack: anInteger
 	self setCursorTrack: (cursorTrack min: tracks size).
 	self triggerEvent: #tracksChanged! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 22/Feb/2026 19:55:04'!
+!Tracker methodsFor: 'tracks' stamp: 'len 10/Jun/2026 17:05:33'!
 insertTrack: anInteger
 	| answer |
 	answer := Track new setTracker: self.
-	"answer label: 'Track ', (tracks size + 1) printString."
-	answer color: (Color okl: 0.7 c: 0.4 h: (137.5 / 5) * (tracks size "+ 4") \\ 360.0).
 	tracks := (tracks copyFrom: 1 to: anInteger - 1), {answer}, (tracks copyFrom: anInteger to: tracks size).
 	self sequenceUniquePatterns do: [:each| each insertTrack: anInteger].
 	sequence := sequence collect: [:each| each key -> ((each value copyFrom: 1 to: anInteger - 1), {true}, (each value copyFrom: anInteger to: each value size))].
@@ -2691,15 +2688,10 @@ setSelectedTrackTuning: aTuningOrNil
 	self selectedTrack tuning: aTuningOrNil.
 	self triggerEvent: #tracksChanged "perhaps we could have a more precise event for this like #tuningChanged"! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 22/Feb/2026 19:50:00'!
+!Tracker methodsFor: 'tracks' stamp: 'len 10/Jun/2026 17:05:54'!
 swapTrack: anInteger with: anotherInteger
-	| color1 |
 	anInteger = anotherInteger ifTrue: [^ self].
 	tracks swap: anInteger with: anotherInteger.
-	"swap track colors:"
-	color1 := (tracks at: anInteger) color.
-	(tracks at: anInteger) color: (tracks at: anotherInteger) color.
-	(tracks at: anotherInteger) color: color1.
 	"swap pattern blocks:"
 	self sequenceUniquePatterns do: [:each| each swapTrack: anInteger with: anotherInteger].
 	"swap masks:"
@@ -2908,8 +2900,10 @@ intervals
 label
 	^ label! !
 
-!Tuning methodsFor: 'accessing' stamp: 'len 10/Jun/2026 01:56:38'!
+!Tuning methodsFor: 'accessing' stamp: 'len 10/Jun/2026 03:27:37'!
 map: midiKey
+	"Map a MIDI key in this tuning to a MIDI key in the standard 12-TET tuning.
+	Assumes root key = C4 (MIDI key 60), i.e. it maps the root at MIDI key 60 to the standard C4 at 261.63 Hz."
 	| cents degree octave relativeNote |
 	relativeNote := midiKey - 60.0.
 	octave := relativeNote // intervals size.
@@ -2917,17 +2911,35 @@ map: midiKey
 	cents := octave * intervals last + (degree < 1.0 ifTrue: [intervals first * degree] ifFalse: [intervals atLinear: degree]).
 	^ (60 noteToHertz * (2.0 raisedTo: cents / 1200.0)) hertzToNote! !
 
-!Tuning methodsFor: 'serialization' stamp: 'len 10/Jun/2026 02:00:43'!
-asJson
-	^ OrderedDictionary new
-		at: #label put: label;
-		at: #intervals put: intervals;
-		yourself! !
+!Tuning methodsFor: 'accessing' stamp: 'len 10/Jun/2026 16:20:42'!
+noteStringFrom: midiKey
+	"Answer a string to represent the given MIDI note."
+	| relativeMidiKey n degree degreeString |
+	relativeMidiKey := midiKey rounded - 60.
+	n := intervals size.
+	degree := relativeMidiKey \\ n.
+	degreeString := degreeNames ifNotNil: [degreeNames at: degree+1] ifNil: [degree printStringBase: 16 length: 2 padded: true].
+	degreeString size = 1 ifTrue: [degreeString := degreeString, '-'].
+	^ degreeString, (relativeMidiKey // n + 4) printString! !
 
-!Tuning methodsFor: 'serialization' stamp: 'len 10/Jun/2026 02:00:48'!
+!Tuning methodsFor: 'serialization' stamp: 'len 10/Jun/2026 16:29:50'!
+asJson
+	| answer |
+	(answer := OrderedDictionary new)
+		at: #label put: label;
+		at: #intervals put: intervals.
+	degreeNames ifNotNil: [answer at: #degreeNames put: (degreeNames collect: [:each| each asUtf8Bytes])].
+	^ answer! !
+
+!Tuning methodsFor: 'serialization' stamp: 'len 10/Jun/2026 16:33:35'!
 readFromJson: json
 	label := json at: #label.
-	intervals := (json at: #intervals) asFloat32Array! !
+	intervals := (json at: #intervals) asFloat32Array.
+	json at: #degreeNames ifPresent: [:anArray| degreeNames := anArray asArray collect: [:each| CharacterSequence fromUtf8Bytes: each asByteArray]]! !
+
+!Tuning methodsFor: 'private' stamp: 'len 10/Jun/2026 15:38:10'!
+degreeNames: anArray
+	degreeNames := anArray! !
 
 !Tuning methodsFor: 'private' stamp: 'len 10/Jun/2026 01:56:45'!
 intervals: anArray
@@ -2941,19 +2953,35 @@ label: aString
 library
 	^ Library! !
 
-!Tuning class methodsFor: 'class initialization' stamp: 'len 9/Jun/2026 22:16:40'!
+!Tuning class methodsFor: 'class initialization' stamp: 'len 10/Jun/2026 16:17:18'!
 initialize
 	super initialize.
 	Library := OrderedCollection new.
-	Library addAll: {self edo: 7. self edo: 19. self edo: 22. self edo: 31. self fiveLimitJustIntonation. self pythagorean. self harmonic: 8}! !
+	Library addAll: {self edo7. self edo19. self edo31. self edo: 53. self fiveLimitJustIntonation. self pythagorean. self harmonic: 8}! !
 
 !Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 01:59:43'!
 edo: anInteger
 	^ self label: anInteger printString, '-EDO' intervals: ((1 to: anInteger) collect: [:i| 1200.0 * i / anInteger])! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 01:57:28'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 15:59:38'!
+edo12
+	^ (self edo: 12) degreeNames: #('C' 'C♯' 'D' 'D♯' 'E' 'F' 'F♯' 'G' 'G♯' 'A' 'A♯' 'B')! !
+
+!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 15:50:00'!
+edo19
+	^ (self edo: 19) degreeNames: #('C' 'C♯' 'D♭' 'D' 'D♯' 'E♭' 'E' 'E♯' "=F♭" 'F' 'F♯' 'G♭' 'G' 'G♯' 'A♭' 'A' 'A♯' 'B♭' 'B' 'B♯' "=C♭")! !
+
+!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 15:57:34'!
+edo31
+	^ (self edo: 31) degreeNames: #('C' 'C↑' 'C♯' 'D♭' 'D↓' 'D' 'D↑' 'D♯' 'E♭' 'E↓' 'E' 'E↑' 'E♯' "=F♭" 'F' 'F↑' 'F♯' 'G♭' 'G↓' 'G' 'G↑' 'G♯' 'A♭' 'A↓' 'A' 'A↑' 'A♯' 'B♭' 'B↓' 'B' 'B↑' 'B♯' "=C♭")! !
+
+!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 16:17:53'!
+edo7
+	^ (self edo: 7) degreeNames: #('C' 'D' 'E' 'F' 'G' 'A' 'B')! !
+
+!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 15:37:36'!
 fiveLimitJustIntonation
-	^ self label: '5-Limit JI' ratios: {16/15. 9/8. 6/5. 5/4. 4/3. 45/32. 3/2. 8/5. 5/3. 9/5. 15/8. 2/1}! !
+	^ (self label: '5-Limit JI' ratios: {16/15. 9/8. 6/5. 5/4. 4/3. 45/32. 3/2. 8/5. 5/3. 9/5. 15/8. 2/1}) degreeNames: #('C' 'C♯' 'D' 'E♭' 'E↓' "syntonic E, lower than Pythagorean by ~21.5¢" 'F' "'F♯↓'" 'F↡'  "lower than Pythagorean F♯" 'G' 'G♯' 'A↓' "syntonic A" 'B♭' 'B↓' "syntonic B")! !
 
 !Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 01:59:10'!
 harmonic: n
@@ -2967,9 +2995,10 @@ label: aString intervals: anArray
 label: aString ratios: aCollection
 	^ self label: aString intervals: (aCollection collect: [:each| (each log: 2.0) * 1200.0]) sorted! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 01:59:22'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 15:40:04'!
 pythagorean
-	^ self label: 'Pythagorean' ratios: {256/243. 9/8. 32/27. 81/64. 4/3. 1024/729. 3/2. 128/81. 27/16. 16/9. 243/128. 2/1}! !
+	^ (self label: 'Pythagorean' ratios: {256/243. 9/8. 32/27. 81/64. 4/3. 1024/729. 3/2. 128/81. 27/16. 16/9. 243/128. 2/1}) degreeNames: #('C' 'C♯' 'D' 'D♯' 'E' 'F' 'F♯' 'G' 'G♯' 'A' 'A♯' 'B')
+! !
 DarkerTheme initialize!
 PatternEditorMorph initialize!
 Tuning initialize!

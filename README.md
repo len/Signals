@@ -49,8 +49,8 @@ On the screenshot above you can see an open tracker window. At the top there is 
 
 At the bottom left there is the "sequencer" or "arranger", that contains the list of patterns to be played. And at the bottom right the "pattern editor" that shows the current pattern and allows you to edit the triggers (notes and effect commands, like a typical tracker). Each track contains the following columns: instrument number, note, velocity, fx1 and fx2. The following are the fx commands currently implemented:
 * Cxy set velocity to x (0 = 0.0, F = 1.0) after (y+1)/16 of a line (0 = 1/16 of a line, F = 1 line)
-* Rxx retrigger every (xx+1)/256 of a line (00 = 1/16 of a line, FF = 16 lines)
-* Gxx glide to note in (xx+1)/16 of a line (00 = 1/16 of a line, FF = 16 lines)
+* Rxx retrigger every (xx+1)/256 of a line (00 = 1/256 of a line, FF = 1 line)
+* Gxx glide to note in (xx+1)/256 of a line (00 = 1/16 of a line, FF = 16 lines)
 * Lxx set instrument volume level to xx (00 = 0.0, FF = 1.0)
 * Pxx set instrument pan (00 = left, 80 = center, FF = right)
 * Ixx / Oxx adjust volume level up/down
@@ -61,7 +61,7 @@ At the bottom left there is the "sequencer" or "arranger", that contains the lis
 * <xx / >xx set speed to xx and play backwards / forward
 * 0xx to 9xx set control input
 * Fxx set BPM to xx
-* Qxx delay trigger by (xx+1)/256 of a line (00 = 1/256 of a line, FF = 1 line)
+* Qxx delay trigger by xx/256 of a line (00 = no delay, FF = almost a line)
 * Yxx set the probability of playing the trigger (00 = never, FF = always)
 
 ### Hotkeys and keyboard mapping

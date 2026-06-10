@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 10 June 2026 at 5:12:54 pm'!
+'From Cuis7.9 [latest update: #7983] on 10 June 2026 at 8:54:05 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 37!
+!provides: 'Tracker' 1 38!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -2971,9 +2971,9 @@ edo12
 edo19
 	^ (self edo: 19) degreeNames: #('C' 'C♯' 'D♭' 'D' 'D♯' 'E♭' 'E' 'E♯' "=F♭" 'F' 'F♯' 'G♭' 'G' 'G♯' 'A♭' 'A' 'A♯' 'B♭' 'B' 'B♯' "=C♭")! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 15:57:34'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 18:17:31'!
 edo31
-	^ (self edo: 31) degreeNames: #('C' 'C↑' 'C♯' 'D♭' 'D↓' 'D' 'D↑' 'D♯' 'E♭' 'E↓' 'E' 'E↑' 'E♯' "=F♭" 'F' 'F↑' 'F♯' 'G♭' 'G↓' 'G' 'G↑' 'G♯' 'A♭' 'A↓' 'A' 'A↑' 'A♯' 'B♭' 'B↓' 'B' 'B↑' 'B♯' "=C♭")! !
+	^ (self edo: 31) degreeNames: #('C' 'C↑' 'C♯' 'D♭' 'D↓' 'D' 'D↑' 'D♯' 'E♭' 'E↓' 'E' 'E↑' 'F↓' 'F' 'F↑' 'F♯' 'G♭' 'G↓' 'G' 'G↑' 'G♯' 'A♭' 'A↓' 'A' 'A↑' 'A♯' 'B♭' 'B↓' 'B' 'B↑' 'C↓')! !
 
 !Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 16:17:53'!
 edo7

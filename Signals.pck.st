@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 10 June 2026 at 8:54:02 pm'!
+'From Cuis7.9 [latest update: #7983] on 11 June 2026 at 11:38:11 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 587!
+!provides: 'Signals' 1 588!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -5142,7 +5142,7 @@ initialize
 	super initialize.
 	self initializeLibrary! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 17/Apr/2026 00:59:21'!
+!Multisample class methodsFor: 'library' stamp: 'len 11/Jun/2026 23:36:33'!
 initializeLibrary
 	"
 	Multisample initializeLibrary
@@ -5150,11 +5150,14 @@ initializeLibrary
 	
 	Library := OrderedDictionary new.
 	'Loading multisamples...' print.
-	#(loadJRhodes3D loadLoFiRhodes loadDancePiano loadVibraphone loadBookerT loadBookerTFast "loadFarfisa" loadTrumpet loadFlute loadSquireBass loadPickedBass loadSlapBass loadPopBass loadFingerBass loadDoubleBass loadSixStringSteelGuitar loadTwoToneHouseOrgan loadStringEnsemble loadChoirAah loadChoirOuh loadTrombone) do: [:each|
+	#(loadJRhodes3D loadDancePiano loadVibraphone loadBookerT loadBookerTFast loadTrumpet loadSquireBass loadSlapBass loadPopBass loadFingerBass loadDoubleBass loadSixStringSteelGuitar loadTwoToneHouseOrgan loadStringEnsemble loadChoirAah loadChoirOuh) do: [:each|
 		| multisample |
 		multisample := self perform: each.
 		('    ∙ ', multisample label) print.
-		Library at: multisample label put: multisample]! !
+		Library at: multisample label put: multisample].
+	#('LoFi Rhodes' 'Picked Bass' 'Flute' 'Brass Section' 'Glockenspiel' 'Cello' 'Viola' 'Violin' 'Xylophone' 'Trombone') do: [:each|
+		('    ∙ ', each) print.
+		self loadMultisampleNamed: each]! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 3/Dec/2025 02:12:00'!
 library
@@ -5281,20 +5284,6 @@ loadFingerBass
 		keymap at: midiKey put: {Sample buffer: reader leftSamples rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Finger Bass'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 11/May/2026 15:48:16'!
-loadFlute
-	"Iowa Flute with vibrato."
-	| keymap |
-	keymap := Dictionary new.
-	#('C3' 'C4' 'C5' 'C6' 'E4' 'G3' 'G4' 'G5') withIndexDo: [:noteName :i|
-		| filename reader buffer |
-		filename := 'Flute - Flute_vib_loud_', noteName, '.wav'.
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'MCO' // filename.
-		buffer := reader leftSamples.
-		keymap at: noteName nameToNote put:
-			{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
-	^ self new label: 'Flute'; keymap: keymap! !
-
 !Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:13:33'!
 loadJRhodes3D
 	"From https://github.com/jlearman/jRhodes3d-wav.git"
@@ -5312,30 +5301,24 @@ loadJRhodes3D
 	keymap := samples collect: [:each| each associations sorted reversed collect: #value].
 	^ self new label: 'Rhodes'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 17/Apr/2026 00:50:53'!
-loadLoFiRhodes
-	| keymap |
-	keymap := Dictionary new.
-	((self multisamplesDirectory / 'LoFi Rhodes') files select: [:each| each name endsWith: '.wav']) do: [:each|
-		| reader midiKey buffer |
-		midiKey := (each name findTokens: '.') first asNumber - 12.
+!Multisample class methodsFor: 'library' stamp: 'len 11/Jun/2026 20:16:53'!
+loadMultisampleNamed: directoryName
+	| samples keymap |
+	samples := Dictionary new.
+	(self multisamplesDirectory / directoryName) files do: [:each|
+		| reader tokens midiKey velocityLayer buffer sample |
+		tokens := ((each name findTokens: '-') second findTokens: '.') first findTokens: ' '.
+		midiKey := tokens first asNumber.
+		velocityLayer := tokens size > 1 ifTrue: [tokens second asNumber] ifFalse: [1].
 		reader := WAVFileReader new readFromFileEntry: each.
 		"If stereo, sum channels:"
 		buffer := reader channels = 2 ifTrue: [reader leftSamples + reader rightSamples] ifFalse: [reader leftSamples].
-		"Remove DC offset:"
-		buffer -= (buffer sum / buffer size).
-		keymap at: midiKey put: {Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
-	^ self new label: 'LoFi Rhodes'; keymap: keymap! !
-
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:14:24'!
-loadPickedBass
-	| keymap |
-	keymap := Dictionary new.
-	#(28 31 34 37 40 43 46 49 52 55 58 61) do: [:midiKey|
-		| reader |
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Bass' // ('Picked Bass - Ibpickin_', midiKey printString, '.wav').
-		keymap at: midiKey put: {Sample buffer: reader leftSamples rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
-	^ self new label: 'Picked Bass'; keymap: keymap! !
+		sample := Sample buffer: buffer rate: reader sampleRate.
+		reader loopStart ifNotNil: [sample loopStart: reader loopStart loopEnd: reader loopEnd]..
+		"sample removeDCOffset."
+		(samples at: midiKey ifAbsentPut: [Dictionary new]) at: velocityLayer put: sample].
+	keymap := samples collect: [:each| each associations sorted reversed collect: #value].
+	Library at: directoryName put: (self new label: directoryName; keymap: keymap)! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:14:24'!
 loadPopBass
@@ -5398,19 +5381,6 @@ loadStringEnsemble
 		keymap at: noteName nameToNote put:
 			{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'String Ensemble'; keymap: keymap! !
-
-!Multisample class methodsFor: 'library' stamp: 'len 17/Apr/2026 00:59:09'!
-loadTrombone
-	| keymap |
-	keymap := Dictionary new.
-	#(60 64 68 72 74 78 80 82 84) withIndexDo: [:midiKey :i|
-		| filename reader buffer |
-		filename := 'Trombone - TBR TB 0', midiKey printString, '.wav'.
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'MCO' // filename.
-		buffer := reader leftSamples.
-		keymap at: midiKey put:
-			{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
-	^ self new label: 'Trombone'; keymap: keymap! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 11/May/2026 15:48:16'!
 loadTrumpet

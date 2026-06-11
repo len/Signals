@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 10 June 2026 at 8:54:05 pm'!
+'From Cuis7.9 [latest update: #7983] on 11 June 2026 at 4:11:22 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 38!
+!provides: 'Tracker' 1 39!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -109,7 +109,7 @@ Track class
 
 !classDefinition: #Tracker category: #'Tracker-Kernel'!
 Object subclass: #Tracker
-	instanceVariableNames: 'instruments tracks sequence label bpm swing level inputCenterKey cursorPattern cursorLine cursorTrack playheadPattern playheadLine followPlayhead playStartPattern playStartLine playEndPattern playEndLine playingMask loop anyTrackSoloed ticksToLine peakLeft peakRight buses random'
+	instanceVariableNames: 'instruments tracks sequence label bpm swing level inputOctave cursorPattern cursorLine cursorTrack playheadPattern playheadLine followPlayhead playStartPattern playStartLine playEndPattern playEndLine playingMask loop anyTrackSoloed ticksToLine peakLeft peakRight buses random'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Tracker-Kernel'!
@@ -129,8 +129,8 @@ Trigger class
 
 !classDefinition: #Tuning category: #'Tracker-Kernel'!
 Object subclass: #Tuning
-	instanceVariableNames: 'intervals label degreeNames'
-	classVariableNames: 'Library'
+	instanceVariableNames: 'intervals label noteNames'
+	classVariableNames: 'EDO12 Library'
 	poolDictionaries: ''
 	category: 'Tracker-Kernel'!
 !classDefinition: 'Tuning class' category: #'Tracker-Kernel'!
@@ -709,7 +709,7 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $d ifTrue: [self duplicateInstrument. ^ true].
 	^ false! !
 
-!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 9/Apr/2026 15:35:00'!
+!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 11/Jun/2026 00:18:02'!
 keyStroke: anEvent
 	| c i |
 	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
@@ -725,7 +725,7 @@ keyStroke: anEvent
 		[c := anEvent keyCharacter.
 		c = $a ifTrue: [anEvent wasHandled: true. tracker selectedInstrument ifNotNil: [:anInstument| anInstument noteOff]. ^ self].
 		(i := 'zsxdcvgbhnjmq2w3er5t6y7ui9o0p' indexOf: c) > 0 ifTrue:
-			[anEvent wasHandled: true. tracker selectedInstrument ifNotNil: [:anInstument| anInstument noteOn: i + tracker inputCenterKey - 1]. ^ self]].
+			[anEvent wasHandled: true. tracker selectedInstrument ifNotNil: [:anInstument| anInstument noteOn: tracker selectedTrack inputCenterKey + i - 1]. ^ self]].
 	^ super keyStroke: anEvent! !
 
 !InstrumentEditorMorph methodsFor: 'initialization' stamp: 'len 18/Feb/2026 17:30:12'!
@@ -961,12 +961,10 @@ setPatternLength
 	tracker isPlaying ifTrue: [^ self].
 	self request: 'Pattern length' initialAnswer: tracker selectedPattern length printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| tracker setSelectedPatternLength: s asNumber. self redrawNeeded]! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 9/Jun/2026 22:55:50'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 11/Jun/2026 02:01:54'!
 setTrackTuning
 	| menu |
 	menu := MenuMorph new.
-	menu add: '12-TET' target: tracker action: #setSelectedTrackTuning: argument: nil.
-	menu addLine.
 	Tuning library do: [:each| menu add: each label target: tracker action: #setSelectedTrackTuning: argument: each].
 	menu invokeModal! !
 
@@ -1154,7 +1152,7 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 19/Apr/2026 02:54:10'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 11/Jun/2026 01:52:21'!
 handleInputKey: anEvent
 	| c i |
 	anEvent isBackspace ifTrue:
@@ -1162,8 +1160,8 @@ handleInputKey: anEvent
 			ifTrue: [tracker selectedTriggerAt: cursorPosition put: nil. self redrawNeeded]
 			ifFalse: [self selectionDelete].
 		^ true].
-	anEvent keyCharacter = $] ifTrue: [self selectedTriggersDo: [:each| each transposeBy: 12]. self redrawNeeded. ^ true].
-	anEvent keyCharacter = $[ ifTrue: [self selectedTriggersDo: [:each| each transposeBy: -12]. self redrawNeeded. ^ true].
+	anEvent keyCharacter = $] ifTrue: [self selectedTriggersDo: [:each| each transposeBy: (tracker selectedTrack tuning size)]. self redrawNeeded. ^ true].
+	anEvent keyCharacter = $[ ifTrue: [self selectedTriggersDo: [:each| each transposeBy: (tracker selectedTrack tuning size negated)]. self redrawNeeded. ^ true].
 	anEvent keyCharacter = $} ifTrue: [self selectedTriggersDo: [:each| each transposeBy: 1]. self redrawNeeded. ^ true].
 	anEvent keyCharacter = ${ ifTrue: [self selectedTriggersDo: [:each| each transposeBy: -1]. self redrawNeeded. ^ true].
 	cursorPosition = 3 ifTrue:
@@ -1173,7 +1171,7 @@ handleInputKey: anEvent
 			tracker moveCursorLineDown: editStep.
 			^ true].
 		(i := 'zsxdcvgbhnjmq2w3er5t6y7ui9o0p' indexOf: c) > 0 ifTrue:
-			[tracker selectedTriggerAt: cursorPosition put: i + tracker inputCenterKey - 1.
+			[tracker selectedTriggerAt: cursorPosition put: tracker selectedTrack inputCenterKey + i - 1.
 			tracker moveCursorLineDown: editStep.
 			^ true].
 		^ false].
@@ -1596,7 +1594,7 @@ update
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 9/Jun/2026 22:01:43'!
+!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 11/Jun/2026 01:54:46'!
 drawOn: aCanvas
 	| color |
 	aCanvas fillRectangle: (0 @ 0 extent: extent) color: Color darkGray.
@@ -1606,8 +1604,8 @@ drawOn: aCanvas
 		drawString: (tracker isPlaying ifTrue: ['▶'] ifFalse: ['◼']) at: 4 @ 0 font: font color: color;
 		drawString: (tracker bpm printStringFractionDigits: 1), ' BPM ⇄ ', (tracker swing * 100) truncated printString, '%' at: 32 @ 2 font: font color: color;
 		drawString: '↧' at: 240 @ 3 font: font color: (tracker followPlayhead ifTrue: [color] ifFalse: [Color lightGray]);
-		drawString: tracker inputCenterKey noteToName at: 280 @ 3 font: font color: color.
-	tracker selectedTrack tuning ifNotNil: [:aTuning| aCanvas drawString: aTuning label at: 340 @ 3 font: font color: color].
+		drawString: 'C', tracker inputOctave printString at: 280 @ 3 font: font color: color;
+		drawString: tracker selectedTrack tuning label at: 340 @ 3 font: font color: color.
 "	tracker selectedInstrumentNumber ifNotNil: [:instrumentNumber|
 		patchLabel := (instrumentNumber printStringBase: 16 nDigits: 2), ' ', (tracker selectedInstrument ifNil: ['EMPTY'] ifNotNil: [:anInstrument| anInstrument label ifNil: ['']]).
 		aCanvas drawString: patchLabel at: (extent x - 4 - (font widthOfString: patchLabel)) @ 2 font: font color: color]"! !
@@ -1625,14 +1623,14 @@ initialize
 	super initialize.
 	font := FontFamily defaultFamilyPointSize: 15! !
 
-!TrackerBarMorph methodsFor: 'initialization' stamp: 'len 9/Jun/2026 23:07:59'!
+!TrackerBarMorph methodsFor: 'initialization' stamp: 'len 11/Jun/2026 00:08:18'!
 setTracker: aTracker
 	tracker := aTracker.
 	tracker
 		when: #playingStatusChanged send: #redrawNeeded to: self;
 		when: #tempoChanged send: #redrawNeeded to: self; "BPM or swing changed"
 		when: #followPlayheadChanged send: #redrawNeeded to: self;
-		when: #inputCenterKeyChanged send: #redrawNeeded to: self.
+		when: #inputOctaveChanged send: #redrawNeeded to: self.
 	"for updating the tuning status:"
 	tracker
 		when: #tracksChanged send: #redrawNeeded to: self;
@@ -1740,10 +1738,10 @@ noteOff
 noteOn: midiKey
 	self noteOn: midiKey glide: 0! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 9/Jun/2026 21:54:18'!
+!Instrument methodsFor: 'playing' stamp: 'len 11/Jun/2026 01:55:01'!
 noteOn: midiKey glide: glide
 	| targetNote |
-	targetNote := track tuning ifNil: [midiKey] ifNotNil: [: aTuning| aTuning map: midiKey].
+	targetNote := track tuningOrNil ifNil: [midiKey] ifNotNil: [: aTuning| aTuning map: midiKey].
 	(glide > 0 and: [note notNil])
 		ifTrue:
 			[glideTicks := (glide / 16.0 * track tracker tpl) truncated.
@@ -2037,6 +2035,10 @@ color
 enabled
 	^ soloed or: [muted not and: [tracker anyTrackSoloed not]]! !
 
+!Track methodsFor: 'accessing' stamp: 'len 11/Jun/2026 01:53:29'!
+inputCenterKey
+	^ (tracker inputOctave - 4) * (tuning ifNil: [12] ifNotNil: [tuning size]) + 60! !
+
 !Track methodsFor: 'accessing' stamp: 'len 17/Feb/2026 19:28:45'!
 instrument
 	^ instrument! !
@@ -2078,13 +2080,17 @@ soloed: aBoolean
 tracker
 	^ tracker! !
 
-!Track methodsFor: 'accessing' stamp: 'len 9/Jun/2026 21:56:04'!
+!Track methodsFor: 'accessing' stamp: 'len 11/Jun/2026 01:55:24'!
 tuning
-	^ tuning! !
+	^ tuning ifNil: [Tuning edo12]! !
 
-!Track methodsFor: 'accessing' stamp: 'len 9/Jun/2026 21:56:12'!
+!Track methodsFor: 'accessing' stamp: 'len 11/Jun/2026 01:56:58'!
 tuning: aTuning
-	tuning := aTuning! !
+	tuning := aTuning = Tuning edo12 ifFalse: [aTuning]! !
+
+!Track methodsFor: 'accessing' stamp: 'len 11/Jun/2026 01:55:28'!
+tuningOrNil
+	^ tuning! !
 
 !Track methodsFor: 'initialization' stamp: 'len 26/Feb/2026 17:36:32'!
 initialize
@@ -2160,9 +2166,9 @@ buses
 followPlayhead
 	^ followPlayhead! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 16/Feb/2026 21:26:45'!
-inputCenterKey
-	^ inputCenterKey! !
+!Tracker methodsFor: 'accessing' stamp: 'len 11/Jun/2026 00:09:15'!
+inputOctave
+	^ inputOctave! !
 
 !Tracker methodsFor: 'accessing' stamp: 'len 18/Feb/2026 16:58:40'!
 instruments
@@ -2241,17 +2247,17 @@ cursorPattern
 cursorTrack
 	^ cursorTrack! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 16/Feb/2026 21:25:21'!
+!Tracker methodsFor: 'cursor' stamp: 'len 11/Jun/2026 00:08:32'!
 inputOctaveDown
-	inputCenterKey > 12 ifFalse: [^ self].
-	inputCenterKey := inputCenterKey - 12.
-	self triggerEvent: #inputCenterKeyChanged! !
+	inputOctave > 0 ifFalse: [^ self].
+	inputOctave := inputOctave - 1.
+	self triggerEvent: #inputOctaveChanged! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 16/Feb/2026 21:25:14'!
+!Tracker methodsFor: 'cursor' stamp: 'len 11/Jun/2026 00:09:02'!
 inputOctaveUp
-	inputCenterKey < 108 ifFalse: [^ self].
-	inputCenterKey := inputCenterKey + 12.
-	self triggerEvent: #inputCenterKeyChanged! !
+	inputOctave < 9 ifFalse: [^ self].
+	inputOctave := inputOctave + 1.
+	self triggerEvent: #inputOctaveChanged! !
 
 !Tracker methodsFor: 'cursor' stamp: 'len 14/Mar/2026 18:22:50'!
 moveCursorBeatDown
@@ -2333,7 +2339,7 @@ setCursorTrack: anInteger
 	cursorTrack := anInteger.
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'initialization' stamp: 'len 6/Apr/2026 15:51:40'!
+!Tracker methodsFor: 'initialization' stamp: 'len 11/Jun/2026 00:07:12'!
 initialize
 	instruments := Dictionary new.
 	tracks := #().
@@ -2341,7 +2347,7 @@ initialize
 	bpm := 120.
 	swing := 0.0.
 	level := 1.0.
-	inputCenterKey := 60.
+	inputOctave := 4.
 	cursorPattern := 1.
 	cursorLine := 1.
 	cursorTrack := 1.
@@ -2888,9 +2894,9 @@ isReverse
 	"Answer true if the receiver has an effect <xx to play a sample backwards."
 	^ (fx1 notNil and: [(fx1 bitShift: -8) = 60]) or: [fx2 notNil and: [(fx2 bitShift: -8) = 60]]! !
 
-!Trigger methodsFor: 'transformations' stamp: 'len 24/Feb/2026 01:25:15'!
-transposeBy: semitones
-	self isNoteOn ifTrue: [note := note + semitones min: 127 max: 0]! !
+!Trigger methodsFor: 'transformations' stamp: 'len 11/Jun/2026 16:06:34'!
+transposeBy: steps
+	self isNoteOn ifTrue: [(note + steps between: 0 and: 127) ifTrue: [note := note + steps]]! !
 
 !Tuning methodsFor: 'accessing' stamp: 'len 10/Jun/2026 02:00:32'!
 intervals
@@ -2911,35 +2917,41 @@ map: midiKey
 	cents := octave * intervals last + (degree < 1.0 ifTrue: [intervals first * degree] ifFalse: [intervals atLinear: degree]).
 	^ (60 noteToHertz * (2.0 raisedTo: cents / 1200.0)) hertzToNote! !
 
-!Tuning methodsFor: 'accessing' stamp: 'len 10/Jun/2026 16:20:42'!
+!Tuning methodsFor: 'accessing' stamp: 'len 10/Jun/2026 23:38:45'!
 noteStringFrom: midiKey
 	"Answer a string to represent the given MIDI note."
-	| relativeMidiKey n degree degreeString |
+	| relativeMidiKey n degree |
 	relativeMidiKey := midiKey rounded - 60.
 	n := intervals size.
 	degree := relativeMidiKey \\ n.
-	degreeString := degreeNames ifNotNil: [degreeNames at: degree+1] ifNil: [degree printStringBase: 16 length: 2 padded: true].
+"	degreeString := degreeNames ifNotNil: [degreeNames at: degree+1] ifNil: [degree printStringBase: 10 length: 2 padded: true].
 	degreeString size = 1 ifTrue: [degreeString := degreeString, '-'].
-	^ degreeString, (relativeMidiKey // n + 4) printString! !
+	^ degreeString, (relativeMidiKey // n + 4) printString
+	"
+	^ (degree < 10 ifTrue: [' ', degree printString] ifFalse: [degree printString]), (#('₀' '₁' '₂' '₃' '₄' '₅' '₆' '₇' '₈' '₉') at: relativeMidiKey // n + 5 ifAbsent: ['?'])! !
 
-!Tuning methodsFor: 'serialization' stamp: 'len 10/Jun/2026 16:29:50'!
+!Tuning methodsFor: 'accessing' stamp: 'len 11/Jun/2026 01:58:10'!
+period
+	^ intervals last! !
+
+!Tuning methodsFor: 'accessing' stamp: 'len 11/Jun/2026 01:57:38'!
+size
+	^ intervals size! !
+
+!Tuning methodsFor: 'serialization' stamp: 'len 11/Jun/2026 02:28:58'!
 asJson
 	| answer |
 	(answer := OrderedDictionary new)
 		at: #label put: label;
 		at: #intervals put: intervals.
-	degreeNames ifNotNil: [answer at: #degreeNames put: (degreeNames collect: [:each| each asUtf8Bytes])].
+	noteNames ifNotNil: [answer at: #noteNames put: (noteNames collect: [:each| each asUtf8Bytes])].
 	^ answer! !
 
-!Tuning methodsFor: 'serialization' stamp: 'len 10/Jun/2026 16:33:35'!
+!Tuning methodsFor: 'serialization' stamp: 'len 11/Jun/2026 02:28:49'!
 readFromJson: json
 	label := json at: #label.
 	intervals := (json at: #intervals) asFloat32Array.
-	json at: #degreeNames ifPresent: [:anArray| degreeNames := anArray asArray collect: [:each| CharacterSequence fromUtf8Bytes: each asByteArray]]! !
-
-!Tuning methodsFor: 'private' stamp: 'len 10/Jun/2026 15:38:10'!
-degreeNames: anArray
-	degreeNames := anArray! !
+	json at: #noteNames ifPresent: [:anArray| noteNames := anArray asArray collect: [:each| CharacterSequence fromUtf8Bytes: each asByteArray]]! !
 
 !Tuning methodsFor: 'private' stamp: 'len 10/Jun/2026 01:56:45'!
 intervals: anArray
@@ -2949,39 +2961,44 @@ intervals: anArray
 label: aString
 	label := aString! !
 
+!Tuning methodsFor: 'private' stamp: 'len 11/Jun/2026 02:12:06'!
+noteNames: anArray
+	noteNames := anArray! !
+
 !Tuning class methodsFor: 'library' stamp: 'len 9/Jun/2026 22:14:43'!
 library
 	^ Library! !
 
-!Tuning class methodsFor: 'class initialization' stamp: 'len 10/Jun/2026 16:17:18'!
+!Tuning class methodsFor: 'class initialization' stamp: 'len 11/Jun/2026 02:01:07'!
 initialize
 	super initialize.
+	EDO12 := nil.
 	Library := OrderedCollection new.
-	Library addAll: {self edo7. self edo19. self edo31. self edo: 53. self fiveLimitJustIntonation. self pythagorean. self harmonic: 8}! !
+	Library addAll: {self edo7. self edo12. self edo19. self edo31. self edo: 53. self fiveLimitJustIntonation. self pythagorean. self harmonic: 8}! !
 
 !Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 01:59:43'!
 edo: anInteger
 	^ self label: anInteger printString, '-EDO' intervals: ((1 to: anInteger) collect: [:i| 1200.0 * i / anInteger])! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 15:59:38'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 11/Jun/2026 02:12:06'!
 edo12
-	^ (self edo: 12) degreeNames: #('C' 'C♯' 'D' 'D♯' 'E' 'F' 'F♯' 'G' 'G♯' 'A' 'A♯' 'B')! !
+	^ EDO12 ifNil: [EDO12 := (self edo: 12) noteNames: #('C' 'C♯' 'D' 'D♯' 'E' 'F' 'F♯' 'G' 'G♯' 'A' 'A♯' 'B')]! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 15:50:00'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 11/Jun/2026 02:12:07'!
 edo19
-	^ (self edo: 19) degreeNames: #('C' 'C♯' 'D♭' 'D' 'D♯' 'E♭' 'E' 'E♯' "=F♭" 'F' 'F♯' 'G♭' 'G' 'G♯' 'A♭' 'A' 'A♯' 'B♭' 'B' 'B♯' "=C♭")! !
+	^ (self edo: 19) noteNames: #('C' 'C♯' 'D♭' 'D' 'D♯' 'E♭' 'E' 'E♯' "=F♭" 'F' 'F♯' 'G♭' 'G' 'G♯' 'A♭' 'A' 'A♯' 'B♭' 'B' 'B♯' "=C♭")! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 18:17:31'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 11/Jun/2026 02:12:06'!
 edo31
-	^ (self edo: 31) degreeNames: #('C' 'C↑' 'C♯' 'D♭' 'D↓' 'D' 'D↑' 'D♯' 'E♭' 'E↓' 'E' 'E↑' 'F↓' 'F' 'F↑' 'F♯' 'G♭' 'G↓' 'G' 'G↑' 'G♯' 'A♭' 'A↓' 'A' 'A↑' 'A♯' 'B♭' 'B↓' 'B' 'B↑' 'C↓')! !
+	^ (self edo: 31) noteNames: #('C' 'C↑' 'C♯' 'D♭' 'D↓' 'D' 'D↑' 'D♯' 'E♭' 'E↓' 'E' 'E↑' 'F↓' 'F' 'F↑' 'F♯' 'G♭' 'G↓' 'G' 'G↑' 'G♯' 'A♭' 'A↓' 'A' 'A↑' 'A♯' 'B♭' 'B↓' 'B' 'B↑' 'C↓')! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 16:17:53'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 11/Jun/2026 02:12:06'!
 edo7
-	^ (self edo: 7) degreeNames: #('C' 'D' 'E' 'F' 'G' 'A' 'B')! !
+	^ (self edo: 7) noteNames: #('C' 'D' 'E' 'F' 'G' 'A' 'B')! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 15:37:36'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 11/Jun/2026 02:12:07'!
 fiveLimitJustIntonation
-	^ (self label: '5-Limit JI' ratios: {16/15. 9/8. 6/5. 5/4. 4/3. 45/32. 3/2. 8/5. 5/3. 9/5. 15/8. 2/1}) degreeNames: #('C' 'C♯' 'D' 'E♭' 'E↓' "syntonic E, lower than Pythagorean by ~21.5¢" 'F' "'F♯↓'" 'F↡'  "lower than Pythagorean F♯" 'G' 'G♯' 'A↓' "syntonic A" 'B♭' 'B↓' "syntonic B")! !
+	^ (self label: '5-Limit JI' ratios: {16/15. 9/8. 6/5. 5/4. 4/3. 45/32. 3/2. 8/5. 5/3. 9/5. 15/8. 2/1}) noteNames: #('C' 'C♯' 'D' 'E♭' 'E↓' "syntonic E, lower than Pythagorean by ~21.5¢" 'F' "'F♯↓'" 'F↡'  "lower than Pythagorean F♯" 'G' 'G♯' 'A↓' "syntonic A" 'B♭' 'B↓' "syntonic B")! !
 
 !Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 01:59:10'!
 harmonic: n
@@ -2995,9 +3012,9 @@ label: aString intervals: anArray
 label: aString ratios: aCollection
 	^ self label: aString intervals: (aCollection collect: [:each| (each log: 2.0) * 1200.0]) sorted! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 15:40:04'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 11/Jun/2026 02:12:06'!
 pythagorean
-	^ (self label: 'Pythagorean' ratios: {256/243. 9/8. 32/27. 81/64. 4/3. 1024/729. 3/2. 128/81. 27/16. 16/9. 243/128. 2/1}) degreeNames: #('C' 'C♯' 'D' 'D♯' 'E' 'F' 'F♯' 'G' 'G♯' 'A' 'A♯' 'B')
+	^ (self label: 'Pythagorean' ratios: {256/243. 9/8. 32/27. 81/64. 4/3. 1024/729. 3/2. 128/81. 27/16. 16/9. 243/128. 2/1}) noteNames: #('C' 'C♯' 'D' 'D♯' 'E' 'F' 'F♯' 'G' 'G♯' 'A' 'A♯' 'B')
 ! !
 DarkerTheme initialize!
 PatternEditorMorph initialize!

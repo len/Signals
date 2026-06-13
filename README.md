@@ -11,6 +11,7 @@ The following are some of the features of Signals:
 * samples and multisamples
 * antialiased oscillators (with PolyBLEP/PolyBLAP)
 * antialiased wavetables (bandlimited on-the-fly via inverse FFT)
+* classic FM with any number of carriers or modulators
 * LFOs and many types of envelopes
 * digital filters based on biquads and SVF
 * virtual analog filters
@@ -32,7 +33,7 @@ The system is based on Smalltalk-80, specifically [Cuis Smalltalk](https://githu
 As many systems based on Smalltalk, it comes complete with an environment for interactive programming, blurring the distinction between user and programmer (or musician and programmer in this case). It contains a complete development environment that allows you to browse classes, inspect objects, debug, and change anything 'live' while it is running.
 
 ### Samples
-Some free samples and multisamples are included in the data/ submodule. The multisamples are taken from public domain sound fonts.
+Some free samples and multisamples are included in the data/ git submodule. The multisamples are taken from public domain sound fonts.
 
 ### Installing
 Clone the git repo with --recurse-submodules in order to clone the data/ submodule:
@@ -48,21 +49,30 @@ Finally, open a FileList, go to Signals/data/projects/ and choose any of the exa
 On the screenshot above you can see an open tracker window. At the top there is the "instrument editor" that contains a patch of modules connected by wires (an instrument, or possibly an effect or other kind of audio processing patch). Each module morph contains controls (like knobs, sliders, a wave, etc) that can be changed with mouse scroll or the arrow keys (with shift pressed to do fine adjustments). The instrument editor is fully zoomable, you can zoom in/out with Cmd-mouse-scroll and pan by mouse-dragging the background. The instrument editor shows the patch for the instrument at current cursor position in the pattern editor below it; you have to move the cursor to see the different patches, or enter a new instrument number to create a new empty patch.
 
 At the bottom left there is the "sequencer" or "arranger", that contains the list of patterns to be played. And at the bottom right the "pattern editor" that shows the current pattern and allows you to edit the triggers (notes and effect commands, like a typical tracker). Each track contains the following columns: instrument number, note, velocity, fx1 and fx2. The following are the fx commands currently implemented:
-* Cxy set velocity to x (0 = 0.0, F = 1.0) after (y+1)/16 of a line (0 = 1/16 of a line, F = 1 line)
-* Rxx retrigger every (xx+1)/256 of a line (00 = 1/256 of a line, FF = 1 line)
+* Cxy cut to velocity x (0 = minimum, F = maximum) after y/12 of a line (C = 1 line)
+* Rxy retrigger every y/12 of a line, and change velocity according to x (see below)
 * Gxx glide to note in (xx+1)/256 of a line (00 = 1/16 of a line, FF = 16 lines)
-* Lxx set instrument volume level to xx (00 = 0.0, FF = 1.0)
+* Lxx set instrument volume level to xx (00 = minimum, FF = maximum)
 * Pxx set instrument pan (00 = left, 80 = center, FF = right)
 * Ixx / Oxx adjust volume level up/down
 * Jxx / Kxx adjust pan left/right
-* Uxx / Dxx adjust note up/down
-* +xx / -xx adjust velocity up/down
-* Sxx set sample offset
-* <xx / >xx set speed to xx and play backwards / forward
+* Uxx / Dxx adjust note up/down by xx/16 notes (depends on the tuning, semitones for 12-EDO)
+* Sxx set sample start offset
+* <xx / >xx set speed to xx/128 and play backwards / forward (40 = half speed, 80 = normal speed, FF = double speed)
 * 0xx to 9xx set control input
 * Fxx set BPM to xx
-* Qxx delay trigger by xx/256 of a line (00 = no delay, FF = almost a line)
+* Qxx delay trigger by xx/256 of a line (00 = no delay, FF = almost a full line)
 * Yxx set the probability of playing the trigger (00 = never, FF = always)
+
+Retrigger velocity change:
+* 0 no velocity change
+* 1, 2, 3, 4, 5 reduce velocity by substracting 1/32, 1/16, 1/8, 1/4, 1/2
+* 6, 7 scale down velocity multuplying by 2/3, 1/2
+* 8 no velocity change
+* 9, A, B, C, D increase velocity by adding 1/32, 1/16, 1/8, 1/4, 1/2
+* E, F scale up velocity multiplying by 3/2, 2
+
+Commands Rxy and Cxy interpret the nibble x as a time span in units of 1/12 of a line (0 = instantly, C = 1 line).
 
 ### Hotkeys and keyboard mapping
 Trackers are heavily keyboard-oriented. The following hotkeys are the most commonly used (in PC, Command and Option are Control and Alt).

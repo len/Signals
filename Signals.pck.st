@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 11 June 2026 at 11:38:11 pm'!
+'From Cuis7.9 [latest update: #7983] on 14 June 2026 at 4:38:31 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 588!
+!provides: 'Signals' 1 589!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -46,7 +46,7 @@ Module class
 
 !classDefinition: #Amp category: #'Signals-Dynamics'!
 Module subclass: #Amp
-	instanceVariableNames: 'input gain output inputRM'
+	instanceVariableNames: 'input gain output inputRM velocity'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Dynamics'!
@@ -426,7 +426,7 @@ Drift class
 
 !classDefinition: #EG category: #'Signals-Modulation'!
 Modulator subclass: #EG
-	instanceVariableNames: 'velocity stage value factor increment attack retrigger'
+	instanceVariableNames: 'stage value factor increment attack retrigger'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Modulation'!
@@ -2728,23 +2728,29 @@ controlRate
 sampleRate
 	^ AudioPlayer sampleRate! !
 
-!Amp methodsFor: 'initialization' stamp: 'len 26/May/2026 17:24:31'!
+!Amp methodsFor: 'controlling' stamp: 'len 12/Jun/2026 15:34:21'!
+setVelocity: aNumber
+	velocity := aNumber! !
+
+!Amp methodsFor: 'initialization' stamp: 'len 12/Jun/2026 15:40:10'!
 initialize
 	super initialize.
-	gain := 0.0! !
+	gain := 0.0.
+	velocity := 0.5! !
 
-!Amp methodsFor: 'initialization' stamp: 'len 2/Dec/2025 23:42:00'!
+!Amp methodsFor: 'initialization' stamp: 'len 14/Jun/2026 04:31:24'!
 initializeControls
 	super initializeControls.
-	self addControl: #gain min: 0.0 max: 1.0 value: 0.0! !
+	self addControl: #gain min: 0.0 max: 1.0 value: 0.0.
+	(self addAmountControl: #velocitySensitivity value: 1.0) label: 'Velocity'! !
 
-!Amp methodsFor: 'processing' stamp: 'len 26/May/2026 17:21:26'!
+!Amp methodsFor: 'processing' stamp: 'len 14/Jun/2026 04:29:28'!
 tick
 	| targetGain |
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	output replaceWith: input.
-	(targetGain := self get: #gain) = gain
+	gain = (targetGain := (self get: #gain) * ((velocity squared - 1.0) * (self get: #velocitySensitivity) + 1.0))
 		ifTrue: [output *= gain]
 		ifFalse:
 			[targetGain < 0.00001 "-100 dB"
@@ -2759,11 +2765,16 @@ tick
 panel
 	^ ControlPanel new addKnob: (controls at: #gain)! !
 
-!Amp methodsFor: 'ui' stamp: 'len 10/Mar/2026 14:28:10'!
+!Amp methodsFor: 'ui' stamp: 'len 14/Jun/2026 04:30:35'!
+panel2
+	^ ControlPanel new addTextualControl: (controls at: #velocitySensitivity)! !
+
+!Amp methodsFor: 'ui' stamp: 'len 14/Jun/2026 04:30:06'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
+	answer flap addMorph: self panel2.
 	answer
 		addAudioInput: #setInput:;
 		addControlInput: #gain;
@@ -4195,10 +4206,6 @@ initializeControls
 	super initializeControls.
 	self addPitchControl: #pitch! !
 
-!TunedGenerator methodsFor: 'controlling' stamp: 'len 3/Mar/2026 19:25:03'!
-adjustNoteBy: aNumber
-	note := note + aNumber min: 127.0 max: 0! !
-
 !TunedGenerator methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:14:57'!
 setNote: aNumber
 	note := aNumber! !
@@ -5027,22 +5034,18 @@ legato
 legato: aBoolean
 	legato := aBoolean! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 7/Mar/2026 18:51:22'!
-adjustVelocityBy: aNumber
-	velocity := velocity + aNumber min: 1.0 max: 0.0! !
-
 !Multisample methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:21:00'!
 gateOff
 	sample ifNotNil: [sample gateOff]! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 9/Jun/2026 03:06:00'!
+!Multisample methodsFor: 'controlling' stamp: 'len 12/Jun/2026 15:45:34'!
 gateOn
 	| closestKey speedFactor samplesByVelocity |
 	sample ifNotNil: [(legato and: [sample isUnreleased]) ifTrue: [^ self]].
 	closestKey := keymap keys detectMin: [:x| (x - note) abs].
 	samplesByVelocity := keymap at: closestKey.
 	(tailSample := sample) ifNotNil: [tailSample gateOn "to setup the tail position"].
-	sample := (samplesByVelocity atPin: (velocity sqrt * (samplesByVelocity size - 1)) truncated + 1) copy.
+	sample := (samplesByVelocity atPin: (velocity * (samplesByVelocity size - 1)) truncated + 1) copy.
 	sample controls at: #pitch put: (controls at: #pitch).
 	sample controls at: #speed put: (controls at: #speed).
 	speedFactor := 60 noteToHertz / closestKey noteToHertz.
@@ -5142,7 +5145,7 @@ initialize
 	super initialize.
 	self initializeLibrary! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 11/Jun/2026 23:36:33'!
+!Multisample class methodsFor: 'library' stamp: 'len 13/Jun/2026 23:08:26'!
 initializeLibrary
 	"
 	Multisample initializeLibrary
@@ -5150,12 +5153,12 @@ initializeLibrary
 	
 	Library := OrderedDictionary new.
 	'Loading multisamples...' print.
-	#(loadJRhodes3D loadDancePiano loadVibraphone loadBookerT loadBookerTFast loadTrumpet loadSquireBass loadSlapBass loadPopBass loadFingerBass loadDoubleBass loadSixStringSteelGuitar loadTwoToneHouseOrgan loadStringEnsemble loadChoirAah loadChoirOuh) do: [:each|
+	#("loadJRhodes3D" loadDancePiano loadVibraphone loadBookerT loadBookerTFast loadChoirAah loadChoirOuh) do: [:each|
 		| multisample |
 		multisample := self perform: each.
 		('    ∙ ', multisample label) print.
 		Library at: multisample label put: multisample].
-	#('LoFi Rhodes' 'Picked Bass' 'Flute' 'Brass Section' 'Glockenspiel' 'Cello' 'Viola' 'Violin' 'Xylophone' 'Trombone') do: [:each|
+	#('LoFi Rhodes' "'Rhodes 2'" 'Double Bass' 'Picked Bass' 'Squier Bass' 'Pop Bass' 'Finger Bass' 'Slap Bass' 'Flute' 'Brass Section' 'String Ensemble' 'Glockenspiel' 'Cello' 'Viola' 'Violin' 'Xylophone' 'Jazz Trumpet' 'Trombone' '6-String Steel Guitar' 'Two Tone House Organ' 'Les Paul Half Drive' 'Les Paul Overdrive' "'Archtop Guitar'") do: [:each|
 		('    ∙ ', each) print.
 		self loadMultisampleNamed: each]! !
 
@@ -5248,16 +5251,6 @@ loadDancePiano
 			{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
 	^ self new label: 'Dance Piano'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:14:24'!
-loadDoubleBass
-	| keymap |
-	keymap := Dictionary new.
-	(0 to: 37) do: [:i|
-		| reader |
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Bass' // ('Acoustic Bass - Double Bass ', (i printStringBase: 10 length: 3 padded: true), '.wav').
-		keymap at: i+30 put: {Sample buffer: reader leftSamples rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
-	^ self new label: 'Double Bass'; keymap: keymap! !
-
 !Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:13:20'!
 loadFarfisa
 	"Farfisa with full drawbars."
@@ -5272,17 +5265,6 @@ loadFarfisa
 			buffer := reader leftSamples + reader rightSamples.
 			keymap at: midiKey put: {Sample buffer: buffer rate: reader sampleRate}]].
 	^ self new label: 'Farfisa'; keymap: keymap! !
-
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:14:24'!
-loadFingerBass
-	"Carvin BB70 finger bass."
-	| keymap |
-	keymap := Dictionary new.
-	#(28 31 33 36 38 41 43 46) with: #('E4' 'G4' 'A3' 'C3' 'D2' 'F2' 'G1' 'Bb1') do: [:midiKey :suffix|
-		| reader |
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Bass' // ('Finger Bass - CVFngBass', suffix, '.wav').
-		keymap at: midiKey put: {Sample buffer: reader leftSamples rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
-	^ self new label: 'Finger Bass'; keymap: keymap! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:13:33'!
 loadJRhodes3D
@@ -5319,95 +5301,6 @@ loadMultisampleNamed: directoryName
 		(samples at: midiKey ifAbsentPut: [Dictionary new]) at: velocityLayer put: sample].
 	keymap := samples collect: [:each| each associations sorted reversed collect: #value].
 	Library at: directoryName put: (self new label: directoryName; keymap: keymap)! !
-
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:14:24'!
-loadPopBass
-	| keymap |
-	keymap := Dictionary new.
-	"why slap bass uses 35 instead of 34?"
-	#(28 30 32 34 36 39 41 43 48) with: #('E0' 'E2' 'E4' 'A1' 'A3' 'D1' 'D3' 'G0' 'G5') do: [:midiKey :suffix|
-		| reader |
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Bass' // ('Pop Bass - Pop ', suffix, '.wav').
-		keymap at: midiKey put: {Sample buffer: reader leftSamples rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
-	^ self new label: 'Pop Bass'; keymap: keymap! !
-
-!Multisample class methodsFor: 'library' stamp: 'len 11/May/2026 15:48:16'!
-loadSixStringSteelGuitar
-	| keymap |
-	keymap := Dictionary new.
-	#('E1' 'A1' 'D2' 'G2' 'B2' 'E3' 'A3' 'D4' 'G4') withIndexDo: [:noteName :i|
-		| filename reader buffer |
-		filename := '6-Stg-Steel-Gtr-', noteName, '.wav'.
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / '6-String Steel Guitar' // filename.
-		buffer := reader leftSamples.
-		keymap at: noteName nameToNote put:
-			{Sample buffer: buffer rate: reader sampleRate}].
-	^ self new label: '6-String Steel Guitar'; keymap: keymap! !
-
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:14:24'!
-loadSlapBass
-	| keymap |
-	keymap := Dictionary new.
-	"why pop bass uses 34 instead of 35?"
-	#(28 30 32 35 36 39 41 43 48) with: #('E0' 'E2' 'E4' 'A1' 'A3' 'D1' 'D3' 'G0' 'G5') do: [:midiKey :suffix|
-		| reader |
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Bass' // ('Slap Bass - Slap Bass ', suffix, '.wav').
-		keymap at: midiKey put: {Sample buffer: reader leftSamples rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
-	^ self new label: 'Slap Bass'; keymap: keymap! !
-
-!Multisample class methodsFor: 'library' stamp: 'len 11/May/2026 15:48:16'!
-loadSquireBass
-	"Fender Squire Bass."
-	| keymap |
-	keymap := Dictionary new.
-	#('e' 'a' 'd' 'e2' 'g' 'a2' 'd2' 'g2') withIndexDo: [:noteName :i|
-		| filename reader buffer |
-		filename := 'squirebass - ', noteName, '.wav'.
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Fender Squire Bass' // filename.
-		buffer := reader leftSamples.
-		keymap at: (#('E1' 'A1' 'D2' 'E2' 'G2' 'A2' 'D3' 'G3') at: i) nameToNote put:
-			{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
-	^ self new label: 'Squire Bass'; keymap: keymap! !
-
-!Multisample class methodsFor: 'library' stamp: 'len 11/May/2026 15:48:16'!
-loadStringEnsemble
-	| keymap |
-	keymap := Dictionary new.
-	#('G2' 'C#3' 'E3' 'B3' 'C#4' 'G4' 'C#5' 'A#5' 'F#5' 'D6' 'E6' 'B6' 'E7' 'A7') withIndexDo: [:noteName :i|
-		| filename reader buffer |
-		filename := 'String ensemble - String ', noteName, '.wav'.
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'String Ensemble' // filename.
-		buffer := reader leftSamples.
-		keymap at: noteName nameToNote put:
-			{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
-	^ self new label: 'String Ensemble'; keymap: keymap! !
-
-!Multisample class methodsFor: 'library' stamp: 'len 11/May/2026 15:48:16'!
-loadTrumpet
-	"Jazz Trumpet."
-	| keymap |
-	keymap := Dictionary new.
-	#('C4' 'D#4' 'F#4' 'A4' 'C#5' 'E5' 'G5' 'A5' 'C#6' 'F6' 'G6' 'A#6') do: [:noteName|
-		| filename reader buffer |
-		filename := 'Jazz Trumpet ', noteName, '.wav'.
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Jazz Trumpet' // filename.
-		buffer := reader leftSamples.
-		keymap at: noteName nameToNote put:
-			{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
-	^ self new label: 'Trumpet'; keymap: keymap! !
-
-!Multisample class methodsFor: 'library' stamp: 'len 11/May/2026 15:48:16'!
-loadTwoToneHouseOrgan
-	| keymap |
-	keymap := Dictionary new.
-	#('C1' 'A#1' 'F1' 'D#2' 'G#2' 'C#3') withIndexDo: [:noteName :i|
-		| filename reader buffer |
-		filename := noteName, '.wav'.
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Two Tone House Organ' // filename.
-		buffer := reader leftSamples + reader rightSamples.
-		keymap at: noteName nameToNote put:
-			{Sample buffer: buffer rate: reader sampleRate}].
-	^ self new label: 'Two-Tone House Organ'; keymap: keymap! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:13:56'!
 loadVibraphone
@@ -5492,12 +5385,14 @@ warp: aBoolean
 gateOff
 	released := true! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 9/Jun/2026 03:43:59'!
+!Sample methodsFor: 'controlling' stamp: 'len 12/Jun/2026 03:27:50'!
 gateOn
-	(legato and: [self isUnreleased]) ifTrue: [increment := nil. ^ self].
+	increment := nil. "this forces to jump instantly to new note in >>#update"
+	(legato and: [self isUnreleased]) ifTrue: [^ self].
 	tailPosition := position.
 	position := (buffer size - 1) * offset + 1.0.
-	released := false! !
+	released := false
+! !
 
 !Sample methodsFor: 'controlling' stamp: 'len 25/Mar/2026 19:46:09'!
 isUnreleased
@@ -5671,15 +5566,13 @@ waveform
 		canvas line: x @ y to: x @ (h // 2) width: 1 color: Color black].
 	^ answer! !
 
-!Sample methodsFor: 'private' stamp: 'len 3/Jun/2026 03:06:45'!
+!Sample methodsFor: 'private' stamp: 'len 12/Jun/2026 03:28:40'!
 buffer: aFloatArray rate: aNumber
 	buffer := aFloatArray.
 	rate := aNumber.
 	offset := 0.0.
 	loopEnd := buffer size.
 	loopLength := 0.
-	increment := 1.0.
-	incrementDelta := 0.0.
 	warp := false.
 	legato := false.
 	self reset! !
@@ -6435,10 +6328,6 @@ stage
 value
 	^ value! !
 
-!EG methodsFor: 'controlling' stamp: 'len 7/Mar/2026 18:51:07'!
-adjustVelocityBy: aNumber
-	velocity := velocity + aNumber min: 1.0 max: 0.0! !
-
 !EG methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:21:00'!
 gateOff
 	^ self! !
@@ -6454,10 +6343,6 @@ reset
 	stage := #idle.
 	value := 0.0! !
 
-!EG methodsFor: 'controlling' stamp: 'len 28/Nov/2025 16:34:00'!
-setVelocity: aNumber
-	velocity := aNumber! !
-
 !EG methodsFor: 'controlling' stamp: 'len 26/Apr/2026 22:57:25'!
 update
 	super update.
@@ -6466,11 +6351,10 @@ update
 	increment := 1.0 / attack.
 ! !
 
-!EG methodsFor: 'initialization' stamp: 'len 3/Jun/2026 15:09:37'!
+!EG methodsFor: 'initialization' stamp: 'len 12/Jun/2026 15:34:34'!
 initialize
 	super initialize.
 	self reset.
-	velocity := 0.5.
 	retrigger := false! !
 
 !EG methodsFor: 'initialization' stamp: 'len 3/Jun/2026 15:09:29'!
@@ -6526,16 +6410,16 @@ initializeControls
 	super initializeControls.
 	self addTimeControl: #decay min: 0.001 max: 2.0 value: 0.5! !
 
-!AD methodsFor: 'processing' stamp: 'len 15/Feb/2026 00:08:04'!
+!AD methodsFor: 'processing' stamp: 'len 12/Jun/2026 15:33:06'!
 next
 	stage = #attack ifTrue:
 		["value := (1.0 - value) * factor + value." value := value + increment.
 		value >= 0.999 ifTrue: [value := 1.0. stage := #decay. factor := 0.001 "-60 dB" raisedTo: 1.0 / decay].
-		^ value * velocity].
+		^ value].
 	stage = #decay ifTrue:
 		[value := value * factor.
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
-	^ value * velocity! !
+	^ value! !
 
 !AD methodsFor: 'ui' stamp: 'len 3/Jun/2026 15:15:55'!
 panel
@@ -6594,21 +6478,21 @@ initializeControls
 	self addGainControl: #sustain value: 0.6.
 	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0! !
 
-!ADSR methodsFor: 'processing' stamp: 'len 15/Feb/2026 00:07:49'!
+!ADSR methodsFor: 'processing' stamp: 'len 12/Jun/2026 15:33:22'!
 next
 	stage = #attack ifTrue:
 		["value := (1.0 - value) * factor + value." value := value + increment.
 		value >= 0.999 ifTrue: [value := 1.0. stage := #decay. factor := 0.001 "-60 dB" raisedTo: 1.0 / decay].
-		^ value * velocity].
+		^ value].
 	stage = #decay ifTrue:
 		[value := (value - sustain) * factor + sustain.
 		value - sustain <= 0.001 ifTrue: [sustain <= 0.001 "-60 dB" ifTrue: [value := 0.0. stage := #idle] ifFalse: [stage := #sustain]].
-		^ value * velocity].
-	stage = #sustain ifTrue: [^ value * velocity].
+		^ value].
+	stage = #sustain ifTrue: [^ value].
 	stage = #release ifTrue:
 		[value := value * factor.
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
-	^ value * velocity! !
+	^ value! !
 
 !ADSR methodsFor: 'serialization' stamp: 'len 3/Jun/2026 15:14:01'!
 settings
@@ -6651,19 +6535,19 @@ initializeControls
 	self addTimeControl: #hold min: 0.001 max: 10.0 value: 1.0.
 	self addTimeControl: #decay min: 0.001 max: 2.0 value: 0.5! !
 
-!AHD methodsFor: 'processing' stamp: 'len 12/Apr/2026 18:49:54'!
+!AHD methodsFor: 'processing' stamp: 'len 12/Jun/2026 15:33:33'!
 next
 	stage = #attack ifTrue:
 		["value := (1.0 - value) * factor + value." value := value + increment.
 		value >= 0.999 ifTrue: [value := 1.0. stage := #hold. holding := hold truncated].
-		^ value * velocity].
+		^ value].
 	stage = #hold ifTrue:
 		[(holding := holding - 1) > 0 ifFalse: [stage := #decay. factor := 0.001 "-60 dB" raisedTo: 1.0 / decay].
-		^ value * velocity].
+		^ value].
 	stage = #decay ifTrue:
 		[value := value * factor.
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
-	^ value * velocity! !
+	^ value! !
 
 !AHD methodsFor: 'ui' stamp: 'len 3/Jun/2026 15:33:34'!
 panel
@@ -6718,17 +6602,17 @@ initializeControls
 	super initializeControls.
 	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0! !
 
-!AR methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:46:53'!
+!AR methodsFor: 'processing' stamp: 'len 12/Jun/2026 15:33:44'!
 next
 	stage = #attack ifTrue:
 		["value := (1.0 - value) * factor + value." value := value + increment.
 		value >= 0.999 ifTrue: [value := 1.0. stage := #sustain].
-		^ value * velocity].
-	stage = #sustain ifTrue: [^ value * velocity].
+		^ value].
+	stage = #sustain ifTrue: [^ value].
 	stage = #release ifTrue:
 		[value := value * factor.
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
-	^ value * velocity! !
+	^ value! !
 
 !AR methodsFor: 'serialization' stamp: 'len 3/Jun/2026 15:18:13'!
 settings
@@ -6793,17 +6677,17 @@ initializeControls
 	self addGainControl: #sustain value: 0.6.
 	self addTimeControl: #release min: 0.001 max: 10.0 value: 1.0! !
 
-!ASR methodsFor: 'processing' stamp: 'len 31/Jan/2026 18:47:02'!
+!ASR methodsFor: 'processing' stamp: 'len 12/Jun/2026 15:32:56'!
 next
 	stage = #attack ifTrue:
 		["value := (1.0 - value) * factor + value." value := value + increment.
 		value >= 0.999 ifTrue: [stage := #sustain. value := sustain].
-		^ value * velocity].
-	stage = #sustain ifTrue: [^ value * velocity].
+		^ value].
+	stage = #sustain ifTrue: [^ value].
 	stage = #release ifTrue:
 		[value := value * factor.
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
-	^ value * velocity! !
+	^ value! !
 
 !ASR methodsFor: 'serialization' stamp: 'len 3/Jun/2026 15:23:58'!
 settings
@@ -6905,10 +6789,6 @@ screen
 !EnvelopeFollower methodsFor: 'wiring' stamp: 'len 10/Feb/2026 00:26:43'!
 setInput: aBuffer
 	input := aBuffer! !
-
-!KeyTracker methodsFor: 'controlling' stamp: 'len 3/Mar/2026 19:25:25'!
-adjustNoteBy: aNumber
-	note := note + aNumber min: 127.0 max: 0! !
 
 !KeyTracker methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:18:55'!
 setNote: aNumber
@@ -7206,10 +7086,6 @@ initialize2
 		at: #'Whole Tone' put:
 			{#'Whole Tone' -> #(0 2 4 6 8 10)};
 		yourself! !
-
-!VelocityTracker methodsFor: 'controlling' stamp: 'len 7/Mar/2026 18:51:28'!
-adjustVelocityBy: aNumber
-	velocity := velocity + aNumber min: 1.0 max: 0.0! !
 
 !VelocityTracker methodsFor: 'controlling' stamp: 'len 10/Feb/2026 17:04:27'!
 setVelocity: aNumber

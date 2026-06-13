@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 13 June 2026 at 11:09:20 pm'!
+'From Cuis7.9 [latest update: #7983] on 14 June 2026 at 3:45:38 am'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 40!
+!provides: 'Tracker' 1 41!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -147,20 +147,20 @@ A pattern is a grid composed of a list of "rows" or "lines" with as columns repr
 !Track commentStamp: '<historical>' prior: 0!
 A track can play one instrument at a time. It can be muted or soloed, and it can be set to an arbitrary tuning to map arbitrary notes to standard 12-EDO notes.!
 
-!Trigger commentStamp: 'len 13/Jun/2026 21:39:25' prior: 0!
+!Trigger commentStamp: 'len 14/Jun/2026 03:40:37' prior: 0!
 A trigger is a cell in a pattern. It can contain any of the following (optional) parameters: an instrument number (1 to 255), a note to play (0 to 127 as MIDI, and -1 to represent note off), a velocity value (0 to 128), and two effect commands.
 
 Effect commands:
-∙ Cxy cut to velocity x (0 = minimum, F = maximum) after y/12 of a line (C = 1 line)
-∙ Rxy retrigger every y/12 of a line, and change velocity according to x (see below)
-∙ Gxx glide to note in xx/16 lines (00 = 1/16 of a line, FF = 16 lines)
+∙ Cxy cut to velocity x (0 = minimum, F = maximum) after y/12 of a line (y must be 1 to B, otherwise do nothing)
+∙ Rxy retrigger every y/12 of a line (y must be 1 to B), and change velocity according to x (see below)
+∙ Gxx glide to note in xx/16 lines (01 = 1/16 of a line, 10 = 1 line, FF = almost 16 lines)
+∙ Uxx / Dxx slide note up/down by xx/16 notes (10 = 1 note, or 1 semitone if the tuning is 12-EDO)
+∙ Sxx set sample start offset (00 = start, FF = end)
+∙ <xx / >xx set speed to xx/128 and play backwards / forward (40 = half speed, 80 = normal, FF = double)
 ∙ Lxx set instrument volume level to xx (00 = minimum, FF = maximum)
 ∙ Pxx set instrument pan (00 = left, 80 = center, FF = right)
-∙ Ixx / Oxx adjust volume level up/down
-∙ Jxx / Kxx adjust pan left/right
-∙ Uxx / Dxx adjust note up/down by xx/16 notes (depends on the tuning, semitones for 12-EDO)
-∙ Sxx set sample start offset
-∙ <xx / >xx set speed to xx/128 and play backwards / forward (40 = half speed, 80 = normal, FF = double)
+∙ Ixx / Oxx adjust intrument volume level up/down
+∙ Jxx / Kxx adjust instrument pan left/right
 ∙ 0xx to 9xx set control input
 ∙ Fxx set BPM to xx
 ∙ Qxx delay trigger by xx/256 of a line (00 = no delay, 01 = 1/256 of a line, FF = almost a line)
@@ -611,9 +611,9 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $m ifTrue: [model toggleTrackMask. ^ true].
 	^ false! !
 
-!TrackerWindow methodsFor: 'events' stamp: 'len 4/Apr/2026 18:43:45'!
+!TrackerWindow methodsFor: 'events' stamp: 'len 14/Jun/2026 00:51:45'!
 keyStroke: anEvent
-	anEvent isSpace ifTrue: [model isPlaying ifTrue: [model stop] ifFalse: [model loop: anEvent secondaryModifierPressed not; play]. ^ true].
+	anEvent isSpace ifTrue: [model isPlaying ifTrue: [model stop] ifFalse: [model loop: anEvent secondaryModifierPressed not; followPlayhead: true; play]. ^ true].
 	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
 		[anEvent wasHandled: true.
 		^ self].
@@ -1026,7 +1026,7 @@ drawOn: aCanvas
 	self drawCursorOn: aCanvas.
 	self drawPatternOn: aCanvas! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 13/Jun/2026 23:02:43'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 14/Jun/2026 00:35:31'!
 drawPatternOn: aCanvas
 	| lineSpacing charWidth y unsetColor noteColor velocityColor pattern endLine middle startLine darkColor lightColor xLeft xRight beatColor trackWidth |
 	pattern := tracker selectedPattern.
@@ -1047,7 +1047,7 @@ drawPatternOn: aCanvas
 	beatColor := Color white alpha: 0.08.
 	"Draw playhead line:"
 	(tracker isPlaying and: [tracker playheadPattern = tracker cursorPattern and: [tracker playheadLine between: startLine and: endLine]])
-		ifTrue: [aCanvas fillRectangle: (0@(tracker playheadLine - startLine * lineSpacing + y) extent: extent x @ lineSpacing) color: beatColor].
+		ifTrue: [aCanvas fillRectangle: (0@(tracker playheadLine - startLine * lineSpacing + y) extent: extent x @ lineSpacing) color: self class playheadColor].
 	"Draw selection:"
 	selectionLineStart ifNotNil:
 		[| sl0 sl1 st0 st1 |
@@ -1226,7 +1226,7 @@ handleKeyStroke: anEvent
 	(anEvent anyModifierKeyPressed not and: [self handleInputKey: anEvent]) ifTrue: [^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Mar/2026 19:19:22'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 14/Jun/2026 00:48:24'!
 handleNavigationKey: anEvent
 	selectionLineStart := selectionTrackStart := nil.
 	anEvent isArrowUp ifTrue: [tracker moveCursorLineUp. ^ true].
@@ -1259,7 +1259,7 @@ handleOptionHotkey: anEvent
 	anEvent isEsc ifTrue: [tracker toggleFollowPlayhead. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 23/Feb/2026 16:14:11'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 14/Jun/2026 00:42:28'!
 handleSelectionKey: anEvent
 	selectionLineStart isNil ifTrue:
 		[selectionLineStart := tracker cursorLine.
@@ -1407,6 +1407,10 @@ initialize
 !PatternEditorMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026 19:58:39'!
 cursorColor
 	^ Color redCathode! !
+
+!PatternEditorMorph class methodsFor: 'colors' stamp: 'len 13/Jun/2026 23:44:14'!
+playheadColor
+	^ self cursorColor alpha: 0.3! !
 
 !PatternEditorMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026 20:07:38'!
 selectionColor
@@ -1612,7 +1616,7 @@ update
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 11/Jun/2026 01:54:46'!
+!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 14/Jun/2026 02:47:47'!
 drawOn: aCanvas
 	| color |
 	aCanvas fillRectangle: (0 @ 0 extent: extent) color: Color darkGray.
@@ -1621,7 +1625,7 @@ drawOn: aCanvas
 	aCanvas
 		drawString: (tracker isPlaying ifTrue: ['▶'] ifFalse: ['◼']) at: 4 @ 0 font: font color: color;
 		drawString: (tracker bpm printStringFractionDigits: 1), ' BPM ⇄ ', (tracker swing * 100) truncated printString, '%' at: 32 @ 2 font: font color: color;
-		drawString: '↧' at: 240 @ 3 font: font color: (tracker followPlayhead ifTrue: [color] ifFalse: [Color lightGray]);
+		drawString: '⇩' "↧" at: 240 @ 3 font: font color: (tracker followPlayhead ifTrue: [color] ifFalse: [Color lightGray]);
 		drawString: 'C', tracker inputOctave printString at: 280 @ 3 font: font color: color;
 		drawString: tracker selectedTrack tuning label at: 340 @ 3 font: font color: color.
 "	tracker selectedInstrumentNumber ifNotNil: [:instrumentNumber|
@@ -1704,11 +1708,6 @@ initialize
 adjustLevelBy: aNumber
 	audioOutput ifNotNil: [audioOutput adjustLevelBy: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 12/Jun/2026 22:32:52'!
-adjustNoteBy: aNumber
-	note := note + aNumber min: 127.0 max: 0.0.
-	self setNote: note! !
-
 !Instrument methodsFor: 'playing' stamp: 'len 3/Mar/2026 19:20:31'!
 adjustPanBy: aNumber
 	audioOutput ifNotNil: [audioOutput adjustPanBy: aNumber]! !
@@ -1724,7 +1723,7 @@ handleCut: anInteger
 	(time := anInteger bitAnd: 16rF) = 0 ifTrue: [^ self setVelocity: velocity].
 	track scheduleTrigger: (Trigger new velocity: (velocity * 128.0) truncated) after: time / 12.0 * track tracker tpl! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026 20:40:22'!
+!Instrument methodsFor: 'playing' stamp: 'len 14/Jun/2026 02:30:36'!
 handleFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
@@ -1738,9 +1737,6 @@ handleFX: anInteger
 	command = 79 "O (volume level down)" ifTrue: [self adjustLevelBy: v / -255.0].
 	command = 74 "J (pan left)" ifTrue: [self adjustPanBy: v / -255.0].
 	command = 75 "K (pan right)" ifTrue: [self adjustPanBy: v / 255.0].
-	"Pitch commands:"
-	command = 85 "U (pitch up)" ifTrue: [self adjustNoteBy: v / 255.0].
-	command = 68 "D (pitch down)" ifTrue: [self adjustNoteBy: v / -255.0].
 	"Sample commands:"
 	command = 83 "S (sample start offset)" ifTrue: [self setOffset: v / 255.0. ^ self].
 	command = 60 "< (speed backwards)" ifTrue: [self setSpeed: v / -128.0. ^ self].
@@ -1749,6 +1745,14 @@ handleFX: anInteger
 	(command between: 48 and: 57) "0 to 9" ifTrue: [controlValues at: command - 47 put: v / 255.0. ^ self].
 	"Global commands:"
 	command = 70 "F (set bpm)" ifTrue: [track tracker bpm: (v max: 1). ^ self]! !
+
+!Instrument methodsFor: 'playing' stamp: 'len 14/Jun/2026 02:34:38'!
+handlePostNoteFX: anInteger
+	| command v |
+	command := anInteger bitShift: -8.
+	v := anInteger bitAnd: 16rFF.
+	command = 85 "U (pitch up)" ifTrue: [self slideNoteBy: v + 1 / 16.0].
+	command = 68 "D (pitch down)" ifTrue: [self slideNoteBy: v + 1 / -16.0]! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026 22:55:55'!
 handleRetrigger: anInteger
@@ -1786,7 +1790,7 @@ noteOn: midiKey glide: glide
 			note := targetNote].
 	self setNote: note; gateOn! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026 20:24:32'!
+!Instrument methodsFor: 'playing' stamp: 'len 14/Jun/2026 02:30:22'!
 playTrigger
 	trigger isNoteOn
 		ifTrue:
@@ -1794,11 +1798,14 @@ playTrigger
 			trigger isReverse ifTrue: [self setOffset: 1.0] ifFalse: [self setSpeed: 1.0; setOffset: 0.0].
 			trigger fx1 ifNotNil: [:fx| self handleFX: fx].
 			trigger fx2 ifNotNil: [:fx| self handleFX: fx].
-			self noteOn: trigger note + trigger noteShift glide: trigger glide]
+			self noteOn: trigger note + trigger noteShift glide: trigger glide.
+			trigger fx1 ifNotNil: [:fx| self handlePostNoteFX: fx].
+			trigger fx2 ifNotNil: [:fx| self handlePostNoteFX: fx].
+			]
 		ifFalse:
 			[trigger velocity ifNotNil: [:vel| self setVelocity: vel / 128.0].
-			trigger fx1 ifNotNil: [:fx| self handleFX: fx].
-			trigger fx2 ifNotNil: [:fx| self handleFX: fx].
+			trigger fx1 ifNotNil: [:fx| self handleFX: fx; handlePostNoteFX: fx].
+			trigger fx2 ifNotNil: [:fx| self handleFX: fx; handlePostNoteFX: fx].
 			trigger isNoteOff ifTrue: [self noteOff]].
 	trigger := nil! !
 
@@ -1860,6 +1867,12 @@ setSpeed: aNumber
 !Instrument methodsFor: 'playing' stamp: 'len 12/Jun/2026 20:01:03'!
 setVelocity: aNumber
 	velocityReceivers do: [:each| each setVelocity: aNumber]! !
+
+!Instrument methodsFor: 'playing' stamp: 'len 14/Jun/2026 02:39:43'!
+slideNoteBy: aNumber
+	"Slide the given number of notes (semitones in 12-EDO) for the duration of 1 line."
+	glideTicks := track tracker tpl.
+	noteIncrement := aNumber / glideTicks asFloat! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 3/Apr/2026 16:52:08'!
 tick
@@ -2064,9 +2077,9 @@ line: anInteger instrumentDo: instrumentBlock noteDo: noteBlock velocityDo: velo
 new: anInteger
 	^ self new initialize: anInteger! !
 
-!Track methodsFor: 'accessing' stamp: 'len 10/Jun/2026 16:51:13'!
+!Track methodsFor: 'accessing' stamp: 'len 14/Jun/2026 00:53:28'!
 backgroundColor
-	^ self color lightnessAndChromaBy: 0.25! !
+	^ self color lightnessAndChromaBy: 0.2! !
 
 !Track methodsFor: 'accessing' stamp: 'len 10/Jun/2026 17:04:08'!
 color
@@ -2145,6 +2158,10 @@ setTracker: aTracker
 !Track methodsFor: 'playing' stamp: 'len 17/Feb/2026 19:28:32'!
 forgetInstrument
 	instrument := nil! !
+
+!Track methodsFor: 'playing' stamp: 'len 13/Jun/2026 23:34:28'!
+forgetScheduledTrigger
+	trigger := nil! !
 
 !Track methodsFor: 'playing' stamp: 'len 3/Mar/2026 23:13:06'!
 playTrigger
@@ -2308,8 +2325,9 @@ moveCursorBeatDown
 moveCursorBeatUp
 	self moveCursorLineUp: self selectedPattern lpb! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 1/Jan/2026 16:41:01'!
+!Tracker methodsFor: 'cursor' stamp: 'len 14/Jun/2026 00:47:39'!
 moveCursorLineBottom
+	self isPlaying ifTrue: [self followPlayhead: false].
 	cursorLine := self selectedPattern length.
 	self triggerEvent: #cursorChanged! !
 
@@ -2317,9 +2335,10 @@ moveCursorLineBottom
 moveCursorLineDown
 	self moveCursorLineDown: 1! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 21/Feb/2026 16:25:39'!
+!Tracker methodsFor: 'cursor' stamp: 'len 14/Jun/2026 00:47:25'!
 moveCursorLineDown: anInteger
 	| n |
+	self isPlaying ifTrue: [self followPlayhead: false].
 	cursorLine := cursorLine + anInteger.
 	n := self selectedPattern length.
 	cursorLine > n ifTrue:
@@ -2331,8 +2350,9 @@ moveCursorLineDown: anInteger
 			ifFalse: [cursorLine := n]].
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 1/Jan/2026 16:40:50'!
+!Tracker methodsFor: 'cursor' stamp: 'len 14/Jun/2026 00:47:34'!
 moveCursorLineTop
+	self isPlaying ifTrue: [self followPlayhead: false].
 	cursorLine := 1.
 	self triggerEvent: #cursorChanged! !
 
@@ -2340,8 +2360,9 @@ moveCursorLineTop
 moveCursorLineUp
 	self moveCursorLineUp: 1! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 1/Jan/2026 15:35:27'!
+!Tracker methodsFor: 'cursor' stamp: 'len 14/Jun/2026 00:47:20'!
 moveCursorLineUp: anInteger
+	self isPlaying ifTrue: [self followPlayhead: false].
 	cursorLine := cursorLine - anInteger.
 	cursorLine < 1 ifTrue:
 		[cursorPattern > 1
@@ -2352,15 +2373,17 @@ moveCursorLineUp: anInteger
 			ifFalse: [cursorLine := 1]].
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 21/Feb/2026 16:25:44'!
+!Tracker methodsFor: 'cursor' stamp: 'len 14/Jun/2026 00:46:59'!
 moveCursorPatternDown
+	self isPlaying ifTrue: [self followPlayhead: false].
 	cursorPattern < sequence size ifFalse: [^ self].
 	cursorPattern := cursorPattern + 1.
 	cursorLine := cursorLine min: self selectedPattern length.
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 10/Jan/2026 22:28:27'!
+!Tracker methodsFor: 'cursor' stamp: 'len 14/Jun/2026 00:47:06'!
 moveCursorPatternUp
+	self isPlaying ifTrue: [self followPlayhead: false].
 	cursorPattern > 1 ifFalse: [^ self].
 	cursorPattern := cursorPattern - 1.
 	cursorLine := cursorLine min: self selectedPattern length.
@@ -2374,7 +2397,7 @@ moveCursorTrackLeft
 moveCursorTrackRight
 	self setCursorTrack: cursorTrack + 1! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 18/Feb/2026 17:33:34'!
+!Tracker methodsFor: 'cursor' stamp: 'len 14/Jun/2026 00:46:39'!
 setCursorTrack: anInteger
 	((anInteger between: 1 and: tracks size) and: [cursorTrack ~= anInteger]) ifFalse: [^ self].
 	cursorTrack := anInteger.
@@ -2497,9 +2520,19 @@ swapPattern: anInteger with: anotherInteger
 	sequence swap: anInteger with: anotherInteger.
 	self triggerEvent: #sequenceChanged! !
 
+!Tracker methodsFor: 'playing' stamp: 'len 14/Jun/2026 00:45:00'!
+followPlayhead: aBoolean
+	followPlayhead = aBoolean ifTrue: [^ self].
+	followPlayhead := aBoolean.
+	self triggerEvent: #followPlayheadChanged! !
+
 !Tracker methodsFor: 'playing' stamp: 'len 2/Jan/2026 15:12:17'!
 isPlaying
 	^ AudioPlayer isPlaying: self! !
+
+!Tracker methodsFor: 'playing' stamp: 'len 14/Jun/2026 00:38:02'!
+isPlayingFollowingPlayhead
+	^ followPlayhead and: [self isPlaying]! !
 
 !Tracker methodsFor: 'playing' stamp: 'len 9/Mar/2026 16:29:54'!
 loop: aBoolean
@@ -2540,7 +2573,7 @@ playFrom: startPattern line: startLine to: endPattern line: endLine tracks: trac
 	self triggerEvent: #playheadChanged.
 	self triggerEvent: #playingStatusChanged! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 5/Jun/2026 23:09:44'!
+!Tracker methodsFor: 'playing' stamp: 'len 13/Jun/2026 23:36:52'!
 playLine
 	| pattern mask ticksPerLine ticksSwing |
 	"Advance playhead:"
@@ -2562,6 +2595,7 @@ playLine
 	mask := self playingMask.
 	tracks withIndexDo: [:track :i|
 		| p |
+		track forgetScheduledTrigger. "this prevents commands like Rxy and Cxy from bleeding into the next line"
 		(mask at: i) ifTrue: [(pattern track: i at: playheadLine) ifNotNil: [:aTrigger|
 			((p := aTrigger probability) = 1.0 or: [random next <= p]) ifTrue: [track scheduleTrigger: aTrigger]]]].
 	ticksPerLine := self tpl.
@@ -2614,10 +2648,9 @@ stop
 	self triggerEvent: #playheadChanged.
 	self triggerEvent: #playingStatusChanged! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 7/Jan/2026 16:05:17'!
+!Tracker methodsFor: 'playing' stamp: 'len 14/Jun/2026 00:45:20'!
 toggleFollowPlayhead
-	followPlayhead := followPlayhead not.
-	self triggerEvent: #followPlayheadChanged! !
+	self followPlayhead: followPlayhead not! !
 
 !Tracker methodsFor: 'serialization' stamp: 'len 9/Jun/2026 23:25:53'!
 asJsonWithBuffers: bufferList

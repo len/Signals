@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 11 June 2026 at 4:11:22 pm'!
+'From Cuis7.9 [latest update: #7983] on 13 June 2026 at 11:09:20 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 39!
+!provides: 'Tracker' 1 40!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -138,25 +138,43 @@ Tuning class
 	instanceVariableNames: ''!
 
 
-!Trigger commentStamp: '<historical>' prior: 0!
-A trigger is a cell in a pattern. It can contain any of the following (optional) parameters: an instrument number, a note to play, a velocity value, and two effect commands.
+!Instrument commentStamp: '<historical>' prior: 0!
+An instrument has a patch of modules, and interprets tracker triggers by changing parameters of the modules in the associated patch.!
 
-Commands:
-∙ Cxy set velocity to x (0.0 to 1.0) after (y+1)/16 of a line (0 = 1/16 of a line, F = 1 line)
-∙ Rxx retrigger every (xx+1)/256 of a line (00 = 1/256 of a line, FF = 1 line)
-∙ Gxx glide to note in (xx+1)/16 lines (00 = 1/16 of a line, FF = 16 lines)
-∙ Lxx set instrument volume level to xx (0.0 to 1.0)
+!Pattern commentStamp: 'len 13/Jun/2026 21:38:08' prior: 0!
+A pattern is a grid composed of a list of "rows" or "lines" with as columns represeting tracks (or channels), each either empty or with a trigger.!
+
+!Track commentStamp: '<historical>' prior: 0!
+A track can play one instrument at a time. It can be muted or soloed, and it can be set to an arbitrary tuning to map arbitrary notes to standard 12-EDO notes.!
+
+!Trigger commentStamp: 'len 13/Jun/2026 21:39:25' prior: 0!
+A trigger is a cell in a pattern. It can contain any of the following (optional) parameters: an instrument number (1 to 255), a note to play (0 to 127 as MIDI, and -1 to represent note off), a velocity value (0 to 128), and two effect commands.
+
+Effect commands:
+∙ Cxy cut to velocity x (0 = minimum, F = maximum) after y/12 of a line (C = 1 line)
+∙ Rxy retrigger every y/12 of a line, and change velocity according to x (see below)
+∙ Gxx glide to note in xx/16 lines (00 = 1/16 of a line, FF = 16 lines)
+∙ Lxx set instrument volume level to xx (00 = minimum, FF = maximum)
 ∙ Pxx set instrument pan (00 = left, 80 = center, FF = right)
 ∙ Ixx / Oxx adjust volume level up/down
 ∙ Jxx / Kxx adjust pan left/right
-∙ Uxx / Dxx adjust note up/down
-∙ +xx / -xx adjust velocity up/down
-∙ Sxx set sample offset
-∙ <xx / >xx set speed to xx and play backwards / forward
+∙ Uxx / Dxx adjust note up/down by xx/16 notes (depends on the tuning, semitones for 12-EDO)
+∙ Sxx set sample start offset
+∙ <xx / >xx set speed to xx/128 and play backwards / forward (40 = half speed, 80 = normal, FF = double)
 ∙ 0xx to 9xx set control input
 ∙ Fxx set BPM to xx
 ∙ Qxx delay trigger by xx/256 of a line (00 = no delay, 01 = 1/256 of a line, FF = almost a line)
 ∙ Yxx set the probability of playing the trigger (00 = never, FF = always)
+
+Retrigger velocity change:
+∙ 0 no velocity change
+∙ 1, 2, 3, 4, 5 reduce velocity by substracting 1/32, 1/16, 1/8, 1/4, 1/2
+∙ 6, 7 scale down velocity multuplying by 2/3, 1/2
+∙ 8 no velocity change
+∙ 9, A, B, C, D increase velocity by adding 1/32, 1/16, 1/8, 1/4, 1/2
+∙ E, F scale up velocity multiplying by 3/2, 2
+
+Commands Rxy and Cxy interpret the nibble x as a time span in units of 1/12 of a line (0 = instantly, C = 1 line).
 !
 
 !DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
@@ -1008,7 +1026,7 @@ drawOn: aCanvas
 	self drawCursorOn: aCanvas.
 	self drawPatternOn: aCanvas! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 10/Jun/2026 17:11:10'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 13/Jun/2026 23:02:43'!
 drawPatternOn: aCanvas
 	| lineSpacing charWidth y unsetColor noteColor velocityColor pattern endLine middle startLine darkColor lightColor xLeft xRight beatColor trackWidth |
 	pattern := tracker selectedPattern.
@@ -1026,7 +1044,7 @@ drawPatternOn: aCanvas
 	xRight := self morphWidth - ((font widthOf: $X)*2) - xLeft.
 	lightColor := Color veryLightGray.
 	darkColor := Color lightGray.
-	beatColor := Color white alpha: 0.1.
+	beatColor := Color white alpha: 0.08.
 	"Draw playhead line:"
 	(tracker isPlaying and: [tracker playheadPattern = tracker cursorPattern and: [tracker playheadLine between: startLine and: endLine]])
 		ifTrue: [aCanvas fillRectangle: (0@(tracker playheadLine - startLine * lineSpacing + y) extent: extent x @ lineSpacing) color: beatColor].
@@ -1152,7 +1170,7 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 11/Jun/2026 01:52:21'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 13/Jun/2026 16:42:56'!
 handleInputKey: anEvent
 	| c i |
 	anEvent isBackspace ifTrue:
@@ -1164,7 +1182,7 @@ handleInputKey: anEvent
 	anEvent keyCharacter = $[ ifTrue: [self selectedTriggersDo: [:each| each transposeBy: (tracker selectedTrack tuning size negated)]. self redrawNeeded. ^ true].
 	anEvent keyCharacter = $} ifTrue: [self selectedTriggersDo: [:each| each transposeBy: 1]. self redrawNeeded. ^ true].
 	anEvent keyCharacter = ${ ifTrue: [self selectedTriggersDo: [:each| each transposeBy: -1]. self redrawNeeded. ^ true].
-	cursorPosition = 3 ifTrue:
+	cursorPosition = 3 ifTrue: "notes"
 		[c := anEvent keyCharacter.
 		c = $a ifTrue:
 			[tracker selectedTriggerAt: cursorPosition put: -1. "note off"
@@ -1175,8 +1193,8 @@ handleInputKey: anEvent
 			tracker moveCursorLineDown: editStep.
 			^ true].
 		^ false].
-	(cursorPosition = 6 or: [cursorPosition = 9]) ifTrue:
-		[('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>+-' includes: (c := anEvent keyCharacter asUppercase)) ifTrue:
+	(cursorPosition = 6 or: [cursorPosition = 9]) ifTrue: "FX commands"
+		[('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>' includes: (c := anEvent keyCharacter asUppercase)) ifTrue:
 			[tracker selectedTriggerAt: cursorPosition put: c codePoint.
 			self moveCursorRight.
 			^ true].
@@ -1362,7 +1380,7 @@ updateTracks
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 10/Jun/2026 17:03:13'!
+!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 13/Jun/2026 16:44:56'!
 initialize
 	"
 	self initialize
@@ -1376,7 +1394,7 @@ initialize
 	"Controls:"
 	'0123456789' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 80)].
 	"Velocity:"
-	'C+-' do: [:c| FXColors at: c codePoint put: self velocityColor].
+	'C' do: [:c| FXColors at: c codePoint put: self velocityColor].
 	"Samples:"
 	'S<>' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 220)].
 	"Pitch:"
@@ -1686,47 +1704,63 @@ initialize
 adjustLevelBy: aNumber
 	audioOutput ifNotNil: [audioOutput adjustLevelBy: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 3/Mar/2026 19:21:57'!
+!Instrument methodsFor: 'playing' stamp: 'len 12/Jun/2026 22:32:52'!
 adjustNoteBy: aNumber
-	noteReceivers do: [:each| each adjustNoteBy: aNumber]! !
+	note := note + aNumber min: 127.0 max: 0.0.
+	self setNote: note! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 3/Mar/2026 19:20:31'!
 adjustPanBy: aNumber
 	audioOutput ifNotNil: [audioOutput adjustPanBy: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 7/Mar/2026 18:50:20'!
-adjustVelocityBy: aNumber
-	velocityReceivers do: [:each| each adjustVelocityBy: aNumber]! !
-
 !Instrument methodsFor: 'playing' stamp: 'len 23/Mar/2026 19:34:40'!
 gateOn
 	gateReceivers do: [:each| each gateOn]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 9/Jun/2026 21:36:58'!
+!Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026 22:56:01'!
+handleCut: anInteger
+	| velocity time |
+	velocity := ((anInteger bitShift: -4) bitAnd: 16rF) / 15.0.
+	(time := anInteger bitAnd: 16rF) = 0 ifTrue: [^ self setVelocity: velocity].
+	track scheduleTrigger: (Trigger new velocity: (velocity * 128.0) truncated) after: time / 12.0 * track tracker tpl! !
+
+!Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026 20:40:22'!
 handleFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
-	command = 67 "C (cut velocity)" ifTrue: [track scheduleTrigger: (Trigger new velocity: ((anInteger bitShift: -4) bitAnd: 16rF) / 15.0) after: (anInteger bitAnd: 16rF) + 1 / 16.0 * track tracker tpl. ^ self].
+	command = 67 "C (cut)" ifTrue: [^ self handleCut: anInteger].
+	command = 82 "R (retrigger)" ifTrue: [^ self handleRetrigger: anInteger].
 	v := anInteger bitAnd: 16rFF.
-	command = 82 "R (retrigger)" ifTrue: [track scheduleTrigger: (trigger copy velocity: nil) after: v + 1 / 256.0 * track tracker tpl. ^ self].
+	"Pre-mixer commands (modify the instrument output to the master bus only):"
 	command = 76 "L (volume level)" ifTrue: [self setLevel:​ v / 255.0. ^ self].
 	command = 80 "P (pan)" ifTrue: [self setPan: v / 256.0 * 2.0 - 1.0. ^ self].
 	command = 73 "I (volume level up)" ifTrue: [self adjustLevelBy: v / 255.0].
 	command = 79 "O (volume level down)" ifTrue: [self adjustLevelBy: v / -255.0].
 	command = 74 "J (pan left)" ifTrue: [self adjustPanBy: v / -255.0].
 	command = 75 "K (pan right)" ifTrue: [self adjustPanBy: v / 255.0].
+	"Pitch commands:"
 	command = 85 "U (pitch up)" ifTrue: [self adjustNoteBy: v / 255.0].
 	command = 68 "D (pitch down)" ifTrue: [self adjustNoteBy: v / -255.0].
-	command = 43 "+ (velocity up)" ifTrue: [self adjustVelocityBy: v / 255.0].
-	command = 45 "- (velocity down)" ifTrue: [self adjustVelocityBy: v / -255.0].
 	"Sample commands:"
-	command = 83 "S (sample offset)" ifTrue: [self setOffset: v / 255.0. ^ self].
-	command = 60 "< (speed backwards)" ifTrue: [self setSpeed: v / -255.0. ^ self].
-	command = 62 "> (speed forward)" ifTrue: [self setSpeed: v / 255.0. ^ self].
+	command = 83 "S (sample start offset)" ifTrue: [self setOffset: v / 255.0. ^ self].
+	command = 60 "< (speed backwards)" ifTrue: [self setSpeed: v / -128.0. ^ self].
+	command = 62 "> (speed forward)" ifTrue: [self setSpeed: v / 128.0. ^ self].
 	"Control change commands:"
 	(command between: 48 and: 57) "0 to 9" ifTrue: [controlValues at: command - 47 put: v / 255.0. ^ self].
 	"Global commands:"
 	command = 70 "F (set bpm)" ifTrue: [track tracker bpm: (v max: 1). ^ self]! !
+
+!Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026 22:55:55'!
+handleRetrigger: anInteger
+	| time velocity x |
+	(time := anInteger bitAnd: 16rF) = 0 ifTrue: [^ self].
+	velocity := (trigger velocity ifNil: [128.0]) / 128.0.
+	x := (anInteger bitShift: -4) bitAnd: 16rF.
+	(x between: 0 and: 5) ifTrue: [velocity := velocity - (#(0 0.03 0.06 0.12 0.25 0.5) at: x + 1) max: 0.0].
+	(x between: 6 and: 7) ifTrue: [velocity := velocity * (#(0.666 0.5) at: x - 5)].
+	(x between: 8 and: 13) ifTrue: [velocity := velocity + (#(0 0.03 0.06 0.12 0.25 0.5) at: x - 7)].
+	(x between: 14 and: 15) ifTrue: [velocity := velocity / (#(0.666 0.5) at: x - 13)].
+	track scheduleTrigger: (trigger copy velocity: (velocity * 128.0) truncated) after: time / 12.0 * track tracker tpl! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 24/Mar/2026 01:47:37'!
 noteOff
@@ -1738,10 +1772,10 @@ noteOff
 noteOn: midiKey
 	self noteOn: midiKey glide: 0! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 11/Jun/2026 01:55:01'!
+!Instrument methodsFor: 'playing' stamp: 'len 12/Jun/2026 22:47:22'!
 noteOn: midiKey glide: glide
 	| targetNote |
-	targetNote := track tuningOrNil ifNil: [midiKey] ifNotNil: [: aTuning| aTuning map: midiKey].
+	targetNote := track tuningOrNil ifNil: [midiKey] ifNotNil: [:aTuning| aTuning map: midiKey].
 	(glide > 0 and: [note notNil])
 		ifTrue:
 			[glideTicks := (glide / 16.0 * track tracker tpl) truncated.
@@ -1752,13 +1786,20 @@ noteOn: midiKey glide: glide
 			note := targetNote].
 	self setNote: note; gateOn! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 9/Jun/2026 18:09:51'!
+!Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026 20:24:32'!
 playTrigger
-	trigger isNoteOn ifTrue: [self setVelocity: 1.0; setOffset: (trigger isReverse ifTrue: [1.0] ifFalse: [self setSpeed: 1.0. 0.0])].
-	trigger velocity ifNotNil: [:vel| self setVelocity: (vel / 255.0) squared]. "quadratic curve for velocity"
-	trigger fx1 ifNotNil: [:fx| self handleFX: fx].
-	trigger fx2 ifNotNil: [:fx| self handleFX: fx].
-	trigger isNoteOn ifTrue: [self noteOn: trigger note + trigger noteShift glide: trigger glide] ifFalse: [trigger isNoteOff ifTrue: [self noteOff]].
+	trigger isNoteOn
+		ifTrue:
+			[self setVelocity: (trigger velocity ifNil: [128.0]) / 128.0.
+			trigger isReverse ifTrue: [self setOffset: 1.0] ifFalse: [self setSpeed: 1.0; setOffset: 0.0].
+			trigger fx1 ifNotNil: [:fx| self handleFX: fx].
+			trigger fx2 ifNotNil: [:fx| self handleFX: fx].
+			self noteOn: trigger note + trigger noteShift glide: trigger glide]
+		ifFalse:
+			[trigger velocity ifNotNil: [:vel| self setVelocity: vel / 128.0].
+			trigger fx1 ifNotNil: [:fx| self handleFX: fx].
+			trigger fx2 ifNotNil: [:fx| self handleFX: fx].
+			trigger isNoteOff ifTrue: [self noteOff]].
 	trigger := nil! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 3/Jun/2026 18:44:54'!
@@ -1816,7 +1857,7 @@ setPan: aNumber
 setSpeed: aNumber
 	samples do: [:each| each setSpeed: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 15/Jan/2026 17:46:05'!
+!Instrument methodsFor: 'playing' stamp: 'len 12/Jun/2026 20:01:03'!
 setVelocity: aNumber
 	velocityReceivers do: [:each| each setVelocity: aNumber]! !
 
@@ -2767,13 +2808,13 @@ serviceLoadSong
 		description:'open in tracker'
 		buttonLabel: 'open in tracker') argumentGetter: [:fileList| fileList selectedFileEntry]! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 1/Mar/2026 14:23:29'!
+!Trigger methodsFor: 'accessing' stamp: 'len 13/Jun/2026 15:28:39'!
 at: position put: value
 	position = 1 ifTrue: [^ instrument := value ifNotNil: [((instrument ifNil: [0]) bitAnd: 16r0F) bitOr: (value bitShift: 4)]].
 	position = 2 ifTrue: [^ instrument := value ifNotNil: [((instrument ifNil: [0]) bitAnd: 16rF0) bitOr: value]].
 	position = 3 ifTrue: [^ note := value].
-	position = 4 ifTrue: [^ velocity := value ifNotNil: [((velocity ifNil: [0]) bitAnd: 16r0F) bitOr: (value bitShift: 4)]].
-	position = 5 ifTrue: [^ velocity := value ifNotNil: [((velocity ifNil: [0]) bitAnd: 16rF0) bitOr: value]].
+	position = 4 ifTrue: [^ velocity := value ifNotNil: [(((velocity ifNil: [0]) bitAnd: 16r0F) bitOr: (value bitShift: 4)) min: 16r80]].
+	position = 5 ifTrue: [^ velocity := value ifNotNil: [(((velocity ifNil: [0]) bitAnd: 16rF0) bitOr: value) min: 16r80]].
 	position = 6 ifTrue: [^ fx1 := value ifNotNil: [((fx1 ifNil: [0]) bitAnd: 16rFF) bitOr: (value bitShift: 8)]].
 	position = 7 ifTrue: [^ fx1 := value ifNotNil: [((fx1 ifNil: [0]) bitAnd: 16rFF0F) bitOr: (value bitShift: 4)]].
 	position = 8 ifTrue: [^ fx1 := value ifNotNil: [((fx1 ifNil: [0]) bitAnd: 16rFFF0) bitOr: value]].
@@ -2854,9 +2895,9 @@ probability
 velocity
 	^ velocity! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 19/Dec/2025 19:13:43'!
+!Trigger methodsFor: 'accessing' stamp: 'len 13/Jun/2026 15:18:59'!
 velocity: anInteger
-	velocity := anInteger! !
+	velocity := anInteger min: 128 max: 0! !
 
 !Trigger methodsFor: 'serialization' stamp: 'len 6/Feb/2026 15:11:33'!
 asJson

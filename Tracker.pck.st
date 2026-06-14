@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 14 June 2026 at 5:13:04 pm'!
+'From Cuis7.9 [latest update: #7983] on 14 June 2026 at 6:31:28 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 42!
+!provides: 'Tracker' 1 44!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -139,13 +139,16 @@ Tuning class
 
 
 !Instrument commentStamp: '<historical>' prior: 0!
-An instrument has a patch of modules, and interprets tracker triggers by changing parameters of the modules in the associated patch.!
+An instrument has a patch of signal processing modules, and interprets tracker triggers by changing parameters of the modules in the associated patch. An instrument has an arbitrary patch, it can be a musical instrument like a synthesizer or it could also be a send effect (like a reverb) that processes the output of other instruments. Instruments are designed to be monophonic (they play one note at a time).!
 
-!Pattern commentStamp: 'len 13/Jun/2026 21:38:08' prior: 0!
-A pattern is a grid composed of a list of "rows" or "lines" with as columns represeting tracks (or channels), each either empty or with a trigger.!
+!Pattern commentStamp: '<historical>' prior: 0!
+A pattern is a grid of triggers (notes and effect commands). The columns represet tracks (or channels).!
 
 !Track commentStamp: '<historical>' prior: 0!
 A track can play one instrument at a time. It can be muted or soloed, and it can be set to an arbitrary tuning to map arbitrary notes to standard 12-EDO notes.!
+
+!Tracker commentStamp: '<historical>' prior: 0!
+This is the model of a tracker. It holds a whole song or project (instruments, tracks and sequence of patterns, and global settings like BPM, swing, etc), and it also keeps track of runtime state (cursor position, playhead position, etc).!
 
 !Trigger commentStamp: '<historical>' prior: 0!
 A trigger is a cell in a pattern. It can contain any of the following (optional) parameters: an instrument number (1 to 255), a note to play (0 to 127 as MIDI, and -1 to represent note off), a velocity value (0 to 128), and two effect commands.
@@ -177,6 +180,9 @@ Retrigger velocity change:
 
 Commands Rxy and Cxy interpret the nibble x as a time span in units of 1/12 of a line (0 = instantly, C = 1 line).
 !
+
+!Tuning commentStamp: '<historical>' prior: 0!
+A tuning system is defined by a list of intervals from the root note, in cents of a semitone. The last interval is assumed to be the octave (normally 1200.0 cents). This is the same definition of tuning system that Scala uses. We also include optional names for the notes, in order to support special notation for some tunings such as 31-EDO.!
 
 !DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
 acceptButton

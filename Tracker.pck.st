@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 14 June 2026 at 3:45:38 am'!
+'From Cuis7.9 [latest update: #7983] on 14 June 2026 at 5:13:04 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 41!
+!provides: 'Tracker' 1 42!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -147,14 +147,15 @@ A pattern is a grid composed of a list of "rows" or "lines" with as columns repr
 !Track commentStamp: '<historical>' prior: 0!
 A track can play one instrument at a time. It can be muted or soloed, and it can be set to an arbitrary tuning to map arbitrary notes to standard 12-EDO notes.!
 
-!Trigger commentStamp: 'len 14/Jun/2026 03:40:37' prior: 0!
+!Trigger commentStamp: '<historical>' prior: 0!
 A trigger is a cell in a pattern. It can contain any of the following (optional) parameters: an instrument number (1 to 255), a note to play (0 to 127 as MIDI, and -1 to represent note off), a velocity value (0 to 128), and two effect commands.
 
 Effect commands:
 ∙ Cxy cut to velocity x (0 = minimum, F = maximum) after y/12 of a line (y must be 1 to B, otherwise do nothing)
 ∙ Rxy retrigger every y/12 of a line (y must be 1 to B), and change velocity according to x (see below)
 ∙ Gxx glide to note in xx/16 lines (01 = 1/16 of a line, 10 = 1 line, FF = almost 16 lines)
-∙ Uxx / Dxx slide note up/down by xx/16 notes (10 = 1 note, or 1 semitone if the tuning is 12-EDO)
+∙ Uxx / Dxx slide note up/down by xx/16 semitones
+∙ +xx / -xx finetune note up/down by xx/256 of a note depending on the selected tuning system
 ∙ Sxx set sample start offset (00 = start, FF = end)
 ∙ <xx / >xx set speed to xx/128 and play backwards / forward (40 = half speed, 80 = normal, FF = double)
 ∙ Lxx set instrument volume level to xx (00 = minimum, FF = maximum)
@@ -1170,7 +1171,7 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 13/Jun/2026 16:42:56'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 14/Jun/2026 17:07:55'!
 handleInputKey: anEvent
 	| c i |
 	anEvent isBackspace ifTrue:
@@ -1194,7 +1195,7 @@ handleInputKey: anEvent
 			^ true].
 		^ false].
 	(cursorPosition = 6 or: [cursorPosition = 9]) ifTrue: "FX commands"
-		[('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>' includes: (c := anEvent keyCharacter asUppercase)) ifTrue:
+		[('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>+-' includes: (c := anEvent keyCharacter asUppercase)) ifTrue:
 			[tracker selectedTriggerAt: cursorPosition put: c codePoint.
 			self moveCursorRight.
 			^ true].
@@ -1380,7 +1381,7 @@ updateTracks
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 13/Jun/2026 16:44:56'!
+!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 14/Jun/2026 17:08:43'!
 initialize
 	"
 	self initialize
@@ -1398,11 +1399,11 @@ initialize
 	"Samples:"
 	'S<>' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 220)].
 	"Pitch:"
-	'UDG' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: -20)].
+	'UDG+-' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: -20)].
 	"Volume and Pan:"
 	'LIOJK' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 160)].
 	"Other:"
-	'FQRY' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0 h: 0)]! !
+	'FQRY' do: [:c| FXColors at: c codePoint put: (Color okl: 0.9 c: 0 h: 0)]! !
 
 !PatternEditorMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026 19:58:39'!
 cursorColor
@@ -1746,13 +1747,13 @@ handleFX: anInteger
 	"Global commands:"
 	command = 70 "F (set bpm)" ifTrue: [track tracker bpm: (v max: 1). ^ self]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 14/Jun/2026 02:34:38'!
+!Instrument methodsFor: 'playing' stamp: 'len 14/Jun/2026 16:54:24'!
 handlePostNoteFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
 	v := anInteger bitAnd: 16rFF.
-	command = 85 "U (pitch up)" ifTrue: [self slideNoteBy: v + 1 / 16.0].
-	command = 68 "D (pitch down)" ifTrue: [self slideNoteBy: v + 1 / -16.0]! !
+	command = 85 "U (slide pitch up)" ifTrue: [self slideNoteBy: v + 1 / 16.0].
+	command = 68 "D (slide pitch down)" ifTrue: [self slideNoteBy: v + 1 / -16.0]! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026 22:55:55'!
 handleRetrigger: anInteger
@@ -1868,9 +1869,9 @@ setSpeed: aNumber
 setVelocity: aNumber
 	velocityReceivers do: [:each| each setVelocity: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 14/Jun/2026 02:39:43'!
+!Instrument methodsFor: 'playing' stamp: 'len 14/Jun/2026 03:48:42'!
 slideNoteBy: aNumber
-	"Slide the given number of notes (semitones in 12-EDO) for the duration of 1 line."
+	"Slide the given number of semitones."
 	glideTicks := track tracker tpl.
 	noteIncrement := aNumber / glideTicks asFloat! !
 
@@ -2902,19 +2903,19 @@ note
 note: anInteger
 	note := anInteger! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 9/Jun/2026 18:09:25'!
+!Trigger methodsFor: 'accessing' stamp: 'len 14/Jun/2026 17:12:35'!
 noteShift
-	"If the receiver has any Uxx or Dxx pitch shift effects, answer the shift in semitones. Otherwise answer 0."
+	"If the receiver has any +xx or -xx finetuning effects, answer the shift amount from -1.0 (previous note) to +1.0 (next note). Otherwise answer 0."
 	| answer cmd |
 	answer := 0.0.
 	fx1 ifNotNil:
-		[(cmd := fx1 bitShift: -8) = 85 "Uxx (pitch up)"
-			ifTrue: [answer := (fx1 bitAnd: 16rFF) / 255.0 + answer]
-			ifFalse: [cmd = 68 "Dxx (pitch down)" ifTrue: [answer := (fx1 bitAnd: 16rFF) / -255.0 + answer]]].
+		[(cmd := fx1 bitShift: -8) = 43 "+xx (finetune note up)"
+			ifTrue: [answer := (fx1 bitAnd: 16rFF) / 256.0 + answer]
+			ifFalse: [cmd = 45 "-xx (finetune note down)" ifTrue: [answer := (fx1 bitAnd: 16rFF) / -256.0 + answer]]].
 	fx2 ifNotNil:
-		[(cmd := fx2 bitShift: -8) = 85 "Uxx (pitch up)"
-			ifTrue: [answer := (fx2 bitAnd: 16rFF) / 255.0 + answer]
-			ifFalse: [cmd = 68 "Dxx (pitch down)" ifTrue: [answer := (fx2 bitAnd: 16rFF) / -255.0 + answer]]].
+		[(cmd := fx2 bitShift: -8) = 43 "+xx (finetune note up)"
+			ifTrue: [answer := (fx2 bitAnd: 16rFF) / 256.0 + answer]
+			ifFalse: [cmd = 45 "-xx (finetune note down)" ifTrue: [answer := (fx2 bitAnd: 16rFF) / -256.0 + answer]]].
 	^ answer! !
 
 !Trigger methodsFor: 'accessing' stamp: 'len 9/Mar/2026 17:28:01'!

@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 14 June 2026 at 6:31:16 pm'!
+'From Cuis7.9 [latest update: #7983] on 14 June 2026 at 6:58:22 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 590!
+!provides: 'Signals' 1 591!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -2738,19 +2738,19 @@ initialize
 	gain := 0.0.
 	velocity := 0.5! !
 
-!Amp methodsFor: 'initialization' stamp: 'len 14/Jun/2026 04:31:24'!
+!Amp methodsFor: 'initialization' stamp: 'len 14/Jun/2026 18:34:04'!
 initializeControls
 	super initializeControls.
-	self addControl: #gain min: 0.0 max: 1.0 value: 0.0.
+	self addControl: #level min: 0.0 max: 1.0 value: 0.0.
 	(self addAmountControl: #velocitySensitivity value: 1.0) label: 'Velocity'! !
 
-!Amp methodsFor: 'processing' stamp: 'len 14/Jun/2026 04:29:28'!
+!Amp methodsFor: 'processing' stamp: 'len 14/Jun/2026 18:40:59'!
 tick
 	| targetGain |
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	output replaceWith: input.
-	gain = (targetGain := (self get: #gain) * ((velocity squared - 1.0) * (self get: #velocitySensitivity) + 1.0))
+	gain = (targetGain := (self get: #level) * ((velocity squared - 1.0) * (self get: #velocitySensitivity) + 1.0))
 		ifTrue: [output *= gain]
 		ifFalse:
 			[targetGain < 0.00001 "-100 dB"
@@ -2761,15 +2761,15 @@ tick
 			gain := targetGain].
 	inputRM ifNotNil: [output *= inputRM]! !
 
-!Amp methodsFor: 'ui' stamp: 'len 19/Apr/2026 04:52:01'!
+!Amp methodsFor: 'ui' stamp: 'len 14/Jun/2026 18:34:52'!
 panel
-	^ ControlPanel new addKnob: (controls at: #gain)! !
+	^ ControlPanel new addKnob: (controls at: #level)! !
 
 !Amp methodsFor: 'ui' stamp: 'len 14/Jun/2026 04:30:35'!
 panel2
 	^ ControlPanel new addTextualControl: (controls at: #velocitySensitivity)! !
 
-!Amp methodsFor: 'ui' stamp: 'len 14/Jun/2026 04:30:06'!
+!Amp methodsFor: 'ui' stamp: 'len 14/Jun/2026 18:34:40'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -2777,7 +2777,7 @@ patchable
 	answer flap addMorph: self panel2.
 	answer
 		addAudioInput: #setInput:;
-		addControlInput: #gain;
+		addControlInput: #level;
 		addAudioInput: #setInputRM: label: 'AM/RM';
 		addAudioOutput: #setOutput:.
 	^ answer! !

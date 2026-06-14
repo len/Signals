@@ -92,6 +92,7 @@ Pattern editor:
 * Shift-Opt-Up/Down move current pattern to the previous/next position in the sequence
 * ]/[ transpose trigger or selection one octave up/down
 * }/{ transpose trigger or selection one note up/down
+* </> notch trigger or selection one line up/down
 * Cmd-[/] change octave for entering notes with the computer keyboard
 * Cmd-f set tracker BPM
 * Cmd-g set tracker swing

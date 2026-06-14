@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 14 June 2026 at 6:31:28 pm'!
+'From Cuis7.9 [latest update: #7983] on 14 June 2026 at 9:02:41 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 44!
+!provides: 'Tracker' 1 45!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -157,7 +157,7 @@ Effect commands:
 ∙ Cxy cut to velocity x (0 = minimum, F = maximum) after y/12 of a line (y must be 1 to B, otherwise do nothing)
 ∙ Rxy retrigger every y/12 of a line (y must be 1 to B), and change velocity according to x (see below)
 ∙ Gxx glide to note in xx/16 lines (01 = 1/16 of a line, 10 = 1 line, FF = almost 16 lines)
-∙ Uxx / Dxx slide note up/down by xx/16 semitones
+∙ Uxx / Dxx slide note up/down by xx/16 semitones (10 = 1 semitone)
 ∙ +xx / -xx finetune note up/down by xx/256 of a note depending on the selected tuning system
 ∙ Sxx set sample start offset (00 = start, FF = end)
 ∙ <xx / >xx set speed to xx/128 and play backwards / forward (40 = half speed, 80 = normal, FF = double)
@@ -946,6 +946,42 @@ moveCursorRight
 			[cursorPosition := cursorPosition + 1].
 	self redrawNeeded! !
 
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 14/Jun/2026 21:01:10'!
+notchSelectionDown
+	| pattern lineStart lineEnd trackStart trackEnd |
+	pattern := tracker selectedPattern.
+	selectionLineStart
+		ifNotNil: [lineStart := selectionLineStart min: tracker cursorLine.
+			lineEnd := selectionLineStart max: tracker cursorLine.
+			trackStart := selectionTrackStart min: tracker cursorTrack.
+			trackEnd := selectionTrackStart max: tracker cursorTrack]
+		ifNil: [lineStart := lineEnd := tracker cursorLine.
+			trackStart := trackEnd := tracker cursorTrack].
+	lineEnd < pattern length ifFalse: [^ self].
+	lineEnd to: lineStart by: -1 do: [:i|
+		trackStart to: trackEnd do: [:k|
+			pattern track: k swap: i with: i + 1]].
+	tracker moveCursorLineDown.
+	selectionLineStart ifNotNil: [selectionLineStart := selectionLineStart + 1]! !
+
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 14/Jun/2026 20:59:22'!
+notchSelectionUp
+	| pattern lineStart lineEnd trackStart trackEnd |
+	pattern := tracker selectedPattern.
+	selectionLineStart
+		ifNotNil: [lineStart := selectionLineStart min: tracker cursorLine.
+			lineEnd := selectionLineStart max: tracker cursorLine.
+			trackStart := selectionTrackStart min: tracker cursorTrack.
+			trackEnd := selectionTrackStart max: tracker cursorTrack]
+		ifNil: [lineStart := lineEnd := tracker cursorLine.
+			trackStart := trackEnd := tracker cursorTrack].
+	lineStart > 1 ifFalse: [^ self].
+	lineStart to: lineEnd do: [:i|
+		trackStart to: trackEnd do: [:k|
+			pattern track: k swap: i with: i - 1]].
+	tracker moveCursorLineUp.
+	selectionLineStart ifNotNil: [selectionLineStart := selectionLineStart - 1]! !
+
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 9/Mar/2026 19:44:57'!
 playSelection
 	| cursorPattern cursorLine cursorTrack |
@@ -1177,7 +1213,7 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 14/Jun/2026 17:07:55'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 14/Jun/2026 20:55:05'!
 handleInputKey: anEvent
 	| c i |
 	anEvent isBackspace ifTrue:
@@ -1189,6 +1225,8 @@ handleInputKey: anEvent
 	anEvent keyCharacter = $[ ifTrue: [self selectedTriggersDo: [:each| each transposeBy: (tracker selectedTrack tuning size negated)]. self redrawNeeded. ^ true].
 	anEvent keyCharacter = $} ifTrue: [self selectedTriggersDo: [:each| each transposeBy: 1]. self redrawNeeded. ^ true].
 	anEvent keyCharacter = ${ ifTrue: [self selectedTriggersDo: [:each| each transposeBy: -1]. self redrawNeeded. ^ true].
+	anEvent keyCharacter = $< ifTrue: [self notchSelectionUp. ^ true].
+	anEvent keyCharacter = $> ifTrue: [self notchSelectionDown. ^ true].
 	cursorPosition = 3 ifTrue: "notes"
 		[c := anEvent keyCharacter.
 		c = $a ifTrue:
@@ -1753,13 +1791,14 @@ handleFX: anInteger
 	"Global commands:"
 	command = 70 "F (set bpm)" ifTrue: [track tracker bpm: (v max: 1). ^ self]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 14/Jun/2026 16:54:24'!
+!Instrument methodsFor: 'playing' stamp: 'len 14/Jun/2026 19:41:44'!
 handlePostNoteFX: anInteger
+	"Note: pitch slide effects must be handled *after* the note on, otherwise the slide gets overridden."
 	| command v |
 	command := anInteger bitShift: -8.
 	v := anInteger bitAnd: 16rFF.
-	command = 85 "U (slide pitch up)" ifTrue: [self slideNoteBy: v + 1 / 16.0].
-	command = 68 "D (slide pitch down)" ifTrue: [self slideNoteBy: v + 1 / -16.0]! !
+	command = 85 "U (slide pitch up)" ifTrue: [self slideNoteBy: v / 16.0].
+	command = 68 "D (slide pitch down)" ifTrue: [self slideNoteBy: v / -16.0]! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026 22:55:55'!
 handleRetrigger: anInteger
@@ -2004,6 +2043,10 @@ track: trackIndex instrumentAbove: line
 	block := (blocks at: trackIndex) ifNil: [^ nil].
 	line to: 1 by: -1 do: [:j| (block at: j) ifNotNil: [:aTrigger| aTrigger instrument ifNotNil: [:anInteger| ^ anInteger = 0 ifFalse: [anInteger]]]].
 	^ nil! !
+
+!Pattern methodsFor: 'accessing' stamp: 'len 14/Jun/2026 20:50:33'!
+track: trackIndex swap: index1 with: index2
+	(blocks at: trackIndex) ifNotNil: [:anArray| anArray swap: index1 with: index2]! !
 
 !Pattern methodsFor: 'copying' stamp: 'len 27/Dec/2025 02:01:58'!
 postCopy

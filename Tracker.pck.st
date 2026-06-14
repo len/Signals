@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 14 June 2026 at 9:02:41 pm'!
+'From Cuis7.9 [latest update: #7983] on 15 June 2026 at 2:45:02 am'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 45!
+!provides: 'Tracker' 1 46!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -366,9 +366,9 @@ initialize
 
 	SHTextStylerST80 initialize! !
 
-!DarkerTheme methodsFor: 'menu colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'menu colors' stamp: 'len 15/Jun/2026 00:17:00'!
 menu
-	^ Color darkGray darker darker! !
+	^ Color darkGray darker! !
 
 !DarkerTheme methodsFor: 'menu colors' stamp: 'len 11/Apr/2026 12:42:14'!
 menuText
@@ -734,10 +734,20 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $d ifTrue: [self duplicateInstrument. ^ true].
 	^ false! !
 
-!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 11/Jun/2026 00:18:02'!
+!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 02:38:41'!
+handleOptionHotkey: anEvent
+	anEvent shiftPressed ifTrue:
+		[anEvent isArrowDown ifTrue: [tracker moveSelectedInstrumentDown. ^ true].
+		anEvent isArrowUp ifTrue: [tracker moveSelectedInstrumentUp. ^ true]].
+	^ false! !
+
+!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 02:43:19'!
 keyStroke: anEvent
 	| c i |
 	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
+		[anEvent wasHandled: true.
+		^ self].
+	(anEvent secondaryModifierPressed and: [self handleOptionHotkey: anEvent]) ifTrue:
 		[anEvent wasHandled: true.
 		^ self].
 	anEvent keyCharacter = $` ifTrue: [anEvent wasHandled: true. self fitPatchToBounds. ^ self].
@@ -1581,12 +1591,13 @@ handleSelectionKey: anEvent
 	anEvent isArrowUp ifTrue: [tracker moveCursorPatternUp].
 	anEvent isArrowDown ifTrue: [tracker moveCursorPatternDown]! !
 
-!SequencerMorph methodsFor: 'events' stamp: 'len 9/Mar/2026 22:27:01'!
+!SequencerMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 00:10:55'!
 keyStroke: anEvent
 	anEvent isArrow ifTrue:
 		[anEvent wasHandled: true.
-		anEvent shiftPressed ifTrue: [^ self handleSelectionKey: anEvent].
-		^ self handleNavigationKey: anEvent].
+		anEvent shiftPressed ifTrue: [self handleSelectionKey: anEvent. ^ self].
+		self handleNavigationKey: anEvent.
+		^ self].
 	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
 		[anEvent wasHandled: true.
 		^ self].
@@ -2014,6 +2025,13 @@ lpb
 !Pattern methodsFor: 'accessing' stamp: 'len 14/Mar/2026 18:26:07'!
 lpb: anInteger
 	lpb := anInteger! !
+
+!Pattern methodsFor: 'accessing' stamp: 'len 15/Jun/2026 02:35:57'!
+swapInstrument: anInteger with: anotherInteger
+	blocks do: [:each| each ifNotNil: [each do: [:trigger| trigger ifNotNil:
+				[trigger instrument = anInteger
+					ifTrue: [trigger instrument: anotherInteger]
+					ifFalse: [trigger instrument = anotherInteger ifTrue: [trigger instrument: anInteger]]]]]].! !
 
 !Pattern methodsFor: 'accessing' stamp: 'len 27/Dec/2025 02:03:30'!
 track: trackIndex at: index
@@ -2516,6 +2534,14 @@ insertSequence: anArray
 	sequence := (sequence copyFrom: 1 to: cursorPattern), (anArray collect: [:each| each key -> each value copy]), (sequence copyFrom: cursorPattern + 1 to: sequence size).
 	self triggerEvent: #sequenceChanged! !
 
+!Tracker methodsFor: 'patterns' stamp: 'len 15/Jun/2026 02:41:04'!
+moveSelectedInstrumentDown
+	self selectedInstrumentNumber ifNotNil: [:anInteger| anInteger > 1ifTrue: [self swapInstrument: anInteger with: anInteger - 1]]! !
+
+!Tracker methodsFor: 'patterns' stamp: 'len 15/Jun/2026 02:40:51'!
+moveSelectedInstrumentUp
+	self selectedInstrumentNumber ifNotNil: [:anInteger| anInteger < 255 ifTrue: [self swapInstrument: anInteger with: anInteger + 1]]! !
+
 !Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026 16:25:49'!
 moveSelectedPatternDown
 	cursorPattern < sequence size ifFalse: [^ self].
@@ -2563,6 +2589,17 @@ setSelectedPatternLength: anInteger
 	cursorLine <= anInteger ifFalse: [cursorLine := anInteger. self triggerEvent: #cursorChanged].
 	(playheadPattern = cursorPattern and: [playheadLine <= anInteger])
 		ifFalse: [playheadLine := anInteger - 1. self triggerEvent: #playheadChanged]! !
+
+!Tracker methodsFor: 'patterns' stamp: 'len 15/Jun/2026 02:42:11'!
+swapInstrument: anInteger with: anotherInteger
+	| instrument1 instrument2 |
+	anInteger = anotherInteger ifTrue: [^ self].
+	instrument1 := instruments at: anInteger ifAbsent: [].
+	instrument2 := instruments at: anotherInteger ifAbsent: [].
+	self sequenceUniquePatterns do: [:each| each swapInstrument: anInteger with: anotherInteger].
+	instrument1 ifNil: [instruments removeKey: anotherInteger ifAbsent: []] ifNotNil: [instruments at: anotherInteger put: instrument1].
+	instrument2 ifNil: [instruments removeKey: anInteger ifAbsent: []] ifNotNil: [instruments at: anInteger put: instrument2].
+	self triggerEvent: #sequenceChanged! !
 
 !Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026 16:23:00'!
 swapPattern: anInteger with: anotherInteger

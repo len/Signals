@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 14 June 2026 at 4:38:31 am'!
+'From Cuis7.9 [latest update: #7983] on 14 June 2026 at 6:31:16 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 589!
+!provides: 'Signals' 1 590!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -5145,7 +5145,7 @@ initialize
 	super initialize.
 	self initializeLibrary! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 13/Jun/2026 23:08:26'!
+!Multisample class methodsFor: 'library' stamp: 'len 14/Jun/2026 17:51:01'!
 initializeLibrary
 	"
 	Multisample initializeLibrary
@@ -5153,12 +5153,12 @@ initializeLibrary
 	
 	Library := OrderedDictionary new.
 	'Loading multisamples...' print.
-	#("loadJRhodes3D" loadDancePiano loadVibraphone loadBookerT loadBookerTFast loadChoirAah loadChoirOuh) do: [:each|
+"	#(loadJRhodes3D loadDancePiano loadVibraphone loadBookerT loadBookerTFast loadChoirAah loadChoirOuh) do: [:each|
 		| multisample |
 		multisample := self perform: each.
 		('    ∙ ', multisample label) print.
-		Library at: multisample label put: multisample].
-	#('LoFi Rhodes' "'Rhodes 2'" 'Double Bass' 'Picked Bass' 'Squier Bass' 'Pop Bass' 'Finger Bass' 'Slap Bass' 'Flute' 'Brass Section' 'String Ensemble' 'Glockenspiel' 'Cello' 'Viola' 'Violin' 'Xylophone' 'Jazz Trumpet' 'Trombone' '6-String Steel Guitar' 'Two Tone House Organ' 'Les Paul Half Drive' 'Les Paul Overdrive' "'Archtop Guitar'") do: [:each|
+		Library at: multisample label put: multisample]."
+	#('LoFi Rhodes' "'Rhodes 2'" 'Double Bass' 'Picked Bass' 'Squier Bass' 'Pop Bass' 'Finger Bass' 'Slap Bass' 'Flute' 'Brass Section' 'String Ensemble' 'Glockenspiel' 'Cello' 'Viola' 'Violin' 'Xylophone' 'Jazz Trumpet' 'Trombone' '6-String Steel Guitar' 'Two Tone House Organ' "'Les Paul Half Drive' 'Les Paul Overdrive'" "'Archtop Guitar' 'Acoustic Grand Piano' 'Electric Piano'") do: [:each|
 		('    ∙ ', each) print.
 		self loadMultisampleNamed: each]! !
 
@@ -5283,20 +5283,24 @@ loadJRhodes3D
 	keymap := samples collect: [:each| each associations sorted reversed collect: #value].
 	^ self new label: 'Rhodes'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 11/Jun/2026 20:16:53'!
+!Multisample class methodsFor: 'library' stamp: 'len 14/Jun/2026 17:33:48'!
 loadMultisampleNamed: directoryName
+"	
+	Multisample loadMultisampleNamed: 'Acoustic Grand Piano'
+"
 	| samples keymap |
 	samples := Dictionary new.
 	(self multisamplesDirectory / directoryName) files do: [:each|
 		| reader tokens midiKey velocityLayer buffer sample |
 		tokens := ((each name findTokens: '-') second findTokens: '.') first findTokens: ' '.
-		midiKey := tokens first asNumber.
+		midiKey := tokens first.
+		midiKey := midiKey first isDigit ifTrue: [midiKey asNumber] ifFalse: [midiKey nameToNote].
 		velocityLayer := tokens size > 1 ifTrue: [tokens second asNumber] ifFalse: [1].
 		reader := WAVFileReader new readFromFileEntry: each.
 		"If stereo, sum channels:"
 		buffer := reader channels = 2 ifTrue: [reader leftSamples + reader rightSamples] ifFalse: [reader leftSamples].
 		sample := Sample buffer: buffer rate: reader sampleRate.
-		reader loopStart ifNotNil: [sample loopStart: reader loopStart loopEnd: reader loopEnd]..
+		reader loopStart ifNotNil: [sample loopStart: reader loopStart loopEnd: reader loopEnd].
 		"sample removeDCOffset."
 		(samples at: midiKey ifAbsentPut: [Dictionary new]) at: velocityLayer put: sample].
 	keymap := samples collect: [:each| each associations sorted reversed collect: #value].

@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 14 June 2026 at 6:58:22 pm'!
+'From Cuis7.9 [latest update: #7983] on 15 June 2026 at 1:01:14 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 591!
+!provides: 'Signals' 1 592!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -186,7 +186,7 @@ TunedGenerator class
 
 !classDefinition: #Operator category: #'Signals-Oscillators'!
 TunedGenerator subclass: #Operator
-	instanceVariableNames: 'phase increment incrementRatio inputPM level retrigger'
+	instanceVariableNames: 'phase increment incrementRatio inputPM gain retrigger velocity'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Oscillators'!
@@ -2732,11 +2732,11 @@ sampleRate
 setVelocity: aNumber
 	velocity := aNumber! !
 
-!Amp methodsFor: 'initialization' stamp: 'len 12/Jun/2026 15:40:10'!
+!Amp methodsFor: 'initialization' stamp: 'len 15/Jun/2026 00:33:57'!
 initialize
 	super initialize.
 	gain := 0.0.
-	velocity := 0.5! !
+	velocity := 1.0! !
 
 !Amp methodsFor: 'initialization' stamp: 'len 14/Jun/2026 18:34:04'!
 initializeControls
@@ -4238,6 +4238,10 @@ gateOn
 reset
 	phase := 0.0! !
 
+!Operator methodsFor: 'controlling' stamp: 'len 15/Jun/2026 00:25:40'!
+setVelocity: aNumber
+	velocity := aNumber! !
+
 !Operator methodsFor: 'controlling' stamp: 'len 15/May/2026 17:24:58'!
 update
 	| targetIncrement |
@@ -4246,28 +4250,30 @@ update
 	increment ifNil: [increment := targetIncrement].
 	incrementRatio := ((targetIncrement / increment) ln / self class blockSize) exp! !
 
-!Operator methodsFor: 'initialization' stamp: 'len 3/Jun/2026 02:54:27'!
+!Operator methodsFor: 'initialization' stamp: 'len 15/Jun/2026 00:33:59'!
 initialize
 	super initialize.
 	self reset.
-	level := 1.0.
+	gain := 1.0.
+	velocity := 1.0.
 	retrigger := false! !
 
-!Operator methodsFor: 'initialization' stamp: 'len 3/Jun/2026 02:54:35'!
+!Operator methodsFor: 'initialization' stamp: 'len 15/Jun/2026 00:27:57'!
 initializeControls
 	super initializeControls.
 	(self addControl: #ratio min: 0.25 max: 16.0 value: 1.0) printer: [:x| '×', (x printStringFractionDigits: 2)].
 	(self addControl: #level min: 0.0 max: 1.0 value: 1.0) printer: [:x| '±', (x printStringFractionDigits: 2)].
+	(self addAmountControl: #velocitySensitivity value: 1.0) label: 'Velocity'.
 	self addAmountControl: #feedback value: 0.0! !
 
-!Operator methodsFor: 'processing' stamp: 'len 17/May/2026 14:46:01'!
+!Operator methodsFor: 'processing' stamp: 'len 15/Jun/2026 00:33:01'!
 tick
-	| feedback twoPi levelIncrement lastOutput |
+	| feedback twoPi gainIncrement lastOutput |
 	output ifNil: [^ self].
 	feedback := self get: #feedback.
 	twoPi := Float twoPi.
-	levelIncrement := (self get: #level) - level / self class blockSize.
-	(level = 0.0 and: [levelIncrement = 0.0]) ifTrue:
+	gainIncrement := (self get: #level) * ((velocity squared - 1.0) * (self get: #velocitySensitivity) + 1.0) - gain / self class blockSize.
+	(gain = 0.0 and: [gainIncrement = 0.0]) ifTrue:
 		[increment := increment * (incrementRatio raisedTo: output size).
 		output atAllPut: 0.0.
 		^ self].
@@ -4276,8 +4282,8 @@ tick
 		| mod |
 		mod := lastOutput * feedback.
 		inputPM ifNotNil: [mod := mod + (inputPM at: i)].
-		level := level + levelIncrement.
-		lastOutput := output at: i put: ((phase + mod) * twoPi) sin * level.
+		gain := gain + gainIncrement.
+		lastOutput := output at: i put: ((phase + mod) * twoPi) sin * gain.
 		phase := phase + (increment := increment * incrementRatio)].
 	phase := phase - phase truncated! !
 
@@ -4290,12 +4296,13 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #reset ifPresent: [:aBoolean| retrigger := aBoolean]! !
 
-!Operator methodsFor: 'ui' stamp: 'len 3/Jun/2026 02:57:10'!
+!Operator methodsFor: 'ui' stamp: 'len 15/Jun/2026 00:28:52'!
 panel
 	^​ super panel
 		addTextualControl: (controls at: #ratio);
 		addTextualControl: (controls at: #level);
 		addTextualControl: (controls at: #feedback);
+		addTextualControl: (controls at: #velocitySensitivity);
 		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset')! !
 
 !Operator methodsFor: 'ui' stamp: 'len 17/May/2026 14:46:14'!
@@ -5145,7 +5152,7 @@ initialize
 	super initialize.
 	self initializeLibrary! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 14/Jun/2026 17:51:01'!
+!Multisample class methodsFor: 'library' stamp: 'len 14/Jun/2026 21:43:45'!
 initializeLibrary
 	"
 	Multisample initializeLibrary
@@ -5153,12 +5160,7 @@ initializeLibrary
 	
 	Library := OrderedDictionary new.
 	'Loading multisamples...' print.
-"	#(loadJRhodes3D loadDancePiano loadVibraphone loadBookerT loadBookerTFast loadChoirAah loadChoirOuh) do: [:each|
-		| multisample |
-		multisample := self perform: each.
-		('    ∙ ', multisample label) print.
-		Library at: multisample label put: multisample]."
-	#('LoFi Rhodes' "'Rhodes 2'" 'Double Bass' 'Picked Bass' 'Squier Bass' 'Pop Bass' 'Finger Bass' 'Slap Bass' 'Flute' 'Brass Section' 'String Ensemble' 'Glockenspiel' 'Cello' 'Viola' 'Violin' 'Xylophone' 'Jazz Trumpet' 'Trombone' '6-String Steel Guitar' 'Two Tone House Organ' "'Les Paul Half Drive' 'Les Paul Overdrive'" "'Archtop Guitar' 'Acoustic Grand Piano' 'Electric Piano'") do: [:each|
+	#('Acoustic Grand Piano' 'Electric Piano' 'Electric Grand Piano' "'LoFi Rhodes' 'Rhodes 2' 'Dance Piano'" 'Double Bass' 'Picked Bass' 'Squier Bass' 'Pop Bass' 'Finger Bass' 'Slap Bass' 'Cello' 'Viola' 'Violin' 'String Ensemble' "'Pizzicato Strings'" 'Vibraphone' 'Glockenspiel' 'Xylophone' 'Flute' 'Jazz Trumpet' 'Trombone' 'Brass Section' '6-String Steel Guitar' 'Two Tone House Organ' "'Les Paul Half Drive' 'Les Paul Overdrive'" "'Archtop Guitar'") do: [:each|
 		('    ∙ ', each) print.
 		self loadMultisampleNamed: each]! !
 
@@ -5199,57 +5201,6 @@ loadBookerTFast
 			keymap at: midiKey put:
 				{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}]].
 	^ self new label: 'Booker T (Fast)'; keymap: keymap! !
-
-!Multisample class methodsFor: 'library' stamp: 'len 11/May/2026 15:48:16'!
-loadChoirAah
-	| keymap |
-	keymap := Dictionary new.
-	#('G3' 'A3' 'B3' 'C4' 'D4' 'E4' 'F4' 'G4' 'A4' 'B4' 'C5' 'D5' 'E5') do: [:noteName|
-		| filename reader buffer |
-		"Read only the left channel because the right channel doesnt match (different size and loop points):"
-		filename := 'Choir Aah - ', noteName, '(L).wav'.
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Choir Aah Ouh' // filename.
-		buffer := reader leftSamples.
-		keymap at: noteName nameToNote put:
-			{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
-	^ self new label: 'Choir Aah'; keymap: keymap! !
-
-!Multisample class methodsFor: 'library' stamp: 'len 11/May/2026 15:48:16'!
-loadChoirOuh
-	| keymap oldAttack newAttack |
-	keymap := Dictionary new.
-	oldAttack := 10000.
-	newAttack := 100.
-	#('A3' 'B3' 'C4' 'D4' 'F4' 'G4' 'A4' 'B4' 'C5' 'D5' 'E5') do: [:noteName|
-		| filename reader buffer loopStart loopEnd |
-		"Read only the left channel because the right channel doesnt match (different size and loop points):"
-		filename := 'Choir Ouh - ', noteName, '(L).wav'.
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Choir Aah Ouh' // filename.
-		"Remove attack, otherwise it's too long:"
-		buffer := reader leftSamples allButFirst: oldAttack.
-		"Smooth out:"
-		1 to: newAttack do: [:i| buffer at: i put: (buffer at: i) * i asFloat / newAttack].
-		loopStart := reader loopStart - oldAttack.
-		loopEnd := reader loopEnd - oldAttack.
-		keymap at: noteName nameToNote put:
-			{Sample buffer: buffer rate: reader sampleRate loopStart: loopStart loopEnd: loopEnd}].
-	^ self new label: 'Choir Ouh'; keymap: keymap! !
-
-!Multisample class methodsFor: 'library' stamp: 'len 11/May/2026 15:48:16'!
-loadDancePiano
-	"Salamander Dance Piano."
-	| keymap |
-	keymap := Dictionary new.
-	#('F#2' 'A2' 'D#3' 'G#3' 'C4' 'E4' 'A4') withIndexDo: [:noteName :i|
-		| filename reader buffer |
-		filename := 'Sal House - Sal House ', noteName.
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Sal House' // (filename, 'L.wav').
-		buffer := reader leftSamples.
-		reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Sal House' // (filename, 'R.wav').
-		buffer += reader leftSamples.
-		keymap at: noteName nameToNote put:
-			{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}].
-	^ self new label: 'Dance Piano'; keymap: keymap! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:13:20'!
 loadFarfisa
@@ -5305,20 +5256,6 @@ loadMultisampleNamed: directoryName
 		(samples at: midiKey ifAbsentPut: [Dictionary new]) at: velocityLayer put: sample].
 	keymap := samples collect: [:each| each associations sorted reversed collect: #value].
 	Library at: directoryName put: (self new label: directoryName; keymap: keymap)! !
-
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:13:56'!
-loadVibraphone
-	| keymap |
-	keymap := Dictionary new.
-	#(55 59 66 70 74 77 80 83 87) with: #(1 2 4 5 6 7 8 9 10) do: [:midiKey :i|
-		| filename reader buffer |
-		filename := 'Vibraphone - Vibraphone ', i printString.
-			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Vibraphone' // (filename, 'l.wav').
-			buffer := reader leftSamples.
-			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'Vibraphone' // (filename, 'r.wav').
-			buffer += reader leftSamples.
-			keymap at: midiKey put: {Sample buffer: buffer rate: reader sampleRate}].
-	^ self new label: 'Vibraphone'; keymap: keymap! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 15:03:49'!
 multisamplesDirectory

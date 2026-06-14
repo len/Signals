@@ -49,16 +49,17 @@ Finally, open a FileList, go to Signals/data/projects/ and choose any of the exa
 On the screenshot above you can see an open tracker window. At the top there is the "instrument editor" that contains a patch of modules connected by wires (an instrument, or possibly an effect or other kind of audio processing patch). Each module morph contains controls (like knobs, sliders, a wave, etc) that can be changed with mouse scroll or the arrow keys (with shift pressed to do fine adjustments). The instrument editor is fully zoomable, you can zoom in/out with Cmd-mouse-scroll and pan by mouse-dragging the background. The instrument editor shows the patch for the instrument at current cursor position in the pattern editor below it; you have to move the cursor to see the different patches, or enter a new instrument number to create a new empty patch.
 
 At the bottom left there is the "sequencer" or "arranger", that contains the list of patterns to be played. And at the bottom right the "pattern editor" that shows the current pattern and allows you to edit the triggers (notes and effect commands, like a typical tracker). Each track contains the following columns: instrument number, note, velocity, fx1 and fx2. The following are the fx commands currently implemented:
-* Cxy cut to velocity x (0 = minimum, F = maximum) after y/12 of a line (C = 1 line)
+* Cxy cut to velocity x (0 = minimum, F = maximum) after y/12 of a line
 * Rxy retrigger every y/12 of a line, and change velocity according to x (see below)
-* Gxx glide to note in (xx+1)/256 of a line (00 = 1/16 of a line, FF = 16 lines)
-* Lxx set instrument volume level to xx (00 = minimum, FF = maximum)
-* Pxx set instrument pan (00 = left, 80 = center, FF = right)
-* Ixx / Oxx adjust volume level up/down
-* Jxx / Kxx adjust pan left/right
-* Uxx / Dxx adjust note up/down by xx/16 notes (depends on the tuning, semitones for 12-EDO)
+* Gxx glide to note in xx/16 lines (01 = 1/16 of a line, 10 = 1 line, FF = almost 16 lines)
+* Uxx / Dxx slide note up/down by xx/16 semitones
+* +xx / -xx finetune note up/down by xx/256 of a note depending on the selected tuning (0 = no change, 80 = half note, FF = almost 1 note)
 * Sxx set sample start offset
 * <xx / >xx set speed to xx/128 and play backwards / forward (40 = half speed, 80 = normal speed, FF = double speed)
+* Lxx set instrument volume level to xx (00 = minimum, FF = maximum)
+* Pxx set instrument pan (00 = left, 80 = center, FF = right)
+* Ixx / Oxx adjust instrument volume level up/down
+* Jxx / Kxx adjust instrument pan left/right
 * 0xx to 9xx set control input
 * Fxx set BPM to xx
 * Qxx delay trigger by xx/256 of a line (00 = no delay, FF = almost a full line)

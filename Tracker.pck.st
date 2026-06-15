@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 15 June 2026 at 8:48:31 pm'!
+'From Cuis7.9 [latest update: #7998] on 15 June 2026 at 11:06:06 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 48!
+!provides: 'Tracker' 1 49!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -961,8 +961,32 @@ moveCursorRight
 	self showFXBalloon.
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 16:47:02'!
-moveSelectionDown
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 23:02:52'!
+moveSelectedTracksLeft
+	| trackStart trackEnd |
+	selectionTrackStart
+		ifNotNil: [trackStart := selectionTrackStart min: tracker cursorTrack.
+			trackEnd := selectionTrackStart max: tracker cursorTrack]
+		ifNil: [trackStart := trackEnd := tracker cursorTrack].
+	trackStart > 1 ifFalse: [^ self].
+	trackStart to: trackEnd do: [:i| tracker swapTrack: i with: i - 1].
+	tracker moveCursorTrackLeft.
+	selectionTrackStart ifNotNil: [selectionTrackStart := selectionTrackStart - 1]! !
+
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 23:03:57'!
+moveSelectedTracksRight
+	| trackStart trackEnd |
+	selectionTrackStart
+		ifNotNil: [trackStart := selectionTrackStart min: tracker cursorTrack.
+			trackEnd := selectionTrackStart max: tracker cursorTrack]
+		ifNil: [trackStart := trackEnd := tracker cursorTrack].
+	trackEnd < tracker tracks size ifFalse: [^ self].
+	trackEnd to: trackStart by: -1 do: [:i| tracker swapTrack: i with: i + 1].
+	tracker moveCursorTrackRight.
+	selectionTrackStart ifNotNil: [selectionTrackStart := selectionTrackStart + 1]! !
+
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 22:59:42'!
+moveSelectedTriggersDown
 	| pattern lineStart lineEnd trackStart trackEnd |
 	pattern := tracker selectedPattern.
 	selectionLineStart
@@ -979,8 +1003,8 @@ moveSelectionDown
 	tracker moveCursorLineDown.
 	selectionLineStart ifNotNil: [selectionLineStart := selectionLineStart + 1]! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 16:47:12'!
-moveSelectionUp
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 22:59:53'!
+moveSelectedTriggersUp
 	| pattern lineStart lineEnd trackStart trackEnd |
 	pattern := tracker selectedPattern.
 	selectionLineStart
@@ -1176,21 +1200,25 @@ drawPatternOn: aCanvas
 					x := charWidth * 3.5 + x]].
 		y := y + lineSpacing]! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Jun/2026 19:30:47'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 15/Jun/2026 22:56:57'!
 drawTracksOn: aCanvas
-	| color textColor charWidth trackWidth x mask headerLineWidth maxTrackLabelWidth fittingTrackLabel |
+	| color textColor charWidth trackWidth x mask headerLineWidth maxTrackLabelWidth fittingTrackLabel highlightedTrackStart highlightedTrackEnd |
 	charWidth := font widthOf: $X.
 	trackWidth := charWidth * self trackWidthInCharacters.
 	maxTrackLabelWidth := trackWidth - (labelMonoFont widthOfString: 'SM') - 2.
 	headerLineWidth := 7.5. "originally was charWidth/2.0, but we don't want to change with the font size"
 	x := charWidth * 2.5.
 	mask := tracker selectedMask.
+	selectionLineStart
+		ifNotNil: [highlightedTrackStart := selectionTrackStart min: tracker cursorTrack.
+			highlightedTrackEnd := selectionTrackStart max: tracker cursorTrack]
+		ifNil: [highlightedTrackStart := highlightedTrackEnd := tracker cursorTrack].
 	tracker tracks withIndexDo: [:track :i| | trackColor trackLabel |
 		trackColor := track color.
 "		aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: (trackColor lightnessAndChromaBy: (i = tracker cursorTrack ifTrue: [0.25] ifFalse: [0.2]))."
 "		aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: (trackColor darker: (i = tracker cursorTrack ifTrue: [0.54] ifFalse: [0.6]))."
 "		aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: (trackColor alpha: (i = tracker cursorTrack ifTrue: [0.1] ifFalse: [0.02]))."
-		i = tracker cursorTrack ifTrue: [aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: track backgroundColor" Color random"].
+		(i between: highlightedTrackStart and: highlightedTrackEnd) ifTrue: [aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: (track color lightnessAndChromaBy: 0.2)].
 		((mask at: i) and: [track enabled])
 			ifTrue:
 				[color := trackColor.
@@ -1312,13 +1340,13 @@ handleNavigationKey: anEvent
 	anEvent isEnd ifTrue: [tracker moveCursorLineBottom. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 16:47:12'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 22:59:53'!
 handleOptionHotkey: anEvent
 	anEvent shiftPressed ifTrue:
-		[anEvent isArrowUp ifTrue: [self moveSelectionUp. ^ true].
-		anEvent isArrowDown ifTrue: [self moveSelectionDown. ^ true].
-		anEvent isArrowLeft ifTrue: [tracker moveSelectedTrackLeft. ^ true].
-		anEvent isArrowRight ifTrue: [tracker moveSelectedTrackRight. ^ true]].
+		[anEvent isArrowUp ifTrue: [self moveSelectedTriggersUp. ^ true].
+		anEvent isArrowDown ifTrue: [self moveSelectedTriggersDown. ^ true].
+		anEvent isArrowLeft ifTrue: [self moveSelectedTracksLeft. ^ true].
+		anEvent isArrowRight ifTrue: [self moveSelectedTracksRight. ^ true]].
 	anEvent isArrowUp ifTrue: [tracker moveCursorPatternUp. ^ true].
 	anEvent isArrowDown ifTrue: [tracker moveCursorPatternDown. ^ true].
 	anEvent isArrowLeft ifTrue: [tracker moveCursorTrackLeft. ^ true].
@@ -2047,13 +2075,13 @@ asJsonWithBuffers: aList
 		at: #label put: (label ifNil: '');
 		yourself! !
 
-!Instrument methodsFor: 'serialization' stamp: 'len 9/Feb/2026 20:57:33'!
+!Instrument methodsFor: 'serialization' stamp: 'len 15/Jun/2026 22:46:40'!
 readFrom: aStream
 	| numberOfBuffers bufferList json |
 	aStream useBytes.
 	numberOfBuffers := aStream nextInt32BigEndian: true.
 	bufferList := (1 to: numberOfBuffers) collect: [:i| Float32Array newFromStream: aStream].
-	aStream useCharacters.
+	aStream useByteCharacters.
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 
@@ -2220,10 +2248,6 @@ line: anInteger instrumentDo: instrumentBlock noteDo: noteBlock velocityDo: velo
 !Pattern class methodsFor: 'instance creation' stamp: 'len 27/Dec/2025 06:03:15'!
 new: anInteger
 	^ self new initialize: anInteger! !
-
-!Track methodsFor: 'accessing' stamp: 'len 14/Jun/2026 00:53:28'!
-backgroundColor
-	^ self color lightnessAndChromaBy: 0.2! !
 
 !Track methodsFor: 'accessing' stamp: 'len 10/Jun/2026 17:04:08'!
 color
@@ -2833,13 +2857,13 @@ asJsonWithBuffers: bufferList
 		at: #instruments put: (instruments collect: [:each| each asJsonWithBuffers: bufferList]);
 		yourself! !
 
-!Tracker methodsFor: 'serialization' stamp: 'len 9/Feb/2026 20:57:54'!
+!Tracker methodsFor: 'serialization' stamp: 'len 15/Jun/2026 22:46:45'!
 readFrom: aStream
 	| numberOfBuffers bufferList json |
 	aStream useBytes.
 	numberOfBuffers := aStream nextInt32BigEndian: true.
 	bufferList := (1 to: numberOfBuffers) collect: [:i| Float32Array newFromStream: aStream].
-	aStream useCharacters.
+	aStream useByteCharacters.
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 

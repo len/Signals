@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 15 June 2026 at 1:01:14 am'!
+'From Cuis7.9 [latest update: #7998] on 16 June 2026 at 3:07:10 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 592!
+!provides: 'Signals' 1 594!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -4018,9 +4018,9 @@ meterValue
 port
 	^ port! !
 
-!AudioOut methodsFor: 'accessing' stamp: 'len 3/Jun/2026 02:11:29'!
+!AudioOut methodsFor: 'accessing' stamp: 'len 16/Jun/2026 02:28:45'!
 port: anInteger
-	^ port! !
+	port := anInteger! !
 
 !AudioOut methodsFor: 'controlling' stamp: 'len 28/Apr/2026 17:31:11'!
 adjustLevelBy: aNumber

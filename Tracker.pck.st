@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7998] on 15 June 2026 at 11:23:44 pm'!
+'From Cuis7.9 [latest update: #7998] on 16 June 2026 at 3:07:30 am'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 50!
+!provides: 'Tracker' 1 51!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -154,8 +154,8 @@ This is the model of a tracker. It holds a whole song or project (instruments, t
 A trigger is a cell in a pattern. It can contain any of the following (optional) parameters: an instrument number (1 to 255), a note to play (0 to 127 as MIDI, and -1 to represent note off), a velocity value (0 to 128), and two effect commands.
 
 Effect commands:
-∙ Cxy cut to velocity x (0 = minimum, F = maximum) after y/12 of a line (y must be 1 to B, otherwise do nothing)
-∙ Rxy retrigger every y/12 of a line (y must be 1 to B), and change velocity according to x (see below)
+∙ Cxy cut to velocity x (0 = minimum, F = maximum) after y/12 of a line
+∙ Rxy retrigger every y/12 of a line, and change velocity according to x (see below)
 ∙ Gxx glide to note in xx/16 lines (01 = 1/16 of a line, 10 = 1 line, FF = almost 16 lines)
 ∙ Uxx / Dxx slide note up/down by xx/16 semitones (10 = 1 semitone)
 ∙ +xx / -xx finetune note up/down by xx/256 of a note depending on the selected tuning system
@@ -167,7 +167,7 @@ Effect commands:
 ∙ Jxx / Kxx adjust instrument pan left/right
 ∙ 0xx to 9xx set control input
 ∙ Fxx set BPM to xx
-∙ Qxx delay trigger by xx/256 of a line (00 = no delay, 01 = 1/256 of a line, FF = almost a line)
+∙ Qxx delay trigger by xx/256 of a line (00 = no delay, 01 = 1/256 of a line, FF = 1/256 before next line)
 ∙ Yxx set the probability of playing the trigger (00 = never, FF = always)
 
 Retrigger velocity change:
@@ -178,11 +178,11 @@ Retrigger velocity change:
 ∙ 9, A, B, C, D increase velocity by adding 1/32, 1/16, 1/8, 1/4, 1/2
 ∙ E, F scale up velocity multiplying by 3/2, 2
 
-Commands Rxy and Cxy interpret the nibble x as a time span in units of 1/12 of a line (0 = instantly, C = 1 line).
+Commands Rxy and Cxy interpret the nibble x as a time span in units of 1/12 of a line (0 = instantly, B = 1/12 before next line).
 !
 
 !Tuning commentStamp: '<historical>' prior: 0!
-A tuning system is defined by a list of intervals from the root note, in cents of a semitone. The last interval is assumed to be the octave (normally 1200.0 cents). This is the same definition of tuning system that Scala uses. We also include optional names for the notes, in order to support special notation for some tunings such as 31-EDO.!
+A tuning system is defined by a list of intervals from the root note, in cents of a semitone. The last interval is assumed to be the octave (normally 1200.0 cents, but not always). This is the same definition of tuning system that Scala uses. We also include optional names for the notes, in order to support special notation for some tunings such as 31-EDO.!
 
 !DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
 acceptButton
@@ -586,7 +586,7 @@ saveProject
 		(self class package packageDirectory / 'data' / 'projects' // (newName, '.song')) writeStreamDo: [:s| model writeOn: s].
 		self setLabel: newName]! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 7/Jan/2026 14:25:54'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 16/Jun/2026 01:20:37'!
 setBPM
 	self request: 'BPM' initialAnswer: model bpm printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| model bpm: s asNumber]! !
 

@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7998] on 15 June 2026 at 11:06:06 pm'!
+'From Cuis7.9 [latest update: #7998] on 15 June 2026 at 11:23:44 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 49!
+!provides: 'Tracker' 1 50!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -19,7 +19,7 @@ DarkerTheme class
 
 !classDefinition: #TrackerWindow category: #'Tracker-Morphic'!
 SystemWindow subclass: #TrackerWindow
-	instanceVariableNames: 'instrumentEditor meter sequencer patternEditor lowerPane'
+	instanceVariableNames: 'instrumentEditor meter arranger patternEditor lowerPane'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Tracker-Morphic'!
@@ -35,6 +35,16 @@ ZoomerMorph subclass: #InstrumentEditorMorph
 	category: 'Tracker-Morphic'!
 !classDefinition: 'InstrumentEditorMorph class' category: #'Tracker-Morphic'!
 InstrumentEditorMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #ArrangerMorph category: #'Tracker-Morphic'!
+BoxMorph subclass: #ArrangerMorph
+	instanceVariableNames: 'tracker font clipboard selectionStart showCursor pauseBlinking'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Tracker-Morphic'!
+!classDefinition: 'ArrangerMorph class' category: #'Tracker-Morphic'!
+ArrangerMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #MultitrackMeterMorph category: #'Tracker-Morphic'!
@@ -55,16 +65,6 @@ BoxMorph subclass: #PatternEditorMorph
 	category: 'Tracker-Morphic'!
 !classDefinition: 'PatternEditorMorph class' category: #'Tracker-Morphic'!
 PatternEditorMorph class
-	instanceVariableNames: ''!
-
-!classDefinition: #SequencerMorph category: #'Tracker-Morphic'!
-BoxMorph subclass: #SequencerMorph
-	instanceVariableNames: 'tracker font clipboard selectionStart showCursor pauseBlinking'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Tracker-Morphic'!
-!classDefinition: 'SequencerMorph class' category: #'Tracker-Morphic'!
-SequencerMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #TrackerBarMorph category: #'Tracker-Morphic'!
@@ -626,19 +626,19 @@ keyStroke: anEvent
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 19/Apr/2026 02:53:42'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 15/Jun/2026 23:22:39'!
 buildMorphicWindow
 	| lowerLeftPane sequencerScroller patternEditorScroller bar |
 	instrumentEditor := InstrumentEditorMorph new setTracker: model.
 	meter := MultitrackMeterMorph new setTracker: model.
-	sequencer := SequencerMorph new setTracker: model.
+	arranger := ArrangerMorph new setTracker: model.
 	patternEditor := PatternEditorMorph new setTracker: model.
 	model when: #cursorChanged send: #ensureCursorVisible to: self.
 	instrumentEditor when: #instrumentLabelChanged send: #redrawNeeded to: patternEditor. "to redraw instrument label in the track header"
 	bar := TrackerBarMorph new setTracker: model.
 	lowerPane := LinearLayoutMorph newRow color: Color transparent.
 	lowerLeftPane := LinearLayoutMorph newColumn color: Color transparent.
-	sequencerScroller := ScrollerMorph new vertical: true; scrollable: sequencer.
+	sequencerScroller := ScrollerMorph new vertical: true; scrollable: arranger.
 	patternEditorScroller := ScrollerMorph new horizontal: true; scrollable: patternEditor.
 	lowerLeftPane
 		addMorph: meter layoutSpec: LayoutSizeSpec new useMorphHeight;
@@ -659,10 +659,10 @@ defaultColor
 widgetsColor: aColor
 	^ self! !
 
-!TrackerWindow methodsFor: 'private' stamp: 'len 19/Apr/2026 16:54:47'!
+!TrackerWindow methodsFor: 'private' stamp: 'len 15/Jun/2026 23:22:24'!
 ensureCursorVisible
 	patternEditor owner scrollToMakeVisible: (patternEditor externalizeBoundingRectOf: patternEditor activeBounds).
-	sequencer owner scrollToMakeVisible: (sequencer externalizeBoundingRectOf: sequencer activeBounds)! !
+	arranger owner scrollToMakeVisible: (arranger externalizeBoundingRectOf: arranger activeBounds)! !
 
 !TrackerWindow methodsFor: 'open/close' stamp: 'len 11/Apr/2026 12:51:09'!
 delete
@@ -716,6 +716,14 @@ importInstrument
 		self fitPatchToBounds.
 		self triggerEvent: #instrumentLabelChanged]! !
 
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 23:20:07'!
+moveInstrumentDown
+	tracker selectedInstrumentNumber ifNotNil: [:anInteger| anInteger > 1 ifTrue: [tracker swapInstrument: anInteger with: anInteger - 1]]! !
+
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 23:20:46'!
+moveInstrumentUp
+	tracker selectedInstrumentNumber ifNotNil: [:anInteger| anInteger < 255 ifTrue: [tracker swapInstrument: anInteger with: anInteger + 1]]! !
+
 !InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Feb/2026 22:50:13'!
 renameInstrument
 	| instrument |
@@ -735,11 +743,11 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $i ifTrue: [tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument inspect]. ^ true].
 	^ false! !
 
-!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 02:38:41'!
+!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 23:20:23'!
 handleOptionHotkey: anEvent
 	anEvent shiftPressed ifTrue:
-		[anEvent isArrowDown ifTrue: [tracker moveSelectedInstrumentDown. ^ true].
-		anEvent isArrowUp ifTrue: [tracker moveSelectedInstrumentUp. ^ true]].
+		[anEvent isArrowDown ifTrue: [tracker moveInstrumentDown. ^ true].
+		anEvent isArrowUp ifTrue: [tracker moveInstrumentUp. ^ true]].
 	^ false! !
 
 !InstrumentEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 02:43:19'!
@@ -781,6 +789,230 @@ update
 	selectedPatch = self patch ifFalse:
 		[self removeAllMorphs.
 		selectedPatch ifNotNil: [self addMorph: selectedPatch]].
+	self redrawNeeded! !
+
+!ArrangerMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026 16:11:15'!
+clipboardCopy
+	clipboard := selectionStart isNil
+		ifTrue: [{tracker sequence at: tracker cursorPattern}]
+		ifFalse: [((selectionStart min: tracker cursorPattern) to: (selectionStart max: tracker cursorPattern)) collect: [:i| tracker sequence at: i]]! !
+
+!ArrangerMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026 16:10:50'!
+clipboardCut
+	| cursor |
+	selectionStart isNil ifTrue: "cut the pattern at cursor"
+		[clipboard := {tracker sequence at: tracker cursorPattern}.
+		tracker deletePattern.
+		^ self].
+	cursor := tracker cursorPattern.
+	clipboard := ((selectionStart min: cursor) to: (selectionStart max: cursor)) collect: [:i| tracker sequence at: i].
+	(selectionStart max: cursor) to: (selectionStart min: cursor) by: -1 do: [:i| tracker deletePattern: i].
+	selectionStart := nil! !
+
+!ArrangerMorph methodsFor: 'actions' stamp: 'len 21/Feb/2026 18:59:25'!
+clipboardPaste
+	selectionStart := nil.
+	clipboard ifNotNil: [tracker insertSequence: (clipboard collect: [:each| each key -> each value])]! !
+
+!ArrangerMorph methodsFor: 'actions' stamp: 'len 21/Feb/2026 18:59:27'!
+clipboardPasteNew
+	selectionStart := nil.
+	clipboard ifNotNil: [tracker insertSequence: (clipboard collect: [:each| each key copy -> each value])]! !
+
+!ArrangerMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 23:15:15'!
+moveSelectedPatternsDown
+	| start end |
+	selectionStart
+		ifNotNil: [start := selectionStart min: tracker cursorPattern.
+			end := selectionStart max: tracker cursorPattern]
+		ifNil: [start := end := tracker cursorPattern].
+	end < tracker sequence size ifFalse: [^ self].
+	end to: start by: -1 do: [:i| tracker swapPattern: i with: i + 1].
+	tracker moveCursorPatternDown.
+	selectionStart ifNotNil: [selectionStart := selectionStart + 1]! !
+
+!ArrangerMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 23:14:04'!
+moveSelectedPatternsUp
+	| start end |
+	selectionStart
+		ifNotNil: [start := selectionStart min: tracker cursorPattern.
+			end := selectionStart max: tracker cursorPattern]
+		ifNil: [start := end := tracker cursorPattern].
+	start > 1 ifFalse: [^ self].
+	start to: end do: [:i| tracker swapPattern: i with: i - 1].
+	tracker moveCursorPatternUp.
+	selectionStart ifNotNil: [selectionStart := selectionStart - 1]! !
+
+!ArrangerMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 16:56:56'!
+activeBounds
+	"Answer a subrectangle of the bounds of the receiver that should preferably be kept visible inside a scroller."
+	| blockHeight charWidth |
+	charWidth := font widthOf: $X.
+	blockHeight := charWidth * 3.
+	^ 0 @ ((tracker cursorPattern - 1) * blockHeight) extent: self morphWidth @ blockHeight! !
+
+!ArrangerMorph methodsFor: 'drawing' stamp: 'len 24/Feb/2026 17:51:21'!
+drawOn: aCanvas
+	| x y s charWidth blockHeight blockWidth space cursorTrack cursorPattern patternNumbers oldPatternNumbers |
+	charWidth := font widthOf: $X.
+	blockHeight := charWidth * 3.
+	blockWidth := charWidth / 2.0.
+	space := charWidth/4.0.
+	x := blockHeight + space.
+	cursorTrack := tracker cursorTrack.
+	"draw tracks background:"
+	tracker tracks withIndexDo: [:track :i|
+		aCanvas fillRectangle: (x @ 0 extent: blockWidth @ extent y) color: (track color lightnessAndChromaBy: (i = cursorTrack ifTrue: [0.6] ifFalse: [0.4])).
+		x := x + blockWidth + space].
+	y := 0.
+	"draw selection:"
+	selectionStart ifNotNil:
+		[aCanvas fillRectangle: (0 @ (((selectionStart min: tracker cursorPattern) - 1) * blockHeight) corner: self morphWidth @ (((selectionStart max: tracker cursorPattern)) * blockHeight)) color: PatternEditorMorph selectionColor].
+	"draw sequence and cursor:"
+	cursorPattern := tracker cursorPattern.
+	patternNumbers := tracker sequencePatternNumbers.
+	oldPatternNumbers := OrderedCollection new.
+	1 to: tracker sequence size do: [:i| | p c |
+		i = cursorPattern ifTrue:
+			[self hasKeyboardFocus
+				ifTrue: [aCanvas fillRectangle: (0@y extent: blockHeight @ blockHeight) color: (showCursor ifTrue: [PatternEditorMorph cursorColor] ifFalse: [PatternEditorMorph cursorColor alpha: 0.7])]
+				ifFalse: [aCanvas fillRectangle: (0@y extent: blockHeight @ blockHeight) color: (PatternEditorMorph cursorColor alpha: 0.7)]].
+		p := patternNumbers at: i.
+		(oldPatternNumbers includes: p) ifFalse: [aCanvas frameRectangle: (4@(y+4) extent: blockHeight -8 @ (blockHeight - 8)) borderWidth: 1 color: Color white cornerRadius: 8].
+		s := p printStringBase: 16 nDigits: 2.
+		c := Color white.
+		(oldPatternNumbers includes: p) ifTrue: [i = cursorPattern ifFalse: [c := Color veryLightGray]] ifFalse: [oldPatternNumbers add: p].
+		aCanvas drawString: s at: blockHeight - (charWidth*2.5) @ (y+(charWidth/2.0)) font: font color: c.
+		y := y + blockHeight].
+	y := 0.
+	"draw pattern blocks:"
+	tracker sequence do: [:each|
+		x := blockHeight + space.
+		tracker tracks withIndexDo: [:track :i|
+			(each key isEmptyTrack: i) ifFalse: [aCanvas fillRectangle: (x @ y extent: blockWidth @ blockHeight) color: ((each value at: i) ifTrue: [track color] ifFalse: [Color black])].
+			x := x + blockWidth + space].
+		y := y + blockHeight].
+	y := tracker cursorPattern - 1 * blockHeight + (tracker cursorLine * blockHeight / tracker selectedPattern length asFloat).
+	"draw pattern line cursor and playhead:"
+	aCanvas line: blockHeight + 1 @ y to: extent x @ y width: 2 color: PatternEditorMorph cursorColor.
+	tracker isPlaying ifTrue:
+		[y := tracker playheadPattern - 1 * blockHeight + (tracker playheadLine * blockHeight / tracker playingPattern length asFloat).
+		aCanvas line: blockHeight + 1 @ y to: extent x @ y width: 2 color: Color white]! !
+
+!ArrangerMorph methodsFor: 'drawing' stamp: 'len 19/Feb/2026 21:44:53'!
+requiresVectorCanvas
+	^ true! !
+
+!ArrangerMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 20:41:18'!
+handleCommandHotkey: anEvent
+	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
+	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
+	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
+	anEvent keyCharacter = $V ifTrue: [self clipboardPasteNew. ^ true].
+	anEvent keyCharacter = $i ifTrue: [tracker selectedPattern ifNotNil: [:aPattern| aPattern inspect]. ^ true].
+	^ false! !
+
+!ArrangerMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:31:30'!
+handleNavigationKey: anEvent
+	selectionStart := nil.
+	anEvent isArrowUp ifTrue: [tracker moveCursorPatternUp].
+	anEvent isArrowDown ifTrue: [tracker moveCursorPatternDown]! !
+
+!ArrangerMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 23:10:21'!
+handleOptionHotkey: anEvent
+	anEvent shiftPressed ifTrue:
+		[anEvent isArrowUp ifTrue: [self moveSelectedPatternsUp. ^ true].
+		anEvent isArrowDown ifTrue: [self moveSelectedPatternsDown. ^ true]].
+	^ false! !
+
+!ArrangerMorph methodsFor: 'events' stamp: 'len 23/Feb/2026 16:09:28'!
+handleSelectionKey: anEvent
+	selectionStart isNil ifTrue: [selectionStart := tracker cursorPattern].
+	anEvent isArrowUp ifTrue: [tracker moveCursorPatternUp].
+	anEvent isArrowDown ifTrue: [tracker moveCursorPatternDown]! !
+
+!ArrangerMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 03:21:44'!
+keyStroke: anEvent
+	(anEvent secondaryModifierPressed and: [self handleOptionHotkey: anEvent]) ifTrue:
+		[anEvent wasHandled: true.
+		^ self].
+	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
+		[anEvent wasHandled: true.
+		^ self].
+	anEvent isArrow ifTrue:
+		[anEvent wasHandled: true.
+		anEvent shiftPressed ifTrue: [self handleSelectionKey: anEvent. ^ self].
+		self handleNavigationKey: anEvent.
+		^ self].
+	^ super keyStroke: anEvent! !
+
+!ArrangerMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 15:43:39'!
+keyboardFocusChange: aBoolean
+	aBoolean ifTrue: [self startBlinking] ifFalse: [self stopBlinking].
+	self redrawNeeded! !
+
+!ArrangerMorph methodsFor: 'geometry' stamp: 'len 21/Feb/2026 16:41:06'!
+minimumExtent
+	| blockHeight blockWidth charWidth space |
+	charWidth := font widthOf: $X.
+	blockHeight := charWidth * 3.
+	blockWidth := charWidth / 2.0.
+	space := charWidth / 4.0.
+	^ (blockWidth + space) * tracker tracks size + blockWidth + blockHeight @ (blockHeight * tracker sequence size)! !
+
+!ArrangerMorph methodsFor: 'initialization' stamp: 'len 10/Mar/2026 19:03:12'!
+initialize
+	super initialize.
+	font := FontFamily familyName: 'JetBrains Mono NL' pointSize: 15.
+	showCursor := true.
+	pauseBlinking := false! !
+
+!ArrangerMorph methodsFor: 'initialization' stamp: 'len 2/Jan/2026 19:33:30'!
+setTracker: aTracker
+	tracker := aTracker.
+	aTracker when: #sequenceChanged send: #redrawNeeded to: self.
+	aTracker when: #tracksChanged send: #update to: self.
+	aTracker when: #cursorChanged send: #redrawNeeded to: self.
+	aTracker when: #playheadChanged send: #redrawNeeded to: self.
+	self update! !
+
+!ArrangerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026 15:38:55'!
+onBlinkCursor
+	"Blink the cursor"
+	showCursor := showCursor not | pauseBlinking.
+	pauseBlinking := false.
+	"cursorRect ifNotNil: [ :r | self invalidateLocalRect: r]"
+	self redrawNeeded! !
+
+!ArrangerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026 15:38:48'!
+pauseBlinking
+	"Show a solid cursor (non blinking) for a short while."
+	pauseBlinking := true.
+	"Show cursor right now if needed:"
+	showCursor ifFalse:
+		[showCursor := true.
+		self redrawNeeded]! !
+
+!ArrangerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026 15:38:27'!
+startBlinking
+	"And show the cursor"
+	pauseBlinking := true.
+	"Start blinking in a short while"
+	showCursor := true.
+	self startStepping: #onBlinkCursor stepTime: 500! !
+
+!ArrangerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026 15:38:38'!
+stopBlinking
+	"And do not show cursor anymore."
+	self stopStepping: #onBlinkCursor.
+	"Hide cursor right now if needed:"
+	showCursor ifFalse:
+		[showCursor := false.
+		self redrawNeeded]! !
+
+!ArrangerMorph methodsFor: 'private' stamp: 'len 31/Dec/2025 22:21:20'!
+update
+	self ensureMinimumExtent.
 	self redrawNeeded! !
 
 !MultitrackMeterMorph methodsFor: 'drawing' stamp: 'len 12/Feb/2026 16:36:41'!
@@ -1575,206 +1807,6 @@ unsetColor
 !PatternEditorMorph class methodsFor: 'colors' stamp: 'len 9/Mar/2026 17:12:29'!
 velocityColor
 	^ `Color okl: 0.95 c: 0.2 h: 120`! !
-
-!SequencerMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026 16:11:15'!
-clipboardCopy
-	clipboard := selectionStart isNil
-		ifTrue: [{tracker sequence at: tracker cursorPattern}]
-		ifFalse: [((selectionStart min: tracker cursorPattern) to: (selectionStart max: tracker cursorPattern)) collect: [:i| tracker sequence at: i]]! !
-
-!SequencerMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026 16:10:50'!
-clipboardCut
-	| cursor |
-	selectionStart isNil ifTrue: "cut the pattern at cursor"
-		[clipboard := {tracker sequence at: tracker cursorPattern}.
-		tracker deletePattern.
-		^ self].
-	cursor := tracker cursorPattern.
-	clipboard := ((selectionStart min: cursor) to: (selectionStart max: cursor)) collect: [:i| tracker sequence at: i].
-	(selectionStart max: cursor) to: (selectionStart min: cursor) by: -1 do: [:i| tracker deletePattern: i].
-	selectionStart := nil! !
-
-!SequencerMorph methodsFor: 'actions' stamp: 'len 21/Feb/2026 18:59:25'!
-clipboardPaste
-	selectionStart := nil.
-	clipboard ifNotNil: [tracker insertSequence: (clipboard collect: [:each| each key -> each value])]! !
-
-!SequencerMorph methodsFor: 'actions' stamp: 'len 21/Feb/2026 18:59:27'!
-clipboardPasteNew
-	selectionStart := nil.
-	clipboard ifNotNil: [tracker insertSequence: (clipboard collect: [:each| each key copy -> each value])]! !
-
-!SequencerMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 16:56:56'!
-activeBounds
-	"Answer a subrectangle of the bounds of the receiver that should preferably be kept visible inside a scroller."
-	| blockHeight charWidth |
-	charWidth := font widthOf: $X.
-	blockHeight := charWidth * 3.
-	^ 0 @ ((tracker cursorPattern - 1) * blockHeight) extent: self morphWidth @ blockHeight! !
-
-!SequencerMorph methodsFor: 'drawing' stamp: 'len 24/Feb/2026 17:51:21'!
-drawOn: aCanvas
-	| x y s charWidth blockHeight blockWidth space cursorTrack cursorPattern patternNumbers oldPatternNumbers |
-	charWidth := font widthOf: $X.
-	blockHeight := charWidth * 3.
-	blockWidth := charWidth / 2.0.
-	space := charWidth/4.0.
-	x := blockHeight + space.
-	cursorTrack := tracker cursorTrack.
-	"draw tracks background:"
-	tracker tracks withIndexDo: [:track :i|
-		aCanvas fillRectangle: (x @ 0 extent: blockWidth @ extent y) color: (track color lightnessAndChromaBy: (i = cursorTrack ifTrue: [0.6] ifFalse: [0.4])).
-		x := x + blockWidth + space].
-	y := 0.
-	"draw selection:"
-	selectionStart ifNotNil:
-		[aCanvas fillRectangle: (0 @ (((selectionStart min: tracker cursorPattern) - 1) * blockHeight) corner: self morphWidth @ (((selectionStart max: tracker cursorPattern)) * blockHeight)) color: PatternEditorMorph selectionColor].
-	"draw sequence and cursor:"
-	cursorPattern := tracker cursorPattern.
-	patternNumbers := tracker sequencePatternNumbers.
-	oldPatternNumbers := OrderedCollection new.
-	1 to: tracker sequence size do: [:i| | p c |
-		i = cursorPattern ifTrue:
-			[self hasKeyboardFocus
-				ifTrue: [aCanvas fillRectangle: (0@y extent: blockHeight @ blockHeight) color: (showCursor ifTrue: [PatternEditorMorph cursorColor] ifFalse: [PatternEditorMorph cursorColor alpha: 0.7])]
-				ifFalse: [aCanvas fillRectangle: (0@y extent: blockHeight @ blockHeight) color: (PatternEditorMorph cursorColor alpha: 0.7)]].
-		p := patternNumbers at: i.
-		(oldPatternNumbers includes: p) ifFalse: [aCanvas frameRectangle: (4@(y+4) extent: blockHeight -8 @ (blockHeight - 8)) borderWidth: 1 color: Color white cornerRadius: 8].
-		s := p printStringBase: 16 nDigits: 2.
-		c := Color white.
-		(oldPatternNumbers includes: p) ifTrue: [i = cursorPattern ifFalse: [c := Color veryLightGray]] ifFalse: [oldPatternNumbers add: p].
-		aCanvas drawString: s at: blockHeight - (charWidth*2.5) @ (y+(charWidth/2.0)) font: font color: c.
-		y := y + blockHeight].
-	y := 0.
-	"draw pattern blocks:"
-	tracker sequence do: [:each|
-		x := blockHeight + space.
-		tracker tracks withIndexDo: [:track :i|
-			(each key isEmptyTrack: i) ifFalse: [aCanvas fillRectangle: (x @ y extent: blockWidth @ blockHeight) color: ((each value at: i) ifTrue: [track color] ifFalse: [Color black])].
-			x := x + blockWidth + space].
-		y := y + blockHeight].
-	y := tracker cursorPattern - 1 * blockHeight + (tracker cursorLine * blockHeight / tracker selectedPattern length asFloat).
-	"draw pattern line cursor and playhead:"
-	aCanvas line: blockHeight + 1 @ y to: extent x @ y width: 2 color: PatternEditorMorph cursorColor.
-	tracker isPlaying ifTrue:
-		[y := tracker playheadPattern - 1 * blockHeight + (tracker playheadLine * blockHeight / tracker playingPattern length asFloat).
-		aCanvas line: blockHeight + 1 @ y to: extent x @ y width: 2 color: Color white]! !
-
-!SequencerMorph methodsFor: 'drawing' stamp: 'len 19/Feb/2026 21:44:53'!
-requiresVectorCanvas
-	^ true! !
-
-!SequencerMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 20:41:18'!
-handleCommandHotkey: anEvent
-	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
-	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
-	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
-	anEvent keyCharacter = $V ifTrue: [self clipboardPasteNew. ^ true].
-	anEvent keyCharacter = $i ifTrue: [tracker selectedPattern ifNotNil: [:aPattern| aPattern inspect]. ^ true].
-	^ false! !
-
-!SequencerMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:31:30'!
-handleNavigationKey: anEvent
-	selectionStart := nil.
-	anEvent isArrowUp ifTrue: [tracker moveCursorPatternUp].
-	anEvent isArrowDown ifTrue: [tracker moveCursorPatternDown]! !
-
-!SequencerMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 03:19:47'!
-handleOptionHotkey: anEvent
-	anEvent shiftPressed ifTrue:
-		[anEvent isArrowUp ifTrue: [tracker moveSelectedPatternUp. ^ true].
-		anEvent isArrowDown ifTrue: [tracker moveSelectedPatternDown. ^ true]].
-	^ false! !
-
-!SequencerMorph methodsFor: 'events' stamp: 'len 23/Feb/2026 16:09:28'!
-handleSelectionKey: anEvent
-	selectionStart isNil ifTrue: [selectionStart := tracker cursorPattern].
-	anEvent isArrowUp ifTrue: [tracker moveCursorPatternUp].
-	anEvent isArrowDown ifTrue: [tracker moveCursorPatternDown]! !
-
-!SequencerMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 03:21:44'!
-keyStroke: anEvent
-	(anEvent secondaryModifierPressed and: [self handleOptionHotkey: anEvent]) ifTrue:
-		[anEvent wasHandled: true.
-		^ self].
-	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
-		[anEvent wasHandled: true.
-		^ self].
-	anEvent isArrow ifTrue:
-		[anEvent wasHandled: true.
-		anEvent shiftPressed ifTrue: [self handleSelectionKey: anEvent. ^ self].
-		self handleNavigationKey: anEvent.
-		^ self].
-	^ super keyStroke: anEvent! !
-
-!SequencerMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 15:43:39'!
-keyboardFocusChange: aBoolean
-	aBoolean ifTrue: [self startBlinking] ifFalse: [self stopBlinking].
-	self redrawNeeded! !
-
-!SequencerMorph methodsFor: 'geometry' stamp: 'len 21/Feb/2026 16:41:06'!
-minimumExtent
-	| blockHeight blockWidth charWidth space |
-	charWidth := font widthOf: $X.
-	blockHeight := charWidth * 3.
-	blockWidth := charWidth / 2.0.
-	space := charWidth / 4.0.
-	^ (blockWidth + space) * tracker tracks size + blockWidth + blockHeight @ (blockHeight * tracker sequence size)! !
-
-!SequencerMorph methodsFor: 'initialization' stamp: 'len 10/Mar/2026 19:03:12'!
-initialize
-	super initialize.
-	font := FontFamily familyName: 'JetBrains Mono NL' pointSize: 15.
-	showCursor := true.
-	pauseBlinking := false! !
-
-!SequencerMorph methodsFor: 'initialization' stamp: 'len 2/Jan/2026 19:33:30'!
-setTracker: aTracker
-	tracker := aTracker.
-	aTracker when: #sequenceChanged send: #redrawNeeded to: self.
-	aTracker when: #tracksChanged send: #update to: self.
-	aTracker when: #cursorChanged send: #redrawNeeded to: self.
-	aTracker when: #playheadChanged send: #redrawNeeded to: self.
-	self update! !
-
-!SequencerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026 15:38:55'!
-onBlinkCursor
-	"Blink the cursor"
-	showCursor := showCursor not | pauseBlinking.
-	pauseBlinking := false.
-	"cursorRect ifNotNil: [ :r | self invalidateLocalRect: r]"
-	self redrawNeeded! !
-
-!SequencerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026 15:38:48'!
-pauseBlinking
-	"Show a solid cursor (non blinking) for a short while."
-	pauseBlinking := true.
-	"Show cursor right now if needed:"
-	showCursor ifFalse:
-		[showCursor := true.
-		self redrawNeeded]! !
-
-!SequencerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026 15:38:27'!
-startBlinking
-	"And show the cursor"
-	pauseBlinking := true.
-	"Start blinking in a short while"
-	showCursor := true.
-	self startStepping: #onBlinkCursor stepTime: 500! !
-
-!SequencerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026 15:38:38'!
-stopBlinking
-	"And do not show cursor anymore."
-	self stopStepping: #onBlinkCursor.
-	"Hide cursor right now if needed:"
-	showCursor ifFalse:
-		[showCursor := false.
-		self redrawNeeded]! !
-
-!SequencerMorph methodsFor: 'private' stamp: 'len 31/Dec/2025 22:21:20'!
-update
-	self ensureMinimumExtent.
-	self redrawNeeded! !
 
 !TrackerBarMorph methodsFor: 'drawing' stamp: 'len 14/Jun/2026 02:47:47'!
 drawOn: aCanvas
@@ -2634,26 +2666,6 @@ insertSequence: anArray
 	sequence := (sequence copyFrom: 1 to: cursorPattern), (anArray collect: [:each| each key -> each value copy]), (sequence copyFrom: cursorPattern + 1 to: sequence size).
 	self triggerEvent: #sequenceChanged! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 15/Jun/2026 02:41:04'!
-moveSelectedInstrumentDown
-	self selectedInstrumentNumber ifNotNil: [:anInteger| anInteger > 1ifTrue: [self swapInstrument: anInteger with: anInteger - 1]]! !
-
-!Tracker methodsFor: 'patterns' stamp: 'len 15/Jun/2026 02:40:51'!
-moveSelectedInstrumentUp
-	self selectedInstrumentNumber ifNotNil: [:anInteger| anInteger < 255 ifTrue: [self swapInstrument: anInteger with: anInteger + 1]]! !
-
-!Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026 16:25:49'!
-moveSelectedPatternDown
-	cursorPattern < sequence size ifFalse: [^ self].
-	cursorPattern := cursorPattern + 1.
-	self swapPattern: cursorPattern with: cursorPattern - 1! !
-
-!Tracker methodsFor: 'patterns' stamp: 'len 1/Jan/2026 15:21:33'!
-moveSelectedPatternUp
-	cursorPattern > 1 ifFalse: [^ self].
-	cursorPattern := cursorPattern - 1.
-	self swapPattern: cursorPattern with: cursorPattern + 1! !
-
 !Tracker methodsFor: 'patterns' stamp: 'len 18/Feb/2026 16:58:40'!
 selectedInstrument
 	^ instruments at: (self selectedInstrumentNumber ifNil: [^ nil]) ifAbsentPut: [Instrument new]! !
@@ -2929,18 +2941,6 @@ insertTrack: anInteger
 	sequence := sequence collect: [:each| each key -> ((each value copyFrom: 1 to: anInteger - 1), {true}, (each value copyFrom: anInteger to: each value size))].
 	self triggerEvent: #tracksChanged.
 	^ answer! !
-
-!Tracker methodsFor: 'tracks' stamp: 'len 1/Jan/2026 15:22:13'!
-moveSelectedTrackLeft
-	cursorTrack > 1 ifFalse: [^ self].
-	cursorTrack := cursorTrack - 1.
-	self swapTrack: cursorTrack + 1 with: cursorTrack! !
-
-!Tracker methodsFor: 'tracks' stamp: 'len 1/Jan/2026 15:22:47'!
-moveSelectedTrackRight
-	cursorTrack < tracks size ifFalse: [^ self].
-	cursorTrack := cursorTrack + 1.
-	self swapTrack: cursorTrack - 1 with: cursorTrack! !
 
 !Tracker methodsFor: 'tracks' stamp: 'len 21/Feb/2026 16:29:22'!
 selectedMask

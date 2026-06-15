@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 15 June 2026 at 8:26:25 pm'!
+'From Cuis7.9 [latest update: #7983] on 15 June 2026 at 8:48:31 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 47!
+!provides: 'Tracker' 1 48!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -726,12 +726,13 @@ renameInstrument
 drawOn: aCanvas
 "	self patch ifNotNil: [aCanvas frameRectangle: self patch fullBoundsInOwner borderWidth: 2 color: Color white]. "! !
 
-!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 13/Apr/2026 15:33:09'!
+!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 20:39:25'!
 handleCommandHotkey: anEvent
 	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
 	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
 	anEvent keyCharacter = $d ifTrue: [self duplicateInstrument. ^ true].
+	anEvent keyCharacter = $i ifTrue: [tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument inspect]. ^ true].
 	^ false! !
 
 !InstrumentEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 02:38:41'!
@@ -1215,7 +1216,7 @@ drawTracksOn: aCanvas
 trackWidthInCharacters
 	^ showFXColumns ifTrue: [15] ifFalse: [8]! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 9/Jun/2026 22:18:38'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 20:40:47'!
 handleCommandHotkey: anEvent
 	"Font size:"
 	anEvent keyCharacter = $- ifTrue: [self adjustFontSizeBy: -1. ^ true].
@@ -1227,6 +1228,8 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $b ifTrue: [self setPatternLPB. ^ true].
 	"Tuning:"
 	anEvent keyCharacter = $u ifTrue: [self setTrackTuning. ^ true].
+	"Inspecting:"
+	anEvent keyCharacter = $i ifTrue: [tracker selectedTrigger ifNotNil: [:aTrigger| aTrigger inspect]. ^ true].
 	"Clipboard:"
 	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
 	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
@@ -1338,6 +1341,10 @@ handleSelectionKey: anEvent
 handlesMouseDown: anEvent
 	^ true! !
 
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 20:45:29'!
+handlesMouseScroll: anEvent
+	^ #(up down) identityIncludes: anEvent direction! !
+
 !PatternEditorMorph methodsFor: 'events' stamp: 'len 10/Jan/2026 23:03:58'!
 keyStroke: anEvent
 	(self handleKeyStroke: anEvent) ifTrue: [anEvent wasHandled: true. ^ self].
@@ -1352,6 +1359,10 @@ mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
 	x < 0.0 ifTrue: [^ self].
 	tracker setCursorTrack: (x / trackWidth) truncated + 1.
 	selectionLineStart := nil! !
+
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 20:47:28'!
+mouseScroll: anEvent localPosition: localEventPosition
+	anEvent direction = #up ifTrue: [tracker moveCursorLineUp] ifFalse: [tracker moveCursorLineDown]! !
 
 !PatternEditorMorph methodsFor: 'focus handling' stamp: 'len 9/Jan/2026 15:20:32'!
 keyboardFocusChange: aBoolean
@@ -1625,12 +1636,13 @@ drawOn: aCanvas
 requiresVectorCanvas
 	^ true! !
 
-!SequencerMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 01:15:39'!
+!SequencerMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 20:41:18'!
 handleCommandHotkey: anEvent
 	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
 	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
 	anEvent keyCharacter = $V ifTrue: [self clipboardPasteNew. ^ true].
+	anEvent keyCharacter = $i ifTrue: [tracker selectedPattern ifNotNil: [:aPattern| aPattern inspect]. ^ true].
 	^ false! !
 
 !SequencerMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:31:30'!

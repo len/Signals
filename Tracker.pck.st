@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 15 June 2026 at 2:45:02 am'!
+'From Cuis7.9 [latest update: #7983] on 15 June 2026 at 8:26:25 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 46!
+!provides: 'Tracker' 1 47!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -912,7 +912,7 @@ clipboardPaste
 				ifTrue: [pattern track: k0 + k at: i0 + i put: trigger copy]]].
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 19:15:17'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 18:29:58'!
 moveCursorColumnLeft
 	cursorPosition <= 2
 		ifTrue:
@@ -921,9 +921,10 @@ moveCursorColumnLeft
 			tracker moveCursorTrackLeft]
 		ifFalse:
 			[cursorPosition := #(1 1 1 3 3 4 4 4 6 6 6) at: cursorPosition].
+	self showFXBalloon.
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 19:14:56'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 18:30:06'!
 moveCursorColumnRight
 	cursorPosition >= self lastColumnPosition
 		ifTrue:
@@ -932,9 +933,10 @@ moveCursorColumnRight
 			tracker moveCursorTrackRight]
 		ifFalse:
 			[cursorPosition := #(3 3 4 6 6 9 9 9) at: cursorPosition].
+	self showFXBalloon.
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 19:13:37'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 18:29:41'!
 moveCursorLeft
 	cursorPosition = 1
 		ifTrue:
@@ -943,9 +945,10 @@ moveCursorLeft
 			tracker moveCursorTrackLeft]
 		ifFalse:
 			[cursorPosition := cursorPosition - 1].
+	self showFXBalloon.
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 19:13:37'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 18:29:48'!
 moveCursorRight
 	cursorPosition = self lastPosition
 		ifTrue:
@@ -954,10 +957,11 @@ moveCursorRight
 			tracker moveCursorTrackRight]
 		ifFalse:
 			[cursorPosition := cursorPosition + 1].
+	self showFXBalloon.
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 14/Jun/2026 21:01:10'!
-notchSelectionDown
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 16:47:02'!
+moveSelectionDown
 	| pattern lineStart lineEnd trackStart trackEnd |
 	pattern := tracker selectedPattern.
 	selectionLineStart
@@ -974,8 +978,8 @@ notchSelectionDown
 	tracker moveCursorLineDown.
 	selectionLineStart ifNotNil: [selectionLineStart := selectionLineStart + 1]! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 14/Jun/2026 20:59:22'!
-notchSelectionUp
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 16:47:12'!
+moveSelectionUp
 	| pattern lineStart lineEnd trackStart trackEnd |
 	pattern := tracker selectedPattern.
 	selectionLineStart
@@ -1039,10 +1043,11 @@ setTrackTuning
 	Tuning library do: [:each| menu add: each label target: tracker action: #setSelectedTrackTuning: argument: each].
 	menu invokeModal! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 19:13:37'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 18:30:38'!
 toggleShowFXColumns
 	showFXColumns := showFXColumns not.
 	cursorPosition := cursorPosition min: self lastPosition.
+	self showFXBalloon.
 	self redrawNeeded! !
 
 !PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Jun/2026 19:30:47'!
@@ -1056,20 +1061,25 @@ activeBounds
 	x := (self trackWidthInCharacters + 0.5) * (tracker cursorTrack - 1) + 2.5.
 	^​ x * charWidth @ y extent: self trackWidthInCharacters * charWidth @ lineSpacing! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Jun/2026 19:30:47'!
-drawCursorOn: aCanvas
-	| lineSpacing charWidth cursorWidth x y cursorRect |
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 15/Jun/2026 18:27:24'!
+cursorRect
+	| lineSpacing charWidth cursorWidth x y |
 	lineSpacing := font lineSpacing.
 	charWidth := font widthOf: $X.
 	y := self morphHeight / 2.0.
-	aCanvas fillRectangle: (0 @ y extent: self morphWidth @ lineSpacing) color: (Color white alpha: 0.1).
 	cursorWidth := cursorPosition = 3 ifTrue: [3] ifFalse: [1].
 	x := (self trackWidthInCharacters + 0.5) * (tracker cursorTrack - 1) + 2.5 + cursorPosition - 1.
 	cursorPosition > 2 ifTrue: [x := x + 0.5].
 	cursorPosition > 3 ifTrue: [x := x + 2.5].
 	cursorPosition > 5 ifTrue: [x := x + 0.5].
 	cursorPosition > 8 ifTrue: [x := x + 0.5].
-	cursorRect := x * charWidth @ y extent: cursorWidth * charWidth @ lineSpacing.
+	^​ x * charWidth @ y extent: cursorWidth * charWidth @ lineSpacing! !
+
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 15/Jun/2026 18:59:45'!
+drawCursorOn: aCanvas
+	| cursorRect |
+	cursorRect := self cursorRect.
+	aCanvas fillRectangle: (0 @ cursorRect top extent: self morphWidth @ cursorRect height) color: `Color white alpha: 0.1`.
 	self hasKeyboardFocus ifFalse: [aCanvas frameRectangle: cursorRect borderWidth: 1 color: self class cursorColor. ^ self].
 	aCanvas fillRectangle: cursorRect color: (showCursor ifTrue: [self class cursorColor] ifFalse: [self class cursorColor alpha: 0.7])! !
 
@@ -1223,7 +1233,7 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 14/Jun/2026 20:55:05'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 18:30:19'!
 handleInputKey: anEvent
 	| c i |
 	anEvent isBackspace ifTrue:
@@ -1235,8 +1245,6 @@ handleInputKey: anEvent
 	anEvent keyCharacter = $[ ifTrue: [self selectedTriggersDo: [:each| each transposeBy: (tracker selectedTrack tuning size negated)]. self redrawNeeded. ^ true].
 	anEvent keyCharacter = $} ifTrue: [self selectedTriggersDo: [:each| each transposeBy: 1]. self redrawNeeded. ^ true].
 	anEvent keyCharacter = ${ ifTrue: [self selectedTriggersDo: [:each| each transposeBy: -1]. self redrawNeeded. ^ true].
-	anEvent keyCharacter = $< ifTrue: [self notchSelectionUp. ^ true].
-	anEvent keyCharacter = $> ifTrue: [self notchSelectionDown. ^ true].
 	cursorPosition = 3 ifTrue: "notes"
 		[c := anEvent keyCharacter.
 		c = $a ifTrue:
@@ -1258,10 +1266,12 @@ handleInputKey: anEvent
 		[tracker selectedTriggerAt: cursorPosition put: i - 1.
 		(#(2 5) includes: cursorPosition) ifTrue:
 			[cursorPosition := cursorPosition - 1.
+			self showFXBalloon.
 			tracker moveCursorLineDown: editStep.
 			^ true].
 		(#(8 11) includes: cursorPosition) ifTrue:
 			[cursorPosition := cursorPosition - 2.
+			self showFXBalloon.
 			tracker moveCursorLineDown: editStep.
 			^ true].	
 		self moveCursorRight.
@@ -1299,11 +1309,11 @@ handleNavigationKey: anEvent
 	anEvent isEnd ifTrue: [tracker moveCursorLineBottom. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 20:04:05'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 16:47:12'!
 handleOptionHotkey: anEvent
 	anEvent shiftPressed ifTrue:
-		[anEvent isArrowUp ifTrue: [tracker moveSelectedPatternUp. ^ true].
-		anEvent isArrowDown ifTrue: [tracker moveSelectedPatternDown. ^ true].
+		[anEvent isArrowUp ifTrue: [self moveSelectionUp. ^ true].
+		anEvent isArrowDown ifTrue: [self moveSelectionDown. ^ true].
 		anEvent isArrowLeft ifTrue: [tracker moveSelectedTrackLeft. ^ true].
 		anEvent isArrowRight ifTrue: [tracker moveSelectedTrackRight. ^ true]].
 	anEvent isArrowUp ifTrue: [tracker moveCursorPatternUp. ^ true].
@@ -1377,6 +1387,41 @@ setTracker: aTracker
 	aTracker when: #playheadChanged send: #redrawNeeded to: self.
 	self updateTracks! !
 
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 15/Jun/2026 20:06:41'!
+balloonTextForFX: anInteger
+	| command v |
+	command := anInteger bitShift: -8.
+	command = 67 "C (cut)" ifTrue:
+		[^ 'Cut velocity to ', (((anInteger bitShift: -4) bitAnd: 16rF) / 15.0 * 100.0) rounded printString, '% after ', ((anInteger bitAnd: 16rF)/12) printString, ' lines'].
+	command = 82 "R (retrigger)" ifTrue:
+		[| velocityChange |
+		velocityChange := #('' '-1/32' '-1/16' '-1/8' '-1/4' '-1/2' '×2/3' '×1/2' '' '+1/32' '+1/16' '+1/8' '+1/4' '+1/2' '×3/2' '×2') at: ((anInteger bitShift: -4) bitAnd: 16rF) + 1.
+		velocityChange ifNotEmpty: [velocityChange := ' changing velocity by ', velocityChange].
+		^ 'Retrigger every ', (anInteger bitAnd: 16rF) printString, '/12 of a line', velocityChange].
+	v := anInteger bitAnd: 16rFF.
+	command = 85 "U (slide pitch up)" ifTrue: [^ 'Slide pitch up by ', (v / 16.0 printStringFractionDigits: 2), ' semitones'].
+	command = 68 "D (slide pitch down)" ifTrue: [^ 'Slide pitch down by ', (v / 16.0 printStringFractionDigits: 2), ' semitones'].
+	command = 43 "+ (finetune note up)" ifTrue: [^ 'Finetune note up by ', (v / 256.0 printStringFractionDigits: 2)].
+	command = 45 "- (finetune note down)" ifTrue: [^ 'Finetune note down by ', (v / 256.0 printStringFractionDigits: 2)].
+	command = 71 "G (glide to note)" ifTrue: [^ 'Glide to note in ', (v / 16.0 printStringFractionDigits: 2), ' lines'].
+	command = 76 "L (volume level)" ifTrue: [^ 'Set volume level to ', (v / 255.0 * 100.0) rounded printString, '%'].
+	command = 80 "P (pan)" ifTrue: [^ 'Set pan to ', (v = 128 ifTrue: ['center'] ifFalse: [v < 128 ifTrue: [(128 - v / 128.0 * 100.0) rounded printString, '% left'] ifFalse: [(v - 128 / 127.0 * 100.0) rounded printString, '% right']])].
+	command = 73 "I (volume level up)" ifTrue: [^ 'Fade in by ', (v / 255.0 * 100.0) rounded printString, '%'].
+	command = 79 "O (volume level down)" ifTrue: [^ 'Fade out by ', (v / 255.0 * 100.0) rounded printString, '%'].
+	command = 74 "J (pan left)" ifTrue: [^ 'Pan left by ', (v / 255.0 * 100.0) rounded printString, '%'].
+	command = 75 "K (pan right)" ifTrue: [^ 'Pan right by ', (v / 255.0 * 100.0) rounded printString, '%'].
+	"Sample commands:"
+	command = 83 "S (sample start offset)" ifTrue: [^ 'Set sample start offset to ', v printString].
+	command = 60 "< (speed backwards)" ifTrue: [^ 'Play backwards at speed ', (v / 128.0 printStringFractionDigits: 2), '×'].
+	command = 62 "> (speed forward)" ifTrue: [^ 'Play forward at speed ', (v / 128.0 printStringFractionDigits: 2), '×'].
+	"Control change commands:"
+	(command between: 48 and: 57) "0 to 9" ifTrue: [^ 'Set control ', (command - 47) printString, ' to ', v printString].
+	"Global commands:"
+	command = 70 "F (set bpm)" ifTrue: [^ 'Set tempo to ', (v max: 1) printString, ' BPM'].
+	command = 89 "Y (trigger probability)" ifTrue: [^ 'Play trigger with ', (v / 255.0 * 100) rounded printString, '% probability'].
+	command = 81 "Q (trigger delay)" ifTrue: [^ 'Delay trigger by ', v printString, '/256 of a line'].
+	^ nil! !
+
 !PatternEditorMorph methodsFor: 'private' stamp: 'len 31/Dec/2025 01:25:06'!
 headerHeight
 	^ labelFont lineSpacing + 8! !
@@ -1389,7 +1434,7 @@ lastColumnPosition
 lastPosition
 	^ showFXColumns ifTrue: [11] ifFalse: [5]! !
 
-!PatternEditorMorph methodsFor: 'private' stamp: 'len 9/Jan/2026 15:22:29'!
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 15/Jun/2026 19:02:36'!
 onBlinkCursor
 	"Blink the cursor"
 	showCursor := showCursor not | pauseBlinking.
@@ -1406,6 +1451,14 @@ pauseBlinking
 		[showCursor := true.
 		self redrawNeeded
 		"cursorRect ifNotNil: [:r| self invalidateLocalRect: r]"]! !
+
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 15/Jun/2026 18:27:38'!
+showFXBalloon
+	self deleteBalloon.
+	cursorPosition > 5 ifFalse: [^ self].
+	tracker selectedTrigger ifNotNil: [:trigger|
+		(cursorPosition < 9 ifTrue: [trigger fx1] ifFalse: [trigger fx2])
+			ifNotNil: [:fx| (self balloonTextForFX: fx) ifNotNil: [:text| self showBalloon: text at: self cursorRect bottomCenter]]]! !
 
 !PatternEditorMorph methodsFor: 'private' stamp: 'len 9/Jan/2026 15:35:08'!
 startBlinking
@@ -1425,17 +1478,18 @@ stopBlinking
 		self redrawNeeded
 		"textCursorRect ifNotNil: [ :r | self invalidateLocalRect: r ]"]! !
 
-!PatternEditorMorph methodsFor: 'private' stamp: 'len 9/Mar/2026 19:07:27'!
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 15/Jun/2026 17:24:42'!
 updateCursor
 	(tracker followPlayhead and: [tracker isPlaying]) ifTrue: [	selectionLineStart := selectionTrackStart := nil].
-	self redrawNeeded! !
+	self redrawNeeded.
+	self showFXBalloon! !
 
 !PatternEditorMorph methodsFor: 'private' stamp: 'len 9/Mar/2026 19:05:48'!
 updateTracks
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 14/Jun/2026 17:08:43'!
+!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 15/Jun/2026 20:13:08'!
 initialize
 	"
 	self initialize
@@ -1453,11 +1507,11 @@ initialize
 	"Samples:"
 	'S<>' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 220)].
 	"Pitch:"
-	'UDG+-' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: -20)].
+	'UDG+-' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 30)].
 	"Volume and Pan:"
-	'LIOJK' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 160)].
+	'LPIOJK' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 160)].
 	"Other:"
-	'FQRY' do: [:c| FXColors at: c codePoint put: (Color okl: 0.9 c: 0 h: 0)]! !
+	'FQRY' do: [:c| FXColors at: c codePoint put: (Color okl: 0.95 c: 0 h: 0)]! !
 
 !PatternEditorMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026 19:58:39'!
 cursorColor
@@ -1585,21 +1639,31 @@ handleNavigationKey: anEvent
 	anEvent isArrowUp ifTrue: [tracker moveCursorPatternUp].
 	anEvent isArrowDown ifTrue: [tracker moveCursorPatternDown]! !
 
+!SequencerMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 03:19:47'!
+handleOptionHotkey: anEvent
+	anEvent shiftPressed ifTrue:
+		[anEvent isArrowUp ifTrue: [tracker moveSelectedPatternUp. ^ true].
+		anEvent isArrowDown ifTrue: [tracker moveSelectedPatternDown. ^ true]].
+	^ false! !
+
 !SequencerMorph methodsFor: 'events' stamp: 'len 23/Feb/2026 16:09:28'!
 handleSelectionKey: anEvent
 	selectionStart isNil ifTrue: [selectionStart := tracker cursorPattern].
 	anEvent isArrowUp ifTrue: [tracker moveCursorPatternUp].
 	anEvent isArrowDown ifTrue: [tracker moveCursorPatternDown]! !
 
-!SequencerMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 00:10:55'!
+!SequencerMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 03:21:44'!
 keyStroke: anEvent
+	(anEvent secondaryModifierPressed and: [self handleOptionHotkey: anEvent]) ifTrue:
+		[anEvent wasHandled: true.
+		^ self].
+	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
+		[anEvent wasHandled: true.
+		^ self].
 	anEvent isArrow ifTrue:
 		[anEvent wasHandled: true.
 		anEvent shiftPressed ifTrue: [self handleSelectionKey: anEvent. ^ self].
 		self handleNavigationKey: anEvent.
-		^ self].
-	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
-		[anEvent wasHandled: true.
 		^ self].
 	^ super keyStroke: anEvent! !
 
@@ -3177,6 +3241,18 @@ label: aString ratios: aCollection
 pythagorean
 	^ (self label: 'Pythagorean' ratios: {256/243. 9/8. 32/27. 81/64. 4/3. 1024/729. 3/2. 128/81. 27/16. 16/9. 243/128. 2/1}) noteNames: #('C' 'C♯' 'D' 'D♯' 'E' 'F' 'F♯' 'G' 'G♯' 'A' 'A♯' 'B')
 ! !
+
+!Morph methodsFor: '*tracker' stamp: 'len 15/Jun/2026 20:17:50'!
+showBalloon: stringOrText at: localPosition
+	"Pop up a balloon containing the given string,
+	first removing any existing BalloonMorphs in the world."
+
+	| balloon |
+	self world ifNotNil: [:w|
+		balloon := HoverHelpMorph contents: stringOrText doWordWrap: false.
+		"Do it in a while. In some cases, processing the event that
+		might have triggered us might also remove any Help Balloon"
+		UISupervisor whenUIinSafeState: [balloon popUpForHand: w activeHand; target: self getter: nil; morphPosition: (self externalizeToWorld: localPosition)]]! !
 DarkerTheme initialize!
 PatternEditorMorph initialize!
 Tuning initialize!

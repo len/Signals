@@ -1,6 +1,6 @@
-'From Cuis7.7 [latest update: #7870] on 10 April 2026 at 12:13:59 am'!
+'From Cuis7.9 [latest update: #7983] on 15 June 2026 at 8:22:26 pm'!
 'Description Minimal audio I/O support.'!
-!provides: 'Audio' 1 5!
+!provides: 'Audio' 1 6!
 !requires: 'FFI' 1 59 nil!
 SystemOrganization addCategory: #Audio!
 
@@ -137,16 +137,16 @@ startPlaying: aSound
 		[(ActiveSounds includes: aSound)
 			ifFalse: [ActiveSounds add: aSound]]! !
 
-!AudioPlayer class methodsFor: 'playing' stamp: 'len 4/Dec/2025 20:52:30'!
+!AudioPlayer class methodsFor: 'playing' stamp: 'len 15/Jun/2026 19:16:53'!
 stopPlaying: aSound
 	"Stop playing the given sound."
-	(PlayerSemaphore ifNil: [^ self]) critical: [ActiveSounds remove: aSound ifAbsent: nil]! !
+	(PlayerSemaphore ifNil: [^ self]) critical: [ActiveSounds remove: aSound ifAbsent: nil. ActiveSounds isEmpty ifTrue: [self shutDown]]! !
 
-!AudioPlayer class methodsFor: 'playing' stamp: 'len 26/Nov/2025 19:35:00'!
+!AudioPlayer class methodsFor: 'playing' stamp: 'len 15/Jun/2026 19:17:01'!
 stopPlayingAll
 	"Stop playing all sounds."
 
-	PlayerSemaphore critical: [ActiveSounds := ActiveSounds species new].
+	PlayerSemaphore critical: [ActiveSounds := ActiveSounds species new. self shutDown].
 ! !
 
 !AudioPlayer class methodsFor: 'playing' stamp: 'len 26/Nov/2025 19:35:00'!
@@ -157,7 +157,7 @@ waitUntilDonePlaying: aSound
 		whileTrue: [(Delay forMilliseconds: 100) wait]
 ! !
 
-!AudioPlayer class methodsFor: 'initialization' stamp: 'len 4/Apr/2026 18:55:46'!
+!AudioPlayer class methodsFor: 'initialization' stamp: 'len 15/Jun/2026 19:20:00'!
 initialize
 	"
 	AudioPlayer shutDown; initialize; startUp
@@ -166,7 +166,8 @@ initialize
 	BufferSize := 2048. "512." "10 msecs"
 	self assert: BufferSize \\ self blockSize = 0. "make sure it's a multiple of the block size"
 	Stereo := true.
-	Smalltalk addToStartUpList: self! !
+"	Smalltalk addToStartUpList: self."
+	Smalltalk addToShutDownList: self "make sure it stops playing before saving image"! !
 
 !AudioPlayer class methodsFor: 'initialization' stamp: 'len 6/Dec/2025 15:34:42'!
 useBufferSize: anInteger

@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7983] on 15 June 2026 at 8:22:26 pm'!
+'From Cuis7.9 [latest update: #7998] on 15 June 2026 at 11:34:03 pm'!
 'Description Minimal audio I/O support.'!
-!provides: 'Audio' 1 6!
+!provides: 'Audio' 1 7!
 !requires: 'FFI' 1 59 nil!
 SystemOrganization addCategory: #Audio!
 
@@ -137,17 +137,16 @@ startPlaying: aSound
 		[(ActiveSounds includes: aSound)
 			ifFalse: [ActiveSounds add: aSound]]! !
 
-!AudioPlayer class methodsFor: 'playing' stamp: 'len 15/Jun/2026 19:16:53'!
+!AudioPlayer class methodsFor: 'playing' stamp: 'len 15/Jun/2026 23:32:08'!
 stopPlaying: aSound
 	"Stop playing the given sound."
-	(PlayerSemaphore ifNil: [^ self]) critical: [ActiveSounds remove: aSound ifAbsent: nil. ActiveSounds isEmpty ifTrue: [self shutDown]]! !
+	(PlayerSemaphore ifNil: [^ self]) critical: [ActiveSounds remove: aSound ifAbsent: nil]! !
 
-!AudioPlayer class methodsFor: 'playing' stamp: 'len 15/Jun/2026 19:17:01'!
+!AudioPlayer class methodsFor: 'playing' stamp: 'len 15/Jun/2026 23:32:30'!
 stopPlayingAll
 	"Stop playing all sounds."
 
-	PlayerSemaphore critical: [ActiveSounds := ActiveSounds species new. self shutDown].
-! !
+	PlayerSemaphore critical: [ActiveSounds := ActiveSounds species new]! !
 
 !AudioPlayer class methodsFor: 'playing' stamp: 'len 26/Nov/2025 19:35:00'!
 waitUntilDonePlaying: aSound

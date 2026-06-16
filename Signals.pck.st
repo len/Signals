@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7998] on 16 June 2026 at 3:07:10 am'!
+'From Cuis7.9 [latest update: #7998] on 16 June 2026 at 7:38:01 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 594!
+!provides: 'Signals' 1 595!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -5152,7 +5152,7 @@ initialize
 	super initialize.
 	self initializeLibrary! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 14/Jun/2026 21:43:45'!
+!Multisample class methodsFor: 'library' stamp: 'len 16/Jun/2026 19:25:11'!
 initializeLibrary
 	"
 	Multisample initializeLibrary
@@ -5160,7 +5160,7 @@ initializeLibrary
 	
 	Library := OrderedDictionary new.
 	'Loading multisamples...' print.
-	#('Acoustic Grand Piano' 'Electric Piano' 'Electric Grand Piano' "'LoFi Rhodes' 'Rhodes 2' 'Dance Piano'" 'Double Bass' 'Picked Bass' 'Squier Bass' 'Pop Bass' 'Finger Bass' 'Slap Bass' 'Cello' 'Viola' 'Violin' 'String Ensemble' "'Pizzicato Strings'" 'Vibraphone' 'Glockenspiel' 'Xylophone' 'Flute' 'Jazz Trumpet' 'Trombone' 'Brass Section' '6-String Steel Guitar' 'Two Tone House Organ' "'Les Paul Half Drive' 'Les Paul Overdrive'" "'Archtop Guitar'") do: [:each|
+	#('Acoustic Grand Piano' 'Electric Piano' 'Electric Grand Piano' "'LoFi Rhodes' 'Rhodes 2' 'Dance Piano'" 'Double Bass' 'Picked Bass' 'Squier Bass' 'Pop Bass' 'Finger Bass' 'Slap Bass' 'Cello' 'Viola' 'Violin' 'String Ensemble' "'Pizzicato Strings'" 'Vibraphone' 'Glockenspiel' 'Xylophone' 'Flute' 'Jazz Trumpet' 'Trombone' 'Brass Section' '6-String Steel Guitar' "'Les Paul Half Drive' 'Les Paul Overdrive'" "'Archtop Guitar'" 'Two Tone House Organ' 'Vox Jaguar' 'Transistor Organ' 'B3 Organ') do: [:each|
 		('    ∙ ', each) print.
 		self loadMultisampleNamed: each]! !
 
@@ -5234,10 +5234,10 @@ loadJRhodes3D
 	keymap := samples collect: [:each| each associations sorted reversed collect: #value].
 	^ self new label: 'Rhodes'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 14/Jun/2026 17:33:48'!
+!Multisample class methodsFor: 'library' stamp: 'len 16/Jun/2026 19:24:47'!
 loadMultisampleNamed: directoryName
 "	
-	Multisample loadMultisampleNamed: 'Acoustic Grand Piano'
+	Multisample loadMultisampleNamed: 'B3 Organ'
 "
 	| samples keymap |
 	samples := Dictionary new.

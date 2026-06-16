@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7998] on 16 June 2026 at 3:07:30 am'!
+'From Cuis7.9 [latest update: #7998] on 16 June 2026 at 7:38:04 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 51!
+!provides: 'Tracker' 1 52!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -145,7 +145,7 @@ An instrument has a patch of signal processing modules, and interprets tracker t
 A pattern is a grid of triggers (notes and effect commands). The columns represet tracks (or channels).!
 
 !Track commentStamp: '<historical>' prior: 0!
-A track can play one instrument at a time. It can be muted or soloed, and it can be set to an arbitrary tuning to map arbitrary notes to standard 12-EDO notes.!
+A track can play one instrument at a time. It can be muted or soloed, and it can be set to an arbitrary tuning. If the tuning is other than the standard 12-EDO, it internally maps arbitrary notes to fractional 12-EDO notes (using floats instead of the standard MIDI 0 to 127 integers).!
 
 !Tracker commentStamp: '<historical>' prior: 0!
 This is the model of a tracker. It holds a whole song or project (instruments, tracks and sequence of patterns, and global settings like BPM, swing, etc), and it also keeps track of runtime state (cursor position, playhead position, etc).!
@@ -851,7 +851,7 @@ activeBounds
 	blockHeight := charWidth * 3.
 	^ 0 @ ((tracker cursorPattern - 1) * blockHeight) extent: self morphWidth @ blockHeight! !
 
-!ArrangerMorph methodsFor: 'drawing' stamp: 'len 24/Feb/2026 17:51:21'!
+!ArrangerMorph methodsFor: 'drawing' stamp: 'len 16/Jun/2026 14:37:27'!
 drawOn: aCanvas
 	| x y s charWidth blockHeight blockWidth space cursorTrack cursorPattern patternNumbers oldPatternNumbers |
 	charWidth := font widthOf: $X.
@@ -862,7 +862,7 @@ drawOn: aCanvas
 	cursorTrack := tracker cursorTrack.
 	"draw tracks background:"
 	tracker tracks withIndexDo: [:track :i|
-		aCanvas fillRectangle: (x @ 0 extent: blockWidth @ extent y) color: (track color lightnessAndChromaBy: (i = cursorTrack ifTrue: [0.6] ifFalse: [0.4])).
+		aCanvas fillRectangle: (x @ 0 extent: blockWidth @ extent y) color: ((PatternEditorMorph trackColor: i) lightnessAndChromaBy: (i = cursorTrack ifTrue: [0.6] ifFalse: [0.4])).
 		x := x + blockWidth + space].
 	y := 0.
 	"draw selection:"
@@ -889,7 +889,7 @@ drawOn: aCanvas
 	tracker sequence do: [:each|
 		x := blockHeight + space.
 		tracker tracks withIndexDo: [:track :i|
-			(each key isEmptyTrack: i) ifFalse: [aCanvas fillRectangle: (x @ y extent: blockWidth @ blockHeight) color: ((each value at: i) ifTrue: [track color] ifFalse: [Color black])].
+			(each key isEmptyTrack: i) ifFalse: [aCanvas fillRectangle: (x @ y extent: blockWidth @ blockHeight) color: ((each value at: i) ifTrue: [(PatternEditorMorph trackColor: i)] ifFalse: [Color black])].
 			x := x + blockWidth + space].
 		y := y + blockHeight].
 	y := tracker cursorPattern - 1 * blockHeight + (tracker cursorLine * blockHeight / tracker selectedPattern length asFloat).
@@ -1020,7 +1020,7 @@ colorForMeterValue: aNumber
 	"White up to -12 dB, yellow from -12 dB to -3 dB, red over -3 dB."
 	^ aNumber > 0.7 ifTrue: [Color redCathode] ifFalse: [aNumber > 0.25 ifTrue: [Color lemonPhosphor] ifFalse: [Color white]]! !
 
-!MultitrackMeterMorph methodsFor: 'drawing' stamp: 'len 10/Mar/2026 18:58:12'!
+!MultitrackMeterMorph methodsFor: 'drawing' stamp: 'len 16/Jun/2026 14:37:49'!
 drawOn: aCanvas
 	| v x y leftMaster rightMaster peak |
 	leftMaster := rightMaster := 0.0.
@@ -1028,7 +1028,7 @@ drawOn: aCanvas
 		(v := track meterValue) > 0.001 ifTrue:
 			[x := meterSpacing * (i-1) + leftMargin.
 			y := self yForMeterValue: v.
-			aCanvas fillRectangle: (x @ y corner: x + meterWidth @ extent y) color: track color.
+			aCanvas fillRectangle: (x @ y corner: x + meterWidth @ extent y) color: (PatternEditorMorph trackColor: i).
 			leftMaster := leftMaster + track meterLeftValue.
 			rightMaster := rightMaster + track meterRightValue]].
 	leftMaster := leftMaster * tracker level * 0.25. "internally we leave -12 dB of headroom"
@@ -1432,7 +1432,7 @@ drawPatternOn: aCanvas
 					x := charWidth * 3.5 + x]].
 		y := y + lineSpacing]! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 15/Jun/2026 22:56:57'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 16/Jun/2026 14:38:40'!
 drawTracksOn: aCanvas
 	| color textColor charWidth trackWidth x mask headerLineWidth maxTrackLabelWidth fittingTrackLabel highlightedTrackStart highlightedTrackEnd |
 	charWidth := font widthOf: $X.
@@ -1446,11 +1446,11 @@ drawTracksOn: aCanvas
 			highlightedTrackEnd := selectionTrackStart max: tracker cursorTrack]
 		ifNil: [highlightedTrackStart := highlightedTrackEnd := tracker cursorTrack].
 	tracker tracks withIndexDo: [:track :i| | trackColor trackLabel |
-		trackColor := track color.
+		trackColor := self class trackColor: i.
 "		aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: (trackColor lightnessAndChromaBy: (i = tracker cursorTrack ifTrue: [0.25] ifFalse: [0.2]))."
 "		aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: (trackColor darker: (i = tracker cursorTrack ifTrue: [0.54] ifFalse: [0.6]))."
 "		aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: (trackColor alpha: (i = tracker cursorTrack ifTrue: [0.1] ifFalse: [0.02]))."
-		(i between: highlightedTrackStart and: highlightedTrackEnd) ifTrue: [aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: (track color lightnessAndChromaBy: 0.2)].
+		(i between: highlightedTrackStart and: highlightedTrackEnd) ifTrue: [aCanvas fillRectangle: (x@0 extent: trackWidth @ extent y) color: (trackColor lightnessAndChromaBy: 0.2)].
 		((mask at: i) and: [track enabled])
 			ifTrue:
 				[color := trackColor.
@@ -1658,7 +1658,7 @@ setTracker: aTracker
 	aTracker when: #playheadChanged send: #redrawNeeded to: self.
 	self updateTracks! !
 
-!PatternEditorMorph methodsFor: 'private' stamp: 'len 15/Jun/2026 20:06:41'!
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 16/Jun/2026 03:11:38'!
 balloonTextForFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
@@ -1682,7 +1682,7 @@ balloonTextForFX: anInteger
 	command = 74 "J (pan left)" ifTrue: [^ 'Pan left by ', (v / 255.0 * 100.0) rounded printString, '%'].
 	command = 75 "K (pan right)" ifTrue: [^ 'Pan right by ', (v / 255.0 * 100.0) rounded printString, '%'].
 	"Sample commands:"
-	command = 83 "S (sample start offset)" ifTrue: [^ 'Set sample start offset to ', v printString].
+	command = 83 "S (sample start offset)" ifTrue: [^ 'Set sample start offset to ', v printString, '/255'].
 	command = 60 "< (speed backwards)" ifTrue: [^ 'Play backwards at speed ', (v / 128.0 printStringFractionDigits: 2), '×'].
 	command = 62 "> (speed forward)" ifTrue: [^ 'Play forward at speed ', (v / 128.0 printStringFractionDigits: 2), '×'].
 	"Control change commands:"
@@ -1760,7 +1760,7 @@ updateTracks
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 15/Jun/2026 20:13:08'!
+!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 16/Jun/2026 03:16:32'!
 initialize
 	"
 	self initialize
@@ -1778,7 +1778,7 @@ initialize
 	"Samples:"
 	'S<>' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 220)].
 	"Pitch:"
-	'UDG+-' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 30)].
+	'UDG+-' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 280)].
 	"Volume and Pan:"
 	'LPIOJK' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 160)].
 	"Other:"
@@ -2002,29 +2002,6 @@ playTrigger
 			trigger isNoteOff ifTrue: [self noteOff]].
 	trigger := nil! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 3/Jun/2026 18:44:54'!
-recomputeModules
-	| currentModules buses |
-	currentModules := patch modules.
-	modules := currentModules.
-	noteReceivers := currentModules select: [:each| each respondsTo: #setNote:].
-	velocityReceivers := currentModules select: [:any| any respondsTo: #setVelocity:].
-	gateReceivers := currentModules select: [:any| any respondsTo: #gateOn].
-	samples := currentModules select: [:each| (each isMemberOf: Sample) or: [each isMemberOf: Multisample]].
-	audioOutput := nil.
-	buses := track tracker buses.
-	currentModules do: [:each|
-		(each isMemberOf: ControlIn)
-			ifTrue: [each setValues: controlValues]
-			ifFalse:
-				[(each isMemberOf: AudioIn)
-					ifTrue: [each setBuses: buses]
-					ifFalse:
-						[(each isMemberOf: AudioOut) ifTrue:
-							[each setBuses: buses.
-							each port = 0 ifTrue: [audioOutput := each]]]]].
-	^ currentModules! !
-
 !Instrument methodsFor: 'playing' stamp: 'len 3/Jun/2026 18:45:14'!
 reset
 	(modules ifNil: [^ self]) do: [:each| each reset]! !
@@ -2067,10 +2044,10 @@ slideNoteBy: aNumber
 	glideTicks := track tracker tpl.
 	noteIncrement := aNumber / glideTicks asFloat! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 3/Apr/2026 16:52:08'!
+!Instrument methodsFor: 'playing' stamp: 'len 16/Jun/2026 04:06:14'!
 tick
 	| currentModules enabled |
-	currentModules := modules ifNil: [self recomputeModules].
+	currentModules := self modules.
 	enabled := track enabled.
 	currentModules do: [:each|
 		(each isMemberOf: AudioOut) ifTrue: [each enabled: enabled].
@@ -2143,6 +2120,30 @@ writeOn: aStream
 	aStream nextInt32Put: bufferList size bigEndian: true.
 	bufferList do: [:each| each writeOn: aStream].
 	json jsonWriteOn: aStream! !
+
+!Instrument methodsFor: 'private' stamp: 'len 16/Jun/2026 04:07:39'!
+modules
+	| currentModules buses |
+	modules ifNotNil: [:anArray| ^ anArray].
+	currentModules := patch modules.
+	modules := currentModules.
+	noteReceivers := currentModules select: [:each| each respondsTo: #setNote:].
+	velocityReceivers := currentModules select: [:any| any respondsTo: #setVelocity:].
+	gateReceivers := currentModules select: [:any| any respondsTo: #gateOn].
+	samples := currentModules select: [:each| (each isMemberOf: Sample) or: [each isMemberOf: Multisample]].
+	audioOutput := nil.
+	buses := track tracker buses.
+	currentModules do: [:each|
+		(each isMemberOf: ControlIn)
+			ifTrue: [each setValues: controlValues]
+			ifFalse:
+				[(each isMemberOf: AudioIn)
+					ifTrue: [each setBuses: buses]
+					ifFalse:
+						[(each isMemberOf: AudioOut) ifTrue:
+							[each setBuses: buses.
+							each port = 0 ifTrue: [audioOutput := each]]]]].
+	^ currentModules! !
 
 !Pattern methodsFor: 'accessing' stamp: 'len 18/Dec/2025 16:32:38'!
 length
@@ -2280,10 +2281,6 @@ line: anInteger instrumentDo: instrumentBlock noteDo: noteBlock velocityDo: velo
 !Pattern class methodsFor: 'instance creation' stamp: 'len 27/Dec/2025 06:03:15'!
 new: anInteger
 	^ self new initialize: anInteger! !
-
-!Track methodsFor: 'accessing' stamp: 'len 10/Jun/2026 17:04:08'!
-color
-	^ PatternEditorMorph trackColor: (tracker tracks indexOf: self)! !
 
 !Track methodsFor: 'accessing' stamp: 'len 9/Jan/2026 15:09:05'!
 enabled

@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7998] on 16 June 2026 at 7:38:01 pm'!
+'From Cuis7.9 [latest update: #7998] on 17 June 2026 at 4:18:42 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 595!
+!provides: 'Signals' 1 596!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -5152,15 +5152,16 @@ initialize
 	super initialize.
 	self initializeLibrary! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 16/Jun/2026 19:25:11'!
+!Multisample class methodsFor: 'library' stamp: 'len 17/Jun/2026 04:16:58'!
 initializeLibrary
 	"
 	Multisample initializeLibrary
 	"
 	
 	Library := OrderedDictionary new.
+	self multisamplesDirectory exists ifFalse: [^ self inform: 'Multisamples directory not found'].
 	'Loading multisamples...' print.
-	#('Acoustic Grand Piano' 'Electric Piano' 'Electric Grand Piano' "'LoFi Rhodes' 'Rhodes 2' 'Dance Piano'" 'Double Bass' 'Picked Bass' 'Squier Bass' 'Pop Bass' 'Finger Bass' 'Slap Bass' 'Cello' 'Viola' 'Violin' 'String Ensemble' "'Pizzicato Strings'" 'Vibraphone' 'Glockenspiel' 'Xylophone' 'Flute' 'Jazz Trumpet' 'Trombone' 'Brass Section' '6-String Steel Guitar' "'Les Paul Half Drive' 'Les Paul Overdrive'" "'Archtop Guitar'" 'Two Tone House Organ' 'Vox Jaguar' 'Transistor Organ' 'B3 Organ') do: [:each|
+	#('Acoustic Grand Piano' 'Electric Piano' 'Electric Grand Piano' "'LoFi Rhodes' 'Rhodes 2' 'Dance Piano'" 'Double Bass' 'Picked Bass' 'Squier Bass' 'Pop Bass' 'Finger Bass' 'Slap Bass' "'Contrabass'" 'Cello' 'Viola' 'Violin' 'String Ensemble' "'Pizzicato Strings'" 'Pizzicato Strings 2' 'Vibraphone' 'Glockenspiel' 'Xylophone' 'Flute' 'Oboe' 'Trumpet' 'Tuba' 'Trombone' 'Brass Section' '6-String Steel Guitar' "'Les Paul Half Drive'" 'Les Paul Overdrive' "'Archtop Guitar'" 'Two Tone House Organ' 'Vox Jaguar' 'Transistor Organ' 'B3 Organ' 'Pan Flute' 'Pizzagogo' 'Fantasia' 'Soundtrack' "'Fresh Air' 'Whistle'") do: [:each|
 		('    ∙ ', each) print.
 		self loadMultisampleNamed: each]! !
 
@@ -5202,21 +5203,6 @@ loadBookerTFast
 				{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}]].
 	^ self new label: 'Booker T (Fast)'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:13:20'!
-loadFarfisa
-	"Farfisa with full drawbars."
-	"TODO: loop points"
-	| keymap |
-	keymap := Dictionary new.
-	(self multisamplesDirectory / 'Farfisa Full') files do: [:each|
-		(each name endsWith: 'wav') ifTrue:
-			[| midiKey reader buffer |
-			midiKey := ((each name findTokens: '-') at: 3) asNumber.
-			reader := WAVFileReader new readFromFileEntry: each.
-			buffer := reader leftSamples + reader rightSamples.
-			keymap at: midiKey put: {Sample buffer: buffer rate: reader sampleRate}]].
-	^ self new label: 'Farfisa'; keymap: keymap! !
-
 !Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:13:33'!
 loadJRhodes3D
 	"From https://github.com/jlearman/jRhodes3d-wav.git"
@@ -5234,14 +5220,16 @@ loadJRhodes3D
 	keymap := samples collect: [:each| each associations sorted reversed collect: #value].
 	^ self new label: 'Rhodes'; keymap: keymap! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 16/Jun/2026 19:24:47'!
+!Multisample class methodsFor: 'library' stamp: 'len 17/Jun/2026 04:11:04'!
 loadMultisampleNamed: directoryName
 "	
 	Multisample loadMultisampleNamed: 'B3 Organ'
 "
-	| samples keymap |
+	| samples directory keymap |
 	samples := Dictionary new.
-	(self multisamplesDirectory / directoryName) files do: [:each|
+	(directory := self multisamplesDirectory / directoryName) exists
+		ifFalse: [^ self inform: 'Multisample ', directoryName printString, ' not found'].
+	directory files do: [:each|
 		| reader tokens midiKey velocityLayer buffer sample |
 		tokens := ((each name findTokens: '-') second findTokens: '.') first findTokens: ' '.
 		midiKey := tokens first.
@@ -5826,9 +5814,9 @@ harmonicSum: aBlock
 		tail := kmax - (kmax := kmax truncated).
 		((1 to: kmax) sum: [:k| aBlock value: k value: θ]) + ((aBlock value: kmax+1 value: θ) * tail)]! !
 
-!Wavetable class methodsFor: 'library' stamp: 'len 27/Mar/2026 22:11:44'!
+!Wavetable class methodsFor: 'library' stamp: 'len 17/Jun/2026 02:20:01'!
 fileReaderServicesForFileEntry: filename suffix: suffix
-	suffix = 'wav' ifTrue: [^ {self serviceLoadWavetable}].
+"	suffix = 'wav' ifTrue: [^ {self serviceLoadWavetable}]."
 	^ #()! !
 
 !Wavetable class methodsFor: 'library' stamp: 'len 29/Mar/2026 15:49:24'!
@@ -5838,15 +5826,15 @@ fromFileEntry: fileEntry frameSize: frameSize
 	table := reader channels = 2 ifTrue: [reader leftSamples + reader rightSamples] ifFalse: [reader leftSamples].
 	^ self new table: table frameSize: frameSize! !
 
-!Wavetable class methodsFor: 'library' stamp: 'len 9/Apr/2026 19:47:54'!
+!Wavetable class methodsFor: 'library' stamp: 'len 17/Jun/2026 03:55:46'!
 initializeLibrary
 	"
-	Wavetable loadLibrary
+	Wavetable initializeLibrary
 	"
 	Library := OrderedDictionary new.
 	'Generating wavetables...' print.
 "	(self class organization listAtCategoryNamed: 'generated') do: [:each|"
-	#(add_saw_exp add_square_exp add_triangle_soft sine_to_saw spectral_tilt "pulse_pw_full") do: [:each|
+	#(add_saw_exp add_square_exp add_triangle_soft sine_to_saw "spectral_tilt" "pulse_pw_full") do: [:each|
 		| label |
 		label := each asPlainString.
 		('    ∙ ', label) print.

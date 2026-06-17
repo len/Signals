@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7998] on 17 June 2026 at 4:18:42 am'!
+'From Cuis7.9 [latest update: #7998] on 17 June 2026 at 7:06:43 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 596!
+!provides: 'Signals' 1 597!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1913,8 +1913,8 @@ Abstract superclass for audio signal generators such as oscillators, noise gener
 !TunedGenerator commentStamp: '<historical>' prior: 0!
 Abstract superclass for audio signal generators with pitch, such as typical oscillators.!
 
-!Operator commentStamp: 'len 10/May/2026 00:45:43' prior: 0!
-An operator for classic FM synthesis (as in the Yamaha DX7, technically phase modulation). Essentially, an operator is a sine oscillator together with an amp, with an audio rate input for phase-modulation and feedback.!
+!Operator commentStamp: '<historical>' prior: 0!
+An operator for classic FM synthesis (as in the Yamaha DX7, technically phase modulation). Essentially, an operator is a sine oscillator together with an amp, with an audio rate input for phase-modulation, and with optional feedback to phase-modulation.!
 
 !Oscillator commentStamp: '<historical>' prior: 0!
 Abstract superclass for oscillators that can be defined by a single phase accumulator.!
@@ -5152,7 +5152,7 @@ initialize
 	super initialize.
 	self initializeLibrary! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 17/Jun/2026 04:16:58'!
+!Multisample class methodsFor: 'library' stamp: 'len 17/Jun/2026 19:02:58'!
 initializeLibrary
 	"
 	Multisample initializeLibrary
@@ -5161,7 +5161,7 @@ initializeLibrary
 	Library := OrderedDictionary new.
 	self multisamplesDirectory exists ifFalse: [^ self inform: 'Multisamples directory not found'].
 	'Loading multisamples...' print.
-	#('Acoustic Grand Piano' 'Electric Piano' 'Electric Grand Piano' "'LoFi Rhodes' 'Rhodes 2' 'Dance Piano'" 'Double Bass' 'Picked Bass' 'Squier Bass' 'Pop Bass' 'Finger Bass' 'Slap Bass' "'Contrabass'" 'Cello' 'Viola' 'Violin' 'String Ensemble' "'Pizzicato Strings'" 'Pizzicato Strings 2' 'Vibraphone' 'Glockenspiel' 'Xylophone' 'Flute' 'Oboe' 'Trumpet' 'Tuba' 'Trombone' 'Brass Section' '6-String Steel Guitar' "'Les Paul Half Drive'" 'Les Paul Overdrive' "'Archtop Guitar'" 'Two Tone House Organ' 'Vox Jaguar' 'Transistor Organ' 'B3 Organ' 'Pan Flute' 'Pizzagogo' 'Fantasia' 'Soundtrack' "'Fresh Air' 'Whistle'") do: [:each|
+	#('Acoustic Grand Piano' 'Electric Piano' 'Electric Grand Piano' "'LoFi Rhodes' 'Rhodes 2' 'Dance Piano'" "'Clavinet'" 'Double Bass' 'Picked Bass' 'Squier Bass' 'Pop Bass' 'Finger Bass' 'Slap Bass' "'Contrabass'" 'Cello' 'Viola' 'Violin' 'String Ensemble' "'Pizzicato Strings'" 'Pizzicato Strings 2' 'Vibraphone' 'Glockenspiel' 'Xylophone' "'Kalimba'" 'Flute' 'Pan Flute'  'Clarinet' 'Oboe' 'Recorder' 'Ocarina' 'Trumpet' 'Tuba' 'Trombone' 'Alto Sax' "'Alto Sax 2'" 'Tenor Sax' 'Baritone Sax' 'Brass Section' 'Nylon Guitar' "'Jazz Guitar'" "'Muted Guitar'" "'Les Paul Half Drive'" 'Les Paul Overdrive' "'Archtop Guitar'" '6-String Steel Guitar' 'Two Tone House Organ' 'Vox Jaguar' 'Transistor Organ' 'B3 Organ' 'Rock Organ' 'Harmonica' 'Pizzagogo' 'Fantasia' 'Soundtrack' "'Fresh Air' 'Whistle'") do: [:each|
 		('    ∙ ', each) print.
 		self loadMultisampleNamed: each]! !
 
@@ -6741,6 +6741,10 @@ tick
 panel
 	^ ControlPanel new addKnob: (controls at: #amount)! !
 
+!KeyTracker methodsFor: 'ui' stamp: 'len 17/Jun/2026 18:20:16'!
+patchable
+	^ super patchable addControlInput: #amount; yourself! !
+
 !LFO methodsFor: 'accessing' stamp: 'len 23/Apr/2026 17:48:41'!
 bipolar
 	^ bipolar! !
@@ -7037,6 +7041,10 @@ tick
 !VelocityTracker methodsFor: 'ui' stamp: 'len 11/Feb/2026 22:22:48'!
 panel
 	^ ControlPanel new addKnob: (controls at: #amount)! !
+
+!VelocityTracker methodsFor: 'ui' stamp: 'len 17/Jun/2026 18:20:22'!
+patchable
+	^ super patchable addControlInput: #amount; yourself! !
 
 !Wobble methodsFor: 'controlling' stamp: 'len 23/May/2026 14:07:22'!
 reset

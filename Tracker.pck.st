@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7998] on 16 June 2026 at 7:38:04 pm'!
+'From Cuis7.9 [latest update: #7998] on 17 June 2026 at 7:06:46 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 52!
+!provides: 'Tracker' 1 53!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -366,9 +366,9 @@ initialize
 
 	SHTextStylerST80 initialize! !
 
-!DarkerTheme methodsFor: 'menu colors' stamp: 'len 15/Jun/2026 00:17:00'!
+!DarkerTheme methodsFor: 'menu colors' stamp: 'len 17/Jun/2026 17:50:11'!
 menu
-	^ Color darkGray darker! !
+	^ Color darkGray! !
 
 !DarkerTheme methodsFor: 'menu colors' stamp: 'len 11/Apr/2026 12:42:14'!
 menuText

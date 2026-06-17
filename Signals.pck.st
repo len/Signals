@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7998] on 17 June 2026 at 7:06:43 pm'!
+'From Cuis7.9 [latest update: #7998] on 18 June 2026 at 2:56:41 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 597!
+!provides: 'Signals' 1 598!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -46,7 +46,7 @@ Module class
 
 !classDefinition: #Amp category: #'Signals-Dynamics'!
 Module subclass: #Amp
-	instanceVariableNames: 'input gain output inputRM velocity'
+	instanceVariableNames: 'input gain output inputRM'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Dynamics'!
@@ -186,7 +186,7 @@ TunedGenerator class
 
 !classDefinition: #Operator category: #'Signals-Oscillators'!
 TunedGenerator subclass: #Operator
-	instanceVariableNames: 'phase increment incrementRatio inputPM gain retrigger velocity'
+	instanceVariableNames: 'phase increment incrementRatio inputPM gain retrigger'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Oscillators'!
@@ -424,18 +424,18 @@ Modulator subclass: #Drift
 Drift class
 	instanceVariableNames: ''!
 
-!classDefinition: #EG category: #'Signals-Modulation'!
-Modulator subclass: #EG
-	instanceVariableNames: 'stage value factor increment attack retrigger'
+!classDefinition: #Envelope category: #'Signals-Modulation'!
+Modulator subclass: #Envelope
+	instanceVariableNames: 'stage value factor increment attack retrigger input output gain velocity'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Modulation'!
-!classDefinition: 'EG class' category: #'Signals-Modulation'!
-EG class
+!classDefinition: 'Envelope class' category: #'Signals-Modulation'!
+Envelope class
 	instanceVariableNames: ''!
 
 !classDefinition: #AD category: #'Signals-Modulation'!
-EG subclass: #AD
+Envelope subclass: #AD
 	instanceVariableNames: 'decay'
 	classVariableNames: ''
 	poolDictionaries: ''
@@ -445,7 +445,7 @@ AD class
 	instanceVariableNames: ''!
 
 !classDefinition: #ADSR category: #'Signals-Modulation'!
-EG subclass: #ADSR
+Envelope subclass: #ADSR
 	instanceVariableNames: 'decay sustain release legato'
 	classVariableNames: ''
 	poolDictionaries: ''
@@ -455,7 +455,7 @@ ADSR class
 	instanceVariableNames: ''!
 
 !classDefinition: #AHD category: #'Signals-Modulation'!
-EG subclass: #AHD
+Envelope subclass: #AHD
 	instanceVariableNames: 'hold holding decay'
 	classVariableNames: ''
 	poolDictionaries: ''
@@ -465,7 +465,7 @@ AHD class
 	instanceVariableNames: ''!
 
 !classDefinition: #AR category: #'Signals-Modulation'!
-EG subclass: #AR
+Envelope subclass: #AR
 	instanceVariableNames: 'release legato'
 	classVariableNames: ''
 	poolDictionaries: ''
@@ -475,7 +475,7 @@ AR class
 	instanceVariableNames: ''!
 
 !classDefinition: #ASR category: #'Signals-Modulation'!
-EG subclass: #ASR
+Envelope subclass: #ASR
 	instanceVariableNames: 'sustain release legato'
 	classVariableNames: ''
 	poolDictionaries: ''
@@ -2029,8 +2029,8 @@ This module generates a control signal that emulates analog drift.
 
 Internally we model drift as an Ornstein-Uhlenbeck process: a mean-reverting random walk that accumulates displacement over time but never wanders off indefinitely. This captures the essential character of thermal and electronic instability, doing long smooth excursions with a soft tendency to return to zero.!
 
-!EG commentStamp: '<historical>' prior: 0!
-Abstract superclass for envelope generators.!
+!Envelope commentStamp: '<historical>' prior: 0!
+Abstract superclass for envelopes.!
 
 !AD commentStamp: '<historical>' prior: 0!
 Attack-Decay envelope generator.!
@@ -2728,29 +2728,23 @@ controlRate
 sampleRate
 	^ AudioPlayer sampleRate! !
 
-!Amp methodsFor: 'controlling' stamp: 'len 12/Jun/2026 15:34:21'!
-setVelocity: aNumber
-	velocity := aNumber! !
-
-!Amp methodsFor: 'initialization' stamp: 'len 15/Jun/2026 00:33:57'!
+!Amp methodsFor: 'initialization' stamp: 'len 18/Jun/2026 00:06:08'!
 initialize
 	super initialize.
-	gain := 0.0.
-	velocity := 1.0! !
+	gain := 0.0! !
 
-!Amp methodsFor: 'initialization' stamp: 'len 14/Jun/2026 18:34:04'!
+!Amp methodsFor: 'initialization' stamp: 'len 18/Jun/2026 00:06:40'!
 initializeControls
 	super initializeControls.
-	self addControl: #level min: 0.0 max: 1.0 value: 0.0.
-	(self addAmountControl: #velocitySensitivity value: 1.0) label: 'Velocity'! !
+	self addControl: #level min: 0.0 max: 1.0 value: 0.0! !
 
-!Amp methodsFor: 'processing' stamp: 'len 14/Jun/2026 18:40:59'!
+!Amp methodsFor: 'processing' stamp: 'len 18/Jun/2026 00:06:04'!
 tick
 	| targetGain |
 	output ifNil: [^ self].
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	output replaceWith: input.
-	gain = (targetGain := (self get: #level) * ((velocity squared - 1.0) * (self get: #velocitySensitivity) + 1.0))
+	gain = (targetGain := self get: #level)
 		ifTrue: [output *= gain]
 		ifFalse:
 			[targetGain < 0.00001 "-100 dB"
@@ -2765,16 +2759,11 @@ tick
 panel
 	^ ControlPanel new addKnob: (controls at: #level)! !
 
-!Amp methodsFor: 'ui' stamp: 'len 14/Jun/2026 04:30:35'!
-panel2
-	^ ControlPanel new addTextualControl: (controls at: #velocitySensitivity)! !
-
-!Amp methodsFor: 'ui' stamp: 'len 14/Jun/2026 18:34:40'!
+!Amp methodsFor: 'ui' stamp: 'len 18/Jun/2026 00:06:57'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
-	answer flap addMorph: self panel2.
 	answer
 		addAudioInput: #setInput:;
 		addControlInput: #level;
@@ -2814,13 +2803,13 @@ update
 	schpf snapToZero; frequency: (self get: #schpf) / self class sampleRate.
 	rmslpf snapToZero! !
 
-!Compressor methodsFor: 'initialization' stamp: 'len 3/Jun/2026 01:59:29'!
+!Compressor methodsFor: 'initialization' stamp: 'len 17/Jun/2026 20:05:44'!
 initialize
 	super initialize.
 	schpf := OnePole new frequency: 100.0 / self class sampleRate "100 hz".
 	rmslpf := OnePole new time: 0.01 * self class sampleRate. "10 ms"
 	envelope := 0.0.
-	mode := #peak! !
+	mode := #Peak! !
 
 !Compressor methodsFor: 'initialization' stamp: 'len 3/Jun/2026 01:59:36'!
 initializeControls
@@ -2833,7 +2822,7 @@ initializeControls
 	self addGainControl: #knee min: 1.0 "0 dB" max: 4.0 "+12 dB" value: 2.0 "+6 dB".
 	self addGainControl: #makeup min: 0.25 "-12 dB" max: 16.0 "+24 dB" value: 1.0! !
 
-!Compressor methodsFor: 'processing' stamp: 'len 3/Jun/2026 01:59:17'!
+!Compressor methodsFor: 'processing' stamp: 'len 17/Jun/2026 20:05:54'!
 tick
 	| sc aux isPeak threshold ratio knee kneeStart kneeEnd kneeWidth gainEnd α β makeup |
 	sc := inputSC ifNil: [inputL ifNil:
@@ -2841,7 +2830,7 @@ tick
 		outputR ifNotNil: [outputR atAllPut: 0.0].
 		^ self]].
 	aux := Aux1.
-	isPeak := mode = #peak. "if not peak, it's RMS"
+	isPeak := mode = #Peak. "if not peak, it's RMS"
 	threshold := self get: #threshold.
 	ratio := self get: #ratio.
 	knee := self get: #knee.
@@ -2881,14 +2870,14 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #mode ifPresent: [:aSymbol| mode := aSymbol]! !
 
-!Compressor methodsFor: 'ui' stamp: 'len 3/Jun/2026 02:06:16'!
+!Compressor methodsFor: 'ui' stamp: 'len 17/Jun/2026 20:04:21'!
 panel
 	| answer |
 	answer := ControlPanel newColumn.
 	answer addRow
 "		addTextualControl: (controls at: #threshold);"
 		addTextualControl: (controls at: #ratio);
-		addMorph: (PluggableChoiceMorph new options: #(peak rms); model: self; getter: #mode; setter: #mode:).
+		addMorph: (PluggableChoiceMorph new options: #(Peak RMS); model: self; getter: #mode; setter: #mode:).
 "	answer addRow
 		addSmallKnob: (controls at: #attack) label: 'Attack';
 		addSmallKnob: (controls at: #release) label: 'Release'."
@@ -2967,13 +2956,13 @@ update
 	schpf snapToZero; frequency: (self get: #schpf) / self class sampleRate.
 	rmslpf snapToZero! !
 
-!Gate methodsFor: 'initialization' stamp: 'len 3/Jun/2026 02:04:38'!
+!Gate methodsFor: 'initialization' stamp: 'len 17/Jun/2026 20:06:09'!
 initialize
 	super initialize.
 	schpf := OnePole new frequency: 100.0 / self class sampleRate "100 hz".
 	rmslpf := OnePole new time: 0.01 * self class sampleRate. "10 ms"
 	envelope := 0.0.
-	mode := #peak.
+	mode := #Peak.
 	holdCount := 0! !
 
 !Gate methodsFor: 'initialization' stamp: 'len 3/Jun/2026 02:04:43'!
@@ -2987,7 +2976,7 @@ initializeControls
 	(self addFrequencyControl: #schpf min: 20.0 max: 200.0 value: 100.0) label: 'SC HPF'.
 	self addGainControl: #knee min: 1.0 "0 dB" max: 4.0 "+12 dB" value: 2.0 "+6 dB"! !
 
-!Gate methodsFor: 'processing' stamp: 'len 3/Jun/2026 02:05:21'!
+!Gate methodsFor: 'processing' stamp: 'len 17/Jun/2026 20:06:14'!
 tick
 	| sc aux isPeak threshold α β knee range holdSamples kneeStart kneeEnd kneeWidth |
 	sc := inputSC ifNil: [inputL ifNil:
@@ -2995,7 +2984,7 @@ tick
 		outputR ifNotNil: [outputR atAllPut: 0.0].
 		^ self]].
 	aux := Aux1.
-	isPeak := mode = #peak. "if not peak, it's RMS"
+	isPeak := mode = #Peak. "if not peak, it's RMS"
 	threshold := self get: #threshold.
 	knee := self get: #knee.
 	kneeStart := threshold / knee sqrt.
@@ -3043,10 +3032,10 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #mode ifPresent: [:aSymbol| mode := aSymbol]! !
 
-!Gate methodsFor: 'ui' stamp: 'len 3/Jun/2026 02:06:10'!
+!Gate methodsFor: 'ui' stamp: 'len 17/Jun/2026 20:04:30'!
 panel
 	^​ ControlPanel new
-		addMorph: (PluggableChoiceMorph new options: #(peak rms); model: self; getter: #mode; setter: #mode:)! !
+		addMorph: (PluggableChoiceMorph new options: #(Peak RMS); model: self; getter: #mode; setter: #mode:)! !
 
 !Gate methodsFor: 'ui' stamp: 'len 26/May/2026 16:04:21'!
 panel2
@@ -4238,10 +4227,6 @@ gateOn
 reset
 	phase := 0.0! !
 
-!Operator methodsFor: 'controlling' stamp: 'len 15/Jun/2026 00:25:40'!
-setVelocity: aNumber
-	velocity := aNumber! !
-
 !Operator methodsFor: 'controlling' stamp: 'len 15/May/2026 17:24:58'!
 update
 	| targetIncrement |
@@ -4250,29 +4235,27 @@ update
 	increment ifNil: [increment := targetIncrement].
 	incrementRatio := ((targetIncrement / increment) ln / self class blockSize) exp! !
 
-!Operator methodsFor: 'initialization' stamp: 'len 15/Jun/2026 00:33:59'!
+!Operator methodsFor: 'initialization' stamp: 'len 18/Jun/2026 00:25:35'!
 initialize
 	super initialize.
 	self reset.
 	gain := 1.0.
-	velocity := 1.0.
 	retrigger := false! !
 
-!Operator methodsFor: 'initialization' stamp: 'len 15/Jun/2026 00:27:57'!
+!Operator methodsFor: 'initialization' stamp: 'len 18/Jun/2026 00:26:03'!
 initializeControls
 	super initializeControls.
 	(self addControl: #ratio min: 0.25 max: 16.0 value: 1.0) printer: [:x| '×', (x printStringFractionDigits: 2)].
 	(self addControl: #level min: 0.0 max: 1.0 value: 1.0) printer: [:x| '±', (x printStringFractionDigits: 2)].
-	(self addAmountControl: #velocitySensitivity value: 1.0) label: 'Velocity'.
 	self addAmountControl: #feedback value: 0.0! !
 
-!Operator methodsFor: 'processing' stamp: 'len 15/Jun/2026 00:33:01'!
+!Operator methodsFor: 'processing' stamp: 'len 18/Jun/2026 00:25:24'!
 tick
 	| feedback twoPi gainIncrement lastOutput |
 	output ifNil: [^ self].
 	feedback := self get: #feedback.
 	twoPi := Float twoPi.
-	gainIncrement := (self get: #level) * ((velocity squared - 1.0) * (self get: #velocitySensitivity) + 1.0) - gain / self class blockSize.
+	gainIncrement := (self get: #level) - gain / self class blockSize.
 	(gain = 0.0 and: [gainIncrement = 0.0]) ifTrue:
 		[increment := increment * (incrementRatio raisedTo: output size).
 		output atAllPut: 0.0.
@@ -4296,13 +4279,12 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #reset ifPresent: [:aBoolean| retrigger := aBoolean]! !
 
-!Operator methodsFor: 'ui' stamp: 'len 15/Jun/2026 00:28:52'!
+!Operator methodsFor: 'ui' stamp: 'len 18/Jun/2026 00:26:10'!
 panel
 	^​ super panel
 		addTextualControl: (controls at: #ratio);
 		addTextualControl: (controls at: #level);
 		addTextualControl: (controls at: #feedback);
-		addTextualControl: (controls at: #velocitySensitivity);
 		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset')! !
 
 !Operator methodsFor: 'ui' stamp: 'len 17/May/2026 14:46:14'!
@@ -5152,7 +5134,7 @@ initialize
 	super initialize.
 	self initializeLibrary! !
 
-!Multisample class methodsFor: 'library' stamp: 'len 17/Jun/2026 19:02:58'!
+!Multisample class methodsFor: 'library' stamp: 'len 17/Jun/2026 19:08:36'!
 initializeLibrary
 	"
 	Multisample initializeLibrary
@@ -5161,64 +5143,13 @@ initializeLibrary
 	Library := OrderedDictionary new.
 	self multisamplesDirectory exists ifFalse: [^ self inform: 'Multisamples directory not found'].
 	'Loading multisamples...' print.
-	#('Acoustic Grand Piano' 'Electric Piano' 'Electric Grand Piano' "'LoFi Rhodes' 'Rhodes 2' 'Dance Piano'" "'Clavinet'" 'Double Bass' 'Picked Bass' 'Squier Bass' 'Pop Bass' 'Finger Bass' 'Slap Bass' "'Contrabass'" 'Cello' 'Viola' 'Violin' 'String Ensemble' "'Pizzicato Strings'" 'Pizzicato Strings 2' 'Vibraphone' 'Glockenspiel' 'Xylophone' "'Kalimba'" 'Flute' 'Pan Flute'  'Clarinet' 'Oboe' 'Recorder' 'Ocarina' 'Trumpet' 'Tuba' 'Trombone' 'Alto Sax' "'Alto Sax 2'" 'Tenor Sax' 'Baritone Sax' 'Brass Section' 'Nylon Guitar' "'Jazz Guitar'" "'Muted Guitar'" "'Les Paul Half Drive'" 'Les Paul Overdrive' "'Archtop Guitar'" '6-String Steel Guitar' 'Two Tone House Organ' 'Vox Jaguar' 'Transistor Organ' 'B3 Organ' 'Rock Organ' 'Harmonica' 'Pizzagogo' 'Fantasia' 'Soundtrack' "'Fresh Air' 'Whistle'") do: [:each|
+	#('Acoustic Grand Piano' 'Electric Piano' 'Electric Grand Piano' "'LoFi Rhodes' 'Rhodes 2' 'Dance Piano'" "'Clavinet'" 'Double Bass' 'Picked Bass' 'Squier Bass' 'Pop Bass' 'Finger Bass' 'Slap Bass' "'Contrabass'" 'Cello' 'Viola' 'Violin' 'String Ensemble' "'Pizzicato Strings'" 'Pizzicato Strings 2' 'Vibraphone' 'Glockenspiel' 'Xylophone' "'Kalimba'" 'Flute' 'Pan Flute' 'Clarinet' 'Oboe' 'Recorder' 'Ocarina' 'Trumpet' 'Tuba' 'Trombone' 'Alto Sax' "'Alto Sax 2'" 'Tenor Sax' 'Baritone Sax' 'Brass Section' 'Nylon Guitar' "'Jazz Guitar'" "'Muted Guitar'" "'Les Paul Half Drive'" 'Les Paul Overdrive' "'Archtop Guitar'" '6-String Steel Guitar' 'Two Tone House Organ' 'Vox Jaguar' 'Transistor Organ' 'B3 Organ' 'Rock Organ' 'Harmonica' 'Pizzagogo' 'Fantasia' 'Soundtrack' "'Fresh Air' 'Whistle'") do: [:each|
 		('    ∙ ', each) print.
 		self loadMultisampleNamed: each]! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 3/Dec/2025 02:12:00'!
 library
 	^ Library! !
-
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:14:24'!
-loadBookerT
-	| keymap |
-	keymap := Dictionary new.
-	#('B' 'F') with: #(59 65) do: [:noteName :centerKey|
-		1 to: 7 do: [:octave|
-			| filename reader buffer midiKey |
-			filename := 'BookerT (slow) - booker_slow_', noteName, octave printString.
-			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'BookerT' // (filename, 'L.wav').
-			buffer := reader leftSamples.
-			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'BookerT' // (filename, 'R.wav').
-			buffer += reader leftSamples.
-			midiKey := (octave - 4) * 12 + centerKey.
-			keymap at: midiKey put:
-				{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}]].
-	^ self new label: 'Booker T'; keymap: keymap! !
-
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:14:24'!
-loadBookerTFast
-	| keymap |
-	keymap := Dictionary new.
-	#('B' 'F') with: #(59 65) do: [:noteName :centerKey|
-		1 to: 7 do: [:octave|
-			| filename reader buffer midiKey |
-			filename := 'BookerT (fast) - booker_fast_', noteName, octave printString.
-			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'BookerT' // (filename, 'L.wav').
-			buffer := reader leftSamples.
-			reader := WAVFileReader new readFromFileEntry: self multisamplesDirectory / 'BookerT' // (filename, 'R.wav').
-			buffer += reader leftSamples.
-			midiKey := (octave - 4) * 12 + centerKey.
-			keymap at: midiKey put:
-				{Sample buffer: buffer rate: reader sampleRate loopStart: reader loopStart loopEnd: reader loopEnd}]].
-	^ self new label: 'Booker T (Fast)'; keymap: keymap! !
-
-!Multisample class methodsFor: 'library' stamp: 'len 9/Apr/2026 23:13:33'!
-loadJRhodes3D
-	"From https://github.com/jlearman/jRhodes3d-wav.git"
-	| samples keymap |
-	samples := Dictionary new.
-	(self multisamplesDirectory / 'jrhodes3d') files do: [:each|
-		| reader tokens midiKey velocityLayer buffer |
-		tokens := each name findTokens: '_'.
-		midiKey := tokens second asNumber.
-		velocityLayer := (tokens last findTokens: '.') first asNumber.
-		reader := WAVFileReader new readFromFileEntry: each.
-		"If stereo, sum channels:"
-		buffer := reader channels = 2 ifTrue: [reader leftSamples + reader rightSamples] ifFalse: [reader leftSamples].
-		(samples at: midiKey ifAbsentPut: [Dictionary new]) at: velocityLayer put: (Sample buffer: buffer rate: reader sampleRate) removeDCOffset].
-	keymap := samples collect: [:each| each associations sorted reversed collect: #value].
-	^ self new label: 'Rhodes'; keymap: keymap! !
 
 !Multisample class methodsFor: 'library' stamp: 'len 17/Jun/2026 04:11:04'!
 loadMultisampleNamed: directoryName
@@ -6073,6 +6004,13 @@ send: aNumber
 patchable
 	^ super patchable addControlOutput; yourself! !
 
+!Modulator methodsFor: 'ui' stamp: 'len 17/Jun/2026 20:10:02'!
+screen
+	| answer |
+	answer := StripChartMorph new bipolar: false.
+	self when: #output: send: #addSample: to: answer.
+	^ answer! !
+
 !ControlIn methodsFor: 'accessing' stamp: 'len 9/Jun/2026 21:31:18'!
 bipolar
 	^ bipolar! !
@@ -6241,38 +6179,42 @@ screen
 	self when: #output: send: #addSample: to: answer.
 	^ answer! !
 
-!EG methodsFor: 'accessing' stamp: 'len 3/Jun/2026 15:08:50'!
+!Envelope methodsFor: 'accessing' stamp: 'len 3/Jun/2026 15:08:50'!
 retrigger
 	^ retrigger! !
 
-!EG methodsFor: 'accessing' stamp: 'len 3/Jun/2026 15:08:44'!
+!Envelope methodsFor: 'accessing' stamp: 'len 3/Jun/2026 15:08:44'!
 retrigger: aBoolean
 	retrigger := aBoolean! !
 
-!EG methodsFor: 'accessing' stamp: 'len 6/Jan/2026 18:33:45'!
+!Envelope methodsFor: 'accessing' stamp: 'len 6/Jan/2026 18:33:45'!
 stage
 	^ stage! !
 
-!EG methodsFor: 'accessing' stamp: 'len 6/Jan/2026 18:35:09'!
+!Envelope methodsFor: 'accessing' stamp: 'len 6/Jan/2026 18:35:09'!
 value
 	^ value! !
 
-!EG methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:21:00'!
+!Envelope methodsFor: 'controlling' stamp: 'len 23/Mar/2026 19:21:00'!
 gateOff
 	^ self! !
 
-!EG methodsFor: 'controlling' stamp: 'len 3/Jun/2026 15:09:11'!
+!Envelope methodsFor: 'controlling' stamp: 'len 3/Jun/2026 15:09:11'!
 gateOn
 	self update.
 	stage := #attack.
 	retrigger ifTrue: [value := 0.0]! !
 
-!EG methodsFor: 'controlling' stamp: 'len 30/Nov/2025 02:15:00'!
+!Envelope methodsFor: 'controlling' stamp: 'len 30/Nov/2025 02:15:00'!
 reset
 	stage := #idle.
 	value := 0.0! !
 
-!EG methodsFor: 'controlling' stamp: 'len 26/Apr/2026 22:57:25'!
+!Envelope methodsFor: 'controlling' stamp: 'len 17/Jun/2026 23:07:57'!
+setVelocity: aNumber
+	velocity := aNumber! !
+
+!Envelope methodsFor: 'controlling' stamp: 'len 26/Apr/2026 22:57:25'!
 update
 	super update.
 	attack := (self get: #attack) * self class controlRate.
@@ -6280,54 +6222,70 @@ update
 	increment := 1.0 / attack.
 ! !
 
-!EG methodsFor: 'initialization' stamp: 'len 12/Jun/2026 15:34:34'!
+!Envelope methodsFor: 'initialization' stamp: 'len 17/Jun/2026 23:08:26'!
 initialize
 	super initialize.
 	self reset.
-	retrigger := false! !
+	retrigger := false.
+	gain := 0.0.
+	velocity := 1.0! !
 
-!EG methodsFor: 'initialization' stamp: 'len 3/Jun/2026 15:09:29'!
+!Envelope methodsFor: 'initialization' stamp: 'len 17/Jun/2026 23:04:46'!
 initializeControls
 	super initializeControls.
+	(self addAmountControl: #velocitySensitivity value: 1.0) label: 'Velocity'.
 	self addTimeControl: #attack min: 0.0005 "0.5 ms" max: 2.0 "s" value: 0.01 "10 ms"! !
 
-!EG methodsFor: 'processing' stamp: 'len 29/Nov/2025 20:41:00'!
+!Envelope methodsFor: 'processing' stamp: 'len 29/Nov/2025 20:41:00'!
 next
 	^ self subclassResponsibility! !
 
-!EG methodsFor: 'processing' stamp: 'len 26/Apr/2026 23:27:26'!
+!Envelope methodsFor: 'processing' stamp: 'len 18/Jun/2026 00:03:51'!
 tick
-	stage = #idle ifFalse: [self send: self next]! !
+	| targetGain |
+	stage = #idle ifFalse: [self send: self next * ((velocity - 1.0) * (self get: #velocitySensitivity) + 1.0)].
+	output ifNil: [^ self].
+	input ifNil: [output atAllPut: 0.0. ^ self].
+	output replaceWith: input.
+	gain = (targetGain := value * ((velocity squared - 1.0) * (self get: #velocitySensitivity) + 1.0))
+		ifTrue: [output *= gain]
+		ifFalse:
+			[targetGain < 0.00001 "-100 dB"
+				ifTrue: [output *= gain; *= FadeOut]
+				ifFalse:
+					[Aux1 replaceWith: FadeOut; *= (gain / targetGain); += FadeIn; *= targetGain.
+					output *= Aux1].
+			gain := targetGain]! !
 
-!EG methodsFor: 'serialization' stamp: 'len 3/Jun/2026 15:11:02'!
+!Envelope methodsFor: 'serialization' stamp: 'len 3/Jun/2026 15:11:02'!
 settings
 	^ super settings at: #reset put: retrigger; yourself! !
 
-!EG methodsFor: 'serialization' stamp: 'len 3/Jun/2026 15:11:14'!
+!Envelope methodsFor: 'serialization' stamp: 'len 3/Jun/2026 15:11:14'!
 settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #reset ifPresent: [:aBoolean| retrigger := aBoolean]! !
 
-!EG methodsFor: 'ui' stamp: 'len 3/Jun/2026 15:10:46'!
-panel
-	^​ super panel
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset')! !
-
-!EG methodsFor: 'ui' stamp: 'len 26/Apr/2026 23:22:20'!
+!Envelope methodsFor: 'ui' stamp: 'len 17/Jun/2026 23:08:56'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	answer addControlOutput.
+	answer
+		addAudioInput: #setInput:;
+		addAudioOutput: #setOutput:;
+		addControlInput: #attack;
+		addControlOutput.
 	^ answer! !
 
-!EG methodsFor: 'ui' stamp: 'len 12/May/2026 15:19:12'!
-screen
-	| answer |
-	answer := StripChartMorph new bipolar: false.
-	self when: #output: send: #addSample: to: answer.
-	^ answer! !
+!Envelope methodsFor: 'wiring' stamp: 'len 17/Jun/2026 23:10:34'!
+setInput: aBuffer
+	input := aBuffer! !
+
+!Envelope methodsFor: 'wiring' stamp: 'len 17/Jun/2026 23:10:40'!
+setOutput: aBuffer
+	output := aBuffer! !
 
 !AD methodsFor: 'controlling' stamp: 'len 18/Jan/2026 19:39:13'!
 update
@@ -6350,17 +6308,17 @@ next
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value! !
 
-!AD methodsFor: 'ui' stamp: 'len 3/Jun/2026 15:15:55'!
+!AD methodsFor: 'ui' stamp: 'len 17/Jun/2026 23:11:43'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #decay) label: 'D';
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset')! !
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
+		addTextualControl: (controls at: #velocitySensitivity)! !
 
-!AD methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:42:58'!
+!AD methodsFor: 'ui' stamp: 'len 17/Jun/2026 23:02:03'!
 patchable
 	^ super patchable
-		addControlInput: #attack;
 		addControlInput: #decay;
 		yourself! !
 
@@ -6432,7 +6390,7 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #legato ifPresent: [:aBoolean| legato := aBoolean]! !
 
-!ADSR methodsFor: 'ui' stamp: 'len 3/Jun/2026 15:27:42'!
+!ADSR methodsFor: 'ui' stamp: 'len 17/Jun/2026 23:12:28'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
@@ -6440,12 +6398,12 @@ panel
 		addSmallKnob: (controls at: #sustain) label: 'S';
 		addSmallKnob: (controls at: #release) label: 'R';
 		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'Legato');
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset')! !
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
+		addTextualControl: (controls at: #velocitySensitivity)! !
 
-!ADSR methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:43:31'!
+!ADSR methodsFor: 'ui' stamp: 'len 17/Jun/2026 23:02:14'!
 patchable
 	^ super patchable
-		addControlInput: #attack;
 		addControlInput: #decay;
 		addControlInput: #release;
 		yourself! !
@@ -6478,18 +6436,18 @@ next
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value! !
 
-!AHD methodsFor: 'ui' stamp: 'len 3/Jun/2026 15:33:34'!
+!AHD methodsFor: 'ui' stamp: 'len 17/Jun/2026 23:12:39'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #hold) label: 'H';
 		addSmallKnob: (controls at: #decay) label: 'D';
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset')! !
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
+		addTextualControl: (controls at: #velocitySensitivity)! !
 
-!AHD methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:44:18'!
+!AHD methodsFor: 'ui' stamp: 'len 17/Jun/2026 23:02:18'!
 patchable
 	^ super patchable
-		addControlInput: #attack;
 		addControlInput: #hold;
 		addControlInput: #decay;
 		yourself! !
@@ -6552,18 +6510,18 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #legato ifPresent: [:aBoolean| legato := aBoolean]! !
 
-!AR methodsFor: 'ui' stamp: 'len 3/Jun/2026 15:28:19'!
+!AR methodsFor: 'ui' stamp: 'len 17/Jun/2026 23:12:47'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #release) label: 'R';
 		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'Legato');
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset')! !
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
+		addTextualControl: (controls at: #velocitySensitivity)! !
 
-!AR methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:44:28'!
+!AR methodsFor: 'ui' stamp: 'len 17/Jun/2026 23:02:22'!
 patchable
 	^ super patchable
-		addControlInput: #attack;
 		addControlInput: #release;
 		yourself! !
 
@@ -6627,19 +6585,19 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #legato ifPresent: [:aBoolean| legato := aBoolean]! !
 
-!ASR methodsFor: 'ui' stamp: 'len 3/Jun/2026 15:28:25'!
+!ASR methodsFor: 'ui' stamp: 'len 17/Jun/2026 23:12:57'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #sustain) label: 'S';
 		addSmallKnob: (controls at: #release) label: 'R';
 		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'Legato');
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset')! !
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
+		addTextualControl: (controls at: #velocitySensitivity)! !
 
-!ASR methodsFor: 'ui' stamp: 'len 23/Feb/2026 19:44:35'!
+!ASR methodsFor: 'ui' stamp: 'len 17/Jun/2026 23:02:25'!
 patchable
 	^ super patchable
-		addControlInput: #attack;
 		addControlInput: #release;
 		yourself! !
 
@@ -6655,10 +6613,10 @@ mode: aSymbol
 reset
 	envelope := 0.0! !
 
-!EnvelopeFollower methodsFor: 'initialization' stamp: 'len 3/Jun/2026 02:17:21'!
+!EnvelopeFollower methodsFor: 'initialization' stamp: 'len 17/Jun/2026 20:04:52'!
 initialize
 	super initialize.
-	mode := #rms.
+	mode := #RMS.
 	self reset! !
 
 !EnvelopeFollower methodsFor: 'initialization' stamp: 'len 3/Jun/2026 02:17:28'!
@@ -6667,11 +6625,11 @@ initializeControls
 	self addTimeControl: #attack min: 0.001 "1 ms" max: 0.05 "50 ms" value: 0.01 "10 ms".
 	self addTimeControl: #release min: 0.01 "10 ms" max: 0.5 "500 ms" value: 0.1 "100 ms"! !
 
-!EnvelopeFollower methodsFor: 'processing' stamp: 'len 3/Jun/2026 02:20:10'!
+!EnvelopeFollower methodsFor: 'processing' stamp: 'len 17/Jun/2026 20:05:14'!
 tick
 	| attack release level |
 	input ifNil: [^ self].
-	level := mode = #peak ifTrue: [input peak] ifFalse: [input rms].
+	level := mode = #Peak ifTrue: [input peak] ifFalse: [input rms].
 	level > envelope
 		ifTrue:
 			[attack := (-1.0 / ((self get: #attack) * self class controlRate)) exp.
@@ -6691,9 +6649,12 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #mode ifPresent: [:aSymbol| mode := aSymbol]! !
 
-!EnvelopeFollower methodsFor: 'ui' stamp: 'len 3/Jun/2026 15:59:27'!
+!EnvelopeFollower methodsFor: 'ui' stamp: 'len 17/Jun/2026 20:14:11'!
 panel
-	^ super panel addMorph: (PluggableChoiceMorph new options: #(peak rms); model: self; getter: #mode; setter: #mode:)! !
+	^ ControlPanel new
+		addSmallKnob: (controls at: #attack) label: 'A';
+		addSmallKnob: (controls at: #release) label: 'R';
+		addMorph: (PluggableChoiceMorph new options: #(Peak RMS); model: self; getter: #mode; setter: #mode:)! !
 
 !EnvelopeFollower methodsFor: 'ui' stamp: 'len 30/Apr/2026 16:14:03'!
 patchable
@@ -6706,13 +6667,6 @@ patchable
 		addControlInput: #attack;
 		addControlInput: #release;
 		addControlOutput.
-	^ answer! !
-
-!EnvelopeFollower methodsFor: 'ui' stamp: 'len 12/May/2026 15:19:12'!
-screen
-	| answer |
-	answer := StripChartMorph new bipolar: false.
-	self when: #output: send: #addSample: to: answer.
 	^ answer! !
 
 !EnvelopeFollower methodsFor: 'wiring' stamp: 'len 10/Feb/2026 00:26:43'!
@@ -6741,9 +6695,16 @@ tick
 panel
 	^ ControlPanel new addKnob: (controls at: #amount)! !
 
-!KeyTracker methodsFor: 'ui' stamp: 'len 17/Jun/2026 18:20:16'!
+!KeyTracker methodsFor: 'ui' stamp: 'len 17/Jun/2026 20:17:06'!
 patchable
-	^ super patchable addControlInput: #amount; yourself! !
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self screen.
+	answer flap addMorph: self panel.
+	answer
+		addControlInput: #amount;
+		addControlOutput.
+	^ answer! !
 
 !LFO methodsFor: 'accessing' stamp: 'len 23/Apr/2026 17:48:41'!
 bipolar
@@ -7020,7 +6981,7 @@ initialize2
 			{#'Whole Tone' -> #(0 2 4 6 8 10)};
 		yourself! !
 
-!VelocityTracker methodsFor: 'controlling' stamp: 'len 10/Feb/2026 17:04:27'!
+!VelocityTracker methodsFor: 'controlling' stamp: 'len 17/Jun/2026 20:44:52'!
 setVelocity: aNumber
 	velocity := aNumber! !
 
@@ -7038,13 +6999,20 @@ initializeControls
 tick
 	self send: velocity * (self get: #amount)! !
 
-!VelocityTracker methodsFor: 'ui' stamp: 'len 11/Feb/2026 22:22:48'!
+!VelocityTracker methodsFor: 'ui' stamp: 'len 17/Jun/2026 20:25:43'!
 panel
-	^ ControlPanel new addKnob: (controls at: #amount)! !
+	^ ControlPanel new addSmallKnob: (controls at: #amount)! !
 
-!VelocityTracker methodsFor: 'ui' stamp: 'len 17/Jun/2026 18:20:22'!
+!VelocityTracker methodsFor: 'ui' stamp: 'len 17/Jun/2026 20:25:34'!
 patchable
-	^ super patchable addControlInput: #amount; yourself! !
+	| answer screen |
+	answer := PatchableMorph new model: self.
+	screen := RollingMeterMorph new color: PatchMorph waveformColor3; meterBlock: [velocity].
+	answer body beRow addMorph: screen; addMorph: self panel.
+	answer
+		addControlInput: #amount;
+		addControlOutput.
+	^ answer! !
 
 !Wobble methodsFor: 'controlling' stamp: 'len 23/May/2026 14:07:22'!
 reset
@@ -12903,17 +12871,19 @@ defaultBufferSize
 defaultExtent
 	^ self defaultBufferSize @ 24! !
 
-!RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Mar/2026 19:50:07'!
+!RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 17/Jun/2026 20:48:23'!
 drawOn: aCanvas
-	| m |
-	m := extent y / 2.0.
-	0 to: buffer size - 1 do: [:i| | h v |
+	| minY maxY h |
+	minY := 2.0.
+	maxY := extent y - 2.0.
+	h := maxY - minY.	
+	0 to: buffer size - 1 do: [:i| | v y |
 		v := buffer at: i + position \\ buffer size + 1.
 		v > 0.01 ifTrue:
-			[h := (v min: 1.0) * m.
-			aCanvas line: i @ (m-h) to: i @ (m+h-1) width: 1 color: color]]! !
+			[y := 1.0 - (v min: 1.0) * h + minY.
+			aCanvas line: i @ maxY to: i @ y width: 1 color: color]]! !
 
-!RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Mar/2026 00:28:00'!
+!RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 17/Jun/2026 20:39:22'!
 initialize
 	super initialize.
 	buffer := Float32Array new: self defaultBufferSize.
@@ -12924,9 +12894,9 @@ initialize
 meterBlock: aBlock
 	meterBlock := aBlock! !
 
-!RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 25/Jan/2026 19:44:49'!
+!RollingMeterMorph methodsFor: 'as yet unclassified' stamp: 'len 17/Jun/2026 20:45:26'!
 step
-	buffer at: position put: (((meterBlock value linearToDecibels + 60.0 max: 0.0) / 60.0) min: 1.0).
+	buffer at: position put: (meterBlock value min: 1.0 max: 0.0).
 	(position := position - 1) > 0 ifFalse: [position := buffer size].
 	self redrawNeeded! !
 

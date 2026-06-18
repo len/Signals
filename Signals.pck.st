@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7998] on 18 June 2026 at 2:56:41 am'!
+'From Cuis7.9 [latest update: #7998] on 19 June 2026 at 12:30:04 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 598!
+!provides: 'Signals' 1 599!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -994,14 +994,24 @@ Module subclass: #OberheimSVF
 OberheimSVF class
 	instanceVariableNames: ''!
 
-!classDefinition: #ControlPanel category: #'Signals-Morphic-Controls'!
+!classDefinition: #ControlPanel category: #'Signals-Morphic-Patches'!
 LinearLayoutMorph subclass: #ControlPanel
 	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Morphic-Controls'!
-!classDefinition: 'ControlPanel class' category: #'Signals-Morphic-Controls'!
+	category: 'Signals-Morphic-Patches'!
+!classDefinition: 'ControlPanel class' category: #'Signals-Morphic-Patches'!
 ControlPanel class
+	instanceVariableNames: ''!
+
+!classDefinition: #RackableMorph category: #'Signals-Morphic-Patches'!
+LinearLayoutMorph subclass: #RackableMorph
+	instanceVariableNames: 'model body title'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Patches'!
+!classDefinition: 'RackableMorph class' category: #'Signals-Morphic-Patches'!
+RackableMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #RoundedLinearLayoutMorph category: #'Signals-Morphic-Support'!
@@ -1366,7 +1376,7 @@ ControlOutputPinMorph class
 
 !classDefinition: #ScrollerMorph category: #'Signals-Morphic-Support'!
 BoxMorph subclass: #ScrollerMorph
-	instanceVariableNames: 'horizontal vertical scrollable'
+	instanceVariableNames: 'horizontal vertical scrollable showScrollbars'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Support'!
@@ -1376,7 +1386,7 @@ ScrollerMorph class
 
 !classDefinition: #ZoomerMorph category: #'Signals-Morphic-Support'!
 BoxMorph subclass: #ZoomerMorph
-	instanceVariableNames: ''
+	instanceVariableNames: 'showScrollbars'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Support'!
@@ -1624,14 +1634,14 @@ PlacedMorph subclass: #PatchableMorph
 PatchableMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #MoverMorph category: #'Signals-Morphic-Support'!
-PlacedMorph subclass: #MoverMorph
+!classDefinition: #MovingHelperMorph category: #'Signals-Morphic-Support'!
+PlacedMorph subclass: #MovingHelperMorph
 	instanceVariableNames: 'target offset'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Support'!
-!classDefinition: 'MoverMorph class' category: #'Signals-Morphic-Support'!
-MoverMorph class
+!classDefinition: 'MovingHelperMorph class' category: #'Signals-Morphic-Support'!
+MovingHelperMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #WireMorph category: #'Signals-Morphic-Patches'!
@@ -2702,6 +2712,15 @@ patchable
 	controls ifNotEmpty: [answer body addMorph: self panel].
 	^ answer! !
 
+!Module methodsFor: 'ui' stamp: 'len 18/Jun/2026 19:09:42'!
+rackable
+	| patchable answer |
+	patchable := self patchable. "make a new one"
+	answer := RackableMorph new model: self.
+	patchable body submorphs reverseDo: [:each| answer body addMorph: each layoutSpec: LayoutSizeSpec new useMorphWidth useMorphHeight].
+	patchable flap submorphs ifNotEmpty: [patchable flap submorphs reverseDo: [:each| answer body addMorph: each layoutSpec: LayoutSizeSpec new useMorphHeight useMorphWidth]].
+	^ answer! !
+
 !Module methodsFor: 'ui' stamp: 'len 27/Jan/2026 14:32:09'!
 title
 	^ self class name camelSeparatedWords! !
@@ -3540,6 +3559,21 @@ patchable
 		addControlInput: #feedback;
 		addControlInput: #damp;
 		yourself! !
+
+!StereoReverb methodsFor: 'ui' stamp: 'len 18/Jun/2026 19:36:31'!
+rackable
+	| answer panel1 panel2 panel3 |
+	panel1 := ControlPanel new
+		addKnob: (controls at: #predelay) label: 'Delay'.
+	panel2 := ControlPanel new
+		addKnob: (controls at: #feedback) label: 'FB';
+		addKnob: (controls at: #damp) label: 'Damp'.
+	panel3 := ControlPanel new
+		addKnob: (controls at: #width) label: 'Width';
+		addKnob: (controls at: #mix) label: 'Mix'.
+	answer := RackableMorph new model: self.
+	answer body addMorph: panel1; addMorph: panel2; addMorph: panel3.
+	^ answer! !
 
 !StereoReverb methodsFor: 'wiring' stamp: 'len 7/Mar/2026 16:14:28'!
 setInputL: aBuffer
@@ -6279,6 +6313,13 @@ patchable
 		addControlOutput.
 	^ answer! !
 
+!Envelope methodsFor: 'ui' stamp: 'len 18/Jun/2026 21:51:46'!
+rackable
+	| answer |
+	answer := RackableMorph new model: self.
+	answer body addMorph: self screen; addMorph: self panel1; addMorph: self panel2.
+	^ answer! !
+
 !Envelope methodsFor: 'wiring' stamp: 'len 17/Jun/2026 23:10:34'!
 setInput: aBuffer
 	input := aBuffer! !
@@ -6313,6 +6354,18 @@ panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #decay) label: 'D';
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
+		addTextualControl: (controls at: #velocitySensitivity)! !
+
+!AD methodsFor: 'ui' stamp: 'len 18/Jun/2026 21:52:12'!
+panel1
+	^ ControlPanel new
+		addSmallKnob: (controls at: #attack) label: 'A';
+		addSmallKnob: (controls at: #decay) label: 'D'! !
+
+!AD methodsFor: 'ui' stamp: 'len 18/Jun/2026 21:52:33'!
+panel2
+	^ ControlPanel new
 		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
 		addTextualControl: (controls at: #velocitySensitivity)! !
 
@@ -6401,6 +6454,21 @@ panel
 		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
 		addTextualControl: (controls at: #velocitySensitivity)! !
 
+!ADSR methodsFor: 'ui' stamp: 'len 18/Jun/2026 21:52:47'!
+panel1
+	^ ControlPanel new
+		addSmallKnob: (controls at: #attack) label: 'A';
+		addSmallKnob: (controls at: #decay) label: 'D';
+		addSmallKnob: (controls at: #sustain) label: 'S';
+		addSmallKnob: (controls at: #release) label: 'R'! !
+
+!ADSR methodsFor: 'ui' stamp: 'len 18/Jun/2026 21:52:56'!
+panel2
+	^ ControlPanel new
+		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'Legato');
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
+		addTextualControl: (controls at: #velocitySensitivity)! !
+
 !ADSR methodsFor: 'ui' stamp: 'len 17/Jun/2026 23:02:14'!
 patchable
 	^ super patchable
@@ -6442,6 +6510,19 @@ panel
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #hold) label: 'H';
 		addSmallKnob: (controls at: #decay) label: 'D';
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
+		addTextualControl: (controls at: #velocitySensitivity)! !
+
+!AHD methodsFor: 'ui' stamp: 'len 18/Jun/2026 21:53:19'!
+panel1
+	^ ControlPanel new
+		addSmallKnob: (controls at: #attack) label: 'A';
+		addSmallKnob: (controls at: #hold) label: 'H';
+		addSmallKnob: (controls at: #decay) label: 'D'! !
+
+!AHD methodsFor: 'ui' stamp: 'len 18/Jun/2026 21:53:25'!
+panel2
+	^ ControlPanel new
 		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
 		addTextualControl: (controls at: #velocitySensitivity)! !
 
@@ -6519,6 +6600,19 @@ panel
 		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
 		addTextualControl: (controls at: #velocitySensitivity)! !
 
+!AR methodsFor: 'ui' stamp: 'len 18/Jun/2026 21:53:35'!
+panel1
+	^ ControlPanel new
+		addSmallKnob: (controls at: #attack) label: 'A';
+		addSmallKnob: (controls at: #release) label: 'R'! !
+
+!AR methodsFor: 'ui' stamp: 'len 18/Jun/2026 21:53:45'!
+panel2
+	^ ControlPanel new
+		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'Legato');
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
+		addTextualControl: (controls at: #velocitySensitivity)! !
+
 !AR methodsFor: 'ui' stamp: 'len 17/Jun/2026 23:02:22'!
 patchable
 	^ super patchable
@@ -6591,6 +6685,20 @@ panel
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #sustain) label: 'S';
 		addSmallKnob: (controls at: #release) label: 'R';
+		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'Legato');
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
+		addTextualControl: (controls at: #velocitySensitivity)! !
+
+!ASR methodsFor: 'ui' stamp: 'len 18/Jun/2026 21:53:57'!
+panel1
+	^ ControlPanel new
+		addSmallKnob: (controls at: #attack) label: 'A';
+		addSmallKnob: (controls at: #sustain) label: 'S';
+		addSmallKnob: (controls at: #release) label: 'R'! !
+
+!ASR methodsFor: 'ui' stamp: 'len 18/Jun/2026 21:54:02'!
+panel2
+	^ ControlPanel new
 		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'Legato');
 		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
 		addTextualControl: (controls at: #velocitySensitivity)! !
@@ -6842,6 +6950,20 @@ patchable
 	answer
 		addControlInput: #speed;
 		addControlOutput.
+	^ answer! !
+
+!LFO methodsFor: 'ui' stamp: 'len 18/Jun/2026 19:29:46'!
+rackable
+	| answer panel1 panel2 |
+	panel1 := ControlPanel new
+		addMorph: (LFOWaveMorph new lfo: self);
+		addTextualControl: (controls at: #speed).
+	panel2 := ControlPanel new
+		addTextualControl: (controls at: #offset);
+		addMorph: (PluggableToggleMorph new model: self; getter: #bipolar; setter: #bipolar:; label: '±'; setBalloonText: 'Bipolar');
+		addMorph: (PluggableChoiceMorph new options: #(Free Reset Hold); model: self; getter: #mode; setter: #mode:; setBalloonText: 'Mode').
+	answer := RackableMorph new model: self.
+	answer body addMorph: self screen; addMorph: panel1; addMorph: panel2.
 	^ answer! !
 
 !LFO methodsFor: 'ui' stamp: 'len 3/Jun/2026 03:15:08'!
@@ -10288,6 +10410,62 @@ initialize
 new
 	^ self newRow! !
 
+!RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Jun/2026 18:53:53'!
+body
+	^ body! !
+
+!RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Jun/2026 18:11:00'!
+handlesMouseOver: anEvent
+	^ true! !
+
+!RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Jun/2026 19:51:43'!
+initialize
+	super initialize.
+	self axisEdgeWeight: 1.0.
+	self gap: 1; color: Color transparent; borderWidth: 0.
+	title := (LabelMorph contents: '' fontSize: 12 emphasis: 1) color: Color white.
+	self addMorph: title layoutSpec: (LayoutSizeSpec new useMorphWidth useMorphHeight offAxisEdgeWeight: 0.0).
+	body := RoundedLinearLayoutMorph newColumn gap: 10; padding: 4 @ 4; borderWidth: 1; borderColor: Color lightGray; color: PatchMorph panelColor; axisEdgeWeight: 0.5.
+	self addMorph: body! !
+
+!RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Jun/2026 19:21:26'!
+keyStroke: aKeyboardEvent
+	aKeyboardEvent primaryModifierPressed ifTrue:
+		[aKeyboardEvent keyCharacter = $b
+			ifTrue: [Smalltalk browseFull: self model class. aKeyboardEvent wasHandled: true. ^ self].
+		aKeyboardEvent keyCharacter = $i
+			ifTrue: [self model inspect. aKeyboardEvent wasHandled: true. ^ self]].
+	^ super keyStroke: aKeyboardEvent! !
+
+!RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Jun/2026 17:49:50'!
+minimumExtent
+	^ super minimumExtent max: 24@24! !
+
+!RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Jun/2026 18:55:43'!
+model
+	^ model! !
+
+!RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Jun/2026 18:55:48'!
+model: anObject
+	model := anObject.
+	self setTitle: model title! !
+
+!RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Jun/2026 18:54:45'!
+mouseEnter: anEvent
+	body borderColor: Color veryVeryLightGray! !
+
+!RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Jun/2026 18:54:31'!
+mouseLeave: anEvent
+	body borderColor: body defaultBorderColor! !
+
+!RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Jun/2026 18:54:02'!
+setTitle: aString
+	title contents: aString! !
+
+!RackableMorph class methodsFor: 'as yet unclassified' stamp: 'len 18/Jun/2026 17:48:39'!
+new
+	^ self newColumn! !
+
 !RoundedLinearLayoutMorph methodsFor: 'drawing' stamp: 'len 27/Jan/2026 19:19:39'!
 drawOn: aCanvas
 	| rect |
@@ -10295,6 +10473,10 @@ drawOn: aCanvas
 	aCanvas
 		fillRectangle: rect color: color cornerRadius: 8.0;
 		frameRectangle: rect borderWidth: borderWidth  color: borderColor cornerRadius: 8.0! !
+
+!RoundedLinearLayoutMorph methodsFor: 'drawing' stamp: 'len 18/Jun/2026 14:53:16'!
+requiresVectorCanvas
+	^ true! !
 
 !RoundedLinearLayoutMorph methodsFor: 'as yet unclassified' stamp: 'len 9/Apr/2026 19:29:01'!
 adoptWidgetsColor: paneColor
@@ -12324,11 +12506,11 @@ startStepping
 drawOn: aCanvas
 "	aCanvas fillRectangle: self localBounds color: Color black"! !
 
-!ScrollerMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 22:36:58'!
+!ScrollerMorph methodsFor: 'drawing' stamp: 'len 18/Jun/2026 23:50:01'!
 postDrawOn: aCanvas
 	"Draw indicative scrollbars if needed, only when the scrollable has keyboard focus."
 	| scrollableBounds viewport thickness color maxHeight maxWidth maxX maxY |
-	(scrollable ifNil: [^ false]) hasKeyboardFocus ifFalse: [^ false].
+	(showScrollbars and: [scrollable notNil]) ifFalse: [^ false].
 	scrollableBounds := scrollable fullBoundsInOwner insetBy: 1.
 	viewport := self localBounds.
 	(viewport containsRect: scrollableBounds) ifTrue: [^ false].
@@ -12350,13 +12532,21 @@ postDrawOn: aCanvas
 		aCanvas fillRectangle: (maxX - thickness @ y1 corner: maxX @ y2) color: color].
 	^ true! !
 
-!ScrollerMorph methodsFor: 'event handling testing' stamp: 'len 28/Dec/2025 22:33:15'!
-handlesMouseScroll: aMouseScrollEvent
+!ScrollerMorph methodsFor: 'events' stamp: 'len 18/Jun/2026 23:28:58'!
+allowsSubmorphDrag
 	^ true! !
 
 !ScrollerMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 17:34:01'!
 handlesKeyboardFocus
 	^ false! !
+
+!ScrollerMorph methodsFor: 'events' stamp: 'len 18/Jun/2026 23:48:01'!
+handlesMouseOver: anEvent
+	^ true! !
+
+!ScrollerMorph methodsFor: 'events' stamp: 'len 28/Dec/2025 22:33:15'!
+handlesMouseScroll: aMouseScrollEvent
+	^ true! !
 
 !ScrollerMorph methodsFor: 'events' stamp: 'len 6/Jan/2026 20:51:13'!
 keyStroke: anEvent 
@@ -12365,6 +12555,16 @@ keyStroke: anEvent
 		anEvent wasHandled: true.
 		^ self].
 	^ super keyStroke: anEvent! !
+
+!ScrollerMorph methodsFor: 'events' stamp: 'len 18/Jun/2026 23:47:27'!
+mouseEnter: anEvent
+	showScrollbars := true.
+	self redrawNeeded! !
+
+!ScrollerMorph methodsFor: 'events' stamp: 'len 18/Jun/2026 23:47:44'!
+mouseLeave: anEvent
+	showScrollbars := false.
+	self redrawNeeded! !
 
 !ScrollerMorph methodsFor: 'events' stamp: 'len 29/Dec/2025 15:34:12'!
 mouseScroll: aMouseScrollEvent localPosition: localEventPosition
@@ -12405,9 +12605,10 @@ defaultExtent
 horizontal: aBoolean
 	horizontal := aBoolean! !
 
-!ScrollerMorph methodsFor: 'initialization' stamp: 'len 28/Dec/2025 22:51:43'!
+!ScrollerMorph methodsFor: 'initialization' stamp: 'len 18/Jun/2026 23:48:34'!
 initialize
 	super initialize.
+	showScrollbars := false.
 	horizontal := false.
 	vertical := false! !
 
@@ -12422,8 +12623,9 @@ scrollable: aMorph
 vertical: aBoolean
 	vertical := aBoolean! !
 
-!ScrollerMorph methodsFor: 'layout' stamp: 'len 19/Apr/2026 19:28:22'!
+!ScrollerMorph methodsFor: 'layout' stamp: 'len 18/Jun/2026 23:34:03'!
 someSubmorphPositionOrExtentChanged
+	self scrollBy: 0 @ 0. "force scrollable morph within correct bounds"
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
@@ -12453,10 +12655,11 @@ wantsSteps
 drawOn: aCanvas
 "	aCanvas fillRectangle: self localBounds color: Color black"! !
 
-!ZoomerMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 22:37:11'!
+!ZoomerMorph methodsFor: 'drawing' stamp: 'len 18/Jun/2026 23:44:18'!
 postDrawOn: aCanvas
 	"Draw indicative scrollbars if needed."
 	| zoomable zoomableBounds viewport thickness color x1 x2 y1 y2 maxHeight maxWidth maxX maxY |
+	showScrollbars ifFalse: [^ false].
 	zoomable := submorphs lastIfEmpty: [^ false].
 	zoomableBounds := zoomable fullBoundsInOwner insetBy: 1.
 	viewport := self localBounds.
@@ -12475,11 +12678,15 @@ postDrawOn: aCanvas
 	aCanvas fillRectangle: (maxX - thickness @ y1 corner: maxX @ y2) color: color.
 	^ true! !
 
-!ZoomerMorph methodsFor: 'event handling testing' stamp: 'len 9/Feb/2026 21:01:23'!
+!ZoomerMorph methodsFor: 'events' stamp: 'len 9/Feb/2026 21:01:23'!
 allowsSubmorphDrag
 	^ true! !
 
-!ZoomerMorph methodsFor: 'event handling testing' stamp: 'len 15/Nov/2025 15:11:00'!
+!ZoomerMorph methodsFor: 'events' stamp: 'len 18/Jun/2026 23:46:27'!
+handlesMouseOver: anEvent
+	^ true! !
+
+!ZoomerMorph methodsFor: 'events' stamp: 'len 15/Nov/2025 15:11:00'!
 handlesMouseScroll: aMouseScrollEvent
 	^ true! !
 
@@ -12490,6 +12697,16 @@ keyStroke: aKeyboardEvent
 		submorphs do: [:any| any mouseButton2Activity].
 		^ self].
 	^ super keyStroke: aKeyboardEvent! !
+
+!ZoomerMorph methodsFor: 'events' stamp: 'len 18/Jun/2026 23:47:04'!
+mouseEnter: anEvent
+	showScrollbars := true.
+	self redrawNeeded! !
+
+!ZoomerMorph methodsFor: 'events' stamp: 'len 18/Jun/2026 23:46:58'!
+mouseLeave: anEvent
+	showScrollbars := false.
+	self redrawNeeded! !
 
 !ZoomerMorph methodsFor: 'events' stamp: 'len 9/Mar/2026 22:26:26'!
 mouseScroll: aMouseScrollEvent localPosition: localEventPosition
@@ -12515,6 +12732,11 @@ clipsSubmorphs
 defaultExtent
 	^ 720 @ 512
 "	^ 1024 + 512 @ 1024"! !
+
+!ZoomerMorph methodsFor: 'initialization' stamp: 'len 18/Jun/2026 23:44:04'!
+initialize
+	super initialize.
+	showScrollbars := false! !
 
 !ZoomerMorph methodsFor: 'layout' stamp: 'len 19/Apr/2026 19:26:08'!
 someSubmorphPositionOrExtentChanged
@@ -13735,9 +13957,9 @@ wantsSteps
 drawOn: aCanvas
 	^ self! !
 
-!PatchMorph methodsFor: 'events' stamp: 'len 9/Feb/2026 21:00:50'!
+!PatchMorph methodsFor: 'events' stamp: 'len 18/Jun/2026 23:14:58'!
 aboutToBeGrabbedBy: aHand
-	^ MoverMorph new target: self; offset: (self owner internalizeFromWorld: aHand morphPosition) - self morphPosition! !
+	^ MovingHelperMorph new target: self; offset: (self owner internalizeFromWorld: aHand morphPosition) - self morphPosition! !
 
 !PatchMorph methodsFor: 'events' stamp: 'len 22/Nov/2025 11:43:00'!
 allowsMorphDrop
@@ -13959,9 +14181,9 @@ addControlOutput
 drawOn: aCanvas
 	^ self! !
 
-!PatchableMorph methodsFor: 'dropping/grabbing' stamp: 'len 16/Nov/2025 15:52:00'!
+!PatchableMorph methodsFor: 'dropping/grabbing' stamp: 'len 18/Jun/2026 23:14:58'!
 aboutToBeGrabbedBy: aHand
-	^ MoverMorph new target: self; offset: (self owner internalizeFromWorld: aHand morphPosition) - self morphPosition! !
+	^ MovingHelperMorph new target: self; offset: (self owner internalizeFromWorld: aHand morphPosition) - self morphPosition! !
 
 !PatchableMorph methodsFor: 'events' stamp: 'len 31/Jan/2026 19:07:05'!
 dragEnter: anEvent
@@ -14032,41 +14254,45 @@ initialize
 	self addMorph: flap.
 	flap visible: false! !
 
+!PatchableMorph methodsFor: 'private' stamp: 'len 18/Jun/2026 18:56:23'!
+rackable
+	^ self valueOfProperty: #rackable ifAbsentPut: [self model rackable]! !
+
 !PatchableMorph methodsFor: 'private' stamp: 'len 27/Nov/2025 18:20:00'!
 uninstallDisconnectedSignals
 	inputsArea submorphsDo: [:m| m uninstallDisconnectedSignals].
 	outputsArea submorphsDo: [:m| m uninstallDisconnectedSignals]	! !
 
-!MoverMorph methodsFor: 'accessing' stamp: 'len 16/Nov/2025 15:52:00'!
+!MovingHelperMorph methodsFor: 'accessing' stamp: 'len 16/Nov/2025 15:52:00'!
 offset: aPoint
 	offset := aPoint! !
 
-!MoverMorph methodsFor: 'accessing' stamp: 'len 11/Nov/2025 22:34:00'!
+!MovingHelperMorph methodsFor: 'accessing' stamp: 'len 11/Nov/2025 22:34:00'!
 target: aMorph
 	target := aMorph! !
 
-!MoverMorph methodsFor: 'drawing' stamp: 'len 16/Nov/2025 15:23:00'!
+!MovingHelperMorph methodsFor: 'drawing' stamp: 'len 16/Nov/2025 15:23:00'!
 drawOn: aCanvas
 	^ self! !
 
-!MoverMorph methodsFor: 'dropping/grabbing' stamp: 'len 16/Nov/2025 15:14:00'!
+!MovingHelperMorph methodsFor: 'dropping/grabbing' stamp: 'len 16/Nov/2025 15:14:00'!
 dragCancel
 	self delete! !
 
-!MoverMorph methodsFor: 'dropping/grabbing' stamp: 'len 11/Nov/2025 22:37:00'!
+!MovingHelperMorph methodsFor: 'dropping/grabbing' stamp: 'len 11/Nov/2025 22:37:00'!
 wantsToBeDroppedInto: aMorph
 	^ true! !
 
-!MoverMorph methodsFor: 'stepping' stamp: 'len 4/Jan/2026 16:40:25'!
+!MovingHelperMorph methodsFor: 'stepping' stamp: 'len 4/Jan/2026 16:40:25'!
 step
 	(self owner isKindOf: HandMorph) ifFalse: [^ self delete].
 	target morphPosition: ((target owner ifNil: [^ self]) internalizeFromWorld: self owner morphPosition) - offset! !
 
-!MoverMorph methodsFor: 'stepping' stamp: 'len 16/Nov/2025 15:28:00'!
+!MovingHelperMorph methodsFor: 'stepping' stamp: 'len 16/Nov/2025 15:28:00'!
 stepTime
 	^ 10! !
 
-!MoverMorph methodsFor: 'stepping' stamp: 'len 11/Nov/2025 22:37:00'!
+!MovingHelperMorph methodsFor: 'stepping' stamp: 'len 11/Nov/2025 22:37:00'!
 wantsSteps
 	^ true! !
 
@@ -15701,9 +15927,16 @@ decibelsPrintString
 decibelsToLinear
 	^ 10.0 raisedTo: self / 20.0! !
 
-!Number methodsFor: '*signals' stamp: 'len 2/Jun/2026 15:16:58'!
-hertzPrintString
+!Number methodsFor: '*signals' stamp: 'len 18/Jun/2026 19:28:47'!
+hertzAndRPMPrintString
 	self < 5.0 ifTrue: [^ (self printStringFractionDigits: 2), ' Hz / ', (60 / self printStringFractionDigits: 1), ' rpm'].
+	self < 100.0 ifTrue: [^ (self printStringFractionDigits: 1), ' Hz'].
+	self < 1000.0 ifTrue: [^ self asInteger printString, ' Hz'].
+	^ ((self / 1000.0) printStringFractionDigits: 1), ' kHz'! !
+
+!Number methodsFor: '*signals' stamp: 'len 18/Jun/2026 19:28:58'!
+hertzPrintString
+	self < 5.0 ifTrue: [^ (self printStringFractionDigits: 2), ' Hz'].
 	self < 100.0 ifTrue: [^ (self printStringFractionDigits: 1), ' Hz'].
 	self < 1000.0 ifTrue: [^ self asInteger printString, ' Hz'].
 	^ ((self / 1000.0) printStringFractionDigits: 1), ' kHz'! !
@@ -15752,10 +15985,16 @@ ratioToCents
 ratioToSemitones
 	^ 12.0 * (self log: 2)! !
 
-!Number methodsFor: '*signals' stamp: 'len 1/Jun/2026 22:12:25'!
-secondsPrintString
+!Number methodsFor: '*signals' stamp: 'len 18/Jun/2026 19:28:20'!
+secondsAndRPMPrintString
 	self abs < 0.01 ifTrue: [^ (self * 1000.0 printStringFractionDigits: 1), ' ms'].
 	self abs < 1.0 ifTrue: [^ (self * 1000.0) asInteger printString, ' ms / ', (self * 60.0 printStringFractionDigits: 1), ' rpm'].
+	^ (self printStringFractionDigits: 1), ' s'! !
+
+!Number methodsFor: '*signals' stamp: 'len 18/Jun/2026 19:28:37'!
+secondsPrintString
+	self abs < 0.01 ifTrue: [^ (self * 1000.0 printStringFractionDigits: 1), ' ms'].
+	self abs < 1.0 ifTrue: [^ (self * 1000.0) asInteger printString, ' ms'].
 	^ (self printStringFractionDigits: 1), ' s'! !
 
 !Number methodsFor: '*signals' stamp: 'len 22/Apr/2026 21:17:12'!

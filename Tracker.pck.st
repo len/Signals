@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #7998] on 19 June 2026 at 12:30:08 am'!
+'From Cuis7.9 [latest update: #8014] on 19 June 2026 at 3:40:23 am'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 54!
+!provides: 'Tracker' 1 55!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -194,61 +194,61 @@ Commands Rxy and Cxy interpret the nibble x as a time span in units of 1/12 of a
 !Tuning commentStamp: '<historical>' prior: 0!
 A tuning system is defined by a list of intervals from the root note, in cents of a semitone. The last interval is assumed to be the octave (normally 1200.0 cents, but not always). This is the same definition of tuning system that Scala uses. We also include optional names for the notes, in order to support special notation for some tunings such as 31-EDO.!
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 acceptButton
 	^ self successColor! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 background
 	^ Color black! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 buttonColorFrom: paneColor
 	^ paneColor adjustSaturation: -0.03 brightness: -0.1! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 buttonLabel
 	^ Color black! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 cancelButton
 	^ self errorColor! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 errorColor
 	^ Color lightRed! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 failureColor
 	^ Color yellow duller! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 focusIndicator
 	^ self textHighlight lighter! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 listMultiHighlightFocused: aBoolean
 	^ (self listHighlightFocused: aBoolean) 
 		adjustSaturation: 0.0 brightness: 0.15! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 paneBackgroundFrom: aColor
 "	^ aColor adjustSaturation: 0 brightness: -0.7"
 	^ aColor alphaMixed: 0.14 with: Color black! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 scrollbarButtonColor
 	^Color black! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 scrollbarColor
 	^ Color black! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 scrollbarSliderShadowColor
 	^Color black! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 shout
 	"
 	SHTextStylerST80 releaseClassCachedState
@@ -312,42 +312,42 @@ shout
 " 
 ! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 successColor
 	^ Color lightGreen duller! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 text
 	^ Color white! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 textAutoHighlight
 	self flag: #fixme. "this needs to change SHTextStylerST80>>#privateConvert to call it."
 	^ (Color colorFrom: '#FF005C') alpha: 0.5
 "	^ (Color colorFrom: '#ff2f8e') alpha: 0.5"
 "	^ (Color colorFrom: '#F0FF42') alpha: 0.3"! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 textCursor
 	^ Color white! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 textHighlight
 	^ Color gray "Color r: 0.2 g: 0.35 b: 0.45"! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 unfocusedTextHighlightFrom: aColor
 	^aColor adjustSaturation: 0.0 brightness: -0.08! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 windowLabel
 	^ `Color gray: 0.2`! !
 
-!DarkerTheme methodsFor: 'icons' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'icons' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 closeIcon
 	^ self cancelIcon! !
 
-!DarkerTheme methodsFor: 'initialization' stamp: 'Install-Tracker 4/Jun/2026 16:16:51'!
+!DarkerTheme methodsFor: 'initialization' stamp: 'Install-Tracker 4/Jun/2026, 9:16:51 am (UTC)'!
 initialize
 	super initialize.
 "
@@ -376,142 +376,142 @@ initialize
 
 	SHTextStylerST80 initialize! !
 
-!DarkerTheme methodsFor: 'menu colors' stamp: 'len 17/Jun/2026 17:50:11'!
+!DarkerTheme methodsFor: 'menu colors' stamp: 'len 17/Jun/2026, 10:50:11 am (UTC)'!
 menu
 	^ Color darkGray! !
 
-!DarkerTheme methodsFor: 'menu colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'menu colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 menuText
 	^ Color white! !
 
-!DarkerTheme methodsFor: 'menu colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'menu colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 menuTitleBar
 	^ self menu darker! !
 
-!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 buttonBorderWidth
 	^ 1! !
 
-!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 buttonPaneHeight
 	"Answer the user's preferred default height for button panes."
 
 	^(Preferences at: #standardButtonFont) lineSpacing * 10 // 8! !
 
-!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 embossedButtonLabels
 	^ false! !
 
-!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 embossedTitles
 	^ false! !
 
-!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 fullScreenDeskMargin
 	^ 0! !
 
-!DarkerTheme methodsFor: 'other options' stamp: 'len 18/Jun/2026 21:04:07'!
+!DarkerTheme methodsFor: 'other options' stamp: 'len 18/Jun/2026, 2:04:07 pm (UTC)'!
 layoutAdjusterThickness
 	^ 4! !
 
-!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 roundButtons
 	^ true! !
 
-!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 roundWindowCorners
 	^ true! !
 
-!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 roundedButtonRadius
 	^ 4! !
 
-!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 roundedWindowRadius
 	^6! !
 
-!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 scrollbarShowButtons
 	^ false! !
 
-!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 scrollbarThickness
 	^ 16! !
 
-!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 useUniformColors
 	^false! !
 
-!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'other options' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 windowBorderWidth
 	^ 6! !
 
-!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 browser
 	^ `(Color fromHexString: '#00FFAB') duller`
 "	^ Color lightGreen duller"! !
 
-!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 changeList
 	^ Color lightCyan duller! !
 
-!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 changeSorter
 	^ Color lightCyan duller! !
 
-!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 debugger
 	^ Color lightRed darker! !
 
-!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 defaultButtonColor
 	^ self defaultWindowColor lighter lighter! !
 
-!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 defaultWindowColor
 	^ `Color hue: 212 chroma: 0.015 luminance: 0.35`! !
 
-!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 fileContentsBrowser
 	^ Color tan! !
 
-!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 fileList
 	^ Color lightMagenta duller! !
 
-!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 messageNames
 	^ Color lightBlue duller! !
 
-!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 messageSet
 	^ Color lightBlue duller! !
 
-!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 packageList
 	^ Color tan! !
 
-!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 testRunner
 	^ Color blue quiteWhiter duller! !
 
-!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 transcript
 	^ Color lightOrange! !
 
-!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 versionsBrowser
 	^ Color pink whiter duller! !
 
-!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 workspace
 	^ Color lightYellow duller! !
 
-!DarkerTheme methodsFor: 'widget colors' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'widget colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 textPane
 	^ Color black! !
 
-!DarkerTheme methodsFor: 'private - shout mappings' stamp: 'len 11/Apr/2026 12:42:14'!
+!DarkerTheme methodsFor: 'private - shout mappings' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 generateShoutConfig
 
 	| styles colors |
@@ -567,40 +567,40 @@ generateShoutConfig
 
 	^ styles! !
 
-!DarkerTheme class methodsFor: 'as yet unclassified' stamp: 'len 11/Apr/2026 12:49:05'!
+!DarkerTheme class methodsFor: 'as yet unclassified' stamp: 'len 11/Apr/2026, 5:49:05 am (UTC)'!
 initialize
 	super initialize.
 	self beCurrent! !
 
-!InstrumentRackMorph methodsFor: 'actions' stamp: 'len 18/Jun/2026 14:55:26'!
+!InstrumentRackMorph methodsFor: 'actions' stamp: 'len 18/Jun/2026, 7:55:26 am (UTC)'!
 moveInstrumentDown
 	tracker selectedInstrumentNumber ifNotNil: [:anInteger| anInteger > 1 ifTrue: [tracker swapInstrument: anInteger with: anInteger - 1]]! !
 
-!InstrumentRackMorph methodsFor: 'actions' stamp: 'len 18/Jun/2026 14:55:26'!
+!InstrumentRackMorph methodsFor: 'actions' stamp: 'len 18/Jun/2026, 7:55:26 am (UTC)'!
 moveInstrumentUp
 	tracker selectedInstrumentNumber ifNotNil: [:anInteger| anInteger < 255 ifTrue: [tracker swapInstrument: anInteger with: anInteger + 1]]! !
 
-!InstrumentRackMorph methodsFor: 'drawing' stamp: 'len 18/Jun/2026 14:55:26'!
+!InstrumentRackMorph methodsFor: 'drawing' stamp: 'len 18/Jun/2026, 7:55:26 am (UTC)'!
 drawOn: aCanvas
 "	self patch ifNotNil: [aCanvas frameRectangle: self patch fullBoundsInOwner borderWidth: 2 color: Color white]. "! !
 
-!InstrumentRackMorph methodsFor: 'events' stamp: 'len 18/Jun/2026 23:24:05'!
+!InstrumentRackMorph methodsFor: 'events' stamp: 'len 18/Jun/2026, 4:24:05 pm (UTC)'!
 aboutToBeGrabbedBy: aHand
 	^ MovingHelperMorph new target: self; offset: (self owner internalizeFromWorld: aHand morphPosition) - self morphPosition! !
 
-!InstrumentRackMorph methodsFor: 'events' stamp: 'len 18/Jun/2026 15:40:08'!
+!InstrumentRackMorph methodsFor: 'events' stamp: 'len 18/Jun/2026, 8:40:08 am (UTC)'!
 handleCommandHotkey: anEvent
 	anEvent keyCharacter = $i ifTrue: [tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument inspect]. ^ true].
 	^ false! !
 
-!InstrumentRackMorph methodsFor: 'events' stamp: 'len 18/Jun/2026 14:55:26'!
+!InstrumentRackMorph methodsFor: 'events' stamp: 'len 18/Jun/2026, 7:55:26 am (UTC)'!
 handleOptionHotkey: anEvent
 	anEvent shiftPressed ifTrue:
 		[anEvent isArrowDown ifTrue: [tracker moveInstrumentDown. ^ true].
 		anEvent isArrowUp ifTrue: [tracker moveInstrumentUp. ^ true]].
 	^ false! !
 
-!InstrumentRackMorph methodsFor: 'events' stamp: 'len 18/Jun/2026 15:08:36'!
+!InstrumentRackMorph methodsFor: 'events' stamp: 'len 18/Jun/2026, 8:08:36 am (UTC)'!
 keyStroke: anEvent
 	| c i |
 	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
@@ -621,47 +621,51 @@ keyStroke: anEvent
 			[anEvent wasHandled: true. tracker selectedInstrument ifNotNil: [:anInstument| anInstument noteOn: tracker selectedTrack inputCenterKey + i - 1]. ^ self]].
 	^ super keyStroke: anEvent! !
 
-!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 18/Jun/2026 16:25:40'!
+!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 18/Jun/2026, 9:25:40 am (UTC)'!
 defaultBorderColor
 	^ Color transparent! !
 
-!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 18/Jun/2026 16:24:53'!
+!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 18/Jun/2026, 9:24:53 am (UTC)'!
 defaultColor
 	^ Color transparent! !
 
-!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 18/Jun/2026 20:58:17'!
+!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 18/Jun/2026, 6:48:11 pm (UTC)'!
 initialize
 	super initialize.
 	self axisEdgeWeight: 1.0.
 	self gap: 4.
-	self padding: 4@4! !
+	self padding: 4@8! !
 
-!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 18/Jun/2026 14:55:26'!
+!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 18/Jun/2026, 7:55:26 am (UTC)'!
 setTracker: aTracker
 	tracker := aTracker.
 	aTracker when: #cursorChanged send: #update to: self.
 	self update! !
 
-!InstrumentRackMorph methodsFor: 'private' stamp: 'len 19/Jun/2026 00:00:24'!
+!InstrumentRackMorph methodsFor: 'private' stamp: 'len 18/Jun/2026, 8:39:36 pm (UTC)'!
 update
 	| selectedInstrument |
 	(selectedInstrument := tracker selectedInstrument ifNil: [^ self]) = currentInstrument ifTrue: [^ self].
 	currentInstrument := selectedInstrument.
 	self removeAllMorphs.
 	self morphExtent: 10@10. "and let it grow from that"
+"	currentInstrument label ifNotNil: [:aString| | labelMorph |
+		labelMorph := LabelMorph contents: aString fontSize: 14 emphasis: 1.
+		self addMorph: labelMorph.
+		labelMorph color: Color white; rotateBy: Float halfPi negated."
 	((selectedInstrument patch submorphs select: [:each| each isKindOf: PatchableMorph])
 		sorted: [:a :b| a morphPosition x < b morphPosition x])
 			do: [:each| self addMorph: each rackable].
 	self redrawNeeded! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 18/Jun/2026 22:25:10'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 18/Jun/2026, 3:25:10 pm (UTC)'!
 fitAllPatchesToInstrumentEditorBounds
 	| bounds |
 	layoutMorph layoutSubmorphs.
 	bounds := instrumentEditor localBounds insetBy: 8.
 	model instruments do: [:each| each patch fitTo: bounds]! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 3/Jun/2026 19:00:30'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 3/Jun/2026, 12:00:30 pm (UTC)'!
 openProject
 	model isPlaying ifTrue: [model stop].
 	self request: 'Project name' initialAnswer: '' do: [:name|
@@ -671,22 +675,22 @@ openProject
 		self fitAllPatchesToInstrumentEditorBounds.
 		model triggerEvent: #cursorChanged]! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 9/Apr/2026 15:02:54'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 9/Apr/2026, 8:02:54 am (UTC)'!
 saveProject
 	self request: 'Project name' initialAnswer: (model label ifNil: '') do: [:newName|
 		model label: newName.
 		(self class package packageDirectory / 'data' / 'projects' // (newName, '.song')) writeStreamDo: [:s| model writeOn: s].
 		self setLabel: newName]! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 16/Jun/2026 01:20:37'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 15/Jun/2026, 6:20:37 pm (UTC)'!
 setBPM
 	self request: 'BPM' initialAnswer: model bpm printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| model bpm: s asNumber]! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 15/Mar/2026 15:08:22'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 15/Mar/2026, 8:08:22 am (UTC)'!
 setSwing
 	self request: 'Swing' initialAnswer: (model swing * 100) truncated printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 0 and: 100]] do: [:s| model swing: s asNumber / 100.0]! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 18/Jun/2026 22:25:10'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 18/Jun/2026, 3:25:10 pm (UTC)'!
 toggleInstrumentRackOrEditor
 	instrumentEditor owner
 		ifNil:
@@ -705,12 +709,12 @@ toggleInstrumentRackOrEditor
 				addAdjusterAndMorph: lowerPane proportionalHeight: 1.0 - 0.1].
 	layoutMorph adoptWidgetsColor: self widgetsColor "to set the color of the adjuster again"! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 18/Jun/2026 22:25:10'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 18/Jun/2026, 3:25:10 pm (UTC)'!
 toggleLowerPane
 	lowerPane visible: lowerPane visible not.
 	instrumentEditor layoutSpec proportionalHeight: (lowerPane visible ifTrue: [0.38] ifFalse: [1.0])! !
 
-!TrackerWindow methodsFor: 'events' stamp: 'len 18/Jun/2026 22:25:10'!
+!TrackerWindow methodsFor: 'events' stamp: 'len 18/Jun/2026, 3:25:10 pm (UTC)'!
 handleCommandHotkey: anEvent
 	anEvent keyCharacter = $f ifTrue: [self setBPM. ^ true].
 	anEvent keyCharacter = $g ifTrue: [self setSwing. ^ true].
@@ -731,7 +735,7 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $m ifTrue: [model toggleTrackMask. ^ true].
 	^ false! !
 
-!TrackerWindow methodsFor: 'events' stamp: 'len 14/Jun/2026 00:51:45'!
+!TrackerWindow methodsFor: 'events' stamp: 'len 13/Jun/2026, 5:51:45 pm (UTC)'!
 keyStroke: anEvent
 	anEvent isSpace ifTrue: [model isPlaying ifTrue: [model stop] ifFalse: [model loop: anEvent secondaryModifierPressed not; followPlayhead: true; play]. ^ true].
 	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
@@ -739,7 +743,7 @@ keyStroke: anEvent
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 18/Jun/2026 22:25:10'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 18/Jun/2026, 3:25:10 pm (UTC)'!
 buildMorphicWindow
 	| lowerLeftPane sequencerScroller patternEditorScroller bar |
 	instrumentEditor := InstrumentEditorMorph new setTracker: model.
@@ -767,48 +771,48 @@ buildMorphicWindow
 		addMorph: instrumentEditor proportionalHeight: 0.38;
 		addAdjusterAndMorph: lowerPane proportionalHeight: 1.0 - 0.38! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 9/Apr/2026 23:59:23'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 9/Apr/2026, 4:59:23 pm (UTC)'!
 defaultColor
 	^ Color black! !
 
-!TrackerWindow methodsFor: 'private' stamp: 'len 15/Jun/2026 23:22:24'!
+!TrackerWindow methodsFor: 'private' stamp: 'len 15/Jun/2026, 4:22:24 pm (UTC)'!
 ensureCursorVisible
 	patternEditor owner scrollToMakeVisible: (patternEditor externalizeBoundingRectOf: patternEditor activeBounds).
 	arranger owner scrollToMakeVisible: (arranger externalizeBoundingRectOf: arranger activeBounds)! !
 
-!TrackerWindow methodsFor: 'open/close' stamp: 'len 11/Apr/2026 12:51:09'!
+!TrackerWindow methodsFor: 'open/close' stamp: 'len 11/Apr/2026, 5:51:09 am (UTC)'!
 delete
 	model stop.
 	super delete! !
 
-!TrackerWindow methodsFor: 'GUI building' stamp: 'len 18/Jun/2026 21:37:08'!
+!TrackerWindow methodsFor: 'GUI building' stamp: 'len 18/Jun/2026, 2:37:08 pm (UTC)'!
 windowColor
 	^ Color gray! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 15:28:14'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026, 8:28:14 am (UTC)'!
 clipboardCopy
 	(self activeHand keyboardFocus ifNil: [^ self])
 		withAllOwnersDo: [:each| (each isKindOf: PatchableMorph) ifTrue: [ClipboardBuffer := each model copy. ^ self]]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 15:28:18'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026, 8:28:18 am (UTC)'!
 clipboardCut
 	(self activeHand keyboardFocus ifNil: [^ self])
 		withAllOwnersDo: [:each| (each isKindOf: PatchableMorph) ifTrue: [ClipboardBuffer := each model copy. each delete. ^ self]]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 15:28:05'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026, 8:28:05 am (UTC)'!
 clipboardPaste
 	| patch |
 	ClipboardBuffer ifNil: [^ self].
 	patch := self patch ifNil: [^ self].
 	patch addMorph: ClipboardBuffer copy patchable position: ((patch internalizeFromWorld: self activeHand morphPosition))! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 19/Apr/2026 22:52:50'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 19/Apr/2026, 3:52:50 pm (UTC)'!
 duplicateInstrument
 	| instrument |
 	instrument := tracker selectedInstrument ifNil: [^ self].
 	self request: 'Duplicate to instrument number' initialAnswer: '' verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| tracker instruments at: s asNumber put: instrument copy]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 9/Apr/2026 15:03:03'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 9/Apr/2026, 8:03:03 am (UTC)'!
 exportInstrument
 	| instrument |
 	instrument := tracker selectedInstrument ifNil: [^ self].
@@ -817,11 +821,11 @@ exportInstrument
 		(self class package packageDirectory / 'data' / 'projects' // (newName, '.patch')) writeStreamDo: [:s| instrument writeOn: s].
 		self triggerEvent: #instrumentLabelChanged]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 9/Apr/2026 18:36:15'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 9/Apr/2026, 11:36:15 am (UTC)'!
 fitPatchToBounds
 	self patch ifNotNil: [:aMorph| aMorph fitTo: (self localBounds insetBy: 8)]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Apr/2026 16:32:20'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Apr/2026, 9:32:20 am (UTC)'!
 importInstrument
 	| instrument |
 	instrument := tracker selectedInstrument ifNil: [^ self].
@@ -832,25 +836,25 @@ importInstrument
 		self fitPatchToBounds.
 		self triggerEvent: #instrumentLabelChanged]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 23:20:07'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026, 4:20:07 pm (UTC)'!
 moveInstrumentDown
 	tracker selectedInstrumentNumber ifNotNil: [:anInteger| anInteger > 1 ifTrue: [tracker swapInstrument: anInteger with: anInteger - 1]]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 23:20:46'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026, 4:20:46 pm (UTC)'!
 moveInstrumentUp
 	tracker selectedInstrumentNumber ifNotNil: [:anInteger| anInteger < 255 ifTrue: [tracker swapInstrument: anInteger with: anInteger + 1]]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Feb/2026 22:50:13'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Feb/2026, 3:50:13 pm (UTC)'!
 renameInstrument
 	| instrument |
 	instrument := tracker selectedInstrument ifNil: [^ self].
 	self request: 'Instrument name' initialAnswer: (instrument label ifNil: ['']) do: [:newName| instrument label: newName. self triggerEvent: #instrumentLabelChanged]! !
 
-!InstrumentEditorMorph methodsFor: 'drawing' stamp: 'len 6/Apr/2026 19:01:18'!
+!InstrumentEditorMorph methodsFor: 'drawing' stamp: 'len 6/Apr/2026, 12:01:18 pm (UTC)'!
 drawOn: aCanvas
 "	self patch ifNotNil: [aCanvas frameRectangle: self patch fullBoundsInOwner borderWidth: 2 color: Color white]. "! !
 
-!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 18/Jun/2026 15:40:20'!
+!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 18/Jun/2026, 8:40:20 am (UTC)'!
 handleCommandHotkey: anEvent
 	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
 	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
@@ -858,14 +862,14 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $i ifTrue: [tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument inspect]. ^ true].
 	^ false! !
 
-!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 23:20:23'!
+!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026, 4:20:23 pm (UTC)'!
 handleOptionHotkey: anEvent
 	anEvent shiftPressed ifTrue:
 		[anEvent isArrowDown ifTrue: [tracker moveInstrumentDown. ^ true].
 		anEvent isArrowUp ifTrue: [tracker moveInstrumentUp. ^ true]].
 	^ false! !
 
-!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 02:43:19'!
+!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 14/Jun/2026, 7:43:19 pm (UTC)'!
 keyStroke: anEvent
 	| c i |
 	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
@@ -887,17 +891,17 @@ keyStroke: anEvent
 			[anEvent wasHandled: true. tracker selectedInstrument ifNotNil: [:anInstument| anInstument noteOn: tracker selectedTrack inputCenterKey + i - 1]. ^ self]].
 	^ super keyStroke: anEvent! !
 
-!InstrumentEditorMorph methodsFor: 'initialization' stamp: 'len 18/Feb/2026 17:30:12'!
+!InstrumentEditorMorph methodsFor: 'initialization' stamp: 'len 18/Feb/2026, 10:30:12 am (UTC)'!
 setTracker: aTracker
 	tracker := aTracker.
 	aTracker when: #cursorChanged send: #update to: self.
 	self update! !
 
-!InstrumentEditorMorph methodsFor: 'private' stamp: 'len 18/Feb/2026 16:16:00'!
+!InstrumentEditorMorph methodsFor: 'private' stamp: 'len 18/Feb/2026, 9:16:00 am (UTC)'!
 patch
 	^ submorphs detect: [:one| one isKindOf: PatchMorph] ifNone: []! !
 
-!InstrumentEditorMorph methodsFor: 'private' stamp: 'len 20/Feb/2026 20:35:37'!
+!InstrumentEditorMorph methodsFor: 'private' stamp: 'len 20/Feb/2026, 1:35:37 pm (UTC)'!
 update
 	| selectedPatch |
 	selectedPatch := tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument patch].
@@ -906,13 +910,13 @@ update
 		selectedPatch ifNotNil: [self addMorph: selectedPatch]].
 	self redrawNeeded! !
 
-!ArrangerMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026 16:11:15'!
+!ArrangerMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026, 9:11:15 am (UTC)'!
 clipboardCopy
 	clipboard := selectionStart isNil
 		ifTrue: [{tracker sequence at: tracker cursorPattern}]
 		ifFalse: [((selectionStart min: tracker cursorPattern) to: (selectionStart max: tracker cursorPattern)) collect: [:i| tracker sequence at: i]]! !
 
-!ArrangerMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026 16:10:50'!
+!ArrangerMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026, 9:10:50 am (UTC)'!
 clipboardCut
 	| cursor |
 	selectionStart isNil ifTrue: "cut the pattern at cursor"
@@ -924,17 +928,17 @@ clipboardCut
 	(selectionStart max: cursor) to: (selectionStart min: cursor) by: -1 do: [:i| tracker deletePattern: i].
 	selectionStart := nil! !
 
-!ArrangerMorph methodsFor: 'actions' stamp: 'len 21/Feb/2026 18:59:25'!
+!ArrangerMorph methodsFor: 'actions' stamp: 'len 21/Feb/2026, 11:59:25 am (UTC)'!
 clipboardPaste
 	selectionStart := nil.
 	clipboard ifNotNil: [tracker insertSequence: (clipboard collect: [:each| each key -> each value])]! !
 
-!ArrangerMorph methodsFor: 'actions' stamp: 'len 21/Feb/2026 18:59:27'!
+!ArrangerMorph methodsFor: 'actions' stamp: 'len 21/Feb/2026, 11:59:27 am (UTC)'!
 clipboardPasteNew
 	selectionStart := nil.
 	clipboard ifNotNil: [tracker insertSequence: (clipboard collect: [:each| each key copy -> each value])]! !
 
-!ArrangerMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 23:15:15'!
+!ArrangerMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026, 4:15:15 pm (UTC)'!
 moveSelectedPatternsDown
 	| start end |
 	selectionStart
@@ -946,7 +950,7 @@ moveSelectedPatternsDown
 	tracker moveCursorPatternDown.
 	selectionStart ifNotNil: [selectionStart := selectionStart + 1]! !
 
-!ArrangerMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 23:14:04'!
+!ArrangerMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026, 4:14:04 pm (UTC)'!
 moveSelectedPatternsUp
 	| start end |
 	selectionStart
@@ -958,7 +962,7 @@ moveSelectedPatternsUp
 	tracker moveCursorPatternUp.
 	selectionStart ifNotNil: [selectionStart := selectionStart - 1]! !
 
-!ArrangerMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026 16:56:56'!
+!ArrangerMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026, 9:56:56 am (UTC)'!
 activeBounds
 	"Answer a subrectangle of the bounds of the receiver that should preferably be kept visible inside a scroller."
 	| blockHeight charWidth |
@@ -966,7 +970,7 @@ activeBounds
 	blockHeight := charWidth * 3.
 	^ 0 @ ((tracker cursorPattern - 1) * blockHeight) extent: self morphWidth @ blockHeight! !
 
-!ArrangerMorph methodsFor: 'drawing' stamp: 'len 16/Jun/2026 14:37:27'!
+!ArrangerMorph methodsFor: 'drawing' stamp: 'len 16/Jun/2026, 7:37:27 am (UTC)'!
 drawOn: aCanvas
 	| x y s charWidth blockHeight blockWidth space cursorTrack cursorPattern patternNumbers oldPatternNumbers |
 	charWidth := font widthOf: $X.
@@ -1014,11 +1018,11 @@ drawOn: aCanvas
 		[y := tracker playheadPattern - 1 * blockHeight + (tracker playheadLine * blockHeight / tracker playingPattern length asFloat).
 		aCanvas line: blockHeight + 1 @ y to: extent x @ y width: 2 color: Color white]! !
 
-!ArrangerMorph methodsFor: 'drawing' stamp: 'len 19/Feb/2026 21:44:53'!
+!ArrangerMorph methodsFor: 'drawing' stamp: 'len 19/Feb/2026, 2:44:53 pm (UTC)'!
 requiresVectorCanvas
 	^ true! !
 
-!ArrangerMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 20:41:18'!
+!ArrangerMorph methodsFor: 'events' stamp: 'len 15/Jun/2026, 1:41:18 pm (UTC)'!
 handleCommandHotkey: anEvent
 	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
 	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
@@ -1027,26 +1031,26 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $i ifTrue: [tracker selectedPattern ifNotNil: [:aPattern| aPattern inspect]. ^ true].
 	^ false! !
 
-!ArrangerMorph methodsFor: 'events' stamp: 'len 22/Feb/2026 16:31:30'!
+!ArrangerMorph methodsFor: 'events' stamp: 'len 22/Feb/2026, 9:31:30 am (UTC)'!
 handleNavigationKey: anEvent
 	selectionStart := nil.
 	anEvent isArrowUp ifTrue: [tracker moveCursorPatternUp].
 	anEvent isArrowDown ifTrue: [tracker moveCursorPatternDown]! !
 
-!ArrangerMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 23:10:21'!
+!ArrangerMorph methodsFor: 'events' stamp: 'len 15/Jun/2026, 4:10:21 pm (UTC)'!
 handleOptionHotkey: anEvent
 	anEvent shiftPressed ifTrue:
 		[anEvent isArrowUp ifTrue: [self moveSelectedPatternsUp. ^ true].
 		anEvent isArrowDown ifTrue: [self moveSelectedPatternsDown. ^ true]].
 	^ false! !
 
-!ArrangerMorph methodsFor: 'events' stamp: 'len 23/Feb/2026 16:09:28'!
+!ArrangerMorph methodsFor: 'events' stamp: 'len 23/Feb/2026, 9:09:28 am (UTC)'!
 handleSelectionKey: anEvent
 	selectionStart isNil ifTrue: [selectionStart := tracker cursorPattern].
 	anEvent isArrowUp ifTrue: [tracker moveCursorPatternUp].
 	anEvent isArrowDown ifTrue: [tracker moveCursorPatternDown]! !
 
-!ArrangerMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 03:21:44'!
+!ArrangerMorph methodsFor: 'events' stamp: 'len 14/Jun/2026, 8:21:44 pm (UTC)'!
 keyStroke: anEvent
 	(anEvent secondaryModifierPressed and: [self handleOptionHotkey: anEvent]) ifTrue:
 		[anEvent wasHandled: true.
@@ -1061,12 +1065,12 @@ keyStroke: anEvent
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!ArrangerMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 15:43:39'!
+!ArrangerMorph methodsFor: 'events' stamp: 'len 24/Feb/2026, 8:43:39 am (UTC)'!
 keyboardFocusChange: aBoolean
 	aBoolean ifTrue: [self startBlinking] ifFalse: [self stopBlinking].
 	self redrawNeeded! !
 
-!ArrangerMorph methodsFor: 'geometry' stamp: 'len 21/Feb/2026 16:41:06'!
+!ArrangerMorph methodsFor: 'geometry' stamp: 'len 21/Feb/2026, 9:41:06 am (UTC)'!
 minimumExtent
 	| blockHeight blockWidth charWidth space |
 	charWidth := font widthOf: $X.
@@ -1075,14 +1079,14 @@ minimumExtent
 	space := charWidth / 4.0.
 	^ (blockWidth + space) * tracker tracks size + blockWidth + blockHeight @ (blockHeight * tracker sequence size)! !
 
-!ArrangerMorph methodsFor: 'initialization' stamp: 'len 10/Mar/2026 19:03:12'!
+!ArrangerMorph methodsFor: 'initialization' stamp: 'len 10/Mar/2026, 12:03:12 pm (UTC)'!
 initialize
 	super initialize.
 	font := FontFamily familyName: 'JetBrains Mono NL' pointSize: 15.
 	showCursor := true.
 	pauseBlinking := false! !
 
-!ArrangerMorph methodsFor: 'initialization' stamp: 'len 2/Jan/2026 19:33:30'!
+!ArrangerMorph methodsFor: 'initialization' stamp: 'len 2/Jan/2026, 12:33:30 pm (UTC)'!
 setTracker: aTracker
 	tracker := aTracker.
 	aTracker when: #sequenceChanged send: #redrawNeeded to: self.
@@ -1091,7 +1095,7 @@ setTracker: aTracker
 	aTracker when: #playheadChanged send: #redrawNeeded to: self.
 	self update! !
 
-!ArrangerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026 15:38:55'!
+!ArrangerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026, 8:38:55 am (UTC)'!
 onBlinkCursor
 	"Blink the cursor"
 	showCursor := showCursor not | pauseBlinking.
@@ -1099,7 +1103,7 @@ onBlinkCursor
 	"cursorRect ifNotNil: [ :r | self invalidateLocalRect: r]"
 	self redrawNeeded! !
 
-!ArrangerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026 15:38:48'!
+!ArrangerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026, 8:38:48 am (UTC)'!
 pauseBlinking
 	"Show a solid cursor (non blinking) for a short while."
 	pauseBlinking := true.
@@ -1108,7 +1112,7 @@ pauseBlinking
 		[showCursor := true.
 		self redrawNeeded]! !
 
-!ArrangerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026 15:38:27'!
+!ArrangerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026, 8:38:27 am (UTC)'!
 startBlinking
 	"And show the cursor"
 	pauseBlinking := true.
@@ -1116,7 +1120,7 @@ startBlinking
 	showCursor := true.
 	self startStepping: #onBlinkCursor stepTime: 500! !
 
-!ArrangerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026 15:38:38'!
+!ArrangerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026, 8:38:38 am (UTC)'!
 stopBlinking
 	"And do not show cursor anymore."
 	self stopStepping: #onBlinkCursor.
@@ -1125,17 +1129,17 @@ stopBlinking
 		[showCursor := false.
 		self redrawNeeded]! !
 
-!ArrangerMorph methodsFor: 'private' stamp: 'len 31/Dec/2025 22:21:20'!
+!ArrangerMorph methodsFor: 'private' stamp: 'len 31/Dec/2025, 3:21:20 pm (UTC)'!
 update
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!MultitrackMeterMorph methodsFor: 'drawing' stamp: 'len 12/Feb/2026 16:36:41'!
+!MultitrackMeterMorph methodsFor: 'drawing' stamp: 'len 12/Feb/2026, 9:36:41 am (UTC)'!
 colorForMeterValue: aNumber
 	"White up to -12 dB, yellow from -12 dB to -3 dB, red over -3 dB."
 	^ aNumber > 0.7 ifTrue: [Color redCathode] ifFalse: [aNumber > 0.25 ifTrue: [Color lemonPhosphor] ifFalse: [Color white]]! !
 
-!MultitrackMeterMorph methodsFor: 'drawing' stamp: 'len 16/Jun/2026 14:37:49'!
+!MultitrackMeterMorph methodsFor: 'drawing' stamp: 'len 16/Jun/2026, 7:37:49 am (UTC)'!
 drawOn: aCanvas
 	| v x y leftMaster rightMaster peak |
 	leftMaster := rightMaster := 0.0.
@@ -1163,25 +1167,25 @@ drawOn: aCanvas
 	y := extent y - 4 - (extent y - 8 * tracker level) max: 0.
 	aCanvas strokeWidth: 1.0 color: Color white do: [aCanvas moveTo: x - 8 @ (y - 4); lineTo: x - 8 @ (y + 4); lineTo: x - 2 @ y; closePath]! !
 
-!MultitrackMeterMorph methodsFor: 'drawing' stamp: 'len 24/Jan/2026 14:11:16'!
+!MultitrackMeterMorph methodsFor: 'drawing' stamp: 'len 24/Jan/2026, 7:11:16 am (UTC)'!
 requiresVectorCanvas
 	^ true ! !
 
-!MultitrackMeterMorph methodsFor: 'drawing' stamp: 'len 25/Jan/2026 19:46:18'!
+!MultitrackMeterMorph methodsFor: 'drawing' stamp: 'len 25/Jan/2026, 12:46:18 pm (UTC)'!
 yForMeterValue: aNumber
 	"Answer the y coordinate for the given linear meter value (RMS or peak).
 	We map it logarithmically to the height of the morph. We ignore values below -60 dB or over 0 dB."
 	^ extent y - (extent y * (aNumber linearToDecibels + 60.0 max: 0.0) / 60.0) max: 0.0! !
 
-!MultitrackMeterMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 17:31:47'!
+!MultitrackMeterMorph methodsFor: 'events' stamp: 'len 24/Feb/2026, 10:31:47 am (UTC)'!
 handlesKeyboardFocus
 	^ false! !
 
-!MultitrackMeterMorph methodsFor: 'events' stamp: 'len 24/Jan/2026 14:14:37'!
+!MultitrackMeterMorph methodsFor: 'events' stamp: 'len 24/Jan/2026, 7:14:37 am (UTC)'!
 handlesMouseScroll: anEvent
 	^ anEvent anyModifierKeyPressed not! !
 
-!MultitrackMeterMorph methodsFor: 'events' stamp: 'len 6/Feb/2026 17:57:18'!
+!MultitrackMeterMorph methodsFor: 'events' stamp: 'len 6/Feb/2026, 10:57:18 am (UTC)'!
 mouseScroll: anEvent localPosition: localEventPosition
 	| step |
 	step := 0.01.
@@ -1190,11 +1194,11 @@ mouseScroll: anEvent localPosition: localEventPosition
 	tracker level: tracker level + step.
 	self showBalloon: tracker level linearToDecibelsPrintString! !
 
-!MultitrackMeterMorph methodsFor: 'geometry' stamp: 'len 31/Dec/2025 23:16:09'!
+!MultitrackMeterMorph methodsFor: 'geometry' stamp: 'len 31/Dec/2025, 4:16:09 pm (UTC)'!
 minimumExtent
 	^ meterSpacing * (tracker tracks size + 1) @ 64! !
 
-!MultitrackMeterMorph methodsFor: 'initialization' stamp: 'len 10/Mar/2026 19:03:03'!
+!MultitrackMeterMorph methodsFor: 'initialization' stamp: 'len 10/Mar/2026, 12:03:03 pm (UTC)'!
 initialize
 	| font charWidth |
 	super initialize.
@@ -1204,37 +1208,37 @@ initialize
 	meterWidth := charWidth / 2.0.
 	meterSpacing := meterWidth + (charWidth/4.0)! !
 
-!MultitrackMeterMorph methodsFor: 'initialization' stamp: 'len 24/Jan/2026 14:21:32'!
+!MultitrackMeterMorph methodsFor: 'initialization' stamp: 'len 24/Jan/2026, 7:21:32 am (UTC)'!
 setTracker: aTracker
 	tracker := aTracker.
 	aTracker when: #tracksChanged send: #update to: self.
 	aTracker when: #levelChanged send: #redrawNeeded to: self! !
 
-!MultitrackMeterMorph methodsFor: 'stepping' stamp: 'len 19/Jan/2026 02:01:38'!
+!MultitrackMeterMorph methodsFor: 'stepping' stamp: 'len 18/Jan/2026, 7:01:38 pm (UTC)'!
 step
 	(tracker isPlaying or: [tracker tracks anySatisfy: [:any| any meterValue > 0.01]]) ifTrue: [self redrawNeeded]! !
 
-!MultitrackMeterMorph methodsFor: 'stepping' stamp: 'len 19/Jan/2026 01:59:32'!
+!MultitrackMeterMorph methodsFor: 'stepping' stamp: 'len 18/Jan/2026, 6:59:32 pm (UTC)'!
 stepTime
 	^ 100! !
 
-!MultitrackMeterMorph methodsFor: 'stepping' stamp: 'len 28/Dec/2025 16:24:02'!
+!MultitrackMeterMorph methodsFor: 'stepping' stamp: 'len 28/Dec/2025, 9:24:02 am (UTC)'!
 wantsSteps
 	^ true! !
 
-!MultitrackMeterMorph methodsFor: 'private' stamp: 'len 31/Dec/2025 22:43:38'!
+!MultitrackMeterMorph methodsFor: 'private' stamp: 'len 31/Dec/2025, 3:43:38 pm (UTC)'!
 update
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 11/Mar/2026 14:45:09'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 11/Mar/2026, 7:45:09 am (UTC)'!
 adjustFontSizeBy: anInteger
 	| pointSizes |
 	pointSizes := font family pointSizes select: [:each| each between: 6 and: 36]. "not too small, not too big"
 	font := font family atPointSize: (pointSizes atPin: (pointSizes indexOf: font pointSize) + anInteger).
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 15:28:57'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026, 8:28:57 am (UTC)'!
 clipboardCopy
 	| pattern |
 	selectionLineStart ifNil: [ClipboardBuffer := {{(tracker selectedTrigger ifNil: [^ self]) copy}}. ^ self].
@@ -1243,11 +1247,11 @@ clipboardCopy
 		collect: [:i|
 			((selectionTrackStart min: tracker cursorTrack) to: (selectionTrackStart max: tracker cursorTrack)) 				collect: [:k| pattern track: k at: i]]! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 22/Feb/2026 22:24:00'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 22/Feb/2026, 3:24:00 pm (UTC)'!
 clipboardCut
 	self clipboardCopy; selectionDelete! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026 15:28:49'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026, 8:28:49 am (UTC)'!
 clipboardPaste
 	| i0 k0 pattern |
 	selectionLineStart := selectionTrackStart := nil.
@@ -1260,7 +1264,7 @@ clipboardPaste
 				ifTrue: [pattern track: k0 + k at: i0 + i put: trigger copy]]].
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 18:29:58'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026, 11:29:58 am (UTC)'!
 moveCursorColumnLeft
 	cursorPosition <= 2
 		ifTrue:
@@ -1272,7 +1276,7 @@ moveCursorColumnLeft
 	self showFXBalloon.
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 18:30:06'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026, 11:30:06 am (UTC)'!
 moveCursorColumnRight
 	cursorPosition >= self lastColumnPosition
 		ifTrue:
@@ -1284,7 +1288,7 @@ moveCursorColumnRight
 	self showFXBalloon.
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 18:29:41'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026, 11:29:41 am (UTC)'!
 moveCursorLeft
 	cursorPosition = 1
 		ifTrue:
@@ -1296,7 +1300,7 @@ moveCursorLeft
 	self showFXBalloon.
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 18:29:48'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026, 11:29:48 am (UTC)'!
 moveCursorRight
 	cursorPosition = self lastPosition
 		ifTrue:
@@ -1308,7 +1312,7 @@ moveCursorRight
 	self showFXBalloon.
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 23:02:52'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026, 4:02:52 pm (UTC)'!
 moveSelectedTracksLeft
 	| trackStart trackEnd |
 	selectionTrackStart
@@ -1320,7 +1324,7 @@ moveSelectedTracksLeft
 	tracker moveCursorTrackLeft.
 	selectionTrackStart ifNotNil: [selectionTrackStart := selectionTrackStart - 1]! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 23:03:57'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026, 4:03:57 pm (UTC)'!
 moveSelectedTracksRight
 	| trackStart trackEnd |
 	selectionTrackStart
@@ -1332,7 +1336,7 @@ moveSelectedTracksRight
 	tracker moveCursorTrackRight.
 	selectionTrackStart ifNotNil: [selectionTrackStart := selectionTrackStart + 1]! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 22:59:42'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026, 3:59:42 pm (UTC)'!
 moveSelectedTriggersDown
 	| pattern lineStart lineEnd trackStart trackEnd |
 	pattern := tracker selectedPattern.
@@ -1350,7 +1354,7 @@ moveSelectedTriggersDown
 	tracker moveCursorLineDown.
 	selectionLineStart ifNotNil: [selectionLineStart := selectionLineStart + 1]! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 22:59:53'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026, 3:59:53 pm (UTC)'!
 moveSelectedTriggersUp
 	| pattern lineStart lineEnd trackStart trackEnd |
 	pattern := tracker selectedPattern.
@@ -1368,7 +1372,7 @@ moveSelectedTriggersUp
 	tracker moveCursorLineUp.
 	selectionLineStart ifNotNil: [selectionLineStart := selectionLineStart - 1]! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 9/Mar/2026 19:44:57'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 9/Mar/2026, 12:44:57 pm (UTC)'!
 playSelection
 	| cursorPattern cursorLine cursorTrack |
 	cursorPattern := tracker cursorPattern.
@@ -1377,7 +1381,7 @@ playSelection
 	selectionLineStart ifNil: [tracker playFrom: cursorPattern line: cursorLine to: cursorPattern line: cursorLine tracks: {cursorTrack}. ^ self].
 	tracker playFrom: cursorPattern line: (selectionLineStart min: cursorLine) to: cursorPattern line: (selectionLineStart max: cursorLine) tracks: ((selectionTrackStart min: cursorTrack) to: (selectionTrackStart max: cursorTrack))! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 24/Feb/2026 01:30:51'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026, 6:30:51 pm (UTC)'!
 selectedTriggersDo: aBlock
 	| pattern |
 	selectionLineStart ifNil: [tracker selectedTrigger ifNotNil: aBlock. ^ self].
@@ -1386,7 +1390,7 @@ selectedTriggersDo: aBlock
 		(selectionTrackStart min: tracker cursorTrack) to: (selectionTrackStart max: tracker cursorTrack) do: [:k|
 			(pattern track: k at: i) ifNotNil: aBlock]]! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026 16:14:01'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026, 9:14:01 am (UTC)'!
 selectionDelete
 	| pattern |
 	pattern := tracker selectedPattern.
@@ -1399,30 +1403,30 @@ selectionDelete
 			pattern track: k at: i put: nil]].
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 14/Mar/2026 18:30:14'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 14/Mar/2026, 11:30:14 am (UTC)'!
 setPatternLPB
 	self request: 'LPB' initialAnswer: tracker selectedPattern lpb printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| tracker selectedPattern lpb: s asNumber. self redrawNeeded]! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 4/Jan/2026 15:52:47'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 4/Jan/2026, 8:52:47 am (UTC)'!
 setPatternLength
 	tracker isPlaying ifTrue: [^ self].
 	self request: 'Pattern length' initialAnswer: tracker selectedPattern length printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| tracker setSelectedPatternLength: s asNumber. self redrawNeeded]! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 11/Jun/2026 02:01:54'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 10/Jun/2026, 7:01:54 pm (UTC)'!
 setTrackTuning
 	| menu |
 	menu := MenuMorph new.
 	Tuning library do: [:each| menu add: each label target: tracker action: #setSelectedTrackTuning: argument: each].
 	menu invokeModal! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026 18:30:38'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026, 11:30:38 am (UTC)'!
 toggleShowFXColumns
 	showFXColumns := showFXColumns not.
 	cursorPosition := cursorPosition min: self lastPosition.
 	self showFXBalloon.
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Jun/2026 19:30:47'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Jun/2026, 12:30:47 pm (UTC)'!
 activeBounds
 	"Answer a subrectangle of the bounds of the receiver that should preferably be kept visible inside a scroller.
 	We use the bounds of the currently selected trigger, so when we move the cursor the current trigger is kept visible."
@@ -1433,7 +1437,7 @@ activeBounds
 	x := (self trackWidthInCharacters + 0.5) * (tracker cursorTrack - 1) + 2.5.
 	^​ x * charWidth @ y extent: self trackWidthInCharacters * charWidth @ lineSpacing! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 15/Jun/2026 18:27:24'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 15/Jun/2026, 11:27:24 am (UTC)'!
 cursorRect
 	| lineSpacing charWidth cursorWidth x y |
 	lineSpacing := font lineSpacing.
@@ -1447,7 +1451,7 @@ cursorRect
 	cursorPosition > 8 ifTrue: [x := x + 0.5].
 	^​ x * charWidth @ y extent: cursorWidth * charWidth @ lineSpacing! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 15/Jun/2026 18:59:45'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 15/Jun/2026, 11:59:45 am (UTC)'!
 drawCursorOn: aCanvas
 	| cursorRect |
 	cursorRect := self cursorRect.
@@ -1455,13 +1459,13 @@ drawCursorOn: aCanvas
 	self hasKeyboardFocus ifFalse: [aCanvas frameRectangle: cursorRect borderWidth: 1 color: self class cursorColor. ^ self].
 	aCanvas fillRectangle: cursorRect color: (showCursor ifTrue: [self class cursorColor] ifFalse: [self class cursorColor alpha: 0.7])! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 22/Feb/2026 19:01:27'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 22/Feb/2026, 12:01:27 pm (UTC)'!
 drawOn: aCanvas
 	self drawTracksOn: aCanvas.
 	self drawCursorOn: aCanvas.
 	self drawPatternOn: aCanvas! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 14/Jun/2026 00:35:31'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 13/Jun/2026, 5:35:31 pm (UTC)'!
 drawPatternOn: aCanvas
 	| lineSpacing charWidth y unsetColor noteColor velocityColor pattern endLine middle startLine darkColor lightColor xLeft xRight beatColor trackWidth |
 	pattern := tracker selectedPattern.
@@ -1547,7 +1551,7 @@ drawPatternOn: aCanvas
 					x := charWidth * 3.5 + x]].
 		y := y + lineSpacing]! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 19/Jun/2026 00:21:27'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 18/Jun/2026, 5:21:27 pm (UTC)'!
 drawTracksOn: aCanvas
 	| color textColor charWidth trackWidth x mask headerLineWidth maxTrackLabelWidth fittingTrackLabel highlightedTrackStart highlightedTrackEnd |
 	charWidth := font widthOf: $X.
@@ -1587,15 +1591,15 @@ drawTracksOn: aCanvas
 		x := x + (charWidth/2.0)].
 	aCanvas fillRectangle: (x @ 0 corner: extent x @ headerLineWidth) color: Color darkGray! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Jun/2026 19:30:47'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Jun/2026, 12:30:47 pm (UTC)'!
 trackWidthInCharacters
 	^ showFXColumns ifTrue: [15] ifFalse: [8]! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 18/Jun/2026 23:17:59'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 18/Jun/2026, 4:17:59 pm (UTC)'!
 aboutToBeGrabbedBy: aHand
 	^ MovingHelperMorph new target: self; offset: (self owner internalizeFromWorld: aHand morphPosition) - self morphPosition! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 20:40:47'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026, 1:40:47 pm (UTC)'!
 handleCommandHotkey: anEvent
 	"Font size:"
 	anEvent keyCharacter = $- ifTrue: [self adjustFontSizeBy: -1. ^ true].
@@ -1615,7 +1619,7 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 18:30:19'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026, 11:30:19 am (UTC)'!
 handleInputKey: anEvent
 	| c i |
 	anEvent isBackspace ifTrue:
@@ -1660,7 +1664,7 @@ handleInputKey: anEvent
 		^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 5/Jun/2026 23:24:43'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 5/Jun/2026, 4:24:43 pm (UTC)'!
 handleKeyStroke: anEvent
 	(anEvent secondaryModifierPressed and: [self handleOptionHotkey: anEvent]) ifTrue: [^ true].
 	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue: [^ true].
@@ -1673,7 +1677,7 @@ handleKeyStroke: anEvent
 	(anEvent anyModifierKeyPressed not and: [self handleInputKey: anEvent]) ifTrue: [^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 14/Jun/2026 00:48:24'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 13/Jun/2026, 5:48:24 pm (UTC)'!
 handleNavigationKey: anEvent
 	selectionLineStart := selectionTrackStart := nil.
 	anEvent isArrowUp ifTrue: [tracker moveCursorLineUp. ^ true].
@@ -1691,7 +1695,7 @@ handleNavigationKey: anEvent
 	anEvent isEnd ifTrue: [tracker moveCursorLineBottom. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 22:59:53'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026, 3:59:53 pm (UTC)'!
 handleOptionHotkey: anEvent
 	anEvent shiftPressed ifTrue:
 		[anEvent isArrowUp ifTrue: [self moveSelectedTriggersUp. ^ true].
@@ -1706,7 +1710,7 @@ handleOptionHotkey: anEvent
 	anEvent isEsc ifTrue: [tracker toggleFollowPlayhead. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 14/Jun/2026 00:42:28'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 13/Jun/2026, 5:42:28 pm (UTC)'!
 handleSelectionKey: anEvent
 	selectionLineStart isNil ifTrue:
 		[selectionLineStart := tracker cursorLine.
@@ -1716,20 +1720,20 @@ handleSelectionKey: anEvent
 	anEvent isArrowLeft ifTrue: [tracker moveCursorTrackLeft].
 	anEvent isArrowRight ifTrue: [tracker moveCursorTrackRight]! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 18/Jun/2026 23:59:04'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 18/Jun/2026, 4:59:04 pm (UTC)'!
 handlesMouseDown: anEvent
 	^ anEvent mouseButton2Pressed or: [anEvent mouseButton1Pressed]! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 20:45:29'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026, 1:45:29 pm (UTC)'!
 handlesMouseScroll: anEvent
 	^ #(up down) identityIncludes: anEvent direction! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 10/Jan/2026 23:03:58'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 10/Jan/2026, 4:03:58 pm (UTC)'!
 keyStroke: anEvent
 	(self handleKeyStroke: anEvent) ifTrue: [anEvent wasHandled: true. ^ self].
 	^ super keyStroke: anEvent! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 8/Jun/2026 19:30:47'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 8/Jun/2026, 12:30:47 pm (UTC)'!
 mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
 	| charWidth trackWidth x |
 	charWidth := font widthOf: $X.
@@ -1739,22 +1743,22 @@ mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
 	tracker setCursorTrack: (x / trackWidth) truncated + 1.
 	selectionLineStart := nil! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026 20:47:28'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026, 1:47:28 pm (UTC)'!
 mouseScroll: anEvent localPosition: localEventPosition
 	anEvent direction = #up ifTrue: [tracker moveCursorLineUp] ifFalse: [tracker moveCursorLineDown]! !
 
-!PatternEditorMorph methodsFor: 'focus handling' stamp: 'len 9/Jan/2026 15:20:32'!
+!PatternEditorMorph methodsFor: 'focus handling' stamp: 'len 9/Jan/2026, 8:20:32 am (UTC)'!
 keyboardFocusChange: aBoolean
 	aBoolean ifTrue: [self startBlinking] ifFalse: [self stopBlinking].
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'geometry' stamp: 'len 8/Jun/2026 19:30:47'!
+!PatternEditorMorph methodsFor: 'geometry' stamp: 'len 8/Jun/2026, 12:30:47 pm (UTC)'!
 minimumExtent
 	| n |
 	n := tracker tracks size.
 	^ (font widthOf: $X) * (n * (self trackWidthInCharacters + 0.5) + 4.5) @ (font lineSpacing * 16)! !
 
-!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 8/Jun/2026 15:49:20'!
+!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 8/Jun/2026, 8:49:20 am (UTC)'!
 initialize
 	super initialize.
 "	font := FontFamily familyName: 'impulseBig' pointSize: 18."
@@ -1767,7 +1771,7 @@ initialize
 	pauseBlinking := false.
 	showFXColumns := true! !
 
-!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 14/Mar/2026 18:36:21'!
+!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 14/Mar/2026, 11:36:21 am (UTC)'!
 setTracker: aTracker
 	tracker := aTracker.
 	cursorPosition := 1.
@@ -1777,7 +1781,7 @@ setTracker: aTracker
 	aTracker when: #playheadChanged send: #redrawNeeded to: self.
 	self updateTracks! !
 
-!PatternEditorMorph methodsFor: 'private' stamp: 'len 16/Jun/2026 03:11:38'!
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 15/Jun/2026, 8:11:38 pm (UTC)'!
 balloonTextForFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
@@ -1812,19 +1816,19 @@ balloonTextForFX: anInteger
 	command = 81 "Q (trigger delay)" ifTrue: [^ 'Delay trigger by ', v printString, '/256 of a line'].
 	^ nil! !
 
-!PatternEditorMorph methodsFor: 'private' stamp: 'len 31/Dec/2025 01:25:06'!
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 30/Dec/2025, 6:25:06 pm (UTC)'!
 headerHeight
 	^ labelFont lineSpacing + 8! !
 
-!PatternEditorMorph methodsFor: 'private' stamp: 'len 8/Jun/2026 19:14:37'!
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 8/Jun/2026, 12:14:37 pm (UTC)'!
 lastColumnPosition
 	^ self lastPosition - (showFXColumns ifTrue: [2] ifFalse: [1])! !
 
-!PatternEditorMorph methodsFor: 'private' stamp: 'len 8/Jun/2026 19:13:37'!
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 8/Jun/2026, 12:13:37 pm (UTC)'!
 lastPosition
 	^ showFXColumns ifTrue: [11] ifFalse: [5]! !
 
-!PatternEditorMorph methodsFor: 'private' stamp: 'len 15/Jun/2026 19:02:36'!
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 15/Jun/2026, 12:02:36 pm (UTC)'!
 onBlinkCursor
 	"Blink the cursor"
 	showCursor := showCursor not | pauseBlinking.
@@ -1832,7 +1836,7 @@ onBlinkCursor
 	"cursorRect ifNotNil: [ :r | self invalidateLocalRect: r]"
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'private' stamp: 'len 9/Jan/2026 15:18:12'!
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 9/Jan/2026, 8:18:12 am (UTC)'!
 pauseBlinking
 	"Show a solid cursor (non blinking) for a short while."
 	pauseBlinking := true.
@@ -1842,7 +1846,7 @@ pauseBlinking
 		self redrawNeeded
 		"cursorRect ifNotNil: [:r| self invalidateLocalRect: r]"]! !
 
-!PatternEditorMorph methodsFor: 'private' stamp: 'len 15/Jun/2026 18:27:38'!
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 15/Jun/2026, 11:27:38 am (UTC)'!
 showFXBalloon
 	self deleteBalloon.
 	cursorPosition > 5 ifFalse: [^ self].
@@ -1850,7 +1854,7 @@ showFXBalloon
 		(cursorPosition < 9 ifTrue: [trigger fx1] ifFalse: [trigger fx2])
 			ifNotNil: [:fx| (self balloonTextForFX: fx) ifNotNil: [:text| self showBalloon: text at: self cursorRect bottomCenter]]]! !
 
-!PatternEditorMorph methodsFor: 'private' stamp: 'len 9/Jan/2026 15:35:08'!
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 9/Jan/2026, 8:35:08 am (UTC)'!
 startBlinking
 	"And show the cursor"
 	pauseBlinking := true.
@@ -1858,7 +1862,7 @@ startBlinking
 	showCursor := true.
 	self startStepping: #onBlinkCursor stepTime: 500! !
 
-!PatternEditorMorph methodsFor: 'private' stamp: 'len 9/Jan/2026 15:33:48'!
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 9/Jan/2026, 8:33:48 am (UTC)'!
 stopBlinking
 	"And do not show cursor anymore."
 	self stopStepping: #onBlinkCursor.
@@ -1868,18 +1872,18 @@ stopBlinking
 		self redrawNeeded
 		"textCursorRect ifNotNil: [ :r | self invalidateLocalRect: r ]"]! !
 
-!PatternEditorMorph methodsFor: 'private' stamp: 'len 15/Jun/2026 17:24:42'!
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 15/Jun/2026, 10:24:42 am (UTC)'!
 updateCursor
 	(tracker followPlayhead and: [tracker isPlaying]) ifTrue: [	selectionLineStart := selectionTrackStart := nil].
 	self redrawNeeded.
 	self showFXBalloon! !
 
-!PatternEditorMorph methodsFor: 'private' stamp: 'len 9/Mar/2026 19:05:48'!
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 9/Mar/2026, 12:05:48 pm (UTC)'!
 updateTracks
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 16/Jun/2026 03:16:32'!
+!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 15/Jun/2026, 8:16:32 pm (UTC)'!
 initialize
 	"
 	self initialize
@@ -1903,31 +1907,31 @@ initialize
 	"Other:"
 	'FQRY' do: [:c| FXColors at: c codePoint put: (Color okl: 0.95 c: 0 h: 0)]! !
 
-!PatternEditorMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026 19:58:39'!
+!PatternEditorMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026, 12:58:39 pm (UTC)'!
 cursorColor
 	^ Color redCathode! !
 
-!PatternEditorMorph class methodsFor: 'colors' stamp: 'len 13/Jun/2026 23:44:14'!
+!PatternEditorMorph class methodsFor: 'colors' stamp: 'len 13/Jun/2026, 4:44:14 pm (UTC)'!
 playheadColor
 	^ self cursorColor alpha: 0.3! !
 
-!PatternEditorMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026 20:07:38'!
+!PatternEditorMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026, 1:07:38 pm (UTC)'!
 selectionColor
 	^ self cursorColor alpha: 0.4! !
 
-!PatternEditorMorph class methodsFor: 'colors' stamp: 'len 10/Jun/2026 17:03:41'!
+!PatternEditorMorph class methodsFor: 'colors' stamp: 'len 10/Jun/2026, 10:03:41 am (UTC)'!
 trackColor: anInteger
 	^ TrackColors atWrap: anInteger! !
 
-!PatternEditorMorph class methodsFor: 'colors' stamp: 'len 9/Mar/2026 17:13:37'!
+!PatternEditorMorph class methodsFor: 'colors' stamp: 'len 9/Mar/2026, 10:13:37 am (UTC)'!
 unsetColor
 	^ Color lightGray! !
 
-!PatternEditorMorph class methodsFor: 'colors' stamp: 'len 9/Mar/2026 17:12:29'!
+!PatternEditorMorph class methodsFor: 'colors' stamp: 'len 9/Mar/2026, 10:12:29 am (UTC)'!
 velocityColor
 	^ `Color okl: 0.95 c: 0.2 h: 120`! !
 
-!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 14/Jun/2026 02:47:47'!
+!TrackerBarMorph methodsFor: 'drawing' stamp: 'len 13/Jun/2026, 7:47:47 pm (UTC)'!
 drawOn: aCanvas
 	| color |
 	aCanvas fillRectangle: (0 @ 0 extent: extent) color: Color darkGray.
@@ -1943,20 +1947,20 @@ drawOn: aCanvas
 		patchLabel := (instrumentNumber printStringBase: 16 nDigits: 2), ' ', (tracker selectedInstrument ifNil: ['EMPTY'] ifNotNil: [:anInstrument| anInstrument label ifNil: ['']]).
 		aCanvas drawString: patchLabel at: (extent x - 4 - (font widthOfString: patchLabel)) @ 2 font: font color: color]"! !
 
-!TrackerBarMorph methodsFor: 'events' stamp: 'len 24/Feb/2026 17:31:36'!
+!TrackerBarMorph methodsFor: 'events' stamp: 'len 24/Feb/2026, 10:31:36 am (UTC)'!
 handlesKeyboardFocus
 	^ false! !
 
-!TrackerBarMorph methodsFor: 'geometry' stamp: 'len 7/Jan/2026 14:33:18'!
+!TrackerBarMorph methodsFor: 'geometry' stamp: 'len 7/Jan/2026, 7:33:18 am (UTC)'!
 minimumExtent
 	^ 200 @ font lineSpacing! !
 
-!TrackerBarMorph methodsFor: 'initialization' stamp: 'len 10/Mar/2026 19:04:30'!
+!TrackerBarMorph methodsFor: 'initialization' stamp: 'len 10/Mar/2026, 12:04:30 pm (UTC)'!
 initialize
 	super initialize.
 	font := FontFamily defaultFamilyPointSize: 15! !
 
-!TrackerBarMorph methodsFor: 'initialization' stamp: 'len 11/Jun/2026 00:08:18'!
+!TrackerBarMorph methodsFor: 'initialization' stamp: 'len 10/Jun/2026, 5:08:18 pm (UTC)'!
 setTracker: aTracker
 	tracker := aTracker.
 	tracker
@@ -1969,72 +1973,72 @@ setTracker: aTracker
 		when: #tracksChanged send: #redrawNeeded to: self;
 		when: #cursorChanged send: #redrawNeeded to: self! !
 
-!Instrument methodsFor: 'accessing' stamp: 'len 28/Dec/2025 15:47:17'!
+!Instrument methodsFor: 'accessing' stamp: 'len 28/Dec/2025, 8:47:17 am (UTC)'!
 label
 	^ label! !
 
-!Instrument methodsFor: 'accessing' stamp: 'len 28/Dec/2025 15:47:23'!
+!Instrument methodsFor: 'accessing' stamp: 'len 28/Dec/2025, 8:47:23 am (UTC)'!
 label: aString
 	label := aString! !
 
-!Instrument methodsFor: 'accessing' stamp: 'len 18/Jan/2026 15:14:01'!
+!Instrument methodsFor: 'accessing' stamp: 'len 18/Jan/2026, 8:14:01 am (UTC)'!
 meterLeftValue
 	^ (audioOutput ifNil: [^ 0.0]) meterLeftValue! !
 
-!Instrument methodsFor: 'accessing' stamp: 'len 18/Jan/2026 15:14:10'!
+!Instrument methodsFor: 'accessing' stamp: 'len 18/Jan/2026, 8:14:10 am (UTC)'!
 meterRightValue
 	^ (audioOutput ifNil: [^ 0.0]) meterRightValue! !
 
-!Instrument methodsFor: 'accessing' stamp: 'len 18/Jan/2026 02:25:34'!
+!Instrument methodsFor: 'accessing' stamp: 'len 17/Jan/2026, 7:25:34 pm (UTC)'!
 meterValue
 	^ (audioOutput ifNil: [^ 0.0]) meterValue! !
 
-!Instrument methodsFor: 'accessing' stamp: 'len 17/Feb/2026 19:39:10'!
+!Instrument methodsFor: 'accessing' stamp: 'len 17/Feb/2026, 12:39:10 pm (UTC)'!
 patch
 	^ patch! !
 
-!Instrument methodsFor: 'accessing' stamp: 'len 17/Feb/2026 19:28:32'!
+!Instrument methodsFor: 'accessing' stamp: 'len 17/Feb/2026, 12:28:32 pm (UTC)'!
 setOwnerTrack: aTrack
 	track ifNotNil: [track forgetInstrument].
 	track := aTrack! !
 
-!Instrument methodsFor: 'accessing' stamp: 'len 3/Jan/2026 15:40:08'!
+!Instrument methodsFor: 'accessing' stamp: 'len 3/Jan/2026, 8:40:08 am (UTC)'!
 track
 	^ track! !
 
-!Instrument methodsFor: 'copying' stamp: 'len 19/Apr/2026 22:49:45'!
+!Instrument methodsFor: 'copying' stamp: 'len 19/Apr/2026, 3:49:45 pm (UTC)'!
 copy
 	| buffers |
 	buffers := OrderedCollection new.
 	^ self class new readFromJson: (self asJsonWithBuffers: buffers) buffers: buffers! !
 
-!Instrument methodsFor: 'initialization' stamp: 'len 24/Mar/2026 01:54:35'!
+!Instrument methodsFor: 'initialization' stamp: 'len 23/Mar/2026, 6:54:35 pm (UTC)'!
 initialize
 	controlValues := Float32Array new: 10.
 	patch := PatchMorph new.
 	patch when: #recomputeNeeded send: #scheduleRecompute to: self.
 	glideTicks := 0! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 3/Mar/2026 19:20:04'!
+!Instrument methodsFor: 'playing' stamp: 'len 3/Mar/2026, 12:20:04 pm (UTC)'!
 adjustLevelBy: aNumber
 	audioOutput ifNotNil: [audioOutput adjustLevelBy: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 3/Mar/2026 19:20:31'!
+!Instrument methodsFor: 'playing' stamp: 'len 3/Mar/2026, 12:20:31 pm (UTC)'!
 adjustPanBy: aNumber
 	audioOutput ifNotNil: [audioOutput adjustPanBy: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 23/Mar/2026 19:34:40'!
+!Instrument methodsFor: 'playing' stamp: 'len 23/Mar/2026, 12:34:40 pm (UTC)'!
 gateOn
 	gateReceivers do: [:each| each gateOn]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026 22:56:01'!
+!Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026, 3:56:01 pm (UTC)'!
 handleCut: anInteger
 	| velocity time |
 	velocity := ((anInteger bitShift: -4) bitAnd: 16rF) / 15.0.
 	(time := anInteger bitAnd: 16rF) = 0 ifTrue: [^ self setVelocity: velocity].
 	track scheduleTrigger: (Trigger new velocity: (velocity * 128.0) truncated) after: time / 12.0 * track tracker tpl! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 14/Jun/2026 02:30:36'!
+!Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026, 7:30:36 pm (UTC)'!
 handleFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
@@ -2057,7 +2061,7 @@ handleFX: anInteger
 	"Global commands:"
 	command = 70 "F (set bpm)" ifTrue: [track tracker bpm: (v max: 1). ^ self]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 14/Jun/2026 19:41:44'!
+!Instrument methodsFor: 'playing' stamp: 'len 14/Jun/2026, 12:41:44 pm (UTC)'!
 handlePostNoteFX: anInteger
 	"Note: pitch slide effects must be handled *after* the note on, otherwise the slide gets overridden."
 	| command v |
@@ -2066,7 +2070,7 @@ handlePostNoteFX: anInteger
 	command = 85 "U (slide pitch up)" ifTrue: [self slideNoteBy: v / 16.0].
 	command = 68 "D (slide pitch down)" ifTrue: [self slideNoteBy: v / -16.0]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026 22:55:55'!
+!Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026, 3:55:55 pm (UTC)'!
 handleRetrigger: anInteger
 	| time velocity x |
 	(time := anInteger bitAnd: 16rF) = 0 ifTrue: [^ self].
@@ -2078,17 +2082,17 @@ handleRetrigger: anInteger
 	(x between: 14 and: 15) ifTrue: [velocity := velocity / (#(0.666 0.5) at: x - 13)].
 	track scheduleTrigger: (trigger copy velocity: (velocity * 128.0) truncated) after: time / 12.0 * track tracker tpl! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 24/Mar/2026 01:47:37'!
+!Instrument methodsFor: 'playing' stamp: 'len 23/Mar/2026, 6:47:37 pm (UTC)'!
 noteOff
 	gateReceivers do: [:each| each gateOff].
 	glideTicks := 0.
 	note := nil! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 24/Mar/2026 01:46:50'!
+!Instrument methodsFor: 'playing' stamp: 'len 23/Mar/2026, 6:46:50 pm (UTC)'!
 noteOn: midiKey
 	self noteOn: midiKey glide: 0! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 12/Jun/2026 22:47:22'!
+!Instrument methodsFor: 'playing' stamp: 'len 12/Jun/2026, 3:47:22 pm (UTC)'!
 noteOn: midiKey glide: glide
 	| targetNote |
 	targetNote := track tuningOrNil ifNil: [midiKey] ifNotNil: [:aTuning| aTuning map: midiKey].
@@ -2102,7 +2106,7 @@ noteOn: midiKey glide: glide
 			note := targetNote].
 	self setNote: note; gateOn! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 14/Jun/2026 02:30:22'!
+!Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026, 7:30:22 pm (UTC)'!
 playTrigger
 	trigger isNoteOn
 		ifTrue:
@@ -2121,49 +2125,49 @@ playTrigger
 			trigger isNoteOff ifTrue: [self noteOff]].
 	trigger := nil! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 3/Jun/2026 18:45:14'!
+!Instrument methodsFor: 'playing' stamp: 'len 3/Jun/2026, 11:45:14 am (UTC)'!
 reset
 	(modules ifNil: [^ self]) do: [:each| each reset]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 6/Jan/2026 16:00:00'!
+!Instrument methodsFor: 'playing' stamp: 'len 6/Jan/2026, 9:00:00 am (UTC)'!
 scheduleRecompute
 	modules := nil! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 5/Jan/2026 19:45:17'!
+!Instrument methodsFor: 'playing' stamp: 'len 5/Jan/2026, 12:45:17 pm (UTC)'!
 scheduleTrigger: aTrigger
 	trigger := aTrigger! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 18/Jan/2026 02:31:21'!
+!Instrument methodsFor: 'playing' stamp: 'len 17/Jan/2026, 7:31:21 pm (UTC)'!
 setLevel: aNumber
 	audioOutput ifNotNil: [audioOutput setLevel: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 23/Mar/2026 19:24:27'!
+!Instrument methodsFor: 'playing' stamp: 'len 23/Mar/2026, 12:24:27 pm (UTC)'!
 setNote: midiKey
 	noteReceivers do: [:each| each setNote: midiKey]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 20/Jan/2026 14:27:42'!
+!Instrument methodsFor: 'playing' stamp: 'len 20/Jan/2026, 7:27:42 am (UTC)'!
 setOffset: aNumber
 	samples do: [:each| each setOffset: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 18/Jan/2026 02:31:31'!
+!Instrument methodsFor: 'playing' stamp: 'len 17/Jan/2026, 7:31:31 pm (UTC)'!
 setPan: aNumber
 	audioOutput ifNotNil: [audioOutput setPan: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 23/Jan/2026 14:30:33'!
+!Instrument methodsFor: 'playing' stamp: 'len 23/Jan/2026, 7:30:33 am (UTC)'!
 setSpeed: aNumber
 	samples do: [:each| each setSpeed: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 12/Jun/2026 20:01:03'!
+!Instrument methodsFor: 'playing' stamp: 'len 12/Jun/2026, 1:01:03 pm (UTC)'!
 setVelocity: aNumber
 	velocityReceivers do: [:each| each setVelocity: aNumber]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 14/Jun/2026 03:48:42'!
+!Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026, 8:48:42 pm (UTC)'!
 slideNoteBy: aNumber
 	"Slide the given number of semitones."
 	glideTicks := track tracker tpl.
 	noteIncrement := aNumber / glideTicks asFloat! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 16/Jun/2026 04:06:14'!
+!Instrument methodsFor: 'playing' stamp: 'len 15/Jun/2026, 9:06:14 pm (UTC)'!
 tick
 	| currentModules enabled |
 	currentModules := self modules.
@@ -2175,7 +2179,7 @@ tick
 	trigger ifNotNil: [self playTrigger].
 	currentModules do: [:each| each update; tick]! !
 
-!Instrument methodsFor: 'serialization' stamp: 'len 27/Apr/2026 02:53:31'!
+!Instrument methodsFor: 'serialization' stamp: 'len 26/Apr/2026, 7:53:31 pm (UTC)'!
 asJsonWithBuffers: aList
 	| patchables wires patchablesJson wiresJson |
 	patchables := (patch submorphs select: [:m| m isKindOf: PatchableMorph]) sort: [:a :b| a morphPosition x <= b morphPosition x].
@@ -2203,7 +2207,7 @@ asJsonWithBuffers: aList
 		at: #label put: (label ifNil: '');
 		yourself! !
 
-!Instrument methodsFor: 'serialization' stamp: 'len 15/Jun/2026 22:46:40'!
+!Instrument methodsFor: 'serialization' stamp: 'len 15/Jun/2026, 3:46:40 pm (UTC)'!
 readFrom: aStream
 	| numberOfBuffers bufferList json |
 	aStream useBytes.
@@ -2213,7 +2217,7 @@ readFrom: aStream
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 
-!Instrument methodsFor: 'serialization' stamp: 'len 27/Apr/2026 02:59:09'!
+!Instrument methodsFor: 'serialization' stamp: 'len 26/Apr/2026, 7:59:09 pm (UTC)'!
 readFromJson: json buffers: bufferList
 	| patchables |
 	patchables := (json at: #modules) collect: [:each|
@@ -2231,7 +2235,7 @@ readFromJson: json buffers: bufferList
 	patch redrawNeeded.
 	label := json at: #label! !
 
-!Instrument methodsFor: 'serialization' stamp: 'len 5/Feb/2026 17:57:19'!
+!Instrument methodsFor: 'serialization' stamp: 'len 5/Feb/2026, 10:57:19 am (UTC)'!
 writeOn: aStream
 	| bufferList json |
 	bufferList := OrderedCollection new.
@@ -2240,7 +2244,7 @@ writeOn: aStream
 	bufferList do: [:each| each writeOn: aStream].
 	json jsonWriteOn: aStream! !
 
-!Instrument methodsFor: 'private' stamp: 'len 16/Jun/2026 04:07:39'!
+!Instrument methodsFor: 'private' stamp: 'len 15/Jun/2026, 9:07:39 pm (UTC)'!
 modules
 	| currentModules buses |
 	modules ifNotNil: [:anArray| ^ anArray].
@@ -2264,36 +2268,36 @@ modules
 							each port = 0 ifTrue: [audioOutput := each]]]]].
 	^ currentModules! !
 
-!Pattern methodsFor: 'accessing' stamp: 'len 18/Dec/2025 16:32:38'!
+!Pattern methodsFor: 'accessing' stamp: 'len 18/Dec/2025, 9:32:38 am (UTC)'!
 length
 	^ length! !
 
-!Pattern methodsFor: 'accessing' stamp: 'len 27/Dec/2025 01:55:31'!
+!Pattern methodsFor: 'accessing' stamp: 'len 26/Dec/2025, 6:55:31 pm (UTC)'!
 length: anInteger
 	anInteger > length ifTrue: [blocks := blocks collect: [:each| each ifNotNil: [each, (Array new: anInteger - length)]]].
 	anInteger < length ifTrue: [blocks := blocks collect: [:each| each ifNotNil: [each copyFrom: 1 to: anInteger]]].
 	length := anInteger! !
 
-!Pattern methodsFor: 'accessing' stamp: 'len 14/Mar/2026 18:31:54'!
+!Pattern methodsFor: 'accessing' stamp: 'len 14/Mar/2026, 11:31:54 am (UTC)'!
 lpb
 	^ lpb ifNil: [4]! !
 
-!Pattern methodsFor: 'accessing' stamp: 'len 14/Mar/2026 18:26:07'!
+!Pattern methodsFor: 'accessing' stamp: 'len 14/Mar/2026, 11:26:07 am (UTC)'!
 lpb: anInteger
 	lpb := anInteger! !
 
-!Pattern methodsFor: 'accessing' stamp: 'len 15/Jun/2026 02:35:57'!
+!Pattern methodsFor: 'accessing' stamp: 'len 14/Jun/2026, 7:35:57 pm (UTC)'!
 swapInstrument: anInteger with: anotherInteger
 	blocks do: [:each| each ifNotNil: [each do: [:trigger| trigger ifNotNil:
 				[trigger instrument = anInteger
 					ifTrue: [trigger instrument: anotherInteger]
 					ifFalse: [trigger instrument = anotherInteger ifTrue: [trigger instrument: anInteger]]]]]].! !
 
-!Pattern methodsFor: 'accessing' stamp: 'len 27/Dec/2025 02:03:30'!
+!Pattern methodsFor: 'accessing' stamp: 'len 26/Dec/2025, 7:03:30 pm (UTC)'!
 track: trackIndex at: index
 	^ (blocks at: trackIndex) ifNotNil: [:anArray| anArray at: index]! !
 
-!Pattern methodsFor: 'accessing' stamp: 'len 27/Dec/2025 20:18:02'!
+!Pattern methodsFor: 'accessing' stamp: 'len 27/Dec/2025, 1:18:02 pm (UTC)'!
 track: trackIndex at: line position: position put: value
 	| block trigger |
 	block := (blocks at: trackIndex) ifNil: [value ifNil: [^ self]. blocks at: trackIndex put: (Array new: length)].
@@ -2303,14 +2307,14 @@ track: trackIndex at: line position: position put: value
 		[block at: line put: nil.
 		(block allSatisfy: [:each| each isNil]) ifTrue: [blocks at: trackIndex put: nil]]! !
 
-!Pattern methodsFor: 'accessing' stamp: 'len 27/Dec/2025 20:42:43'!
+!Pattern methodsFor: 'accessing' stamp: 'len 27/Dec/2025, 1:42:43 pm (UTC)'!
 track: trackIndex at: index put: aTrigger
 	| block |
 	block := (blocks at: trackIndex) ifNil: [aTrigger ifNil: [^ self]. blocks at: trackIndex put: (Array new: length)].
 	block at: index put: aTrigger.
 	(aTrigger isNil and: [block allSatisfy: [:each| each isNil]]) ifTrue: [blocks at: trackIndex put: nil]! !
 
-!Pattern methodsFor: 'accessing' stamp: 'len 11/Mar/2026 19:54:58'!
+!Pattern methodsFor: 'accessing' stamp: 'len 11/Mar/2026, 12:54:58 pm (UTC)'!
 track: trackIndex instrumentAbove: line
 	"Answer the instrument set for the given track at or above the given line. This is the instrument that will play that line when the playhead reaches it."
 	| block |
@@ -2318,21 +2322,21 @@ track: trackIndex instrumentAbove: line
 	line to: 1 by: -1 do: [:j| (block at: j) ifNotNil: [:aTrigger| aTrigger instrument ifNotNil: [:anInteger| ^ anInteger = 0 ifFalse: [anInteger]]]].
 	^ nil! !
 
-!Pattern methodsFor: 'accessing' stamp: 'len 14/Jun/2026 20:50:33'!
+!Pattern methodsFor: 'accessing' stamp: 'len 14/Jun/2026, 1:50:33 pm (UTC)'!
 track: trackIndex swap: index1 with: index2
 	(blocks at: trackIndex) ifNotNil: [:anArray| anArray swap: index1 with: index2]! !
 
-!Pattern methodsFor: 'copying' stamp: 'len 27/Dec/2025 02:01:58'!
+!Pattern methodsFor: 'copying' stamp: 'len 26/Dec/2025, 7:01:58 pm (UTC)'!
 postCopy
 	blocks := blocks collect: [:eachBlock| eachBlock ifNotNil: [eachBlock collect: [:each| each copy]]]! !
 
-!Pattern methodsFor: 'initialization' stamp: 'len 14/Mar/2026 18:26:57'!
+!Pattern methodsFor: 'initialization' stamp: 'len 14/Mar/2026, 11:26:57 am (UTC)'!
 initialize: anInteger
 	length := 64.
 	lpb := 4.
 	blocks := Array new: anInteger! !
 
-!Pattern methodsFor: 'serialization' stamp: 'len 14/Mar/2026 18:28:00'!
+!Pattern methodsFor: 'serialization' stamp: 'len 14/Mar/2026, 11:28:00 am (UTC)'!
 asJson
 	| answer blocksJson |
 	(answer := OrderedDictionary new)
@@ -2349,7 +2353,7 @@ asJson
 	answer at: #blocks put: blocksJson.
 	^ answer! !
 
-!Pattern methodsFor: 'serialization' stamp: 'len 14/Mar/2026 18:28:37'!
+!Pattern methodsFor: 'serialization' stamp: 'len 14/Mar/2026, 11:28:37 am (UTC)'!
 readFromJson: json
 	| blocksJson |
 	length := json at: #length.
@@ -2360,30 +2364,30 @@ readFromJson: json
 		eachBlockJson do: [:rowJson|
 			self track: t at: (rowJson at: #line) put: (Trigger new readFromJson: (rowJson at: #trigger))]]! !
 
-!Pattern methodsFor: 'testing' stamp: 'len 17/Feb/2026 19:36:54'!
+!Pattern methodsFor: 'testing' stamp: 'len 17/Feb/2026, 12:36:54 pm (UTC)'!
 hasReferenceToInstrument: anInteger
 	^ blocks anySatisfy: [:block| block notNil and: [block anySatisfy: [:trigger| trigger notNil and: [trigger instrument = anInteger]]]]! !
 
-!Pattern methodsFor: 'testing' stamp: 'len 28/Dec/2025 02:24:12'!
+!Pattern methodsFor: 'testing' stamp: 'len 27/Dec/2025, 7:24:12 pm (UTC)'!
 isEmptyTrack: anInteger
 	^ (blocks at: anInteger) isNil! !
 
-!Pattern methodsFor: 'tracks' stamp: 'len 24/Dec/2025 18:51:22'!
+!Pattern methodsFor: 'tracks' stamp: 'len 24/Dec/2025, 11:51:22 am (UTC)'!
 deleteTrack: anInteger
 	"Remove the track at the given index."
 	blocks := (blocks copyFrom: 1 to: anInteger - 1), (blocks copyFrom: anInteger + 1 to: blocks size)! !
 
-!Pattern methodsFor: 'tracks' stamp: 'len 27/Dec/2025 01:55:53'!
+!Pattern methodsFor: 'tracks' stamp: 'len 26/Dec/2025, 6:55:53 pm (UTC)'!
 insertTrack: anInteger
 	"Add a track at the given index."
 	blocks := (blocks copyFrom: 1 to: anInteger - 1), {nil}, (blocks copyFrom: anInteger to: blocks size)! !
 
-!Pattern methodsFor: 'tracks' stamp: 'len 31/Dec/2025 22:48:08'!
+!Pattern methodsFor: 'tracks' stamp: 'len 31/Dec/2025, 3:48:08 pm (UTC)'!
 swapTrack: anInteger with: anotherInteger
 	anInteger = anotherInteger ifTrue: [^ self].
 	blocks swap: anInteger with: anotherInteger! !
 
-!Pattern methodsFor: 'private' stamp: 'len 1/Mar/2026 14:22:10'!
+!Pattern methodsFor: 'private' stamp: 'len 1/Mar/2026, 7:22:10 am (UTC)'!
 line: anInteger instrumentDo: instrumentBlock noteDo: noteBlock velocityDo: velocityBlock effectsDo: effectsBlock emptyTriggersDo: emptyBlock
 	blocks do: [:each|
 		each
@@ -2397,89 +2401,89 @@ line: anInteger instrumentDo: instrumentBlock noteDo: noteBlock velocityDo: velo
 						velocityBlock value: trigger velocity.
 						effectsBlock value: trigger fx1; value: trigger fx2]]]! !
 
-!Pattern class methodsFor: 'instance creation' stamp: 'len 27/Dec/2025 06:03:15'!
+!Pattern class methodsFor: 'instance creation' stamp: 'len 26/Dec/2025, 11:03:15 pm (UTC)'!
 new: anInteger
 	^ self new initialize: anInteger! !
 
-!Track methodsFor: 'accessing' stamp: 'len 9/Jan/2026 15:09:05'!
+!Track methodsFor: 'accessing' stamp: 'len 9/Jan/2026, 8:09:05 am (UTC)'!
 enabled
 	^ soloed or: [muted not and: [tracker anyTrackSoloed not]]! !
 
-!Track methodsFor: 'accessing' stamp: 'len 11/Jun/2026 01:53:29'!
+!Track methodsFor: 'accessing' stamp: 'len 10/Jun/2026, 6:53:29 pm (UTC)'!
 inputCenterKey
 	^ (tracker inputOctave - 4) * (tuning ifNil: [12] ifNotNil: [tuning size]) + 60! !
 
-!Track methodsFor: 'accessing' stamp: 'len 17/Feb/2026 19:28:45'!
+!Track methodsFor: 'accessing' stamp: 'len 17/Feb/2026, 12:28:45 pm (UTC)'!
 instrument
 	^ instrument! !
 
-!Track methodsFor: 'accessing' stamp: 'len 17/Feb/2026 19:28:15'!
+!Track methodsFor: 'accessing' stamp: 'len 17/Feb/2026, 12:28:15 pm (UTC)'!
 meterLeftValue
 	^ (instrument ifNil: [^ 0.0]) meterLeftValue! !
 
-!Track methodsFor: 'accessing' stamp: 'len 17/Feb/2026 19:28:15'!
+!Track methodsFor: 'accessing' stamp: 'len 17/Feb/2026, 12:28:15 pm (UTC)'!
 meterRightValue
 	^ (instrument ifNil: [^ 0.0]) meterRightValue! !
 
-!Track methodsFor: 'accessing' stamp: 'len 17/Feb/2026 19:28:15'!
+!Track methodsFor: 'accessing' stamp: 'len 17/Feb/2026, 12:28:15 pm (UTC)'!
 meterValue
 	^ (instrument ifNil: [^ 0.0]) meterValue! !
 
-!Track methodsFor: 'accessing' stamp: 'len 17/Dec/2025 16:11:15'!
+!Track methodsFor: 'accessing' stamp: 'len 17/Dec/2025, 9:11:15 am (UTC)'!
 muted
 	^ muted! !
 
-!Track methodsFor: 'accessing' stamp: 'len 31/Dec/2025 22:30:46'!
+!Track methodsFor: 'accessing' stamp: 'len 31/Dec/2025, 3:30:46 pm (UTC)'!
 muted: aBoolean
 	muted := aBoolean! !
 
-!Track methodsFor: 'accessing' stamp: 'len 10/Jun/2026 17:11:16'!
+!Track methodsFor: 'accessing' stamp: 'len 10/Jun/2026, 10:11:16 am (UTC)'!
 noteStringFrom: note
 	"Answer a string to represent the given MIDI note, depending on the tuning of this track."
 	^ (tuning ifNil: [^ note noteToName]) noteStringFrom: note! !
 
-!Track methodsFor: 'accessing' stamp: 'len 17/Dec/2025 16:44:47'!
+!Track methodsFor: 'accessing' stamp: 'len 17/Dec/2025, 9:44:47 am (UTC)'!
 soloed
 	^ soloed! !
 
-!Track methodsFor: 'accessing' stamp: 'len 22/Dec/2025 17:32:01'!
+!Track methodsFor: 'accessing' stamp: 'len 22/Dec/2025, 10:32:01 am (UTC)'!
 soloed: aBoolean
 	soloed := aBoolean! !
 
-!Track methodsFor: 'accessing' stamp: 'len 26/Feb/2026 17:20:51'!
+!Track methodsFor: 'accessing' stamp: 'len 26/Feb/2026, 10:20:51 am (UTC)'!
 tracker
 	^ tracker! !
 
-!Track methodsFor: 'accessing' stamp: 'len 11/Jun/2026 01:55:24'!
+!Track methodsFor: 'accessing' stamp: 'len 10/Jun/2026, 6:55:24 pm (UTC)'!
 tuning
 	^ tuning ifNil: [Tuning edo12]! !
 
-!Track methodsFor: 'accessing' stamp: 'len 11/Jun/2026 01:56:58'!
+!Track methodsFor: 'accessing' stamp: 'len 10/Jun/2026, 6:56:58 pm (UTC)'!
 tuning: aTuning
 	tuning := aTuning = Tuning edo12 ifFalse: [aTuning]! !
 
-!Track methodsFor: 'accessing' stamp: 'len 11/Jun/2026 01:55:28'!
+!Track methodsFor: 'accessing' stamp: 'len 10/Jun/2026, 6:55:28 pm (UTC)'!
 tuningOrNil
 	^ tuning! !
 
-!Track methodsFor: 'initialization' stamp: 'len 26/Feb/2026 17:36:32'!
+!Track methodsFor: 'initialization' stamp: 'len 26/Feb/2026, 10:36:32 am (UTC)'!
 initialize
 	muted := false.
 	soloed := false! !
 
-!Track methodsFor: 'initialization' stamp: 'len 3/Jan/2026 15:47:12'!
+!Track methodsFor: 'initialization' stamp: 'len 3/Jan/2026, 8:47:12 am (UTC)'!
 setTracker: aTracker
 	tracker := aTracker! !
 
-!Track methodsFor: 'playing' stamp: 'len 17/Feb/2026 19:28:32'!
+!Track methodsFor: 'playing' stamp: 'len 17/Feb/2026, 12:28:32 pm (UTC)'!
 forgetInstrument
 	instrument := nil! !
 
-!Track methodsFor: 'playing' stamp: 'len 13/Jun/2026 23:34:28'!
+!Track methodsFor: 'playing' stamp: 'len 13/Jun/2026, 4:34:28 pm (UTC)'!
 forgetScheduledTrigger
 	trigger := nil! !
 
-!Track methodsFor: 'playing' stamp: 'len 3/Mar/2026 23:13:06'!
+!Track methodsFor: 'playing' stamp: 'len 3/Mar/2026, 4:13:06 pm (UTC)'!
 playTrigger
 	trigger instrument ifNotNil: [:anInteger|
 		instrument ifNotNil: [instrument setOwnerTrack: nil].
@@ -2488,7 +2492,7 @@ playTrigger
 	instrument ifNotNil: [instrument scheduleTrigger: trigger].
 	trigger := nil! !
 
-!Track methodsFor: 'playing' stamp: 'len 9/Jun/2026 21:47:27'!
+!Track methodsFor: 'playing' stamp: 'len 9/Jun/2026, 2:47:27 pm (UTC)'!
 scheduleTrigger: aTrigger
 	"Schedule aTrigger to play either immediatly if delay = 0, or after the number of ticks required by the delay.
 	The delay is specified by a Qxx command, where xx specifies the delay in steps of 1/256th the duration of a line."
@@ -2497,18 +2501,18 @@ scheduleTrigger: aTrigger
 		ifTrue: [self scheduleTrigger: aTrigger after: 0]
 		ifFalse: [self scheduleTrigger: aTrigger after: triggerDelay / 256.0 * tracker tpl]! !
 
-!Track methodsFor: 'playing' stamp: 'len 26/Feb/2026 23:30:14'!
+!Track methodsFor: 'playing' stamp: 'len 26/Feb/2026, 4:30:14 pm (UTC)'!
 scheduleTrigger: aTrigger after: ticks
 	"Schedule aTrigger to play after the required number of ticks."
 	trigger := aTrigger.
 	ticksToTrigger := ticks! !
 
-!Track methodsFor: 'playing' stamp: 'len 17/Feb/2026 19:28:15'!
+!Track methodsFor: 'playing' stamp: 'len 17/Feb/2026, 12:28:15 pm (UTC)'!
 tick
 	trigger ifNotNil: [ticksToTrigger > 0 ifTrue: [ticksToTrigger := ticksToTrigger - 1] ifFalse: [self playTrigger]].
 	instrument ifNotNil: [instrument tick]! !
 
-!Track methodsFor: 'serialization' stamp: 'len 9/Jun/2026 23:23:45'!
+!Track methodsFor: 'serialization' stamp: 'len 9/Jun/2026, 4:23:45 pm (UTC)'!
 asJson
 	| answer |
 	(answer := OrderedDictionary new)
@@ -2517,141 +2521,141 @@ asJson
 	tuning ifNotNil: [:aTuning| answer at: #tuning put: aTuning asJson].
 	^ answer! !
 
-!Track methodsFor: 'serialization' stamp: 'len 9/Jun/2026 23:24:44'!
+!Track methodsFor: 'serialization' stamp: 'len 9/Jun/2026, 4:24:44 pm (UTC)'!
 readFromJson: json
 	muted := json at: #muted.
 	soloed := json at: #soloed.
 	json at: #tuning ifPresent: [:tuningJson| tuning := Tuning new readFromJson: tuningJson]! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 16/Dec/2025 17:27:25'!
+!Tracker methodsFor: 'accessing' stamp: 'len 16/Dec/2025, 10:27:25 am (UTC)'!
 bpm
 	^ bpm! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 9/Jun/2026 22:11:33'!
+!Tracker methodsFor: 'accessing' stamp: 'len 9/Jun/2026, 3:11:33 pm (UTC)'!
 bpm: anInteger
 	bpm := anInteger.
 	self triggerEvent: #tempoChanged! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 5/Mar/2026 15:36:52'!
+!Tracker methodsFor: 'accessing' stamp: 'len 5/Mar/2026, 8:36:52 am (UTC)'!
 buses
 	^ buses! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 7/Jan/2026 16:00:57'!
+!Tracker methodsFor: 'accessing' stamp: 'len 7/Jan/2026, 9:00:57 am (UTC)'!
 followPlayhead
 	^ followPlayhead! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 11/Jun/2026 00:09:15'!
+!Tracker methodsFor: 'accessing' stamp: 'len 10/Jun/2026, 5:09:15 pm (UTC)'!
 inputOctave
 	^ inputOctave! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 18/Feb/2026 16:58:40'!
+!Tracker methodsFor: 'accessing' stamp: 'len 18/Feb/2026, 9:58:40 am (UTC)'!
 instruments
 	^ instruments! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 10/Feb/2026 15:05:40'!
+!Tracker methodsFor: 'accessing' stamp: 'len 10/Feb/2026, 8:05:40 am (UTC)'!
 label
 	^ label! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 10/Feb/2026 15:05:55'!
+!Tracker methodsFor: 'accessing' stamp: 'len 10/Feb/2026, 8:05:55 am (UTC)'!
 label: aString
 	label := aString.
 	self triggerEvent: #labelChanged! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 24/Jan/2026 14:02:29'!
+!Tracker methodsFor: 'accessing' stamp: 'len 24/Jan/2026, 7:02:29 am (UTC)'!
 level
 	^ level! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 24/Jan/2026 14:20:55'!
+!Tracker methodsFor: 'accessing' stamp: 'len 24/Jan/2026, 7:20:55 am (UTC)'!
 level: aNumber
 	level := aNumber min: 1.0 max: 0.0.
 	self triggerEvent: #levelChanged! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 24/Jan/2026 22:29:37'!
+!Tracker methodsFor: 'accessing' stamp: 'len 24/Jan/2026, 3:29:37 pm (UTC)'!
 peakLeft
 	^ peakLeft := peakLeft * 0.95! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 24/Jan/2026 22:29:52'!
+!Tracker methodsFor: 'accessing' stamp: 'len 24/Jan/2026, 3:29:52 pm (UTC)'!
 peakRight
 	^ peakRight := peakRight * 0.95! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 21/Feb/2026 16:39:00'!
+!Tracker methodsFor: 'accessing' stamp: 'len 21/Feb/2026, 9:39:00 am (UTC)'!
 sequence
 	^ sequence! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 21/Feb/2026 16:40:24'!
+!Tracker methodsFor: 'accessing' stamp: 'len 21/Feb/2026, 9:40:24 am (UTC)'!
 sequencePatternNumbers
 	| unique |
 	unique := self sequenceUniquePatterns.
 	^ sequence collect: [:each| unique indexOf: each key]! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 21/Feb/2026 16:40:36'!
+!Tracker methodsFor: 'accessing' stamp: 'len 21/Feb/2026, 9:40:36 am (UTC)'!
 sequenceUniquePatterns
 	| answer |
 	answer := OrderedCollection new.
 	sequence do: [:each| (answer identityIncludes: each key) ifFalse: [answer add: each key]].
 	^ answer! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 10/Feb/2026 01:41:17'!
+!Tracker methodsFor: 'accessing' stamp: 'len 9/Feb/2026, 6:41:17 pm (UTC)'!
 swing
 	^ swing! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 9/Jun/2026 22:11:08'!
+!Tracker methodsFor: 'accessing' stamp: 'len 9/Jun/2026, 3:11:08 pm (UTC)'!
 swing: aNumber
 	swing := aNumber min: 1.0 max: 0.0.
 	self triggerEvent: #tempoChanged! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 14/Mar/2026 18:24:45'!
+!Tracker methodsFor: 'accessing' stamp: 'len 14/Mar/2026, 11:24:45 am (UTC)'!
 tpl
 	"Answer the number of ticks per line."
 	^ Module controlRate * 60.0 / (bpm * self playingPattern lpb)! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 16/Dec/2025 21:18:23'!
+!Tracker methodsFor: 'accessing' stamp: 'len 16/Dec/2025, 2:18:23 pm (UTC)'!
 tracks
 	^ tracks! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 1/Jan/2026 17:06:02'!
+!Tracker methodsFor: 'cursor' stamp: 'len 1/Jan/2026, 10:06:02 am (UTC)'!
 cursorLine
 	^ cursorLine! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 1/Jan/2026 17:08:09'!
+!Tracker methodsFor: 'cursor' stamp: 'len 1/Jan/2026, 10:08:09 am (UTC)'!
 cursorPattern
 	^ cursorPattern! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 1/Jan/2026 16:37:16'!
+!Tracker methodsFor: 'cursor' stamp: 'len 1/Jan/2026, 9:37:16 am (UTC)'!
 cursorTrack
 	^ cursorTrack! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 11/Jun/2026 00:08:32'!
+!Tracker methodsFor: 'cursor' stamp: 'len 10/Jun/2026, 5:08:32 pm (UTC)'!
 inputOctaveDown
 	inputOctave > 0 ifFalse: [^ self].
 	inputOctave := inputOctave - 1.
 	self triggerEvent: #inputOctaveChanged! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 11/Jun/2026 00:09:02'!
+!Tracker methodsFor: 'cursor' stamp: 'len 10/Jun/2026, 5:09:02 pm (UTC)'!
 inputOctaveUp
 	inputOctave < 9 ifFalse: [^ self].
 	inputOctave := inputOctave + 1.
 	self triggerEvent: #inputOctaveChanged! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 14/Mar/2026 18:22:50'!
+!Tracker methodsFor: 'cursor' stamp: 'len 14/Mar/2026, 11:22:50 am (UTC)'!
 moveCursorBeatDown
 	self moveCursorLineDown: self selectedPattern lpb! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 14/Mar/2026 18:22:59'!
+!Tracker methodsFor: 'cursor' stamp: 'len 14/Mar/2026, 11:22:59 am (UTC)'!
 moveCursorBeatUp
 	self moveCursorLineUp: self selectedPattern lpb! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 14/Jun/2026 00:47:39'!
+!Tracker methodsFor: 'cursor' stamp: 'len 13/Jun/2026, 5:47:39 pm (UTC)'!
 moveCursorLineBottom
 	self isPlaying ifTrue: [self followPlayhead: false].
 	cursorLine := self selectedPattern length.
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 10/Jan/2026 22:27:29'!
+!Tracker methodsFor: 'cursor' stamp: 'len 10/Jan/2026, 3:27:29 pm (UTC)'!
 moveCursorLineDown
 	self moveCursorLineDown: 1! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 14/Jun/2026 00:47:25'!
+!Tracker methodsFor: 'cursor' stamp: 'len 13/Jun/2026, 5:47:25 pm (UTC)'!
 moveCursorLineDown: anInteger
 	| n |
 	self isPlaying ifTrue: [self followPlayhead: false].
@@ -2666,17 +2670,17 @@ moveCursorLineDown: anInteger
 			ifFalse: [cursorLine := n]].
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 14/Jun/2026 00:47:34'!
+!Tracker methodsFor: 'cursor' stamp: 'len 13/Jun/2026, 5:47:34 pm (UTC)'!
 moveCursorLineTop
 	self isPlaying ifTrue: [self followPlayhead: false].
 	cursorLine := 1.
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 10/Jan/2026 22:27:36'!
+!Tracker methodsFor: 'cursor' stamp: 'len 10/Jan/2026, 3:27:36 pm (UTC)'!
 moveCursorLineUp
 	self moveCursorLineUp: 1! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 14/Jun/2026 00:47:20'!
+!Tracker methodsFor: 'cursor' stamp: 'len 13/Jun/2026, 5:47:20 pm (UTC)'!
 moveCursorLineUp: anInteger
 	self isPlaying ifTrue: [self followPlayhead: false].
 	cursorLine := cursorLine - anInteger.
@@ -2689,7 +2693,7 @@ moveCursorLineUp: anInteger
 			ifFalse: [cursorLine := 1]].
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 14/Jun/2026 00:46:59'!
+!Tracker methodsFor: 'cursor' stamp: 'len 13/Jun/2026, 5:46:59 pm (UTC)'!
 moveCursorPatternDown
 	self isPlaying ifTrue: [self followPlayhead: false].
 	cursorPattern < sequence size ifFalse: [^ self].
@@ -2697,7 +2701,7 @@ moveCursorPatternDown
 	cursorLine := cursorLine min: self selectedPattern length.
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 14/Jun/2026 00:47:06'!
+!Tracker methodsFor: 'cursor' stamp: 'len 13/Jun/2026, 5:47:06 pm (UTC)'!
 moveCursorPatternUp
 	self isPlaying ifTrue: [self followPlayhead: false].
 	cursorPattern > 1 ifFalse: [^ self].
@@ -2705,21 +2709,21 @@ moveCursorPatternUp
 	cursorLine := cursorLine min: self selectedPattern length.
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 14/Feb/2026 19:54:17'!
+!Tracker methodsFor: 'cursor' stamp: 'len 14/Feb/2026, 12:54:17 pm (UTC)'!
 moveCursorTrackLeft
 	self setCursorTrack: cursorTrack - 1! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 14/Feb/2026 19:54:07'!
+!Tracker methodsFor: 'cursor' stamp: 'len 14/Feb/2026, 12:54:07 pm (UTC)'!
 moveCursorTrackRight
 	self setCursorTrack: cursorTrack + 1! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 14/Jun/2026 00:46:39'!
+!Tracker methodsFor: 'cursor' stamp: 'len 13/Jun/2026, 5:46:39 pm (UTC)'!
 setCursorTrack: anInteger
 	((anInteger between: 1 and: tracks size) and: [cursorTrack ~= anInteger]) ifFalse: [^ self].
 	cursorTrack := anInteger.
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'initialization' stamp: 'len 11/Jun/2026 00:07:12'!
+!Tracker methodsFor: 'initialization' stamp: 'len 10/Jun/2026, 5:07:12 pm (UTC)'!
 initialize
 	instruments := Dictionary new.
 	tracks := #().
@@ -2747,28 +2751,28 @@ initialize
 	self insertPattern: 1.
 	self selectedPattern track: 1 at: 1 position: 2 put: 1 "set instrument to 1"! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026 16:20:33'!
+!Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026, 9:20:33 am (UTC)'!
 deletePattern
 	sequence size > 1 ifFalse: [^ self]. "don't delete last pattern"
 	self deletePattern: cursorPattern! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026 16:23:15'!
+!Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026, 9:23:15 am (UTC)'!
 deletePattern: anInteger
 	sequence := (sequence copyFrom: 1 to: anInteger - 1), (sequence copyFrom: anInteger + 1 to: sequence size).
 	cursorPattern := cursorPattern min: sequence size.
 	cursorLine := cursorLine min: self selectedPattern length.
 	self triggerEvent: #sequenceChanged! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 1/Jan/2026 17:00:10'!
+!Tracker methodsFor: 'patterns' stamp: 'len 1/Jan/2026, 10:00:10 am (UTC)'!
 deleteTrigger
 	self selectedPattern track: cursorTrack at: cursorLine put: nil! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 10/Jan/2026 22:55:11'!
+!Tracker methodsFor: 'patterns' stamp: 'len 10/Jan/2026, 3:55:11 pm (UTC)'!
 insertPattern
 	self insertPattern: (cursorPattern := cursorPattern + 1).
 	cursorLine := cursorLine min: self selectedPattern length! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026 16:21:43'!
+!Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026, 9:21:43 am (UTC)'!
 insertPattern: anInteger
 	| answer |
 	answer := Pattern new: tracks size.
@@ -2776,41 +2780,41 @@ insertPattern: anInteger
 	self triggerEvent: #sequenceChanged.
 	^ answer! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026 19:37:25'!
+!Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026, 12:37:25 pm (UTC)'!
 insertSequence: anArray
 	"Insert a list of patterns and masks after the current pattern."
 	sequence := (sequence copyFrom: 1 to: cursorPattern), (anArray collect: [:each| each key -> each value copy]), (sequence copyFrom: cursorPattern + 1 to: sequence size).
 	self triggerEvent: #sequenceChanged! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 18/Feb/2026 16:58:40'!
+!Tracker methodsFor: 'patterns' stamp: 'len 18/Feb/2026, 9:58:40 am (UTC)'!
 selectedInstrument
 	^ instruments at: (self selectedInstrumentNumber ifNil: [^ nil]) ifAbsentPut: [Instrument new]! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 18/Feb/2026 16:41:16'!
+!Tracker methodsFor: 'patterns' stamp: 'len 18/Feb/2026, 9:41:16 am (UTC)'!
 selectedInstrumentNumber
 	^​ self selectedPattern track: cursorTrack instrumentAbove: cursorLine! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 20/Feb/2026 22:39:55'!
+!Tracker methodsFor: 'patterns' stamp: 'len 20/Feb/2026, 3:39:55 pm (UTC)'!
 selectedInstrumentNumberAtTrack: trackIndex
 	^​ self selectedPattern track: trackIndex instrumentAbove: cursorLine! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026 16:22:40'!
+!Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026, 9:22:40 am (UTC)'!
 selectedPattern
 	^ (sequence at: cursorPattern) key! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 1/Jan/2026 16:55:05'!
+!Tracker methodsFor: 'patterns' stamp: 'len 1/Jan/2026, 9:55:05 am (UTC)'!
 selectedTrigger
 	^ self selectedPattern track: cursorTrack at: cursorLine! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 20/Jan/2026 16:40:37'!
+!Tracker methodsFor: 'patterns' stamp: 'len 20/Jan/2026, 9:40:37 am (UTC)'!
 selectedTriggerAt: position put: value
 	self selectedPattern track: cursorTrack at: cursorLine position: position put: value! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 20/Jan/2026 16:41:51'!
+!Tracker methodsFor: 'patterns' stamp: 'len 20/Jan/2026, 9:41:51 am (UTC)'!
 selectedTriggerPut: aTrigger
 	self selectedPattern track: cursorTrack at: cursorLine put: aTrigger! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 22/Jan/2026 14:16:23'!
+!Tracker methodsFor: 'patterns' stamp: 'len 22/Jan/2026, 7:16:23 am (UTC)'!
 setSelectedPatternLength: anInteger
 	self assert: self isPlaying not.
 	self selectedPattern length: anInteger.
@@ -2818,7 +2822,7 @@ setSelectedPatternLength: anInteger
 	(playheadPattern = cursorPattern and: [playheadLine <= anInteger])
 		ifFalse: [playheadLine := anInteger - 1. self triggerEvent: #playheadChanged]! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 15/Jun/2026 02:42:11'!
+!Tracker methodsFor: 'patterns' stamp: 'len 14/Jun/2026, 7:42:11 pm (UTC)'!
 swapInstrument: anInteger with: anotherInteger
 	| instrument1 instrument2 |
 	anInteger = anotherInteger ifTrue: [^ self].
@@ -2829,31 +2833,31 @@ swapInstrument: anInteger with: anotherInteger
 	instrument2 ifNil: [instruments removeKey: anInteger ifAbsent: []] ifNotNil: [instruments at: anInteger put: instrument2].
 	self triggerEvent: #sequenceChanged! !
 
-!Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026 16:23:00'!
+!Tracker methodsFor: 'patterns' stamp: 'len 21/Feb/2026, 9:23:00 am (UTC)'!
 swapPattern: anInteger with: anotherInteger
 	anInteger = anotherInteger ifTrue: [^ self].
 	sequence swap: anInteger with: anotherInteger.
 	self triggerEvent: #sequenceChanged! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 14/Jun/2026 00:45:00'!
+!Tracker methodsFor: 'playing' stamp: 'len 13/Jun/2026, 5:45:00 pm (UTC)'!
 followPlayhead: aBoolean
 	followPlayhead = aBoolean ifTrue: [^ self].
 	followPlayhead := aBoolean.
 	self triggerEvent: #followPlayheadChanged! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 2/Jan/2026 15:12:17'!
+!Tracker methodsFor: 'playing' stamp: 'len 2/Jan/2026, 8:12:17 am (UTC)'!
 isPlaying
 	^ AudioPlayer isPlaying: self! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 14/Jun/2026 00:38:02'!
+!Tracker methodsFor: 'playing' stamp: 'len 13/Jun/2026, 5:38:02 pm (UTC)'!
 isPlayingFollowingPlayhead
 	^ followPlayhead and: [self isPlaying]! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 9/Mar/2026 16:29:54'!
+!Tracker methodsFor: 'playing' stamp: 'len 9/Mar/2026, 9:29:54 am (UTC)'!
 loop: aBoolean
 	loop := aBoolean! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 3/Jun/2026 18:58:40'!
+!Tracker methodsFor: 'playing' stamp: 'len 3/Jun/2026, 11:58:40 am (UTC)'!
 play
 	self isPlaying ifTrue: [^ self].
 	playStartPattern := 1.
@@ -2872,7 +2876,7 @@ play
 	self triggerEvent: #playheadChanged.
 	self triggerEvent: #playingStatusChanged! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 8/Mar/2026 19:22:44'!
+!Tracker methodsFor: 'playing' stamp: 'len 8/Mar/2026, 12:22:44 pm (UTC)'!
 playFrom: startPattern line: startLine to: endPattern line: endLine tracks: tracksToPlay
 	self isPlaying ifTrue: [^ self].
 	playStartPattern := startPattern.
@@ -2888,7 +2892,7 @@ playFrom: startPattern line: startLine to: endPattern line: endLine tracks: trac
 	self triggerEvent: #playheadChanged.
 	self triggerEvent: #playingStatusChanged! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 13/Jun/2026 23:36:52'!
+!Tracker methodsFor: 'playing' stamp: 'len 13/Jun/2026, 4:36:52 pm (UTC)'!
 playLine
 	| pattern mask ticksPerLine ticksSwing |
 	"Advance playhead:"
@@ -2919,7 +2923,7 @@ playLine
 	(playheadLine \\ pattern lpb) even ifTrue: [ticksSwing := ticksSwing negated].
 	ticksToLine := ticksToLine + ticksSwing! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 5/Jun/2026 23:10:00'!
+!Tracker methodsFor: 'playing' stamp: 'len 5/Jun/2026, 4:10:00 pm (UTC)'!
 playSampleCount: n into: anAudioBuffer startingAt: startIndex
 	| blockSize i masterGain mask masterBus |
 	blockSize := Module blockSize.
@@ -2940,34 +2944,34 @@ playSampleCount: n into: anAudioBuffer startingAt: startIndex
 		i := i + blockSize].
 	^ n! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 1/Jan/2026 17:14:07'!
+!Tracker methodsFor: 'playing' stamp: 'len 1/Jan/2026, 10:14:07 am (UTC)'!
 playheadLine
 	^ playheadLine! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 1/Jan/2026 17:13:55'!
+!Tracker methodsFor: 'playing' stamp: 'len 1/Jan/2026, 10:13:55 am (UTC)'!
 playheadPattern
 	^ playheadPattern! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 8/Mar/2026 19:19:48'!
+!Tracker methodsFor: 'playing' stamp: 'len 8/Mar/2026, 12:19:48 pm (UTC)'!
 playingMask
 	^ playingMask ifNil: [(sequence at: playheadPattern) value]! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 21/Feb/2026 16:27:08'!
+!Tracker methodsFor: 'playing' stamp: 'len 21/Feb/2026, 9:27:08 am (UTC)'!
 playingPattern
 	^ (sequence at: playheadPattern) key! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 9/Mar/2026 17:22:44'!
+!Tracker methodsFor: 'playing' stamp: 'len 9/Mar/2026, 10:22:44 am (UTC)'!
 stop
 	self isPlaying ifFalse: [^ self].
 	AudioPlayer stopPlaying: self.
 	self triggerEvent: #playheadChanged.
 	self triggerEvent: #playingStatusChanged! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 14/Jun/2026 00:45:20'!
+!Tracker methodsFor: 'playing' stamp: 'len 13/Jun/2026, 5:45:20 pm (UTC)'!
 toggleFollowPlayhead
 	self followPlayhead: followPlayhead not! !
 
-!Tracker methodsFor: 'serialization' stamp: 'len 9/Jun/2026 23:25:53'!
+!Tracker methodsFor: 'serialization' stamp: 'len 9/Jun/2026, 4:25:53 pm (UTC)'!
 asJsonWithBuffers: bufferList
 	| uniquePatterns |
 	uniquePatterns := self sequenceUniquePatterns.
@@ -2985,7 +2989,7 @@ asJsonWithBuffers: bufferList
 		at: #instruments put: (instruments collect: [:each| each asJsonWithBuffers: bufferList]);
 		yourself! !
 
-!Tracker methodsFor: 'serialization' stamp: 'len 15/Jun/2026 22:46:45'!
+!Tracker methodsFor: 'serialization' stamp: 'len 15/Jun/2026, 3:46:45 pm (UTC)'!
 readFrom: aStream
 	| numberOfBuffers bufferList json |
 	aStream useBytes.
@@ -2995,7 +2999,7 @@ readFrom: aStream
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 
-!Tracker methodsFor: 'serialization' stamp: 'len 9/Jun/2026 23:30:40'!
+!Tracker methodsFor: 'serialization' stamp: 'len 9/Jun/2026, 4:30:40 pm (UTC)'!
 readFromJson: json buffers: bufferList
 	| uniquePatterns tracksJson |
 	bpm := json at: #bpm.
@@ -3018,7 +3022,7 @@ readFromJson: json buffers: bufferList
 	instruments := Dictionary new.
 	(json at: #instruments) keysAndValuesDo: [:key :value| instruments at: key asNumber put: (Instrument new readFromJson: value buffers: bufferList)]! !
 
-!Tracker methodsFor: 'serialization' stamp: 'len 9/Feb/2026 16:22:08'!
+!Tracker methodsFor: 'serialization' stamp: 'len 9/Feb/2026, 9:22:08 am (UTC)'!
 writeOn: aStream
 	| bufferList json |
 	bufferList := OrderedCollection new.
@@ -3027,20 +3031,20 @@ writeOn: aStream
 	bufferList do: [:each| each writeOn: aStream].
 	json jsonWriteOn: aStream! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 9/Jun/2026 23:19:44'!
+!Tracker methodsFor: 'tracks' stamp: 'len 9/Jun/2026, 4:19:44 pm (UTC)'!
 addTrack
 	^ self insertTrack: tracks size + 1! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 9/Jan/2026 15:08:32'!
+!Tracker methodsFor: 'tracks' stamp: 'len 9/Jan/2026, 8:08:32 am (UTC)'!
 anyTrackSoloed
 	^ anyTrackSoloed! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 14/Jan/2026 12:49:04'!
+!Tracker methodsFor: 'tracks' stamp: 'len 14/Jan/2026, 5:49:04 am (UTC)'!
 deleteTrack
 	tracks size > 1 ifFalse: [^ self]. "don't delete last track"
 	self deleteTrack: cursorTrack! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 22/Feb/2026 19:53:48'!
+!Tracker methodsFor: 'tracks' stamp: 'len 22/Feb/2026, 12:53:48 pm (UTC)'!
 deleteTrack: anInteger
 	tracks := (tracks copyFrom: 1 to: anInteger - 1), (tracks copyFrom: anInteger + 1 to: tracks size).
 	self sequenceUniquePatterns do: [:each| each deleteTrack: anInteger].
@@ -3048,7 +3052,7 @@ deleteTrack: anInteger
 	self setCursorTrack: (cursorTrack min: tracks size).
 	self triggerEvent: #tracksChanged! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 10/Jun/2026 17:05:33'!
+!Tracker methodsFor: 'tracks' stamp: 'len 10/Jun/2026, 10:05:33 am (UTC)'!
 insertTrack: anInteger
 	| answer |
 	answer := Track new setTracker: self.
@@ -3058,20 +3062,20 @@ insertTrack: anInteger
 	self triggerEvent: #tracksChanged.
 	^ answer! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 21/Feb/2026 16:29:22'!
+!Tracker methodsFor: 'tracks' stamp: 'len 21/Feb/2026, 9:29:22 am (UTC)'!
 selectedMask
 	^ (sequence at: cursorPattern) value! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 1/Jan/2026 15:35:44'!
+!Tracker methodsFor: 'tracks' stamp: 'len 1/Jan/2026, 8:35:44 am (UTC)'!
 selectedTrack
 	^ tracks at: cursorTrack! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 9/Jun/2026 22:13:47'!
+!Tracker methodsFor: 'tracks' stamp: 'len 9/Jun/2026, 3:13:47 pm (UTC)'!
 setSelectedTrackTuning: aTuningOrNil
 	self selectedTrack tuning: aTuningOrNil.
 	self triggerEvent: #tracksChanged "perhaps we could have a more precise event for this like #tuningChanged"! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 10/Jun/2026 17:05:54'!
+!Tracker methodsFor: 'tracks' stamp: 'len 10/Jun/2026, 10:05:54 am (UTC)'!
 swapTrack: anInteger with: anotherInteger
 	anInteger = anotherInteger ifTrue: [^ self].
 	tracks swap: anInteger with: anotherInteger.
@@ -3081,33 +3085,33 @@ swapTrack: anInteger with: anotherInteger
 	sequence do: [:each| each value swap: anInteger with: anotherInteger].
 	self triggerEvent: #tracksChanged! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 1/Jan/2026 15:33:12'!
+!Tracker methodsFor: 'tracks' stamp: 'len 1/Jan/2026, 8:33:12 am (UTC)'!
 toggleTrackMask
 	self toggleTrackMask: cursorTrack at: cursorPattern! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 21/Feb/2026 16:30:16'!
+!Tracker methodsFor: 'tracks' stamp: 'len 21/Feb/2026, 9:30:16 am (UTC)'!
 toggleTrackMask: trackIndex at: patternIndex
 	| mask |
 	mask := (sequence at: patternIndex) value.
 	mask at: trackIndex put: (mask at: trackIndex) not.
 	self triggerEvent: #tracksChanged! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 1/Jan/2026 16:42:36'!
+!Tracker methodsFor: 'tracks' stamp: 'len 1/Jan/2026, 9:42:36 am (UTC)'!
 toggleTrackMute
 	self toggleTrackMute: cursorTrack! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 31/Dec/2025 22:37:29'!
+!Tracker methodsFor: 'tracks' stamp: 'len 31/Dec/2025, 3:37:29 pm (UTC)'!
 toggleTrackMute: trackIndex
 	| track |
 	track := tracks at: trackIndex.
 	track muted: track muted not.
 	self triggerEvent: #tracksChanged! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 1/Jan/2026 16:42:28'!
+!Tracker methodsFor: 'tracks' stamp: 'len 1/Jan/2026, 9:42:28 am (UTC)'!
 toggleTrackSolo
 	self toggleTrackSolo: cursorTrack! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 9/Jan/2026 15:08:18'!
+!Tracker methodsFor: 'tracks' stamp: 'len 9/Jan/2026, 8:08:18 am (UTC)'!
 toggleTrackSolo: trackIndex
 	| track |
 	track := tracks at: trackIndex.
@@ -3115,27 +3119,27 @@ toggleTrackSolo: trackIndex
 	anyTrackSoloed := tracks anySatisfy: [:any| any soloed].
 	self triggerEvent: #tracksChanged! !
 
-!Tracker methodsFor: 'ui' stamp: 'len 9/Apr/2026 18:50:20'!
+!Tracker methodsFor: 'ui' stamp: 'len 9/Apr/2026, 11:50:20 am (UTC)'!
 open
 	^ TrackerWindow open: self label: label! !
 
-!Tracker class methodsFor: 'as yet unclassified' stamp: 'len 5/Apr/2026 17:24:41'!
+!Tracker class methodsFor: 'as yet unclassified' stamp: 'len 5/Apr/2026, 10:24:41 am (UTC)'!
 fileReaderServicesForFileEntry: filename suffix: suffix
 	suffix = 'song' ifTrue: [^ {self serviceLoadSong}].
 	^ #()! !
 
-!Tracker class methodsFor: 'as yet unclassified' stamp: 'len 9/Apr/2026 18:47:00'!
+!Tracker class methodsFor: 'as yet unclassified' stamp: 'len 9/Apr/2026, 11:47:00 am (UTC)'!
 fromFileEntry: aFileEntry
 	| answer |
 	answer := aFileEntry readStreamDo: [:s| self new readFrom: s binary].
 	(aFileEntry name endsWith: '.song') ifTrue: [answer label: (aFileEntry name allButLast: 5)].
 	^ answer! !
 
-!Tracker class methodsFor: 'as yet unclassified' stamp: 'len 9/Apr/2026 19:22:28'!
+!Tracker class methodsFor: 'as yet unclassified' stamp: 'len 9/Apr/2026, 12:22:28 pm (UTC)'!
 openFromFileEntry: aFileEntry
 	^​ (self fromFileEntry: aFileEntry) open fitAllPatchesToInstrumentEditorBounds! !
 
-!Tracker class methodsFor: 'as yet unclassified' stamp: 'len 9/Apr/2026 18:48:19'!
+!Tracker class methodsFor: 'as yet unclassified' stamp: 'len 9/Apr/2026, 11:48:19 am (UTC)'!
 serviceLoadSong
 	^ (SimpleServiceEntry
 		provider: self
@@ -3144,7 +3148,7 @@ serviceLoadSong
 		description:'open in tracker'
 		buttonLabel: 'open in tracker') argumentGetter: [:fileList| fileList selectedFileEntry]! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 13/Jun/2026 15:28:39'!
+!Trigger methodsFor: 'accessing' stamp: 'len 13/Jun/2026, 8:28:39 am (UTC)'!
 at: position put: value
 	position = 1 ifTrue: [^ instrument := value ifNotNil: [((instrument ifNil: [0]) bitAnd: 16r0F) bitOr: (value bitShift: 4)]].
 	position = 2 ifTrue: [^ instrument := value ifNotNil: [((instrument ifNil: [0]) bitAnd: 16rF0) bitOr: value]].
@@ -3159,53 +3163,53 @@ at: position put: value
 	position = 11 ifTrue: [^ fx2 := value ifNotNil: [((fx2 ifNil: [0]) bitAnd: 16rFFF0) bitOr: value]].
 	^ self error: 'out of bounds'! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 26/Feb/2026 23:26:06'!
+!Trigger methodsFor: 'accessing' stamp: 'len 26/Feb/2026, 4:26:06 pm (UTC)'!
 delay
 	"Answer the delay for this trigger, i.e. the parameter of the effect command Q."
 	fx1 ifNotNil: [(fx1 bitShift: -8) = 81 "Q" ifTrue: [^ fx1 bitAnd: 16rFF]].
 	fx2 ifNotNil: [(fx2 bitShift: -8) = 81 "Q" ifTrue: [^ fx2 bitAnd: 16rFF]].
 	^ 0! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 16/Dec/2025 21:03:26'!
+!Trigger methodsFor: 'accessing' stamp: 'len 16/Dec/2025, 2:03:26 pm (UTC)'!
 fx1
 	^ fx1! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 16/Dec/2025 20:35:00'!
+!Trigger methodsFor: 'accessing' stamp: 'len 16/Dec/2025, 1:35:00 pm (UTC)'!
 fx1: anInteger
 	fx1 := anInteger! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 16/Dec/2025 20:35:18'!
+!Trigger methodsFor: 'accessing' stamp: 'len 16/Dec/2025, 1:35:18 pm (UTC)'!
 fx2
 	^ fx2! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 16/Dec/2025 20:35:04'!
+!Trigger methodsFor: 'accessing' stamp: 'len 16/Dec/2025, 1:35:04 pm (UTC)'!
 fx2: anInteger
 	fx2 := anInteger! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 24/Mar/2026 01:13:55'!
+!Trigger methodsFor: 'accessing' stamp: 'len 23/Mar/2026, 6:13:55 pm (UTC)'!
 glide
 	"Answer the glide or portamento effect for this trigger, i.e. the parameter of the effect command G."
 	fx1 ifNotNil: [(fx1 bitShift: -8) = 71 "G" ifTrue: [^ fx1 bitAnd: 16rFF]].
 	fx2 ifNotNil: [(fx2 bitShift: -8) = 71 "G" ifTrue: [^ fx2 bitAnd: 16rFF]].
 	^ 0! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 24/Dec/2025 15:57:45'!
+!Trigger methodsFor: 'accessing' stamp: 'len 24/Dec/2025, 8:57:45 am (UTC)'!
 instrument
 	^ instrument! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 24/Dec/2025 15:59:14'!
+!Trigger methodsFor: 'accessing' stamp: 'len 24/Dec/2025, 8:59:14 am (UTC)'!
 instrument: anInteger
 	instrument := anInteger! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 16/Dec/2025 20:34:20'!
+!Trigger methodsFor: 'accessing' stamp: 'len 16/Dec/2025, 1:34:20 pm (UTC)'!
 note
 	^ note! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 16/Dec/2025 20:34:28'!
+!Trigger methodsFor: 'accessing' stamp: 'len 16/Dec/2025, 1:34:28 pm (UTC)'!
 note: anInteger
 	note := anInteger! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 14/Jun/2026 17:12:35'!
+!Trigger methodsFor: 'accessing' stamp: 'len 14/Jun/2026, 10:12:35 am (UTC)'!
 noteShift
 	"If the receiver has any +xx or -xx finetuning effects, answer the shift amount from -1.0 (previous note) to +1.0 (next note). Otherwise answer 0."
 	| answer cmd |
@@ -3220,22 +3224,22 @@ noteShift
 			ifFalse: [cmd = 45 "-xx (finetune note down)" ifTrue: [answer := (fx2 bitAnd: 16rFF) / -256.0 + answer]]].
 	^ answer! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 9/Mar/2026 17:28:01'!
+!Trigger methodsFor: 'accessing' stamp: 'len 9/Mar/2026, 10:28:01 am (UTC)'!
 probability
 	"Answer the probability for this trigger, i.e. the parameter of the effect command Yxx."
 	fx1 ifNotNil: [(fx1 bitShift: -8) = 89 "Y" ifTrue: [^ (fx1 bitAnd: 16rFF) / 255.0]].
 	fx2 ifNotNil: [(fx2 bitShift: -8) = 89 "Y" ifTrue: [^ (fx2 bitAnd: 16rFF) / 255.0]].
 	^ 1.0! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 19/Dec/2025 19:13:34'!
+!Trigger methodsFor: 'accessing' stamp: 'len 19/Dec/2025, 12:13:34 pm (UTC)'!
 velocity
 	^ velocity! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 13/Jun/2026 15:18:59'!
+!Trigger methodsFor: 'accessing' stamp: 'len 13/Jun/2026, 8:18:59 am (UTC)'!
 velocity: anInteger
 	velocity := anInteger min: 128 max: 0! !
 
-!Trigger methodsFor: 'serialization' stamp: 'len 6/Feb/2026 15:11:33'!
+!Trigger methodsFor: 'serialization' stamp: 'len 6/Feb/2026, 8:11:33 am (UTC)'!
 asJson
 	| answer |
 	answer := OrderedDictionary new.
@@ -3246,7 +3250,7 @@ asJson
 	fx2 ifNotNil: [answer at: #fx2 put: fx2].
 	^ answer! !
 
-!Trigger methodsFor: 'serialization' stamp: 'len 6/Feb/2026 15:13:53'!
+!Trigger methodsFor: 'serialization' stamp: 'len 6/Feb/2026, 8:13:53 am (UTC)'!
 readFromJson: json
 	note := json at: #note ifAbsent: [].
 	instrument := json at: #instrument ifAbsent: [].
@@ -3254,36 +3258,36 @@ readFromJson: json
 	fx1 := json at: #fx1 ifAbsent: [].
 	fx2 := json at: #fx2 ifAbsent: []! !
 
-!Trigger methodsFor: 'testing' stamp: 'len 27/Dec/2025 20:32:35'!
+!Trigger methodsFor: 'testing' stamp: 'len 27/Dec/2025, 1:32:35 pm (UTC)'!
 isEmpty
 	^ note isNil and: [instrument isNil and: [velocity isNil and: [fx1 isNil and: [fx2 isNil]]]]! !
 
-!Trigger methodsFor: 'testing' stamp: 'len 18/Feb/2026 23:33:07'!
+!Trigger methodsFor: 'testing' stamp: 'len 18/Feb/2026, 4:33:07 pm (UTC)'!
 isNoteOff
 	^ note notNil and: [note < 0]! !
 
-!Trigger methodsFor: 'testing' stamp: 'len 18/Feb/2026 23:28:26'!
+!Trigger methodsFor: 'testing' stamp: 'len 18/Feb/2026, 4:28:26 pm (UTC)'!
 isNoteOn
 	^ note notNil and: [note >= 0]! !
 
-!Trigger methodsFor: 'testing' stamp: 'len 9/Jun/2026 14:43:58'!
+!Trigger methodsFor: 'testing' stamp: 'len 9/Jun/2026, 7:43:58 am (UTC)'!
 isReverse
 	"Answer true if the receiver has an effect <xx to play a sample backwards."
 	^ (fx1 notNil and: [(fx1 bitShift: -8) = 60]) or: [fx2 notNil and: [(fx2 bitShift: -8) = 60]]! !
 
-!Trigger methodsFor: 'transformations' stamp: 'len 11/Jun/2026 16:06:34'!
+!Trigger methodsFor: 'transformations' stamp: 'len 11/Jun/2026, 9:06:34 am (UTC)'!
 transposeBy: steps
 	self isNoteOn ifTrue: [(note + steps between: 0 and: 127) ifTrue: [note := note + steps]]! !
 
-!Tuning methodsFor: 'accessing' stamp: 'len 10/Jun/2026 02:00:32'!
+!Tuning methodsFor: 'accessing' stamp: 'len 9/Jun/2026, 7:00:32 pm (UTC)'!
 intervals
 	^ intervals! !
 
-!Tuning methodsFor: 'accessing' stamp: 'len 9/Jun/2026 18:47:48'!
+!Tuning methodsFor: 'accessing' stamp: 'len 9/Jun/2026, 11:47:48 am (UTC)'!
 label
 	^ label! !
 
-!Tuning methodsFor: 'accessing' stamp: 'len 10/Jun/2026 03:27:37'!
+!Tuning methodsFor: 'accessing' stamp: 'len 9/Jun/2026, 8:27:37 pm (UTC)'!
 map: midiKey
 	"Map a MIDI key in this tuning to a MIDI key in the standard 12-TET tuning.
 	Assumes root key = C4 (MIDI key 60), i.e. it maps the root at MIDI key 60 to the standard C4 at 261.63 Hz."
@@ -3294,7 +3298,7 @@ map: midiKey
 	cents := octave * intervals last + (degree < 1.0 ifTrue: [intervals first * degree] ifFalse: [intervals atLinear: degree]).
 	^ (60 noteToHertz * (2.0 raisedTo: cents / 1200.0)) hertzToNote! !
 
-!Tuning methodsFor: 'accessing' stamp: 'len 10/Jun/2026 23:38:45'!
+!Tuning methodsFor: 'accessing' stamp: 'len 10/Jun/2026, 4:38:45 pm (UTC)'!
 noteStringFrom: midiKey
 	"Answer a string to represent the given MIDI note."
 	| relativeMidiKey n degree |
@@ -3307,15 +3311,15 @@ noteStringFrom: midiKey
 	"
 	^ (degree < 10 ifTrue: [' ', degree printString] ifFalse: [degree printString]), (#('₀' '₁' '₂' '₃' '₄' '₅' '₆' '₇' '₈' '₉') at: relativeMidiKey // n + 5 ifAbsent: ['?'])! !
 
-!Tuning methodsFor: 'accessing' stamp: 'len 11/Jun/2026 01:58:10'!
+!Tuning methodsFor: 'accessing' stamp: 'len 10/Jun/2026, 6:58:10 pm (UTC)'!
 period
 	^ intervals last! !
 
-!Tuning methodsFor: 'accessing' stamp: 'len 11/Jun/2026 01:57:38'!
+!Tuning methodsFor: 'accessing' stamp: 'len 10/Jun/2026, 6:57:38 pm (UTC)'!
 size
 	^ intervals size! !
 
-!Tuning methodsFor: 'serialization' stamp: 'len 11/Jun/2026 02:28:58'!
+!Tuning methodsFor: 'serialization' stamp: 'len 10/Jun/2026, 7:28:58 pm (UTC)'!
 asJson
 	| answer |
 	(answer := OrderedDictionary new)
@@ -3324,77 +3328,77 @@ asJson
 	noteNames ifNotNil: [answer at: #noteNames put: (noteNames collect: [:each| each asUtf8Bytes])].
 	^ answer! !
 
-!Tuning methodsFor: 'serialization' stamp: 'len 11/Jun/2026 02:28:49'!
+!Tuning methodsFor: 'serialization' stamp: 'len 10/Jun/2026, 7:28:49 pm (UTC)'!
 readFromJson: json
 	label := json at: #label.
 	intervals := (json at: #intervals) asFloat32Array.
 	json at: #noteNames ifPresent: [:anArray| noteNames := anArray asArray collect: [:each| CharacterSequence fromUtf8Bytes: each asByteArray]]! !
 
-!Tuning methodsFor: 'private' stamp: 'len 10/Jun/2026 01:56:45'!
+!Tuning methodsFor: 'private' stamp: 'len 9/Jun/2026, 6:56:45 pm (UTC)'!
 intervals: anArray
 	intervals := anArray asFloat32Array! !
 
-!Tuning methodsFor: 'private' stamp: 'len 9/Jun/2026 18:48:00'!
+!Tuning methodsFor: 'private' stamp: 'len 9/Jun/2026, 11:48:00 am (UTC)'!
 label: aString
 	label := aString! !
 
-!Tuning methodsFor: 'private' stamp: 'len 11/Jun/2026 02:12:06'!
+!Tuning methodsFor: 'private' stamp: 'len 10/Jun/2026, 7:12:06 pm (UTC)'!
 noteNames: anArray
 	noteNames := anArray! !
 
-!Tuning class methodsFor: 'library' stamp: 'len 9/Jun/2026 22:14:43'!
+!Tuning class methodsFor: 'library' stamp: 'len 9/Jun/2026, 3:14:43 pm (UTC)'!
 library
 	^ Library! !
 
-!Tuning class methodsFor: 'class initialization' stamp: 'len 11/Jun/2026 02:01:07'!
+!Tuning class methodsFor: 'class initialization' stamp: 'len 10/Jun/2026, 7:01:07 pm (UTC)'!
 initialize
 	super initialize.
 	EDO12 := nil.
 	Library := OrderedCollection new.
 	Library addAll: {self edo7. self edo12. self edo19. self edo31. self edo: 53. self fiveLimitJustIntonation. self pythagorean. self harmonic: 8}! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 01:59:43'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026, 6:59:43 pm (UTC)'!
 edo: anInteger
 	^ self label: anInteger printString, '-EDO' intervals: ((1 to: anInteger) collect: [:i| 1200.0 * i / anInteger])! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 11/Jun/2026 02:12:06'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026, 7:12:06 pm (UTC)'!
 edo12
 	^ EDO12 ifNil: [EDO12 := (self edo: 12) noteNames: #('C' 'C♯' 'D' 'D♯' 'E' 'F' 'F♯' 'G' 'G♯' 'A' 'A♯' 'B')]! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 11/Jun/2026 02:12:07'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026, 7:12:07 pm (UTC)'!
 edo19
 	^ (self edo: 19) noteNames: #('C' 'C♯' 'D♭' 'D' 'D♯' 'E♭' 'E' 'E♯' "=F♭" 'F' 'F♯' 'G♭' 'G' 'G♯' 'A♭' 'A' 'A♯' 'B♭' 'B' 'B♯' "=C♭")! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 11/Jun/2026 02:12:06'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026, 7:12:06 pm (UTC)'!
 edo31
 	^ (self edo: 31) noteNames: #('C' 'C↑' 'C♯' 'D♭' 'D↓' 'D' 'D↑' 'D♯' 'E♭' 'E↓' 'E' 'E↑' 'F↓' 'F' 'F↑' 'F♯' 'G♭' 'G↓' 'G' 'G↑' 'G♯' 'A♭' 'A↓' 'A' 'A↑' 'A♯' 'B♭' 'B↓' 'B' 'B↑' 'C↓')! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 11/Jun/2026 02:12:06'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026, 7:12:06 pm (UTC)'!
 edo7
 	^ (self edo: 7) noteNames: #('C' 'D' 'E' 'F' 'G' 'A' 'B')! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 11/Jun/2026 02:12:07'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026, 7:12:07 pm (UTC)'!
 fiveLimitJustIntonation
 	^ (self label: '5-Limit JI' ratios: {16/15. 9/8. 6/5. 5/4. 4/3. 45/32. 3/2. 8/5. 5/3. 9/5. 15/8. 2/1}) noteNames: #('C' 'C♯' 'D' 'E♭' 'E↓' "syntonic E, lower than Pythagorean by ~21.5¢" 'F' "'F♯↓'" 'F↡'  "lower than Pythagorean F♯" 'G' 'G♯' 'A↓' "syntonic A" 'B♭' 'B↓' "syntonic B")! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 01:59:10'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026, 6:59:10 pm (UTC)'!
 harmonic: n
 	^ self label: 'Harmonic ', n printString ratios: ((n to: n*2) collect: [:m| m / n])! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 01:58:37'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026, 6:58:37 pm (UTC)'!
 label: aString intervals: anArray
 	^ self new label: aString; intervals: anArray! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026 01:58:52'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 9/Jun/2026, 6:58:52 pm (UTC)'!
 label: aString ratios: aCollection
 	^ self label: aString intervals: (aCollection collect: [:each| (each log: 2.0) * 1200.0]) sorted! !
 
-!Tuning class methodsFor: 'instance creation' stamp: 'len 11/Jun/2026 02:12:06'!
+!Tuning class methodsFor: 'instance creation' stamp: 'len 10/Jun/2026, 7:12:06 pm (UTC)'!
 pythagorean
 	^ (self label: 'Pythagorean' ratios: {256/243. 9/8. 32/27. 81/64. 4/3. 1024/729. 3/2. 128/81. 27/16. 16/9. 243/128. 2/1}) noteNames: #('C' 'C♯' 'D' 'D♯' 'E' 'F' 'F♯' 'G' 'G♯' 'A' 'A♯' 'B')
 ! !
 
-!Morph methodsFor: '*tracker' stamp: 'len 15/Jun/2026 20:17:50'!
+!Morph methodsFor: '*tracker' stamp: 'len 15/Jun/2026, 1:17:50 pm (UTC)'!
 showBalloon: stringOrText at: localPosition
 	"Pop up a balloon containing the given string,
 	first removing any existing BalloonMorphs in the world."

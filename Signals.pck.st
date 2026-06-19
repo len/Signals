@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 19 June 2026 at 2:47:28 pm'!
+'From Cuis7.9 [latest update: #8014] on 19 June 2026 at 5:43:31 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 601!
+!provides: 'Signals' 1 602!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -5186,10 +5186,11 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!Multisample methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:30:17 am (UTC)'!
+!Multisample methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:58:03 am (UTC)'!
 screen
 	| answer |
 	answer := SampleWaveformMorph new.
+	sample ifNotNil: [:aSample| answer sample: aSample].
 	self when: #sampleChanged: send: #sample: to: answer.
 	^ answer! !
 
@@ -5387,7 +5388,7 @@ mixTailInto: aBuffer
 					^ self]]].
 	tailPosition := nil! !
 
-!Sample methodsFor: 'processing' stamp: 'len 2/Jun/2026, 8:13:41 am (UTC)'!
+!Sample methodsFor: 'processing' stamp: 'len 19/Jun/2026, 10:30:32 am (UTC)'!
 read: aBuffer
 	| end |
 	position ifNil: [aBuffer atAllPut: 0.0. ^ self].
@@ -5411,8 +5412,8 @@ read: aBuffer
 			loopStart := loopLength > 0 ifTrue: [loopEnd - loopLength + 1.0] ifFalse: [1.0].
 			1 to: aBuffer size do: [:i|
 				aBuffer at: i put: (buffer atLinear: position).
-				((position := position - (increment := increment + incrementDelta)) <= loopStart and: [released not]) ifTrue:
-					[position := position + loopLength - 1.0].
+				position := position - (increment := increment + incrementDelta).
+"				(position <= loopStart and: [released not]) ifTrue: [position := position + loopLength - 1.0]."
 				position >= 1.0 ifFalse:
 					[released := true.
 					aBuffer from: i + 1 to: aBuffer size put: 0.0.
@@ -13281,43 +13282,49 @@ stepTime
 wantsSteps
 	^ true! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 7:39:57 am (UTC)'!
+!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 10:41:12 am (UTC)'!
 computeImage
-	| h canvas i step waveform frame |
+	| h canvas i step waveform frame rmsPixelValue |
 	needsRecomputingImage := false.
-	image fillColor: "Color black. " PatchMorph panelColor.
+	image fillColor: Color black. " PatchMorph panelColor."
+	rmsPixelValue := image pixelValueFor: color.
 	h := image extent y / 2.0.
 	waveform := sample buffer.
 	step := waveform size asFloat / image width.
 	canvas := BitBltCanvas onForm: image.
-	frame := Float32Array new: step truncated + 1.
+	frame := Float32Array new: step truncated.
 	i := 1.
 	0 to: image extent x - 1 do: [:x|
-		| v |
+		| v r peakColor |
 		frame replaceFrom: 1 to: frame size with: waveform startingAt: i.
-		v := frame rms * h.
-		canvas line: x @ (h - v) to: x @ (h + v) width: 1 color: color.
-		i := i + step].
-! !
+		(r := frame rms) > 0.0 ifTrue:
+			[peakColor := color darker alpha: (r * 2.5 min: 0.8).
+			v := frame max * h.
+			canvas line: x @ (h - v) to: x @ h width: 1 color: peakColor.
+			v := frame min * h.
+			canvas line: x @ (h - v) to: x @ h width: 1 color: peakColor].
+		i := i + step]! !
 
 !SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Feb/2026, 6:46:54 pm (UTC)'!
 defaultExtent
 	^ `384 @ 92`! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 7:35:01 am (UTC)'!
+!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 10:35:42 am (UTC)'!
 drawOn: aCanvas
-	| x n |
+	| x n h |
 	sample ifNil: [^ self].
 	needsRecomputingImage ifTrue: [self computeImage].
 	aCanvas image: image at: 0@0.
+	h := extent y // 2.
+	aCanvas line: 0@h to: extent x@h width: 1 color: (Color white alpha: 0.3).
 	n := sample buffer size.
 	sample loopLength > 0 ifTrue:
 		[x := sample loopStart / n * self morphWidth.
-		aCanvas line: x @ 0 to: x @ extent y width: 1 color: Color lightGray.
+		aCanvas line: x @ 0 to: x @ extent y width: 1 color: Color veryLightGray.
 		x := sample loopEnd / n * self morphWidth.
-		aCanvas line: x @ 0 to: x @ extent y width: 1 color: Color lightGray].
+		aCanvas line: x @ 0 to: x @ extent y width: 1 color: Color veryLightGray].
 	x := (lastPosition ifNil: [^ self]) - 1.0 /  n * self morphWidth.
-	aCanvas line: x @ 0 to: x @ extent y width: 2 color: Color white! !
+	aCanvas line: x @ 1 to: x @ (extent y - 1) width: 2 color: Color white! !
 
 !SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 7:34:20 am (UTC)'!
 initialize
@@ -13326,11 +13333,13 @@ initialize
 	image := Form extent: self defaultExtent depth: Display depth.
 	needsRecomputingImage := false! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 7:33:35 am (UTC)'!
+!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 7:50:17 am (UTC)'!
 sample: aSample
+	| isNewSample |
+	isNewSample := sample isNil or: [sample buffer ~= aSample buffer].
 	sample := aSample.
 	lastPosition := sample position.
-	needsRecomputingImage := true.
+	needsRecomputingImage := isNewSample.
 	self redrawNeeded! !
 
 !SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 7:37:17 am (UTC)'!

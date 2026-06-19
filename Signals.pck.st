@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 19 June 2026 at 3:40:20 am'!
+'From Cuis7.9 [latest update: #8014] on 19 June 2026 at 2:47:28 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 600!
+!provides: 'Signals' 1 601!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1456,7 +1456,7 @@ RollingMeterMorph class
 
 !classDefinition: #SampleWaveformMorph category: #'Signals-Morphic-Widgets'!
 BoxMorph subclass: #SampleWaveformMorph
-	instanceVariableNames: 'sample color image lastPosition'
+	instanceVariableNames: 'sample color image lastPosition needsRecomputingImage'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Widgets'!
@@ -5078,7 +5078,7 @@ legato: aBoolean
 gateOff
 	sample ifNotNil: [sample gateOff]! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 12/Jun/2026, 8:45:34 am (UTC)'!
+!Multisample methodsFor: 'controlling' stamp: 'len 19/Jun/2026, 7:38:07 am (UTC)'!
 gateOn
 	| closestKey speedFactor samplesByVelocity |
 	sample ifNotNil: [(legato and: [sample isUnreleased]) ifTrue: [^ self]].
@@ -5092,7 +5092,8 @@ gateOn
 	sample rate: sample rate * speedFactor.
 	sample setNote: note.
 	offset ifNotNil: [sample setOffset: offset].
-	sample gateOn! !
+	sample gateOn.
+	self triggerEvent: #sampleChanged: with: sample! !
 
 !Multisample methodsFor: 'controlling' stamp: 'len 15/Feb/2026, 1:41:02 pm (UTC)'!
 reset
@@ -5172,6 +5173,25 @@ panel
 	^ super panel
 		addTextualControl: (controls at: #speed);
 		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'Legato')! !
+
+!Multisample methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:35:46 am (UTC)'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self screen.
+	answer flap addMorph: self panel.
+	answer
+		addControlInput: #pitch;
+		addControlInput: #speed;
+		addAudioOutput: #setOutput:.
+	^ answer! !
+
+!Multisample methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:30:17 am (UTC)'!
+screen
+	| answer |
+	answer := SampleWaveformMorph new.
+	self when: #sampleChanged: send: #sample: to: answer.
+	^ answer! !
 
 !Multisample methodsFor: 'ui' stamp: 'len 18/Jun/2026, 7:30:48 pm (UTC)'!
 title
@@ -13261,29 +13281,34 @@ stepTime
 wantsSteps
 	^ true! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 12/Feb/2026, 3:40:54 pm (UTC)'!
+!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 7:39:57 am (UTC)'!
 computeImage
-	| h canvas x y step waveform alphaColor |
-	image := Form extent: self defaultExtent depth: Display depth.
+	| h canvas i step waveform frame |
+	needsRecomputingImage := false.
 	image fillColor: "Color black. " PatchMorph panelColor.
-	h := self defaultExtent y.
+	h := image extent y / 2.0.
 	waveform := sample buffer.
+	step := waveform size asFloat / image width.
 	canvas := BitBltCanvas onForm: image.
-	step := image width / waveform size asFloat.
-	alphaColor := color alpha: (step * 5.0 min: 1.0).
-	x := 0.
-	1 to: waveform size do: [:i|
-		x := x + step.
-		y := (1.0 - (waveform at: i) / 2.0) * h.
-		canvas line: x @ y to: x @ (h / 2.0) width: 1 color: alphaColor]! !
+	frame := Float32Array new: step truncated + 1.
+	i := 1.
+	0 to: image extent x - 1 do: [:x|
+		| v |
+		frame replaceFrom: 1 to: frame size with: waveform startingAt: i.
+		v := frame rms * h.
+		canvas line: x @ (h - v) to: x @ (h + v) width: 1 color: color.
+		i := i + step].
+! !
 
 !SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Feb/2026, 6:46:54 pm (UTC)'!
 defaultExtent
 	^ `384 @ 92`! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 28/Mar/2026, 8:47:29 pm (UTC)'!
+!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 7:35:01 am (UTC)'!
 drawOn: aCanvas
 	| x n |
+	sample ifNil: [^ self].
+	needsRecomputingImage ifTrue: [self computeImage].
 	aCanvas image: image at: 0@0.
 	n := sample buffer size.
 	sample loopLength > 0 ifTrue:
@@ -13294,20 +13319,24 @@ drawOn: aCanvas
 	x := (lastPosition ifNil: [^ self]) - 1.0 /  n * self morphWidth.
 	aCanvas line: x @ 0 to: x @ extent y width: 2 color: Color white! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Jan/2026, 9:54:53 am (UTC)'!
+!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 7:34:20 am (UTC)'!
 initialize
 	super initialize.
-	color := PatchMorph waveformColor! !
+	color := PatchMorph waveformColor.
+	image := Form extent: self defaultExtent depth: Display depth.
+	needsRecomputingImage := false! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 28/Mar/2026, 1:20:31 pm (UTC)'!
+!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 7:33:35 am (UTC)'!
 sample: aSample
 	sample := aSample.
 	lastPosition := sample position.
-	self computeImage! !
+	needsRecomputingImage := true.
+	self redrawNeeded! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 28/Mar/2026, 1:20:36 pm (UTC)'!
+!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 7:37:17 am (UTC)'!
 step
 	| position |
+	sample ifNil: [^ self].
 	(position := sample position) = lastPosition ifTrue: [^ self].
 	lastPosition := position.
 	self redrawNeeded! !

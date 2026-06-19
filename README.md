@@ -78,6 +78,14 @@ Commands Rxy and Cxy interpret the nibble x as a time span in units of 1/12 of a
 ### Hotkeys and keyboard mapping
 Trackers are heavily keyboard-oriented. The following hotkeys are the most commonly used (in PC, Command and Option are Control and Alt).
 
+General (tracker window):
+
+* Cmd-o and Cmd-s open and save a project (the whole song)
+* Cmd-k switch the upper pane between instrument editor (the DSP graph) and instrument rack (just the modules in a row)
+* Cmd-f set tracker BPM
+* Cmd-g set tracker swing
+* Cmd-[/] change octave for entering notes with the computer keyboard
+
 Pattern editor:
 
 * Space play sequence from cursor line and loop it (don't loop with Opt), or stop if currently playing
@@ -86,35 +94,30 @@ Pattern editor:
 * Cmd-m toggle track mask in current sequence position
 * Cmd-t insert new track after current track (Cmd-T delete current track)
 * Cmd-n insert new pattern after current pattern (Cmd-N delete current pattern)
-* Opt-Left/Right go to the left/right track
+* Opt-Left/Right go to next track to the left/right
 * Shift-Opt-Left/Right move current track to the left/right
 * Opt-Up/Down go to previous/next pattern in the sequence
-* Shift-Opt-Up/Down move current pattern to the previous/next position in the sequence
+* Shift-Opt-Up/Down move current trigger or selection one line up/down
 * ]/[ transpose trigger or selection one octave up/down
 * }/{ transpose trigger or selection one note up/down
-* </> notch trigger or selection one line up/down
-* Cmd-[/] change octave for entering notes with the computer keyboard
-* Cmd-f set tracker BPM
-* Cmd-g set tracker swing
 * Cmd-l set pattern length
 * Cmd-b set pattern LPB (lines per beat)
 * Cmd-u set track tuning system (default 12-TET)
 * Cmd-r rename instrument
-* Cmd-o and Cmd-s open and save a project (the whole song)
-* Cmd-i and Cmd-e import and export an instrument
-* Cmd-j toggle the lower pane (the pattern editor and sequencer)
 * Cmd-+/- increase/decrease pattern editor font size
 * Cmd-' show/hide FX columns
 
 Instrument editor:
 
-* Esc open menu to add new modules to the patch
+* Esc or click on background to open menu to add new modules to the patch
 * Mouse-drag background for panning
 * Cmd-mouse-scroll zoom
 * Backspace delete module or wire under the mouse
 * Mouse-drag from a module output pin to another module input pin to add a wire
 * ` to center and zoom the patch to make it fit the available space
 * Mouse-scroll on a control wire to change modulation depth
+
+Modules:
 * Cmd-b and Cmd-i browse and inspect module under the mouse
 
 You can use the computer keyboard to input notes in the tracker or trigger notes in realtime in the instrument editor while the tracker is playing. Transpose one octave up with Cmd-] and down with Cmd-[.

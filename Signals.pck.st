@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 19 June 2026 at 5:43:31 pm'!
+'From Cuis7.9 [latest update: #8014] on 19 June 2026 at 9:32:29 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 602!
+!provides: 'Signals' 1 603!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -10558,9 +10558,9 @@ initialize
 new
 	^ self newRow! !
 
-!RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Jun/2026, 8:25:46 pm (UTC)'!
+!RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 2:21:28 pm (UTC)'!
 addRow: aMorph
-	self body addMorph: aMorph layoutSpec: LayoutSizeSpec new useMorphWidth useMorphHeight! !
+	self body addMorph: aMorph layoutSpec: LayoutSizeSpec keepMorphExtent! !
 
 !RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Jun/2026, 11:53:53 am (UTC)'!
 body
@@ -10570,13 +10570,13 @@ body
 handlesMouseOver: anEvent
 	^ true! !
 
-!RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Jun/2026, 12:51:43 pm (UTC)'!
+!RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 2:04:53 pm (UTC)'!
 initialize
 	super initialize.
-	self axisEdgeWeight: 1.0.
+	self axisEdgeWeight: 0.0.
 	self gap: 1; color: Color transparent; borderWidth: 0.
 	title := (LabelMorph contents: '' fontSize: 12 emphasis: 1) color: Color white.
-	self addMorph: title layoutSpec: (LayoutSizeSpec new useMorphWidth useMorphHeight offAxisEdgeWeight: 0.0).
+	self addMorph: title layoutSpec: (LayoutSizeSpec keepMorphExtent offAxisEdgeWeight: 0.0).
 	body := RoundedLinearLayoutMorph newColumn gap: 10; padding: 4 @ 4; borderWidth: 1; borderColor: Color lightGray; color: PatchMorph panelColor; axisEdgeWeight: 0.5.
 	self addMorph: body! !
 
@@ -12775,10 +12775,11 @@ scrollable: aMorph
 vertical: aBoolean
 	vertical := aBoolean! !
 
-!ScrollerMorph methodsFor: 'layout' stamp: 'len 18/Jun/2026, 4:34:03 pm (UTC)'!
+!ScrollerMorph methodsFor: 'layout' stamp: 'len 19/Jun/2026, 2:17:19 pm (UTC)'!
 someSubmorphPositionOrExtentChanged
 	self scrollBy: 0 @ 0. "force scrollable morph within correct bounds"
 	self ensureMinimumExtent.
+	scrollable morphExtent: extent.
 	self redrawNeeded! !
 
 !ScrollerMorph methodsFor: 'scrolling' stamp: 'len 29/Dec/2025, 8:50:04 am (UTC)'!
@@ -13333,13 +13334,13 @@ initialize
 	image := Form extent: self defaultExtent depth: Display depth.
 	needsRecomputingImage := false! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 7:50:17 am (UTC)'!
+!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 2:10:49 pm (UTC)'!
 sample: aSample
 	| isNewSample |
 	isNewSample := sample isNil or: [sample buffer ~= aSample buffer].
 	sample := aSample.
 	lastPosition := sample position.
-	needsRecomputingImage := isNewSample.
+	needsRecomputingImage := needsRecomputingImage | isNewSample.
 	self redrawNeeded! !
 
 !SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 7:37:17 am (UTC)'!
@@ -13350,7 +13351,7 @@ step
 	lastPosition := position.
 	self redrawNeeded! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 2/Jan/2026, 10:03:09 am (UTC)'!
+!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 1:44:40 pm (UTC)'!
 stepTime
 	^ 30! !
 
@@ -14257,9 +14258,10 @@ lowsColor
 midsColor
 	^ `Color okl: 0.65 c: 0.35 h: 123.0`! !
 
-!PatchMorph class methodsFor: 'colors' stamp: 'len 12/Feb/2026, 3:39:58 pm (UTC)'!
+!PatchMorph class methodsFor: 'colors' stamp: 'len 19/Jun/2026, 2:16:12 pm (UTC)'!
 panelColor
-	^ `Color fromHexString: '#141414'`! !
+	^ `Color fromHexString: '#181818'`
+"	^ `Color fromHexString: '#141414'`"! !
 
 !PatchMorph class methodsFor: 'colors' stamp: 'len 1/Mar/2026, 12:33:00 pm (UTC)'!
 waveformColor

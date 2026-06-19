@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 19 June 2026 at 3:40:23 am'!
+'From Cuis7.9 [latest update: #8014] on 19 June 2026 at 9:32:32 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 55!
+!provides: 'Tracker' 1 56!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -629,10 +629,10 @@ defaultBorderColor
 defaultColor
 	^ Color transparent! !
 
-!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 18/Jun/2026, 6:48:11 pm (UTC)'!
+!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 19/Jun/2026, 1:51:23 pm (UTC)'!
 initialize
 	super initialize.
-	self axisEdgeWeight: 1.0.
+	self axisEdgeWeight: 0.0.
 	self gap: 4.
 	self padding: 4@8! !
 
@@ -642,7 +642,7 @@ setTracker: aTracker
 	aTracker when: #cursorChanged send: #update to: self.
 	self update! !
 
-!InstrumentRackMorph methodsFor: 'private' stamp: 'len 18/Jun/2026, 8:39:36 pm (UTC)'!
+!InstrumentRackMorph methodsFor: 'private' stamp: 'len 19/Jun/2026, 2:18:40 pm (UTC)'!
 update
 	| selectedInstrument |
 	(selectedInstrument := tracker selectedInstrument ifNil: [^ self]) = currentInstrument ifTrue: [^ self].
@@ -655,8 +655,9 @@ update
 		labelMorph color: Color white; rotateBy: Float halfPi negated."
 	((selectedInstrument patch submorphs select: [:each| each isKindOf: PatchableMorph])
 		sorted: [:a :b| a morphPosition x < b morphPosition x])
-			do: [:each| self addMorph: each rackable].
-	self redrawNeeded! !
+			do: [:each| self addMorph: each rackable layoutSpec: LayoutSizeSpec new useMorphWidth "useMorphHeight"].
+	self redrawNeeded.
+! !
 
 !TrackerWindow methodsFor: 'actions' stamp: 'len 18/Jun/2026, 3:25:10 pm (UTC)'!
 fitAllPatchesToInstrumentEditorBounds

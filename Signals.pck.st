@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 20 June 2026 at 11:50:01 pm'!
+'From Cuis7.9 [latest update: #8014] on 21 June 2026 at 2:46:34 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 605!
+!provides: 'Signals' 1 606!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1004,16 +1004,6 @@ LinearLayoutMorph subclass: #ControlPanel
 ControlPanel class
 	instanceVariableNames: ''!
 
-!classDefinition: #RackableMorph category: #'Signals-Morphic-Patches'!
-LinearLayoutMorph subclass: #RackableMorph
-	instanceVariableNames: 'model body title'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Patches'!
-!classDefinition: 'RackableMorph class' category: #'Signals-Morphic-Patches'!
-RackableMorph class
-	instanceVariableNames: ''!
-
 !classDefinition: #RoundedLinearLayoutMorph category: #'Signals-Morphic-Support'!
 LinearLayoutMorph subclass: #RoundedLinearLayoutMorph
 	instanceVariableNames: ''
@@ -1382,6 +1372,16 @@ OutputPinMorph subclass: #ControlOutputPinMorph
 	category: 'Signals-Morphic-Patches'!
 !classDefinition: 'ControlOutputPinMorph class' category: #'Signals-Morphic-Patches'!
 ControlOutputPinMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #RackableMorph category: #'Signals-Morphic-Patches'!
+BoxMorph subclass: #RackableMorph
+	instanceVariableNames: 'model body flap title'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Patches'!
+!classDefinition: 'RackableMorph class' category: #'Signals-Morphic-Patches'!
+RackableMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #ScrollerMorph category: #'Signals-Morphic-Support'!
@@ -4445,7 +4445,7 @@ panel
 		addTextualControl: (controls at: #feedback);
 		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger')! !
 
-!Operator methodsFor: 'ui' stamp: 'len 20/Jun/2026, 1:54:13 pm (UTC)'!
+!Operator methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:35:04 pm (UTC)'!
 panelBottom
 	^​ super panel
 		addTextualControl: (controls at: #ratio);
@@ -5313,6 +5313,14 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
+!Multisample methodsFor: 'ui' stamp: 'len 20/Jun/2026, 6:52:13 pm (UTC)'!
+rackable
+	| answer |
+	answer := RackableMorph new model: self.
+	answer body addMorph: (self screen morphExtent: 512@128).
+	answer flap addMorph: self panel.
+	^ answer! !
+
 !Multisample methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:58:03 am (UTC)'!
 screen
 	| answer |
@@ -5603,6 +5611,14 @@ patchable
 !Sample methodsFor: 'ui' stamp: 'len 2/Oct/2025, 1:06:00 pm (UTC)'!
 plot
 	^ PlotMorph new domain: (1 to: buffer size); plot: [:t| buffer at: t]! !
+
+!Sample methodsFor: 'ui' stamp: 'len 20/Jun/2026, 6:52:05 pm (UTC)'!
+rackable
+	| answer |
+	answer := RackableMorph new model: self.
+	answer body addMorph: (self screen morphExtent: 512@128).
+	answer flap addMorph: self panel.
+	^ answer! !
 
 !Sample methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:01:23 pm (UTC)'!
 screen
@@ -6371,12 +6387,13 @@ patchable
 	answer addControlOutput.
 	^ answer! !
 
-!Drift methodsFor: 'ui' stamp: 'len 20/Jun/2026, 11:33:39 am (UTC)'!
+!Drift methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:42:56 pm (UTC)'!
 rackable
 	| answer |
 	answer := RackableMorph new model: self.
 	answer addRow: self screen.
 	answer addRow
+"		separation: 0 @ 8;"
 		addKnob: (controls at: #time) label: 'Time';
 		addKnob: (controls at: #slew) label: 'Slew'.
 	^ answer! !
@@ -6491,12 +6508,12 @@ patchable
 		addControlOutput.
 	^ answer! !
 
-!Envelope methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:52:19 am (UTC)'!
+!Envelope methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:41:49 pm (UTC)'!
 rackable
 	| answer |
 	answer := RackableMorph new model: self.
 	answer addRow addMorph: self screen; addMorph: self panelRight.
-	answer addRow: self panelBottom.
+	answer addRow: (self panelBottom separation: 0 @ 8).
 	^ answer! !
 
 !Envelope methodsFor: 'wiring' stamp: 'len 17/Jun/2026, 4:10:34 pm (UTC)'!
@@ -6536,7 +6553,7 @@ panel
 		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger');
 		addTextualControl: (controls at: #velocitySensitivity)! !
 
-!AD methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:52:29 am (UTC)'!
+!AD methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:38:49 pm (UTC)'!
 panelBottom
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
@@ -7131,18 +7148,19 @@ patchable
 		addControlOutput.
 	^ answer! !
 
-!LFO methodsFor: 'ui' stamp: 'len 20/Jun/2026, 12:10:59 pm (UTC)'!
+!LFO methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:01:54 pm (UTC)'!
 rackable
 	| answer |
 	answer := RackableMorph new model: self.
-	answer addRow: self screen.
 	answer addRow
 		addMorph: (LFOWaveMorph new lfo: self);
 		addTextualControl: (controls at: #speed).
-	answer addRow
-		addTextualControl: (controls at: #offset);
-		addMorph: (PluggableToggleMorph new model: self; getter: #bipolar; setter: #bipolar:; label: '±'; setBalloonText: 'Bipolar');
-		addMorph: (PluggableChoiceMorph new options: #(Free Reset Hold); model: self; getter: #mode; setter: #mode:; setBalloonText: 'Mode').
+	answer addRow: self screen.
+	answer flap addMorph:
+		(ControlPanel new gap: 0;
+			addTextualControl: (controls at: #offset);
+			addMorph: (PluggableToggleMorph new model: self; getter: #bipolar; setter: #bipolar:; label: '±'; setBalloonText: 'Bipolar');
+			addMorph: (PluggableChoiceMorph new options: #(Free Reset Hold); model: self; getter: #mode; setter: #mode:; setBalloonText: 'Mode')).
 	^ answer! !
 
 !LFO methodsFor: 'ui' stamp: 'len 2/Jun/2026, 8:15:08 pm (UTC)'!
@@ -9658,12 +9676,12 @@ patchable
 	answer addAudioInput: #setInput:.
 	^ answer! !
 
-!Oscilloscope methodsFor: 'ui' stamp: 'len 20/Jun/2026, 1:02:56 pm (UTC)'!
+!Oscilloscope methodsFor: 'ui' stamp: 'len 20/Jun/2026, 6:14:18 pm (UTC)'!
 rackable
 	| answer |
 	answer := RackableMorph new model: self.
 	answer addRow: self screen.
-	answer addRow addTextualControl: (controls at: #time).
+"	answer flap addMorph: (TextualControlMorph new control: (controls at: #time))."
 	^ answer! !
 
 !Oscilloscope methodsFor: 'ui' stamp: 'len 13/May/2026, 7:03:03 am (UTC)'!
@@ -9766,11 +9784,12 @@ patchable
 	answer addAudioInput: #setInput:.
 	^ answer! !
 
-!Spectrogram methodsFor: 'ui' stamp: 'len 20/Jun/2026, 12:59:02 pm (UTC)'!
+!Spectrogram methodsFor: 'ui' stamp: 'len 20/Jun/2026, 6:10:19 pm (UTC)'!
 rackable
 	| answer |
 	answer := RackableMorph new model: self.
 	answer addRow: self screen.
+	answer flap addMorph: self panel.
 	^ answer! !
 
 !Spectrogram methodsFor: 'ui' stamp: 'len 10/May/2026, 8:53:03 am (UTC)'!
@@ -10403,17 +10422,19 @@ patchable
 	answer addAudioInput: #setInput:.
 	^ answer! !
 
-!SpectrumAnalyzer methodsFor: 'ui' stamp: 'len 20/Jun/2026, 12:58:22 pm (UTC)'!
+!SpectrumAnalyzer methodsFor: 'ui' stamp: 'len 20/Jun/2026, 5:34:24 pm (UTC)'!
 rackable
-	| screen answer |
+	| screen answer flapPanel |
 	screen := SpectrumMorph new.
 	self when: #spectrum: send: #spectrum: to: screen.
 	answer := RackableMorph new model: self.
 	answer addRow: screen.
-"	answer addRow
+	flapPanel := ControlPanel new.
+	flapPanel
 		addMorph: (PluggableChoiceMorph new options: #(256 512 1024 2048 4096); model: self; getter: #windowSize; setter: #windowSize:; setBalloonText: 'WIndow Size');
 		addMorph: (PluggableChoiceMorph new options: #(linear log); model: screen; getter: #frequencyScale; setter: #frequencyScale:; setBalloonText: 'Frequency Scale');
-		addMorph: (PluggableChoiceMorph new options: #(bars outline); model: screen; getter: #displayMode; setter: #displayMode:; setBalloonText: 'Display Mode')."
+		addMorph: (PluggableChoiceMorph new options: #(bars outline); model: screen; getter: #displayMode; setter: #displayMode:; setBalloonText: 'Display Mode').
+	answer flap addMorph: flapPanel.
 	^ answer! !
 
 !SpectrumAnalyzer methodsFor: 'wiring' stamp: 'len 3/Apr/2026, 12:27:01 pm (UTC)'!
@@ -10770,84 +10791,6 @@ initialize
 !ControlPanel class methodsFor: 'instance creation' stamp: 'len 12/Mar/2026, 10:56:12 am (UTC)'!
 new
 	^ self newRow! !
-
-!RackableMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 1:28:26 pm (UTC)'!
-addColumn
-	| column |
-	column := ControlPanel newColumn.
-	self addRow: column.
-	^ column! !
-
-!RackableMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 7:43:30 am (UTC)'!
-addRow
-	| row |
-	row := ControlPanel newRow.
-	self addRow: row.
-	^ row! !
-
-!RackableMorph methodsFor: 'accessing' stamp: 'len 19/Jun/2026, 5:22:00 pm (UTC)'!
-addRow: aMorph
-	self body addMorph: aMorph "layoutSpec: LayoutSizeSpec keepMorphExtent"! !
-
-!RackableMorph methodsFor: 'accessing' stamp: 'len 18/Jun/2026, 11:53:53 am (UTC)'!
-body
-	^ body! !
-
-!RackableMorph methodsFor: 'accessing' stamp: 'len 18/Jun/2026, 11:55:43 am (UTC)'!
-model
-	^ model! !
-
-!RackableMorph methodsFor: 'accessing' stamp: 'len 18/Jun/2026, 11:55:48 am (UTC)'!
-model: anObject
-	model := anObject.
-	self setTitle: model title! !
-
-!RackableMorph methodsFor: 'accessing' stamp: 'len 18/Jun/2026, 11:54:02 am (UTC)'!
-setTitle: aString
-	title contents: aString! !
-
-!RackableMorph methodsFor: 'initialization' stamp: 'len 19/Jun/2026, 5:57:22 pm (UTC)'!
-initialize
-	super initialize.
-	self axisEdgeWeight: 0.5.
-	self gap: 1; color: Color transparent; borderWidth: 0.
-	title := (LabelMorph contents: '' fontSize: 12 emphasis: 1) color: Color white.
-	self addMorph: title layoutSpec: (LayoutSizeSpec keepMorphExtent offAxisEdgeWeight: 0.0).
-	body := RoundedLinearLayoutMorph newColumn gap: 4; padding: 4 @ 4; borderWidth: 1; borderColor: Color lightGray; color: PatchMorph panelColor; axisEdgeWeight: 0.5.
-	self addMorph: body! !
-
-!RackableMorph methodsFor: 'events' stamp: 'len 20/Jun/2026, 8:38:22 am (UTC)'!
-handlesKeyboardFocus
-	^ true! !
-
-!RackableMorph methodsFor: 'events' stamp: 'len 18/Jun/2026, 11:11:00 am (UTC)'!
-handlesMouseOver: anEvent
-	^ true! !
-
-!RackableMorph methodsFor: 'events' stamp: 'len 18/Jun/2026, 12:21:26 pm (UTC)'!
-keyStroke: aKeyboardEvent
-	aKeyboardEvent primaryModifierPressed ifTrue:
-		[aKeyboardEvent keyCharacter = $b
-			ifTrue: [Smalltalk browseFull: self model class. aKeyboardEvent wasHandled: true. ^ self].
-		aKeyboardEvent keyCharacter = $i
-			ifTrue: [self model inspect. aKeyboardEvent wasHandled: true. ^ self]].
-	^ super keyStroke: aKeyboardEvent! !
-
-!RackableMorph methodsFor: 'events' stamp: 'len 18/Jun/2026, 11:54:45 am (UTC)'!
-mouseEnter: anEvent
-	body borderColor: Color veryVeryLightGray! !
-
-!RackableMorph methodsFor: 'events' stamp: 'len 18/Jun/2026, 11:54:31 am (UTC)'!
-mouseLeave: anEvent
-	body borderColor: body defaultBorderColor! !
-
-!RackableMorph methodsFor: 'geometry' stamp: 'len 18/Jun/2026, 10:49:50 am (UTC)'!
-minimumExtent
-	^ super minimumExtent max: 24@24! !
-
-!RackableMorph class methodsFor: 'as yet unclassified' stamp: 'len 18/Jun/2026, 10:48:39 am (UTC)'!
-new
-	^ self newColumn! !
 
 !RoundedLinearLayoutMorph methodsFor: 'drawing' stamp: 'len 27/Jan/2026, 12:19:39 pm (UTC)'!
 drawOn: aCanvas
@@ -13514,6 +13457,109 @@ startStepping
 	self model when: #output: send: #level: to: self.
 	super startStepping! !
 
+!RackableMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 1:28:26 pm (UTC)'!
+addColumn
+	| column |
+	column := ControlPanel newColumn.
+	self addRow: column.
+	^ column! !
+
+!RackableMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 7:43:30 am (UTC)'!
+addRow
+	| row |
+	row := ControlPanel newRow.
+	self addRow: row.
+	^ row! !
+
+!RackableMorph methodsFor: 'accessing' stamp: 'len 19/Jun/2026, 5:22:00 pm (UTC)'!
+addRow: aMorph
+	self body addMorph: aMorph "layoutSpec: LayoutSizeSpec keepMorphExtent"! !
+
+!RackableMorph methodsFor: 'accessing' stamp: 'len 18/Jun/2026, 11:53:53 am (UTC)'!
+body
+	^ body! !
+
+!RackableMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 5:32:17 pm (UTC)'!
+flap
+	^ flap! !
+
+!RackableMorph methodsFor: 'accessing' stamp: 'len 18/Jun/2026, 11:55:43 am (UTC)'!
+model
+	^ model! !
+
+!RackableMorph methodsFor: 'accessing' stamp: 'len 18/Jun/2026, 11:55:48 am (UTC)'!
+model: anObject
+	model := anObject.
+	self setTitle: model title! !
+
+!RackableMorph methodsFor: 'accessing' stamp: 'len 18/Jun/2026, 11:54:02 am (UTC)'!
+setTitle: aString
+	title contents: aString! !
+
+!RackableMorph methodsFor: 'alarms' stamp: 'len 20/Jun/2026, 5:35:56 pm (UTC)'!
+hideFlap
+	flap visible: false! !
+
+!RackableMorph methodsFor: 'drawing' stamp: 'len 20/Jun/2026, 5:55:55 pm (UTC)'!
+drawOn: aCanvas
+	^ self! !
+
+!RackableMorph methodsFor: 'events' stamp: 'len 20/Jun/2026, 8:38:22 am (UTC)'!
+handlesKeyboardFocus
+	^ true! !
+
+!RackableMorph methodsFor: 'events' stamp: 'len 18/Jun/2026, 11:11:00 am (UTC)'!
+handlesMouseOver: anEvent
+	^ true! !
+
+!RackableMorph methodsFor: 'events' stamp: 'len 18/Jun/2026, 12:21:26 pm (UTC)'!
+keyStroke: aKeyboardEvent
+	aKeyboardEvent primaryModifierPressed ifTrue:
+		[aKeyboardEvent keyCharacter = $b
+			ifTrue: [Smalltalk browseFull: self model class. aKeyboardEvent wasHandled: true. ^ self].
+		aKeyboardEvent keyCharacter = $i
+			ifTrue: [self model inspect. aKeyboardEvent wasHandled: true. ^ self]].
+	^ super keyStroke: aKeyboardEvent! !
+
+!RackableMorph methodsFor: 'events' stamp: 'len 20/Jun/2026, 7:11:16 pm (UTC)'!
+mouseEnter: anEvent
+	self removeAlarm: #hideFlap.
+	body borderColor: Color veryVeryLightGray.
+	title color: Color white.
+	flap hasSubmorphs ifTrue:
+		[flap position: 8 @ (self morphHeight - flap morphHeight) extent: flap minimumExtent.
+		flap visible: true]! !
+
+!RackableMorph methodsFor: 'events' stamp: 'len 20/Jun/2026, 7:31:51 pm (UTC)'!
+mouseLeave: anEvent
+	body borderColor: body defaultBorderColor.
+	title color: Color veryLightGray.
+	self addAlarm: #hideFlap after: 300 "wait 300 ms before actually hiding them"! !
+
+!RackableMorph methodsFor: 'geometry' stamp: 'len 20/Jun/2026, 6:01:58 pm (UTC)'!
+extentChanged: oldExtent
+	title position: 0 @ 0 extent: extent x @ title morphHeight.
+	body position: 0 @ title morphHeight extent: extent x @ (extent y - title morphHeight)! !
+
+!RackableMorph methodsFor: 'geometry' stamp: 'len 20/Jun/2026, 6:01:07 pm (UTC)'!
+minimumExtent
+	| m1 m2 |
+	m1 := body minimumExtent.
+	m2 := title minimumExtent.
+	^ (m1 x max: m2 x) @ (m1 y + m2 y)! !
+
+!RackableMorph methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 7:09:22 pm (UTC)'!
+initialize
+	super initialize.
+"	self gap: 1; color: Color transparent; borderWidth: 0."
+	title := (LabelMorph contents: '' fontSize: 12 emphasis: 1) color: Color veryLightGray.
+	self addMorph: title position: 0 @ 0.
+	body := RoundedLinearLayoutMorph newColumn gap: 4; padding: 4 @ 4; borderWidth: 1; borderColor: Color lightGray; color: PatchMorph panelColor; axisEdgeWeight: 0.5.
+	self addMorph: body position: 0 @ title minimumExtent y.
+	flap := RoundedLinearLayoutMorph newColumn gap: 10; padding: 4 @ 8; "borderWidth: 0; borderColor: Color lightGray; color: PatchMorph panelColor" color: (Color darkGray alpha: 0.7).
+	self addMorph: flap.
+	flap visible: false! !
+
 !ScrollerMorph methodsFor: 'drawing' stamp: 'len 10/Jan/2026, 8:31:15 am (UTC)'!
 drawOn: aCanvas
 "	aCanvas fillRectangle: self localBounds color: Color black"! !
@@ -14232,12 +14278,12 @@ stepTime
 wantsSteps
 	^ true! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 2:52:27 pm (UTC)'!
+!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Jun/2026, 7:24:14 pm (UTC)'!
 computeImage
-	| h canvas i step waveform frame rmsPixelValue |
+	| h canvas i step waveform frame |
 	needsRecomputingImage := false.
+	image extent = extent ifFalse: [image := Form extent: extent depth: Display depth].
 	image fillColor: PatchMorph panelColor. "(color darker: 0.6). "
-	rmsPixelValue := image pixelValueFor: color.
 	h := image extent y / 2.0.
 	waveform := sample buffer.
 	step := waveform size asFloat / image width.
@@ -14275,6 +14321,10 @@ drawOn: aCanvas
 		aCanvas line: x @ 0 to: x @ extent y width: 1 color: Color veryLightGray].
 	x := (lastPosition ifNil: [^ self]) - 1.0 /  n * self morphWidth.
 	aCanvas line: x @ 1 to: x @ (extent y - 1) width: 2 color: Color white! !
+
+!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Jun/2026, 6:48:30 pm (UTC)'!
+extentChanged: oldExtent
+	needsRecomputingImage := true! !
 
 !SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 7:34:20 am (UTC)'!
 initialize
@@ -15272,6 +15322,11 @@ patch
 setTitle: aString
 	title contents: aString! !
 
+!PatchableMorph methodsFor: 'alarms' stamp: 'len 23/Apr/2026, 1:13:35 pm (UTC)'!
+hideFlapAndTitle
+	title visible: false.
+	flap visible: false! !
+
 !PatchableMorph methodsFor: 'building' stamp: 'len 2/Feb/2026, 8:40:17 am (UTC)'!
 addAudioInput: aSymbol
 	^ self addAudioInput: aSymbol label: 'In'! !
@@ -15335,11 +15390,6 @@ handlesKeyboardFocus
 !PatchableMorph methodsFor: 'events' stamp: 'len 21/Nov/2025, 6:33:00 pm (UTC)'!
 handlesMouseOver: anEvent
 	^ true! !
-
-!PatchableMorph methodsFor: 'events' stamp: 'len 23/Apr/2026, 1:13:35 pm (UTC)'!
-hideFlapAndTitle
-	title visible: false.
-	flap visible: false! !
 
 !PatchableMorph methodsFor: 'events' stamp: 'len 20/Jun/2026, 9:33:59 am (UTC)'!
 keyStroke: aKeyboardEvent

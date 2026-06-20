@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 19 June 2026 at 9:32:32 pm'!
+'From Cuis7.9 [latest update: #8014] on 20 June 2026 at 3:40:38 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 56!
+!provides: 'Tracker' 1 57!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -636,28 +636,32 @@ initialize
 	self gap: 4.
 	self padding: 4@8! !
 
-!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 18/Jun/2026, 7:55:26 am (UTC)'!
+!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 19/Jun/2026, 4:36:51 pm (UTC)'!
 setTracker: aTracker
 	tracker := aTracker.
 	aTracker when: #cursorChanged send: #update to: self.
 	self update! !
 
-!InstrumentRackMorph methodsFor: 'private' stamp: 'len 19/Jun/2026, 2:18:40 pm (UTC)'!
+!InstrumentRackMorph methodsFor: 'private' stamp: 'len 19/Jun/2026, 4:38:47 pm (UTC)'!
+forceUpdate
+	currentInstrument := nil.
+	self update! !
+
+!InstrumentRackMorph methodsFor: 'private' stamp: 'len 20/Jun/2026, 8:20:50 am (UTC)'!
 update
 	| selectedInstrument |
-	(selectedInstrument := tracker selectedInstrument ifNil: [^ self]) = currentInstrument ifTrue: [^ self].
+	(selectedInstrument := tracker selectedInstrument ifNil: [^ self removeAllMorphs]) = currentInstrument ifTrue: [^ self].
 	currentInstrument := selectedInstrument.
 	self removeAllMorphs.
 	self morphExtent: 10@10. "and let it grow from that"
-"	currentInstrument label ifNotNil: [:aString| | labelMorph |
-		labelMorph := LabelMorph contents: aString fontSize: 14 emphasis: 1.
-		self addMorph: labelMorph.
-		labelMorph color: Color white; rotateBy: Float halfPi negated."
+	currentInstrument label ifNotNil: [:aString| | labelMorph |
+		labelMorph := VerticalLabelMorph new label: aString.
+		self addMorph: labelMorph].
 	((selectedInstrument patch submorphs select: [:each| each isKindOf: PatchableMorph])
 		sorted: [:a :b| a morphPosition x < b morphPosition x])
 			do: [:each| self addMorph: each rackable layoutSpec: LayoutSizeSpec new useMorphWidth "useMorphHeight"].
-	self redrawNeeded.
-! !
+	self addMorph: (PluggableButtonMorph new model: self; action: #addNewModule; label: '+'; morphExtent: 10 @ 10) layoutSpec: LayoutSizeSpec new useMorphWidth.
+	self redrawNeeded! !
 
 !TrackerWindow methodsFor: 'actions' stamp: 'len 18/Jun/2026, 3:25:10 pm (UTC)'!
 fitAllPatchesToInstrumentEditorBounds
@@ -691,7 +695,7 @@ setBPM
 setSwing
 	self request: 'Swing' initialAnswer: (model swing * 100) truncated printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 0 and: 100]] do: [:s| model swing: s asNumber / 100.0]! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 18/Jun/2026, 3:25:10 pm (UTC)'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 19/Jun/2026, 4:35:14 pm (UTC)'!
 toggleInstrumentRackOrEditor
 	instrumentEditor owner
 		ifNil:
@@ -707,7 +711,8 @@ toggleInstrumentRackOrEditor
 			layoutMorph submorphs first delete. "adjuster"
 			layoutMorph
 				addMorph: instrumentRackScroller proportionalHeight: 0.1;
-				addAdjusterAndMorph: lowerPane proportionalHeight: 1.0 - 0.1].
+				addAdjusterAndMorph: lowerPane proportionalHeight: 1.0 - 0.1.
+			instrumentRack forceUpdate].
 	layoutMorph adoptWidgetsColor: self widgetsColor "to set the color of the adjuster again"! !
 
 !TrackerWindow methodsFor: 'actions' stamp: 'len 18/Jun/2026, 3:25:10 pm (UTC)'!
@@ -715,13 +720,18 @@ toggleLowerPane
 	lowerPane visible: lowerPane visible not.
 	instrumentEditor layoutSpec proportionalHeight: (lowerPane visible ifTrue: [0.38] ifFalse: [1.0])! !
 
-!TrackerWindow methodsFor: 'events' stamp: 'len 18/Jun/2026, 3:25:10 pm (UTC)'!
+!TrackerWindow methodsFor: 'events' stamp: 'len 19/Jun/2026, 4:31:35 pm (UTC)'!
 handleCommandHotkey: anEvent
 	anEvent keyCharacter = $f ifTrue: [self setBPM. ^ true].
 	anEvent keyCharacter = $g ifTrue: [self setSwing. ^ true].
 	anEvent keyCharacter = $o ifTrue: [self openProject. ^ true].
 	anEvent keyCharacter = $s ifTrue: [self saveProject. ^ true].
-	anEvent keyCharacter = $k ifTrue: [self toggleInstrumentRackOrEditor.  anEvent hand newKeyboardFocus: self. ^ true].
+	anEvent keyCharacter = $k ifTrue:
+		[| oldKeyboardFocus |
+		oldKeyboardFocus := anEvent hand keyboardFocus.
+		self toggleInstrumentRackOrEditor.
+		anEvent hand newKeyboardFocus: ((oldKeyboardFocus notNil and: [oldKeyboardFocus isInWorld]) ifTrue: [oldKeyboardFocus] ifFalse: [self]).
+		^ true].
 "	anEvent keyCharacter = $j ifTrue: [self toggleLowerPane. ^ true]."
 	anEvent keyCharacter = $d ifTrue: [instrumentEditor duplicateInstrument. ^ true].
 	anEvent keyCharacter = $r ifTrue: [instrumentEditor renameInstrument. ^ true].
@@ -2013,11 +2023,11 @@ copy
 	buffers := OrderedCollection new.
 	^ self class new readFromJson: (self asJsonWithBuffers: buffers) buffers: buffers! !
 
-!Instrument methodsFor: 'initialization' stamp: 'len 23/Mar/2026, 6:54:35 pm (UTC)'!
+!Instrument methodsFor: 'initialization' stamp: 'len 19/Jun/2026, 4:11:11 pm (UTC)'!
 initialize
 	controlValues := Float32Array new: 10.
 	patch := PatchMorph new.
-	patch when: #recomputeNeeded send: #scheduleRecompute to: self.
+	patch when: #recomputeNeeded send: #recomputeNeeded to: self.
 	glideTicks := 0! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 3/Mar/2026, 12:20:04 pm (UTC)'!
@@ -2126,13 +2136,14 @@ playTrigger
 			trigger isNoteOff ifTrue: [self noteOff]].
 	trigger := nil! !
 
+!Instrument methodsFor: 'playing' stamp: 'len 19/Jun/2026, 4:37:02 pm (UTC)'!
+recomputeNeeded
+	"!!!!!! this doesn't work, the morph forgets the action map when deleted"
+	modules := nil! !
+
 !Instrument methodsFor: 'playing' stamp: 'len 3/Jun/2026, 11:45:14 am (UTC)'!
 reset
 	(modules ifNil: [^ self]) do: [:each| each reset]! !
-
-!Instrument methodsFor: 'playing' stamp: 'len 6/Jan/2026, 9:00:00 am (UTC)'!
-scheduleRecompute
-	modules := nil! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 5/Jan/2026, 12:45:17 pm (UTC)'!
 scheduleTrigger: aTrigger

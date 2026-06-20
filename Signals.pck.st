@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 19 June 2026 at 9:32:29 pm'!
+'From Cuis7.9 [latest update: #8014] on 20 June 2026 at 3:40:41 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 603!
+!provides: 'Signals' 1 604!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1384,6 +1384,16 @@ BoxMorph subclass: #ScrollerMorph
 ScrollerMorph class
 	instanceVariableNames: ''!
 
+!classDefinition: #VerticalLabelMorph category: #'Signals-Morphic-Support'!
+BoxMorph subclass: #VerticalLabelMorph
+	instanceVariableNames: 'font label color'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Support'!
+!classDefinition: 'VerticalLabelMorph class' category: #'Signals-Morphic-Support'!
+VerticalLabelMorph class
+	instanceVariableNames: ''!
+
 !classDefinition: #ZoomerMorph category: #'Signals-Morphic-Support'!
 BoxMorph subclass: #ZoomerMorph
 	instanceVariableNames: 'showScrollbars'
@@ -2254,6 +2264,16 @@ Virtual analog model of the Oberheim state variable filter. It has low-pass, hig
 
 See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 
+!VerticalLabelMorph commentStamp: '<historical>' prior: 0!
+LabelMorph is a "lightweight" Morph to display a String. It supports only a single font, color, and emphasis combination. For multiple text styles, use TextModelMorph or TextParagraphMorph.
+
+Structure:
+instance var    	Type              Description 
+font 			Font 		(normally nil; then the accessor #font gives back  a Font or nil #defaultFont) 
+emphasis 		SmallInteger	bitmask determining character attributes (underline, bold, 	italics, struckThrough) 
+contents 		String 			The text that will be displayed. 
+!
+
 !AllpassComb commentStamp: '<historical>' prior: 0!
 Schroeder allpass filter.!
 
@@ -2889,14 +2909,14 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #mode ifPresent: [:aSymbol| mode := aSymbol]! !
 
-!Compressor methodsFor: 'ui' stamp: 'len 17/Jun/2026, 1:04:21 pm (UTC)'!
+!Compressor methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:05:19 am (UTC)'!
 panel
 	| answer |
 	answer := ControlPanel newColumn.
 	answer addRow
 "		addTextualControl: (controls at: #threshold);"
 		addTextualControl: (controls at: #ratio);
-		addMorph: (PluggableChoiceMorph new options: #(Peak RMS); model: self; getter: #mode; setter: #mode:).
+		addMorph: (PluggableChoiceMorph new options: #(Peak RMS); model: self; getter: #mode; setter: #mode:; setBalloonText: 'Mode').
 "	answer addRow
 		addSmallKnob: (controls at: #attack) label: 'Attack';
 		addSmallKnob: (controls at: #release) label: 'Release'."
@@ -3051,10 +3071,10 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #mode ifPresent: [:aSymbol| mode := aSymbol]! !
 
-!Gate methodsFor: 'ui' stamp: 'len 17/Jun/2026, 1:04:30 pm (UTC)'!
+!Gate methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:05:38 am (UTC)'!
 panel
 	^​ ControlPanel new
-		addMorph: (PluggableChoiceMorph new options: #(Peak RMS); model: self; getter: #mode; setter: #mode:)! !
+		addMorph: (PluggableChoiceMorph new options: #(Peak RMS); model: self; getter: #mode; setter: #mode:; setBalloonText: 'Mode')! !
 
 !Gate methodsFor: 'ui' stamp: 'len 26/May/2026, 9:04:21 am (UTC)'!
 panel2
@@ -3560,22 +3580,20 @@ patchable
 		addControlInput: #damp;
 		yourself! !
 
-!StereoReverb methodsFor: 'ui' stamp: 'len 18/Jun/2026, 7:59:36 pm (UTC)'!
+!StereoReverb methodsFor: 'ui' stamp: 'len 19/Jun/2026, 5:27:44 pm (UTC)'!
 rackable
-	| panel1 panel2 panel3 |
+	| panel1 panel2 |
 	panel1 := ControlPanel new
-		addKnob: (controls at: #predelay) label: 'Delay'.
+		addKnob: (controls at: #predelay) label: 'Delay';
+		addKnob: (controls at: #feedback) label: 'FB'.
 	panel2 := ControlPanel new
-		addKnob: (controls at: #feedback) label: 'FB';
-		addKnob: (controls at: #damp) label: 'Damp'.
-	panel3 := ControlPanel new
-		addKnob: (controls at: #width) label: 'Width';
-		addKnob: (controls at: #mix) label: 'Mix'.
+		addSmallKnob: (controls at: #damp) label: 'Damp';
+		addSmallKnob: (controls at: #width) label: 'Width';
+		addSmallKnob: (controls at: #mix) label: 'Mix'.
 	^ RackableMorph new
 		model: self;
 		addRow: panel1;
-		addRow: panel2;
-		addRow: panel3! !
+		addRow: panel2! !
 
 !StereoReverb methodsFor: 'wiring' stamp: 'len 7/Mar/2026, 9:14:28 am (UTC)'!
 setInputL: aBuffer
@@ -3993,12 +4011,12 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #port ifPresent: [:anInteger| port := anInteger]! !
 
-!AudioIn methodsFor: 'ui' stamp: 'len 2/Jun/2026, 7:10:59 pm (UTC)'!
+!AudioIn methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:08:29 am (UTC)'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
 	display := ControlPanel new gap: 0;
-		addMorph: (PluggableChoiceMorph new color: PatchMorph waveformColor; options: (0 to: 9); model: self; getter: #port; setter: #port:);
+		addMorph: (PluggableChoiceMorph new color: PatchMorph waveformColor; options: (0 to: 9); model: self; getter: #port; setter: #port:; setBalloonText: 'Input Bus');
 		addMorph: self scope.
 	answer body addMorph: display.
 	answer
@@ -4157,12 +4175,12 @@ panel
 		addHorizontalSlider: (controls at: #pan).
 	^ answer! !
 
-!AudioOut methodsFor: 'ui' stamp: 'len 2/Jun/2026, 7:11:09 pm (UTC)'!
+!AudioOut methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:08:34 am (UTC)'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
 	display := ControlPanel new gap: 0;
-		addMorph: (PluggableChoiceMorph new color: PatchMorph waveformColor; options: (0 to: 9); model: self; getter: #port; setter: #port:);
+		addMorph: (PluggableChoiceMorph new color: PatchMorph waveformColor; options: (0 to: 9); model: self; getter: #port; setter: #port:; setBalloonText: 'Output Bus (0 = master)');
 		addMorph: self scope.
 	answer body addMorph: display; addMorph: self panel.
 	answer
@@ -4330,13 +4348,13 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #reset ifPresent: [:aBoolean| retrigger := aBoolean]! !
 
-!Operator methodsFor: 'ui' stamp: 'len 17/Jun/2026, 5:26:10 pm (UTC)'!
+!Operator methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:09:18 am (UTC)'!
 panel
 	^​ super panel
 		addTextualControl: (controls at: #ratio);
 		addTextualControl: (controls at: #level);
 		addTextualControl: (controls at: #feedback);
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset')! !
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger')! !
 
 !Operator methodsFor: 'ui' stamp: 'len 17/May/2026, 7:46:14 am (UTC)'!
 patchable
@@ -5168,11 +5186,11 @@ readFromJson: json buffers: aList
 	label := json at: #label.
 	label isEmpty ifTrue: [label := nil]! !
 
-!Multisample methodsFor: 'ui' stamp: 'len 2/Jun/2026, 8:11:14 pm (UTC)'!
+!Multisample methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:19:12 pm (UTC)'!
 panel
 	^ super panel
 		addTextualControl: (controls at: #speed);
-		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'Legato')! !
+		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'L'; setBalloonText: 'Legato')! !
 
 !Multisample methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:35:46 am (UTC)'!
 patchable
@@ -5454,12 +5472,12 @@ settings: aDictionary
 	aDictionary at: #warp ifPresent: [:aBoolean| warp := aBoolean].
 	aDictionary at: #legato ifPresent: [:aBoolean| legato := aBoolean]! !
 
-!Sample methodsFor: 'ui' stamp: 'len 2/Jun/2026, 8:05:40 pm (UTC)'!
+!Sample methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:19:06 pm (UTC)'!
 panel
 	^ super panel
 		addTextualControl: (controls at: #speed);
 "		addMorph: (PluggableToggleMorph new model: self; getter: #warp; setter: #warp:; label: 'Warp');"
-		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'Legato')! !
+		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'L'; setBalloonText: 'Legato')! !
 
 !Sample methodsFor: 'ui' stamp: 'len 18/Jun/2026, 7:31:24 pm (UTC)'!
 patchable
@@ -6124,13 +6142,13 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #port ifPresent: [:anInteger| port := anInteger]! !
 
-!ControlIn methodsFor: 'ui' stamp: 'len 9/Jun/2026, 2:31:07 pm (UTC)'!
+!ControlIn methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:07:05 am (UTC)'!
 patchable
 	| answer screen |
 	answer := PatchableMorph new model: self.
 	screen := ControlPanel new gap: 0;
-		addMorph: (PluggableChoiceMorph new color: PatchMorph waveformColor3; options: (0 to: 9); model: self; getter: #port; setter: #port:);
-		addMorph: (PluggableToggleMorph new label: '±'; model: self; getter: #bipolar; setter: #bipolar:);
+		addMorph: (PluggableChoiceMorph new color: PatchMorph waveformColor3; options: (0 to: 9); model: self; getter: #port; setter: #port:; setBalloonText: 'Port');
+		addMorph: (PluggableToggleMorph new label: '±'; model: self; getter: #bipolar; setter: #bipolar:; setBalloonText: 'Bipolar');
 		addMorph: (RollingMeterMorph new color: PatchMorph waveformColor3; meterBlock: [lastValue]).
 	answer body addMorph: screen.
 	answer addControlOutput.
@@ -6244,6 +6262,17 @@ patchable
 	answer addControlOutput.
 	^ answer! !
 
+!Drift methodsFor: 'ui' stamp: 'len 19/Jun/2026, 5:53:21 pm (UTC)'!
+rackable
+	| panel |
+	panel := ControlPanel new
+		addSmallKnob: (controls at: #time) label: 'Time';
+		addSmallKnob: (controls at: #slew) label: 'Slew'.
+	^ RackableMorph new
+		model: self;
+		addRow: self screen;
+		addRow: panel! !
+
 !Drift methodsFor: 'ui' stamp: 'len 5/Jun/2026, 1:37:11 pm (UTC)'!
 screen
 	| answer |
@@ -6354,13 +6383,13 @@ patchable
 		addControlOutput.
 	^ answer! !
 
-!Envelope methodsFor: 'ui' stamp: 'len 18/Jun/2026, 7:58:43 pm (UTC)'!
+!Envelope methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:52:19 am (UTC)'!
 rackable
-	^ RackableMorph new
-		model: self;
-		addRow: self screen;
-		addRow: self panel1;
-		addRow: self panel2! !
+	| answer |
+	answer := RackableMorph new model: self.
+	answer addRow addMorph: self screen; addMorph: self panelRight.
+	answer addRow: self panelBottom.
+	^ answer! !
 
 !Envelope methodsFor: 'wiring' stamp: 'len 17/Jun/2026, 4:10:34 pm (UTC)'!
 setInput: aBuffer
@@ -6391,25 +6420,25 @@ next
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value! !
 
-!AD methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:11:43 pm (UTC)'!
+!AD methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:15:52 pm (UTC)'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #decay) label: 'D';
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger');
 		addTextualControl: (controls at: #velocitySensitivity)! !
 
-!AD methodsFor: 'ui' stamp: 'len 18/Jun/2026, 2:52:12 pm (UTC)'!
-panel1
+!AD methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:52:29 am (UTC)'!
+panelBottom
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
-		addSmallKnob: (controls at: #decay) label: 'D'! !
-
-!AD methodsFor: 'ui' stamp: 'len 18/Jun/2026, 2:52:33 pm (UTC)'!
-panel2
-	^ ControlPanel new
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
+		addSmallKnob: (controls at: #decay) label: 'D';
 		addTextualControl: (controls at: #velocitySensitivity)! !
+
+!AD methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:53:53 am (UTC)'!
+panelRight
+	^ ControlPanel newColumn
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger')! !
 
 !AD methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:02:03 pm (UTC)'!
 patchable
@@ -6485,31 +6514,31 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #legato ifPresent: [:aBoolean| legato := aBoolean]! !
 
-!ADSR methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:12:28 pm (UTC)'!
+!ADSR methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:17:55 pm (UTC)'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #decay) label: 'D';
 		addSmallKnob: (controls at: #sustain) label: 'S';
 		addSmallKnob: (controls at: #release) label: 'R';
-		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'Legato');
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
+		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'L'; setBalloonText: 'Legato');
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger');
 		addTextualControl: (controls at: #velocitySensitivity)! !
 
-!ADSR methodsFor: 'ui' stamp: 'len 18/Jun/2026, 2:52:47 pm (UTC)'!
-panel1
+!ADSR methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:52:56 am (UTC)'!
+panelBottom
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #decay) label: 'D';
 		addSmallKnob: (controls at: #sustain) label: 'S';
-		addSmallKnob: (controls at: #release) label: 'R'! !
-
-!ADSR methodsFor: 'ui' stamp: 'len 18/Jun/2026, 2:52:56 pm (UTC)'!
-panel2
-	^ ControlPanel new
-		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'Legato');
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
+		addSmallKnob: (controls at: #release) label: 'R';
 		addTextualControl: (controls at: #velocitySensitivity)! !
+
+!ADSR methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:53:43 am (UTC)'!
+panelRight
+	^ ControlPanel newColumn
+		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'L'; setBalloonText: 'Legato');
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger')! !
 
 !ADSR methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:02:14 pm (UTC)'!
 patchable
@@ -6546,27 +6575,27 @@ next
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value! !
 
-!AHD methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:12:39 pm (UTC)'!
+!AHD methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:16:45 pm (UTC)'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #hold) label: 'H';
 		addSmallKnob: (controls at: #decay) label: 'D';
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger');
 		addTextualControl: (controls at: #velocitySensitivity)! !
 
-!AHD methodsFor: 'ui' stamp: 'len 18/Jun/2026, 2:53:19 pm (UTC)'!
-panel1
+!AHD methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:54:36 am (UTC)'!
+panelBottom
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #hold) label: 'H';
-		addSmallKnob: (controls at: #decay) label: 'D'! !
-
-!AHD methodsFor: 'ui' stamp: 'len 18/Jun/2026, 2:53:25 pm (UTC)'!
-panel2
-	^ ControlPanel new
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
+		addSmallKnob: (controls at: #decay) label: 'D';
 		addTextualControl: (controls at: #velocitySensitivity)! !
+
+!AHD methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:54:46 am (UTC)'!
+panelRight
+	^ ControlPanel newColumn
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger')! !
 
 !AHD methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:02:18 pm (UTC)'!
 patchable
@@ -6633,27 +6662,27 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #legato ifPresent: [:aBoolean| legato := aBoolean]! !
 
-!AR methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:12:47 pm (UTC)'!
+!AR methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:18:02 pm (UTC)'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #release) label: 'R';
-		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'Legato');
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
+		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'L'; setBalloonText: 'Legato');
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger');
 		addTextualControl: (controls at: #velocitySensitivity)! !
 
-!AR methodsFor: 'ui' stamp: 'len 18/Jun/2026, 2:53:35 pm (UTC)'!
-panel1
+!AR methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:55:04 am (UTC)'!
+panelBottom
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
-		addSmallKnob: (controls at: #release) label: 'R'! !
-
-!AR methodsFor: 'ui' stamp: 'len 18/Jun/2026, 2:53:45 pm (UTC)'!
-panel2
-	^ ControlPanel new
-		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'Legato');
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
+		addSmallKnob: (controls at: #release) label: 'R';
 		addTextualControl: (controls at: #velocitySensitivity)! !
+
+!AR methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:55:12 am (UTC)'!
+panelRight
+	^ ControlPanel newColumn
+		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'L'; setBalloonText: 'Legato');
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger')! !
 
 !AR methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:02:22 pm (UTC)'!
 patchable
@@ -6721,29 +6750,29 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #legato ifPresent: [:aBoolean| legato := aBoolean]! !
 
-!ASR methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:12:57 pm (UTC)'!
+!ASR methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:18:10 pm (UTC)'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #sustain) label: 'S';
 		addSmallKnob: (controls at: #release) label: 'R';
-		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'Legato');
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
+		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'L'; setBalloonText: 'Legato');
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger');
 		addTextualControl: (controls at: #velocitySensitivity)! !
 
-!ASR methodsFor: 'ui' stamp: 'len 18/Jun/2026, 2:53:57 pm (UTC)'!
-panel1
+!ASR methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:55:22 am (UTC)'!
+panelBottom
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #sustain) label: 'S';
-		addSmallKnob: (controls at: #release) label: 'R'! !
-
-!ASR methodsFor: 'ui' stamp: 'len 18/Jun/2026, 2:54:02 pm (UTC)'!
-panel2
-	^ ControlPanel new
-		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'Legato');
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'Reset');
+		addSmallKnob: (controls at: #release) label: 'R';
 		addTextualControl: (controls at: #velocitySensitivity)! !
+
+!ASR methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:55:30 am (UTC)'!
+panelRight
+	^ ControlPanel newColumn
+		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'L'; setBalloonText: 'Legato');
+		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger')! !
 
 !ASR methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:02:25 pm (UTC)'!
 patchable
@@ -6799,12 +6828,12 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #mode ifPresent: [:aSymbol| mode := aSymbol]! !
 
-!EnvelopeFollower methodsFor: 'ui' stamp: 'len 17/Jun/2026, 1:14:11 pm (UTC)'!
+!EnvelopeFollower methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:07:16 am (UTC)'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #release) label: 'R';
-		addMorph: (PluggableChoiceMorph new options: #(Peak RMS); model: self; getter: #mode; setter: #mode:)! !
+		addMorph: (PluggableChoiceMorph new options: #(Peak RMS); model: self; getter: #mode; setter: #mode:; setBalloonText: 'Mode')! !
 
 !EnvelopeFollower methodsFor: 'ui' stamp: 'len 30/Apr/2026, 9:14:03 am (UTC)'!
 patchable
@@ -6994,7 +7023,7 @@ patchable
 		addControlOutput.
 	^ answer! !
 
-!LFO methodsFor: 'ui' stamp: 'len 18/Jun/2026, 8:00:58 pm (UTC)'!
+!LFO methodsFor: 'ui' stamp: 'len 19/Jun/2026, 5:47:27 pm (UTC)'!
 rackable
 	| panel1 panel2 |
 	panel1 := ControlPanel new
@@ -9151,11 +9180,17 @@ tick
 	outputL += aux.
 	outputR -= aux! !
 
-!StereoMatrix methodsFor: 'ui' stamp: 'len 25/Apr/2026, 5:24:28 pm (UTC)'!
+!StereoMatrix methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:33:17 pm (UTC)'!
+panel
+	^​ ControlPanel newColumn
+		addKnob: (controls at: #width) label: 'Width';
+		addKnob: (controls at: #balance) label: 'Balance'! !
+
+!StereoMatrix methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:33:39 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
-	answer body addMorph: self screen.
+	answer body addMorph: self panel.
 	answer
 		addAudioInput: #setInputA: label: 'A';
 		addAudioInput: #setInputB: label: 'B';
@@ -9165,9 +9200,11 @@ patchable
 		addAudioOutput: #setOutputR: label: 'R'.
 	^ answer! !
 
-!StereoMatrix methodsFor: 'ui' stamp: 'len 25/Apr/2026, 5:24:20 pm (UTC)'!
-screen
-	^ StereoMatrixControlMorph new width: (controls at: #width); balance: (controls at: #balance)! !
+!StereoMatrix methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:33:28 pm (UTC)'!
+rackable
+	^ RackableMorph new
+		model: self;
+		addRow: self panel! !
 
 !StereoMatrix methodsFor: 'wiring' stamp: 'len 26/Jan/2026, 6:49:43 pm (UTC)'!
 setInputA: aBuffer
@@ -9559,11 +9596,11 @@ settings: aDictionary
 	aDictionary at: #windowSize ifPresent: [:anInteger| windowSize := anInteger].
 	aDictionary at: #frequencyScale ifPresent: [:aSymbol| frequencyScale := aSymbol]! !
 
-!Spectrogram methodsFor: 'ui' stamp: 'len 3/Jun/2026, 8:51:07 am (UTC)'!
+!Spectrogram methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:07:50 am (UTC)'!
 panel
 	^ ControlPanel new
-		addMorph: (PluggableChoiceMorph new options: #(256 512 1024 2048 4096); model: self; getter: #windowSize; setter: #windowSize:);
-		addMorph: (PluggableChoiceMorph new options: #(linear log); model: self; getter: #frequencyScale; setter: #frequencyScale:)! !
+		addMorph: (PluggableChoiceMorph new options: #(256 512 1024 2048 4096); model: self; getter: #windowSize; setter: #windowSize:; setBalloonText: 'Window Size');
+		addMorph: (PluggableChoiceMorph new options: #(linear log); model: self; getter: #frequencyScale; setter: #frequencyScale:; setBalloonText: 'Frequency Scale')! !
 
 !Spectrogram methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:05:57 pm (UTC)'!
 patchable
@@ -10188,7 +10225,7 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #windowSize ifPresent: [:anInteger| windowSize := anInteger]! !
 
-!SpectrumAnalyzer methodsFor: 'ui' stamp: 'len 3/Jun/2026, 8:41:45 am (UTC)'!
+!SpectrumAnalyzer methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:08:18 am (UTC)'!
 patchable
 	| answer screen panel |
 	answer := PatchableMorph new model: self.
@@ -10197,9 +10234,9 @@ patchable
 	answer body addMorph: screen.
 	panel := ControlPanel new.
 	panel
-		addMorph: (PluggableChoiceMorph new options: #(256 512 1024 2048 4096); model: self; getter: #windowSize; setter: #windowSize:);
-		addMorph: (PluggableChoiceMorph new options: #(linear log); model: screen; getter: #frequencyScale; setter: #frequencyScale:);
-		addMorph: (PluggableChoiceMorph new options: #(bars outline); model: screen; getter: #displayMode; setter: #displayMode:).
+		addMorph: (PluggableChoiceMorph new options: #(256 512 1024 2048 4096); model: self; getter: #windowSize; setter: #windowSize:; setBalloonText: 'WIndow Size');
+		addMorph: (PluggableChoiceMorph new options: #(linear log); model: screen; getter: #frequencyScale; setter: #frequencyScale:; setBalloonText: 'Frequency Scale');
+		addMorph: (PluggableChoiceMorph new options: #(bars outline); model: screen; getter: #displayMode; setter: #displayMode:; setBalloonText: 'Display Mode').
 	answer flap addMorph: panel.
 	answer addAudioInput: #setInput:.
 	^ answer! !
@@ -10545,7 +10582,7 @@ minimumExtent
 defaultColor
 	^ Color transparent! !
 
-!ControlPanel methodsFor: 'initialization' stamp: 'len 4/Nov/2025, 8:37:00 am (UTC)'!
+!ControlPanel methodsFor: 'initialization' stamp: 'len 19/Jun/2026, 5:44:12 pm (UTC)'!
 defaultGap
 	^ 12! !
 
@@ -10558,26 +10595,37 @@ initialize
 new
 	^ self newRow! !
 
-!RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 2:21:28 pm (UTC)'!
+!RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Jun/2026, 7:43:30 am (UTC)'!
+addRow
+	| row |
+	row := ControlPanel newRow.
+	self addRow: row.
+	^ row! !
+
+!RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 5:22:00 pm (UTC)'!
 addRow: aMorph
-	self body addMorph: aMorph layoutSpec: LayoutSizeSpec keepMorphExtent! !
+	self body addMorph: aMorph "layoutSpec: LayoutSizeSpec keepMorphExtent"! !
 
 !RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Jun/2026, 11:53:53 am (UTC)'!
 body
 	^ body! !
 
+!RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Jun/2026, 8:38:22 am (UTC)'!
+handlesKeyboardFocus
+	^ true! !
+
 !RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Jun/2026, 11:11:00 am (UTC)'!
 handlesMouseOver: anEvent
 	^ true! !
 
-!RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 2:04:53 pm (UTC)'!
+!RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 5:57:22 pm (UTC)'!
 initialize
 	super initialize.
-	self axisEdgeWeight: 0.0.
+	self axisEdgeWeight: 0.5.
 	self gap: 1; color: Color transparent; borderWidth: 0.
 	title := (LabelMorph contents: '' fontSize: 12 emphasis: 1) color: Color white.
 	self addMorph: title layoutSpec: (LayoutSizeSpec keepMorphExtent offAxisEdgeWeight: 0.0).
-	body := RoundedLinearLayoutMorph newColumn gap: 10; padding: 4 @ 4; borderWidth: 1; borderColor: Color lightGray; color: PatchMorph panelColor; axisEdgeWeight: 0.5.
+	body := RoundedLinearLayoutMorph newColumn gap: 4; padding: 4 @ 4; borderWidth: 1; borderColor: Color lightGray; color: PatchMorph panelColor; axisEdgeWeight: 0.5.
 	self addMorph: body! !
 
 !RackableMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Jun/2026, 12:21:26 pm (UTC)'!
@@ -10633,10 +10681,6 @@ requiresVectorCanvas
 !RoundedLinearLayoutMorph methodsFor: 'as yet unclassified' stamp: 'len 9/Apr/2026, 12:29:01 pm (UTC)'!
 adoptWidgetsColor: paneColor
 	^ self! !
-
-!PluggableChoiceMorph methodsFor: 'accessing' stamp: 'len 19/Jan/2026, 11:12:04 am (UTC)'!
-color: aColor
-	color := aColor! !
 
 !PluggableChoiceMorph methodsFor: 'accessing' stamp: 'len 19/Jan/2026, 11:49:32 am (UTC)'!
 getter: aSymbol
@@ -10746,10 +10790,6 @@ defaultFontSize
 initialize
 	super initialize.
 	font := FontFamily defaultFamilyPointSize: self defaultFontSize! !
-
-!PluggableToggleMorph methodsFor: 'accessing' stamp: 'len 20/Jan/2026, 11:35:12 am (UTC)'!
-color: aColor
-	color := aColor! !
 
 !PluggableToggleMorph methodsFor: 'accessing' stamp: 'len 20/Jan/2026, 11:35:12 am (UTC)'!
 getter: aSymbol
@@ -11008,14 +11048,14 @@ drawOn: aCanvas
 defaultExtent
 	^ `36 @ 36`! !
 
-!KnobControlMorph methodsFor: 'drawing' stamp: 'len 30/Apr/2026, 1:33:28 pm (UTC)'!
+!KnobControlMorph methodsFor: 'drawing' stamp: 'len 19/Jun/2026, 6:00:07 pm (UTC)'!
 drawOn: aCanvas
 	| v vMod center radius zeroPosition dialPosition |
 "	self hasKeyboardFocus ifTrue: [self drawFocusIndicatorOn: aCanvas]."
 	v := control basePosition.
 	vMod := v + control modulation min: 1.0 max: 0.0.
 	center := self morphExtent / 2.0.
-	radius := center - 1.
+	radius := center - 2.
 	zeroPosition := (0 @ radius y rotatedBy: Float pi * 0.2) + center.
 	dialPosition := (zeroPosition - center / 2.0 rotatedBy: Float pi * 1.6 * v) + center.
 	"draw the dial on the base value:"
@@ -11290,13 +11330,13 @@ initialize
 	bipolar := true.
 	downsampleFactor := 5! !
 
-!StripChartControlMorph methodsFor: 'drawing' stamp: 'len 19/May/2026, 8:10:00 am (UTC)'!
+!StripChartControlMorph methodsFor: 'drawing' stamp: 'len 19/Jun/2026, 6:03:08 pm (UTC)'!
 drawOn: aCanvas
 	| step x y h offset slack y0 |
 	slack := 5.
 	step := self morphWidth - 2.0 / (buffer size - slack).
 	(offset := writePosition + slack - 1) > buffer size ifTrue: [offset := offset - buffer size].
-	h := self morphHeight.
+	h := self morphHeight - 1.0.
 	y0 := bipolar ifTrue: [h / 2.0] ifFalse: [h].
 	aCanvas strokeWidth: 1.5 color: Color veryLightGray dashedStrokeBits: 2r1110000 do:
 		[aCanvas moveTo: 0 @ y0; lineTo: self morphWidth @ y0].
@@ -12069,13 +12109,13 @@ initialize
 	bipolar := true.
 	downsampleFactor := 5! !
 
-!StripChartXYControlMorph methodsFor: 'drawing' stamp: 'len 19/May/2026, 7:57:18 am (UTC)'!
+!StripChartXYControlMorph methodsFor: 'drawing' stamp: 'len 19/Jun/2026, 6:03:01 pm (UTC)'!
 drawOn: aCanvas
 	| step x y h offset slack y0 |
 	slack := 5.
 	step := self morphWidth - 2.0 / (buffer size - slack).
 	(offset := writePosition + slack - 1) > buffer size ifTrue: [offset := offset - buffer size].
-	h := self morphHeight.
+	h := self morphHeight - 1.0.
 	y0 := bipolar ifTrue: [h / 2.0] ifFalse: [h].
 	aCanvas strokeWidth: 1.5 color: Color veryLightGray dashedStrokeBits: 2r1110000 do:
 		[aCanvas moveTo: 0 @ y0; lineTo: self morphWidth @ y0].
@@ -12604,9 +12644,9 @@ installConnectionTo: anInput
 	self model perform: setter with: buffer. "perhaps it's already set, unless this is the first connection"
 	anInput model perform: anInput setter with: buffer! !
 
-!AudioOutputPinMorph methodsFor: 'connections' stamp: 'len 26/Apr/2026, 9:03:33 pm (UTC)'!
+!AudioOutputPinMorph methodsFor: 'connections' stamp: 'len 19/Jun/2026, 4:10:40 pm (UTC)'!
 uninstallConnectionTo: anInput
-	self patch ifNotNil: [:p| p scheduleRecompute]
+	self patch ifNotNil: [:p| p recomputeNeeded]
 
 "	anInput model perform: anInput setter with: nil.
 	connections isEmpty ifTrue: [self model perform: setter with: nil]"! !
@@ -12803,6 +12843,86 @@ scrollToMakeVisible: aRectangle
 !ScrollerMorph methodsFor: 'stepping' stamp: 'len 28/Dec/2025, 3:33:15 pm (UTC)'!
 wantsSteps
 	^ true! !
+
+!VerticalLabelMorph methodsFor: 'accessing' stamp: 'len 19/Jun/2026, 7:00:57 pm (UTC)'!
+color: aColor
+	color := aColor.
+	self redrawNeeded! !
+
+!VerticalLabelMorph methodsFor: 'accessing' stamp: 'len 19/Jun/2026, 6:35:44 pm (UTC)'!
+font: aFont
+	font := aFont! !
+
+!VerticalLabelMorph methodsFor: 'accessing' stamp: 'len 19/Jun/2026, 6:53:45 pm (UTC)'!
+label: aString
+	label := aString.
+	self morphExtent: `0@0`! !
+
+!VerticalLabelMorph methodsFor: 'drawing' stamp: 'len 19/Jun/2026, 7:01:30 pm (UTC)'!
+drawOn: aCanvas
+"	aCanvas
+		frameRectangle: self localBounds
+		borderWidth: 1
+		color: Color white."
+	aCanvas
+		geometryTransformation: ((aCanvas currentTransformation rotatedBy: Float pi / -2.0) translatedBy: 0 @ extent y);
+		drawString: label at: 0 @ 0 font: font color: color! !
+
+!VerticalLabelMorph methodsFor: 'drawing' stamp: 'len 19/Jun/2026, 6:35:21 pm (UTC)'!
+requiresVectorCanvas
+	^ true! !
+
+!VerticalLabelMorph methodsFor: 'initialization' stamp: 'len 19/Jun/2026, 6:33:46 pm (UTC)'!
+defaultFontSize
+	^ (FontFamily defaultPointSize * 0.8) truncated! !
+
+!VerticalLabelMorph methodsFor: 'initialization' stamp: 'len 19/Jun/2026, 6:59:33 pm (UTC)'!
+initialize
+	super initialize.
+	font := FontFamily defaultFamilyPointSize: self defaultFontSize.
+	label := 'a label'.
+	color := Color white! !
+
+!VerticalLabelMorph methodsFor: 'geometry' stamp: 'len 19/Jun/2026, 6:35:02 pm (UTC)'!
+minimumExtent
+	^ font lineSpacing @ ((font widthOfString: label) + 6)! !
+
+!VerticalLabelMorph class methodsFor: 'instance creation' stamp: 'len 19/Jun/2026, 6:25:35 pm (UTC)'!
+contents: aString
+
+	^ self contents: aString font: nil! !
+
+!VerticalLabelMorph class methodsFor: 'instance creation' stamp: 'len 19/Jun/2026, 6:25:35 pm (UTC)'!
+contents: aString font: aFont
+	^ self basicNew initWithContents: aString font: aFont emphasis: 0! !
+
+!VerticalLabelMorph class methodsFor: 'instance creation' stamp: 'len 19/Jun/2026, 6:25:35 pm (UTC)'!
+contents: aString font: aFont emphasis: emphasisCode
+	^ self basicNew initWithContents: aString font: aFont emphasis: emphasisCode! !
+
+!VerticalLabelMorph class methodsFor: 'instance creation' stamp: 'len 19/Jun/2026, 6:25:35 pm (UTC)'!
+contents: aString fontSize: pointSize
+	"
+	(LabelMorph contents: 'I am a LabelMorph' fontSize: 25) openInWorld.
+	"
+	^ self basicNew
+		initWithContents: aString
+		font: (FontFamily defaultFamilyPointSize: pointSize)
+		emphasis: 0.! !
+
+!VerticalLabelMorph class methodsFor: 'instance creation' stamp: 'len 19/Jun/2026, 6:25:35 pm (UTC)'!
+contents: aString fontSize: pointSize emphasis: emphasisCode
+	"
+	(LabelMorph contents: 'I am a LabelMorph' fontSize: 25 emphasis: 3) openInWorld.
+	"
+	^ self basicNew
+		initWithContents: aString
+		font: (FontFamily defaultFamilyPointSize: pointSize)
+		emphasis: emphasisCode.! !
+
+!VerticalLabelMorph class methodsFor: 'new-morph participation' stamp: 'len 19/Jun/2026, 6:25:35 pm (UTC)'!
+categoryInNewMorphMenu
+	^ 'Basic'! !
 
 !ZoomerMorph methodsFor: 'drawing' stamp: 'len 10/Jan/2026, 8:31:30 am (UTC)'!
 drawOn: aCanvas
@@ -13283,11 +13403,11 @@ stepTime
 wantsSteps
 	^ true! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 10:41:12 am (UTC)'!
+!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 2:52:27 pm (UTC)'!
 computeImage
 	| h canvas i step waveform frame rmsPixelValue |
 	needsRecomputingImage := false.
-	image fillColor: Color black. " PatchMorph panelColor."
+	image fillColor: PatchMorph panelColor. "(color darker: 0.6). "
 	rmsPixelValue := image pixelValueFor: color.
 	h := image extent y / 2.0.
 	waveform := sample buffer.
@@ -14151,11 +14271,11 @@ fullIncludesPixel: aPoint
 includesPixel: aPoint
 	^ submorphs noneSatisfy: [:m| m fullIncludesPixel: aPoint]! !
 
-!PatchMorph methodsFor: 'layout' stamp: 'len 27/Apr/2026, 11:36:48 am (UTC)'!
+!PatchMorph methodsFor: 'layout' stamp: 'len 19/Jun/2026, 4:11:03 pm (UTC)'!
 someSubmorphPositionOrExtentChanged
 	super someSubmorphPositionOrExtentChanged.
 	self submorphsDo: [:each| (each isMemberOf: WireMorph) ifTrue: [each update]].
-	self scheduleRecompute! !
+	self recomputeNeeded! !
 
 !PatchMorph methodsFor: 'menu' stamp: 'len 18/Mar/2026, 1:29:53 pm (UTC)'!
 addControlInput
@@ -14241,8 +14361,8 @@ modules
 	modules := answer.
 	^ answer! !
 
-!PatchMorph methodsFor: 'private' stamp: 'len 5/Jan/2026, 3:05:52 pm (UTC)'!
-scheduleRecompute
+!PatchMorph methodsFor: 'private' stamp: 'len 19/Jun/2026, 4:37:43 pm (UTC)'!
+recomputeNeeded
 	modules := nil.
 	self triggerEvent: #recomputeNeeded! !
 

@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 20 June 2026 at 3:40:38 pm'!
+'From Cuis7.9 [latest update: #8014] on 20 June 2026 at 11:50:05 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 57!
+!provides: 'Tracker' 1 58!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -463,9 +463,9 @@ changeSorter
 debugger
 	^ Color lightRed darker! !
 
-!DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
+!DarkerTheme methodsFor: 'tool colors' stamp: 'len 20/Jun/2026, 11:19:46 am (UTC)'!
 defaultButtonColor
-	^ self defaultWindowColor lighter lighter! !
+	^ self defaultWindowColor lighter "lighter"! !
 
 !DarkerTheme methodsFor: 'tool colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 defaultWindowColor
@@ -647,7 +647,7 @@ forceUpdate
 	currentInstrument := nil.
 	self update! !
 
-!InstrumentRackMorph methodsFor: 'private' stamp: 'len 20/Jun/2026, 8:20:50 am (UTC)'!
+!InstrumentRackMorph methodsFor: 'private' stamp: 'len 20/Jun/2026, 9:55:29 am (UTC)'!
 update
 	| selectedInstrument |
 	(selectedInstrument := tracker selectedInstrument ifNil: [^ self removeAllMorphs]) = currentInstrument ifTrue: [^ self].
@@ -660,7 +660,7 @@ update
 	((selectedInstrument patch submorphs select: [:each| each isKindOf: PatchableMorph])
 		sorted: [:a :b| a morphPosition x < b morphPosition x])
 			do: [:each| self addMorph: each rackable layoutSpec: LayoutSizeSpec new useMorphWidth "useMorphHeight"].
-	self addMorph: (PluggableButtonMorph new model: self; action: #addNewModule; label: '+'; morphExtent: 10 @ 10) layoutSpec: LayoutSizeSpec new useMorphWidth.
+	self addMorph: (PluggablePushButtonMorph new model: self; action: #addNewModule; label: '+'; setBalloonText: 'Add new module'; morphExtent: 10 @ 10) layoutSpec: LayoutSizeSpec new useMorphWidth.
 	self redrawNeeded! !
 
 !TrackerWindow methodsFor: 'actions' stamp: 'len 18/Jun/2026, 3:25:10 pm (UTC)'!
@@ -695,13 +695,13 @@ setBPM
 setSwing
 	self request: 'Swing' initialAnswer: (model swing * 100) truncated printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 0 and: 100]] do: [:s| model swing: s asNumber / 100.0]! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 19/Jun/2026, 4:35:14 pm (UTC)'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 20/Jun/2026, 12:56:43 pm (UTC)'!
 toggleInstrumentRackOrEditor
 	instrumentEditor owner
 		ifNil:
 			[instrumentRackScroller delete.
 			lowerPane delete.
-			layoutMorph submorphs first delete. "adjuster"
+			"layoutMorph submorphs first delete. "
 			layoutMorph
 				addMorph: instrumentEditor proportionalHeight: 0.38;
 				addAdjusterAndMorph: lowerPane proportionalHeight: 1.0 - 0.38]
@@ -710,8 +710,8 @@ toggleInstrumentRackOrEditor
 			lowerPane delete.
 			layoutMorph submorphs first delete. "adjuster"
 			layoutMorph
-				addMorph: instrumentRackScroller proportionalHeight: 0.1;
-				addAdjusterAndMorph: lowerPane proportionalHeight: 1.0 - 0.1.
+				addMorph: instrumentRackScroller fixedHeight: 176;
+				addMorph: lowerPane proportionalHeight: 1.0.
 			instrumentRack forceUpdate].
 	layoutMorph adoptWidgetsColor: self widgetsColor "to set the color of the adjuster again"! !
 
@@ -754,7 +754,7 @@ keyStroke: anEvent
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 18/Jun/2026, 3:25:10 pm (UTC)'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 2:07:35 pm (UTC)'!
 buildMorphicWindow
 	| lowerLeftPane sequencerScroller patternEditorScroller bar |
 	instrumentEditor := InstrumentEditorMorph new setTracker: model.
@@ -779,8 +779,8 @@ buildMorphicWindow
 		addMorph: patternEditorScroller layoutSpec: LayoutSizeSpec new.
 	self layoutMorph
 		addMorph: bar fixedHeight: 24;
-		addMorph: instrumentEditor proportionalHeight: 0.38;
-		addAdjusterAndMorph: lowerPane proportionalHeight: 1.0 - 0.38! !
+		addMorph: instrumentRackScroller fixedHeight: 176;
+		addMorph: lowerPane proportionalHeight: 1.0! !
 
 !TrackerWindow methodsFor: 'initialization' stamp: 'len 9/Apr/2026, 4:59:23 pm (UTC)'!
 defaultColor

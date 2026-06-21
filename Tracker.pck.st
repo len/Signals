@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 20 June 2026 at 11:50:05 pm'!
+'From Cuis7.9 [latest update: #8014] on 21 June 2026 at 7:41:58 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 58!
+!provides: 'Tracker' 1 59!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -17,24 +17,24 @@ Theme subclass: #DarkerTheme
 DarkerTheme class
 	instanceVariableNames: ''!
 
-!classDefinition: #InstrumentRackMorph category: #'Tracker-Morphic'!
-LinearLayoutMorph subclass: #InstrumentRackMorph
-	instanceVariableNames: 'tracker currentInstrument'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Tracker-Morphic'!
-!classDefinition: 'InstrumentRackMorph class' category: #'Tracker-Morphic'!
-InstrumentRackMorph class
-	instanceVariableNames: ''!
-
 !classDefinition: #TrackerWindow category: #'Tracker-Morphic'!
 SystemWindow subclass: #TrackerWindow
-	instanceVariableNames: 'instrumentEditor instrumentRack instrumentRackScroller meter arranger patternEditor lowerPane'
+	instanceVariableNames: 'instrumentEditor instrumentRack adjuster meter arranger patternEditor lowerPane'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Tracker-Morphic'!
 !classDefinition: 'TrackerWindow class' category: #'Tracker-Morphic'!
 TrackerWindow class
+	instanceVariableNames: ''!
+
+!classDefinition: #InstrumentRackMorph category: #'Tracker-Morphic'!
+ScrollerMorph subclass: #InstrumentRackMorph
+	instanceVariableNames: 'tracker'
+	classVariableNames: 'ClipboardBuffer'
+	poolDictionaries: ''
+	category: 'Tracker-Morphic'!
+!classDefinition: 'InstrumentRackMorph class' category: #'Tracker-Morphic'!
+InstrumentRackMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #InstrumentEditorMorph category: #'Tracker-Morphic'!
@@ -572,97 +572,6 @@ initialize
 	super initialize.
 	self beCurrent! !
 
-!InstrumentRackMorph methodsFor: 'actions' stamp: 'len 18/Jun/2026, 7:55:26 am (UTC)'!
-moveInstrumentDown
-	tracker selectedInstrumentNumber ifNotNil: [:anInteger| anInteger > 1 ifTrue: [tracker swapInstrument: anInteger with: anInteger - 1]]! !
-
-!InstrumentRackMorph methodsFor: 'actions' stamp: 'len 18/Jun/2026, 7:55:26 am (UTC)'!
-moveInstrumentUp
-	tracker selectedInstrumentNumber ifNotNil: [:anInteger| anInteger < 255 ifTrue: [tracker swapInstrument: anInteger with: anInteger + 1]]! !
-
-!InstrumentRackMorph methodsFor: 'drawing' stamp: 'len 18/Jun/2026, 7:55:26 am (UTC)'!
-drawOn: aCanvas
-"	self patch ifNotNil: [aCanvas frameRectangle: self patch fullBoundsInOwner borderWidth: 2 color: Color white]. "! !
-
-!InstrumentRackMorph methodsFor: 'events' stamp: 'len 18/Jun/2026, 4:24:05 pm (UTC)'!
-aboutToBeGrabbedBy: aHand
-	^ MovingHelperMorph new target: self; offset: (self owner internalizeFromWorld: aHand morphPosition) - self morphPosition! !
-
-!InstrumentRackMorph methodsFor: 'events' stamp: 'len 18/Jun/2026, 8:40:08 am (UTC)'!
-handleCommandHotkey: anEvent
-	anEvent keyCharacter = $i ifTrue: [tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument inspect]. ^ true].
-	^ false! !
-
-!InstrumentRackMorph methodsFor: 'events' stamp: 'len 18/Jun/2026, 7:55:26 am (UTC)'!
-handleOptionHotkey: anEvent
-	anEvent shiftPressed ifTrue:
-		[anEvent isArrowDown ifTrue: [tracker moveInstrumentDown. ^ true].
-		anEvent isArrowUp ifTrue: [tracker moveInstrumentUp. ^ true]].
-	^ false! !
-
-!InstrumentRackMorph methodsFor: 'events' stamp: 'len 18/Jun/2026, 8:08:36 am (UTC)'!
-keyStroke: anEvent
-	| c i |
-	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
-		[anEvent wasHandled: true.
-		^ self].
-	(anEvent secondaryModifierPressed and: [self handleOptionHotkey: anEvent]) ifTrue:
-		[anEvent wasHandled: true.
-		^ self].
-	anEvent keyCharacter = $\ ifTrue:
-		[anEvent wasHandled: true.
-		tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument track ifNotNil: [:aTrack|
-			anEvent primaryModifierPressed ifTrue: [tracker toggleTrackSolo: (tracker tracks indexOf: aTrack)] ifFalse: [tracker toggleTrackMute: (tracker tracks indexOf: aTrack)]]].
-		^ self].
-	anEvent anyModifierKeyPressed ifFalse:
-		[c := anEvent keyCharacter.
-		c = $a ifTrue: [anEvent wasHandled: true. tracker selectedInstrument ifNotNil: [:anInstument| anInstument noteOff]. ^ self].
-		(i := 'zsxdcvgbhnjmq2w3er5t6y7ui9o0p' indexOf: c) > 0 ifTrue:
-			[anEvent wasHandled: true. tracker selectedInstrument ifNotNil: [:anInstument| anInstument noteOn: tracker selectedTrack inputCenterKey + i - 1]. ^ self]].
-	^ super keyStroke: anEvent! !
-
-!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 18/Jun/2026, 9:25:40 am (UTC)'!
-defaultBorderColor
-	^ Color transparent! !
-
-!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 18/Jun/2026, 9:24:53 am (UTC)'!
-defaultColor
-	^ Color transparent! !
-
-!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 19/Jun/2026, 1:51:23 pm (UTC)'!
-initialize
-	super initialize.
-	self axisEdgeWeight: 0.0.
-	self gap: 4.
-	self padding: 4@8! !
-
-!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 19/Jun/2026, 4:36:51 pm (UTC)'!
-setTracker: aTracker
-	tracker := aTracker.
-	aTracker when: #cursorChanged send: #update to: self.
-	self update! !
-
-!InstrumentRackMorph methodsFor: 'private' stamp: 'len 19/Jun/2026, 4:38:47 pm (UTC)'!
-forceUpdate
-	currentInstrument := nil.
-	self update! !
-
-!InstrumentRackMorph methodsFor: 'private' stamp: 'len 20/Jun/2026, 9:55:29 am (UTC)'!
-update
-	| selectedInstrument |
-	(selectedInstrument := tracker selectedInstrument ifNil: [^ self removeAllMorphs]) = currentInstrument ifTrue: [^ self].
-	currentInstrument := selectedInstrument.
-	self removeAllMorphs.
-	self morphExtent: 10@10. "and let it grow from that"
-	currentInstrument label ifNotNil: [:aString| | labelMorph |
-		labelMorph := VerticalLabelMorph new label: aString.
-		self addMorph: labelMorph].
-	((selectedInstrument patch submorphs select: [:each| each isKindOf: PatchableMorph])
-		sorted: [:a :b| a morphPosition x < b morphPosition x])
-			do: [:each| self addMorph: each rackable layoutSpec: LayoutSizeSpec new useMorphWidth "useMorphHeight"].
-	self addMorph: (PluggablePushButtonMorph new model: self; action: #addNewModule; label: '+'; setBalloonText: 'Add new module'; morphExtent: 10 @ 10) layoutSpec: LayoutSizeSpec new useMorphWidth.
-	self redrawNeeded! !
-
 !TrackerWindow methodsFor: 'actions' stamp: 'len 18/Jun/2026, 3:25:10 pm (UTC)'!
 fitAllPatchesToInstrumentEditorBounds
 	| bounds |
@@ -695,42 +604,36 @@ setBPM
 setSwing
 	self request: 'Swing' initialAnswer: (model swing * 100) truncated printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 0 and: 100]] do: [:s| model swing: s asNumber / 100.0]! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 20/Jun/2026, 12:56:43 pm (UTC)'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 21/Jun/2026, 7:42:34 am (UTC)'!
 toggleInstrumentRackOrEditor
-	instrumentEditor owner
-		ifNil:
-			[instrumentRackScroller delete.
-			lowerPane delete.
-			"layoutMorph submorphs first delete. "
-			layoutMorph
-				addMorph: instrumentEditor proportionalHeight: 0.38;
-				addAdjusterAndMorph: lowerPane proportionalHeight: 1.0 - 0.38]
-		ifNotNil:
-			[instrumentEditor delete.
-			lowerPane delete.
-			layoutMorph submorphs first delete. "adjuster"
-			layoutMorph
-				addMorph: instrumentRackScroller fixedHeight: 176;
-				addMorph: lowerPane proportionalHeight: 1.0.
-			instrumentRack forceUpdate].
-	layoutMorph adoptWidgetsColor: self widgetsColor "to set the color of the adjuster again"! !
+	| editorMode |
+	editorMode := instrumentEditor visible not.
+	instrumentEditor visible: editorMode.
+	adjuster visible: editorMode.
+	instrumentRack visible: editorMode not.
+	"why need to do this? otherwise the lower pane doesn't expand properly when going to the smaller instrument rack:"
+	lowerPane delete.
+	layoutMorph addMorph: lowerPane proportionalHeight: 1.0! !
 
 !TrackerWindow methodsFor: 'actions' stamp: 'len 18/Jun/2026, 3:25:10 pm (UTC)'!
 toggleLowerPane
 	lowerPane visible: lowerPane visible not.
 	instrumentEditor layoutSpec proportionalHeight: (lowerPane visible ifTrue: [0.38] ifFalse: [1.0])! !
 
-!TrackerWindow methodsFor: 'events' stamp: 'len 19/Jun/2026, 4:31:35 pm (UTC)'!
+!TrackerWindow methodsFor: 'events' stamp: 'len 21/Jun/2026, 11:52:51 am (UTC)'!
 handleCommandHotkey: anEvent
 	anEvent keyCharacter = $f ifTrue: [self setBPM. ^ true].
 	anEvent keyCharacter = $g ifTrue: [self setSwing. ^ true].
 	anEvent keyCharacter = $o ifTrue: [self openProject. ^ true].
 	anEvent keyCharacter = $s ifTrue: [self saveProject. ^ true].
 	anEvent keyCharacter = $k ifTrue:
-		[| oldKeyboardFocus |
+		[| oldKeyboardFocus focusedModule |
 		oldKeyboardFocus := anEvent hand keyboardFocus.
+		focusedModule := (oldKeyboardFocus ownerChain detect: [:one| one isKindOf: RackableMorph] ifNone: []) ifNotNil: [:aRackableMorph| aRackableMorph model].
 		self toggleInstrumentRackOrEditor.
 		anEvent hand newKeyboardFocus: ((oldKeyboardFocus notNil and: [oldKeyboardFocus isInWorld]) ifTrue: [oldKeyboardFocus] ifFalse: [self]).
+		layoutMorph layoutSubmorphs.
+		focusedModule ifNotNil: [instrumentEditor focusOnModule: focusedModule].
 		^ true].
 "	anEvent keyCharacter = $j ifTrue: [self toggleLowerPane. ^ true]."
 	anEvent keyCharacter = $d ifTrue: [instrumentEditor duplicateInstrument. ^ true].
@@ -754,18 +657,15 @@ keyStroke: anEvent
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 2:07:35 pm (UTC)'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 7:33:49 am (UTC)'!
 buildMorphicWindow
 	| lowerLeftPane sequencerScroller patternEditorScroller bar |
 	instrumentEditor := InstrumentEditorMorph new setTracker: model.
-	instrumentRack := InstrumentRackMorph newRow setTracker: model.
-	instrumentRackScroller := ScrollerMorph new horizontal: true; scrollable: instrumentRack.
-"	instrumentRackScroller visible: false."
+	instrumentRack := InstrumentRackMorph new setTracker: model.
 	meter := MultitrackMeterMorph new setTracker: model.
 	arranger := ArrangerMorph new setTracker: model.
 	patternEditor := PatternEditorMorph new setTracker: model.
 	model when: #cursorChanged send: #ensureCursorVisible to: self.
-	instrumentEditor when: #instrumentLabelChanged send: #redrawNeeded to: patternEditor. "to redraw instrument label in the track header"
 	bar := TrackerBarMorph new setTracker: model.
 	lowerPane := LinearLayoutMorph newRow color: Color transparent.
 	lowerLeftPane := LinearLayoutMorph newColumn color: Color transparent.
@@ -777,10 +677,14 @@ buildMorphicWindow
 	lowerPane
 		addMorph: lowerLeftPane layoutSpec: (LayoutSizeSpec new useMorphWidth);
 		addMorph: patternEditorScroller layoutSpec: LayoutSizeSpec new.
-	self layoutMorph
+	layoutMorph
 		addMorph: bar fixedHeight: 24;
-		addMorph: instrumentRackScroller fixedHeight: 176;
-		addMorph: lowerPane proportionalHeight: 1.0! !
+		addMorph: instrumentRack fixedHeight: 176.
+	layoutMorph addMorph: instrumentEditor proportionalHeight: 0.38.
+	adjuster := layoutMorph addAdjusterMorph submorphs first.
+	layoutMorph addMorph: lowerPane "proportionalHeight: 1.0".
+	instrumentEditor visible: false.
+	adjuster visible: false! !
 
 !TrackerWindow methodsFor: 'initialization' stamp: 'len 9/Apr/2026, 4:59:23 pm (UTC)'!
 defaultColor
@@ -799,6 +703,103 @@ delete
 !TrackerWindow methodsFor: 'GUI building' stamp: 'len 18/Jun/2026, 2:37:08 pm (UTC)'!
 windowColor
 	^ Color gray! !
+
+!InstrumentRackMorph methodsFor: 'actions' stamp: 'len 20/Jun/2026, 8:31:27 pm (UTC)'!
+duplicateInstrument
+	| instrument |
+	instrument := tracker selectedInstrument ifNil: [^ self].
+	self request: 'Duplicate to instrument number' initialAnswer: '' verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| tracker instruments at: s asNumber put: instrument copy]! !
+
+!InstrumentRackMorph methodsFor: 'actions' stamp: 'len 21/Jun/2026, 7:26:06 am (UTC)'!
+exportInstrument
+	| instrument |
+	instrument := tracker selectedInstrument ifNil: [^ self].
+	self request: 'Instrument name' initialAnswer: (instrument label ifNil: ['']) do: [:newName|
+		instrument label: newName.
+		(self class package packageDirectory / 'data' / 'projects' // (newName, '.patch')) writeStreamDo: [:s| instrument writeOn: s].
+		tracker triggerEvent: #instrumentLabelChanged]! !
+
+!InstrumentRackMorph methodsFor: 'actions' stamp: 'len 21/Jun/2026, 7:25:59 am (UTC)'!
+importInstrument
+	| instrument |
+	instrument := tracker selectedInstrument ifNil: [^ self].
+	self request: 'Instrument name' initialAnswer: (instrument label ifNil: ['']) do: [:newName|
+		instrument label: nil.
+		(self class package packageDirectory / 'data' / 'projects' // (newName, '.patch')) readStreamDo: [:s| instrument readFrom: s binary].
+		instrument label: newName.
+		self fitPatchToBounds.
+		tracker triggerEvent: #instrumentLabelChanged]! !
+
+!InstrumentRackMorph methodsFor: 'actions' stamp: 'len 20/Jun/2026, 8:31:27 pm (UTC)'!
+moveInstrumentDown
+	tracker selectedInstrumentNumber ifNotNil: [:anInteger| anInteger > 1 ifTrue: [tracker swapInstrument: anInteger with: anInteger - 1]]! !
+
+!InstrumentRackMorph methodsFor: 'actions' stamp: 'len 20/Jun/2026, 8:31:27 pm (UTC)'!
+moveInstrumentUp
+	tracker selectedInstrumentNumber ifNotNil: [:anInteger| anInteger < 255 ifTrue: [tracker swapInstrument: anInteger with: anInteger + 1]]! !
+
+!InstrumentRackMorph methodsFor: 'actions' stamp: 'len 21/Jun/2026, 7:25:45 am (UTC)'!
+renameInstrument
+	| instrument |
+	instrument := tracker selectedInstrument ifNil: [^ self].
+	self request: 'Instrument name' initialAnswer: (instrument label ifNil: ['']) do: [:newName| instrument label: newName. tracker triggerEvent: #instrumentLabelChanged]! !
+
+!InstrumentRackMorph methodsFor: 'events' stamp: 'len 20/Jun/2026, 8:33:00 pm (UTC)'!
+handleCommandHotkey: anEvent
+	anEvent keyCharacter = $i ifTrue: [tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument inspect]. ^ true].
+	^ false! !
+
+!InstrumentRackMorph methodsFor: 'events' stamp: 'len 20/Jun/2026, 8:31:27 pm (UTC)'!
+handleOptionHotkey: anEvent
+	anEvent shiftPressed ifTrue:
+		[anEvent isArrowDown ifTrue: [tracker moveInstrumentDown. ^ true].
+		anEvent isArrowUp ifTrue: [tracker moveInstrumentUp. ^ true]].
+	^ false! !
+
+!InstrumentRackMorph methodsFor: 'events' stamp: 'len 20/Jun/2026, 8:44:35 pm (UTC)'!
+keyStroke: anEvent
+	| c i |
+	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
+		[anEvent wasHandled: true.
+		^ self].
+	(anEvent secondaryModifierPressed and: [self handleOptionHotkey: anEvent]) ifTrue:
+		[anEvent wasHandled: true.
+		^ self].
+	anEvent keyCharacter = $\ ifTrue:
+		[anEvent wasHandled: true.
+		tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument track ifNotNil: [:aTrack|
+			anEvent primaryModifierPressed ifTrue: [tracker toggleTrackSolo: (tracker tracks indexOf: aTrack)] ifFalse: [tracker toggleTrackMute: (tracker tracks indexOf: aTrack)]]].
+		^ self].
+	anEvent anyModifierKeyPressed ifFalse:
+		[c := anEvent keyCharacter.
+		c = $a ifTrue: [anEvent wasHandled: true. tracker selectedInstrument ifNotNil: [:anInstument| anInstument noteOff]. ^ self].
+		(i := 'zsxdcvgbhnjmq2w3er5t6y7ui9o0p' indexOf: c) > 0 ifTrue:
+			[anEvent wasHandled: true. tracker selectedInstrument ifNotNil: [:anInstument| anInstument noteOn: tracker selectedTrack inputCenterKey + i - 1]. ^ self]].
+	^ super keyStroke: anEvent! !
+
+!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 8:48:17 pm (UTC)'!
+initialize
+	super initialize.
+	self horizontal: true.
+	self scrollable: RackMorph new! !
+
+!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 8:31:27 pm (UTC)'!
+setTracker: aTracker
+	tracker := aTracker.
+	aTracker when: #cursorChanged send: #update to: self.
+	self update! !
+
+!InstrumentRackMorph methodsFor: 'private' stamp: 'len 20/Jun/2026, 9:32:49 pm (UTC)'!
+forceUpdate
+	scrollable patch: tracker selectedInstrument patch; update! !
+
+!InstrumentRackMorph methodsFor: 'private' stamp: 'len 21/Jun/2026, 11:38:20 am (UTC)'!
+rack
+	^ scrollable! !
+
+!InstrumentRackMorph methodsFor: 'private' stamp: 'len 21/Jun/2026, 9:00:48 am (UTC)'!
+update
+	scrollable patch: (tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument patch])! !
 
 !InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026, 8:28:14 am (UTC)'!
 clipboardCopy
@@ -823,20 +824,32 @@ duplicateInstrument
 	instrument := tracker selectedInstrument ifNil: [^ self].
 	self request: 'Duplicate to instrument number' initialAnswer: '' verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| tracker instruments at: s asNumber put: instrument copy]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 9/Apr/2026, 8:03:03 am (UTC)'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 21/Jun/2026, 7:26:14 am (UTC)'!
 exportInstrument
 	| instrument |
 	instrument := tracker selectedInstrument ifNil: [^ self].
 	self request: 'Instrument name' initialAnswer: (instrument label ifNil: ['']) do: [:newName|
 		instrument label: newName.
 		(self class package packageDirectory / 'data' / 'projects' // (newName, '.patch')) writeStreamDo: [:s| instrument writeOn: s].
-		self triggerEvent: #instrumentLabelChanged]! !
+		tracker triggerEvent: #instrumentLabelChanged]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 9/Apr/2026, 11:36:15 am (UTC)'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 21/Jun/2026, 9:05:41 am (UTC)'!
 fitPatchToBounds
-	self patch ifNotNil: [:aMorph| aMorph fitTo: (self localBounds insetBy: 8)]! !
+	self patch ifNotNil: [:aPatchMorph| aPatchMorph fitTo: (self localBounds insetBy: 8)]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Apr/2026, 9:32:20 am (UTC)'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 21/Jun/2026, 11:54:02 am (UTC)'!
+focusOnModule: aModule
+	| patchMorph patchable boundsInPatch boundsInZoomer zoomerCenter |
+	patchMorph := self patch ifNil: [^ self].
+	patchable := patchMorph submorphs detect: [:one| (one isKindOf: PatchableMorph) and: [one model == aModule]] ifNone: [^ self].
+	patchable comeToFront.
+	boundsInPatch := patchable fullBoundsInOwner.
+	boundsInZoomer := patchMorph externalizeBoundingRectOf: boundsInPatch.
+	zoomerCenter := extent / 2.0.
+	patchMorph translateBy: zoomerCenter - boundsInZoomer center.
+"	patchMorph scaleBy: ((extent x / boundsInZoomer width asFloat min: extent y / boundsInZoomer height asFloat) min: 1.5) around: zoomerCenter"! !
+
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 21/Jun/2026, 7:26:20 am (UTC)'!
 importInstrument
 	| instrument |
 	instrument := tracker selectedInstrument ifNil: [^ self].
@@ -845,7 +858,7 @@ importInstrument
 		(self class package packageDirectory / 'data' / 'projects' // (newName, '.patch')) readStreamDo: [:s| instrument readFrom: s binary].
 		instrument label: newName.
 		self fitPatchToBounds.
-		self triggerEvent: #instrumentLabelChanged]! !
+		tracker triggerEvent: #instrumentLabelChanged]! !
 
 !InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026, 4:20:07 pm (UTC)'!
 moveInstrumentDown
@@ -855,11 +868,11 @@ moveInstrumentDown
 moveInstrumentUp
 	tracker selectedInstrumentNumber ifNotNil: [:anInteger| anInteger < 255 ifTrue: [tracker swapInstrument: anInteger with: anInteger + 1]]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 20/Feb/2026, 3:50:13 pm (UTC)'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 21/Jun/2026, 7:26:25 am (UTC)'!
 renameInstrument
 	| instrument |
 	instrument := tracker selectedInstrument ifNil: [^ self].
-	self request: 'Instrument name' initialAnswer: (instrument label ifNil: ['']) do: [:newName| instrument label: newName. self triggerEvent: #instrumentLabelChanged]! !
+	self request: 'Instrument name' initialAnswer: (instrument label ifNil: ['']) do: [:newName| instrument label: newName. tracker triggerEvent: #instrumentLabelChanged]! !
 
 !InstrumentEditorMorph methodsFor: 'drawing' stamp: 'len 6/Apr/2026, 12:01:18 pm (UTC)'!
 drawOn: aCanvas
@@ -1782,7 +1795,7 @@ initialize
 	pauseBlinking := false.
 	showFXColumns := true! !
 
-!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 14/Mar/2026, 11:36:21 am (UTC)'!
+!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 7:27:34 am (UTC)'!
 setTracker: aTracker
 	tracker := aTracker.
 	cursorPosition := 1.
@@ -1790,6 +1803,7 @@ setTracker: aTracker
 	aTracker when: #tracksChanged send: #updateTracks to: self.
 	aTracker when: #cursorChanged send: #updateCursor to: self.
 	aTracker when: #playheadChanged send: #redrawNeeded to: self.
+	aTracker when: #instrumentLabelChanged send: #redrawNeeded to: self.
 	self updateTracks! !
 
 !PatternEditorMorph methodsFor: 'private' stamp: 'len 15/Jun/2026, 8:11:38 pm (UTC)'!

@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 21 June 2026 at 2:46:34 am'!
+'From Cuis7.9 [latest update: #8014] on 21 June 2026 at 7:41:54 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 606!
+!provides: 'Signals' 1 607!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1002,6 +1002,16 @@ LinearLayoutMorph subclass: #ControlPanel
 	category: 'Signals-Morphic-Patches'!
 !classDefinition: 'ControlPanel class' category: #'Signals-Morphic-Patches'!
 ControlPanel class
+	instanceVariableNames: ''!
+
+!classDefinition: #RackMorph category: #'Signals-Morphic-Patches'!
+LinearLayoutMorph subclass: #RackMorph
+	instanceVariableNames: 'patch'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Patches'!
+!classDefinition: 'RackMorph class' category: #'Signals-Morphic-Patches'!
+RackMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #RoundedLinearLayoutMorph category: #'Signals-Morphic-Support'!
@@ -10792,6 +10802,51 @@ initialize
 new
 	^ self newRow! !
 
+!RackMorph methodsFor: 'drawing' stamp: 'len 20/Jun/2026, 8:15:16 pm (UTC)'!
+drawOn: aCanvas
+"	self patch ifNotNil: [aCanvas frameRectangle: self patch fullBoundsInOwner borderWidth: 2 color: Color white]. "! !
+
+!RackMorph methodsFor: 'events' stamp: 'len 20/Jun/2026, 8:15:16 pm (UTC)'!
+aboutToBeGrabbedBy: aHand
+	^ MovingHelperMorph new target: self; offset: (self owner internalizeFromWorld: aHand morphPosition) - self morphPosition! !
+
+!RackMorph methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 8:15:16 pm (UTC)'!
+defaultBorderColor
+	^ Color transparent! !
+
+!RackMorph methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 8:15:16 pm (UTC)'!
+defaultColor
+	^ Color transparent! !
+
+!RackMorph methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 7:37:07 am (UTC)'!
+initialize
+	super initialize.
+"	self axisEdgeWeight: 0.0."
+	self gap: 4.
+	self padding: 4@8! !
+
+!RackMorph methodsFor: 'private' stamp: 'len 20/Jun/2026, 9:35:12 pm (UTC)'!
+patch: aPatchMorph
+	patch = aPatchMorph ifTrue: [^ self].
+	patch := aPatchMorph.
+"	aPatchMorph when: #recomputeNeeded send: #update to: self."
+	self update! !
+
+!RackMorph methodsFor: 'private' stamp: 'len 21/Jun/2026, 9:01:19 am (UTC)'!
+update
+	self removeAllMorphs.
+	self morphExtent: 10@10. "and let it grow from that"
+	patch ifNil: [^ self].
+	((patch submorphs select: [:each| each isKindOf: PatchableMorph])
+		sorted: [:a :b| a morphPosition x < b morphPosition x])
+			do: [:each| self addMorph: each rackable layoutSpec: LayoutSizeSpec new useMorphWidth "useMorphHeight"].
+	self addMorph: (PluggablePushButtonMorph new model: self; action: #addNewModule; label: '+'; setBalloonText: 'Add new module'; morphExtent: 10 @ 10) layoutSpec: LayoutSizeSpec new useMorphWidth.
+	self redrawNeeded! !
+
+!RackMorph class methodsFor: 'as yet unclassified' stamp: 'len 20/Jun/2026, 8:51:00 pm (UTC)'!
+new
+	^ self newRow! !
+
 !RoundedLinearLayoutMorph methodsFor: 'drawing' stamp: 'len 27/Jan/2026, 12:19:39 pm (UTC)'!
 drawOn: aCanvas
 	| rect |
@@ -11529,29 +11584,13 @@ moveUp
 update: aSymbol
 	self redrawNeeded! !
 
-!PluggableToggleMorph methodsFor: 'drawing' stamp: 'len 21/Jan/2026, 9:28:21 pm (UTC)'!
+!PluggableToggleMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 10:10:00 am (UTC)'!
 drawOn: aCanvas
 	| labelColor |
-"	aCanvas fillRectangle: self localBounds color: Color red."
-"	aCanvas
-		frameRectangle: (0@0 extent: self minimumExtent) borderWidth: 1 color: color;
-		drawString: control value asString at: 4@0 font: font color: color
-"
-"	aCanvas
-		roundRect: (0@0 extent: self minimumExtent) color: color radius: 6;
-		roundRect: ((0@0 extent: self minimumExtent) insetBy: 1) color: Color black radius: 6;
-		drawString: control value asString at: 3@0 font: font color: color"
+	aCanvas
+		fillRectangle: (0@0 extent: self minimumExtent) color: Color gray cornerRadius: 4.0.
 	labelColor := (model perform: getter) ifTrue: [color] ifFalse: [self inactiveColor].
-	aCanvas drawString: label at: 3 @ 0 font: font color: labelColor.
-
-"	(model perform: getter)
-		ifTrue:
-			[aCanvas roundRect: (0 @ 0 extent: self minimumExtent) color: color radius: 6.
-			labelColor := Color black]
-		ifFalse:
-			[aCanvas roundRect: (0 @ 0 extent: self minimumExtent) color: self inactiveColor radius: 6.
-			labelColor := color].
-	aCanvas drawString: label at: 3 @ 0 font: font color: labelColor."
+	aCanvas drawString: label at: 2 @ 1 font: font color: labelColor.
 	self hasKeyboardFocus ifTrue:
 		[| y |
 		y := font ascent + 2.
@@ -11783,7 +11822,7 @@ drawOn: aCanvas
 defaultExtent
 	^ `36 @ 36`! !
 
-!KnobControlMorph methodsFor: 'drawing' stamp: 'len 19/Jun/2026, 6:00:07 pm (UTC)'!
+!KnobControlMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 12:41:13 pm (UTC)'!
 drawOn: aCanvas
 	| v vMod center radius zeroPosition dialPosition |
 "	self hasKeyboardFocus ifTrue: [self drawFocusIndicatorOn: aCanvas]."
@@ -11791,15 +11830,17 @@ drawOn: aCanvas
 	vMod := v + control modulation min: 1.0 max: 0.0.
 	center := self morphExtent / 2.0.
 	radius := center - 2.
-	zeroPosition := (0 @ radius y rotatedBy: Float pi * 0.2) + center.
+"	aCanvas ellipseCenter: center radius: radius - 4 borderWidth: 0 borderColor: nil fillColor: Color gray."
+	zeroPosition := (0 @ (radius y * 1.3) rotatedBy: Float pi * 0.2) + center.
 	dialPosition := (zeroPosition - center / 2.0 rotatedBy: Float pi * 1.6 * v) + center.
-	"draw the dial on the base value:"
-	aCanvas strokeWidth: 3.0 color: self inactiveColor do:
+	"draw the background gray arc:"
+	aCanvas strokeWidth: 2.0 color: self inactiveColor do:
 		[aCanvas arcCenter: center radius: radius rotationAngle: Float pi / 2.0 start: Float pi * 1.8 sweep: Float pi * -1.6].
+	"draw the dial on the base value:"
 	aCanvas strokeWidth: 3.0 color: (self hasKeyboardFocus ifTrue: [color] ifFalse: [self inactiveColor]) do:
 		[aCanvas moveTo: dialPosition; lineTo: center].
 	"and here show the modulated value, not the base value:"
-	aCanvas strokeWidth: 3.0 color: color do:
+	aCanvas strokeWidth: 2.0 color: color do:
 		[control isBipolar
 			ifTrue: [aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: Float pi sweep: Float pi * 1.6 * (vMod - 0.5)]
 			ifFalse: [aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: Float pi * 0.2 sweep: Float pi * 1.6 * vMod]]! !
@@ -13521,13 +13562,13 @@ keyStroke: aKeyboardEvent
 			ifTrue: [self model inspect. aKeyboardEvent wasHandled: true. ^ self]].
 	^ super keyStroke: aKeyboardEvent! !
 
-!RackableMorph methodsFor: 'events' stamp: 'len 20/Jun/2026, 7:11:16 pm (UTC)'!
+!RackableMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 7:40:21 am (UTC)'!
 mouseEnter: anEvent
 	self removeAlarm: #hideFlap.
 	body borderColor: Color veryVeryLightGray.
 	title color: Color white.
 	flap hasSubmorphs ifTrue:
-		[flap position: 8 @ (self morphHeight - flap morphHeight) extent: flap minimumExtent.
+		[flap position: 8 @ (self morphHeight - flap morphHeight - 2.0) extent: flap minimumExtent.
 		flap visible: true]! !
 
 !RackableMorph methodsFor: 'events' stamp: 'len 20/Jun/2026, 7:31:51 pm (UTC)'!
@@ -13536,10 +13577,10 @@ mouseLeave: anEvent
 	title color: Color veryLightGray.
 	self addAlarm: #hideFlap after: 300 "wait 300 ms before actually hiding them"! !
 
-!RackableMorph methodsFor: 'geometry' stamp: 'len 20/Jun/2026, 6:01:58 pm (UTC)'!
+!RackableMorph methodsFor: 'geometry' stamp: 'len 21/Jun/2026, 7:37:48 am (UTC)'!
 extentChanged: oldExtent
 	title position: 0 @ 0 extent: extent x @ title morphHeight.
-	body position: 0 @ title morphHeight extent: extent x @ (extent y - title morphHeight)! !
+	body position: 0 @ title morphHeight extent: extent x @ (extent y - title morphHeight - 1.0)! !
 
 !RackableMorph methodsFor: 'geometry' stamp: 'len 20/Jun/2026, 6:01:07 pm (UTC)'!
 minimumExtent
@@ -13564,7 +13605,7 @@ initialize
 drawOn: aCanvas
 "	aCanvas fillRectangle: self localBounds color: Color black"! !
 
-!ScrollerMorph methodsFor: 'drawing' stamp: 'len 18/Jun/2026, 4:50:01 pm (UTC)'!
+!ScrollerMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 8:59:22 am (UTC)'!
 postDrawOn: aCanvas
 	"Draw indicative scrollbars if needed, only when the scrollable has keyboard focus."
 	| scrollableBounds viewport thickness color maxHeight maxWidth maxX maxY |
@@ -13572,22 +13613,26 @@ postDrawOn: aCanvas
 	scrollableBounds := scrollable fullBoundsInOwner insetBy: 1.
 	viewport := self localBounds.
 	(viewport containsRect: scrollableBounds) ifTrue: [^ false].
-	thickness := 4.0.
-	color := Color white alpha: 0.4.
-	maxWidth := extent x - 8.0.
-	maxHeight := extent y - 8.0.
+	thickness := self class scrollbarThickness.
+	color := self class scrollbarColor.
+	maxWidth := extent x - thickness - 4.0.
+	maxHeight := extent y - thickness - 4.0.
 	maxX := extent x - 4.0.
 	maxY := extent y - 4.0.
 	horizontal ifTrue:
 		[| x1 x2 |
 		x1 := (viewport left - scrollableBounds left / scrollableBounds width asFloat * maxWidth max: 0.0) + 4.0.
 		x2 := extent x - (scrollableBounds right - viewport right / scrollableBounds width asFloat * maxWidth) min: maxX - thickness.
-		aCanvas fillRectangle: (x1 @ (maxY - thickness) corner: x2 @ maxY) color: color].
+		aCanvas fillRectangle: (x1 @ (maxY - thickness) corner: x2 @ maxY) color: color cornerRadius: self class scrollbarCornerRadius].
 	vertical ifTrue:
 		[| y1 y2 |
 		y1 := (viewport top - scrollableBounds top / scrollableBounds height asFloat * maxHeight max: 0.0) + 4.0.
 		y2 := extent y - (scrollableBounds bottom - viewport bottom / scrollableBounds height asFloat * maxHeight) min: maxY - thickness.
-		aCanvas fillRectangle: (maxX - thickness @ y1 corner: maxX @ y2) color: color].
+		aCanvas fillRectangle: (maxX - thickness @ y1 corner: maxX @ y2) color: color cornerRadius: self class scrollbarCornerRadius].
+	^ true! !
+
+!ScrollerMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 8:59:53 am (UTC)'!
+requiresVectorCanvas
 	^ true! !
 
 !ScrollerMorph methodsFor: 'events' stamp: 'len 18/Jun/2026, 4:28:58 pm (UTC)'!
@@ -13710,6 +13755,18 @@ scrollToMakeVisible: aRectangle
 wantsSteps
 	^ true! !
 
+!ScrollerMorph class methodsFor: 'as yet unclassified' stamp: 'len 21/Jun/2026, 8:54:32 am (UTC)'!
+scrollbarColor
+	^ `Color white alpha: 0.3`! !
+
+!ScrollerMorph class methodsFor: 'as yet unclassified' stamp: 'len 21/Jun/2026, 8:57:10 am (UTC)'!
+scrollbarCornerRadius
+	^ 4.0! !
+
+!ScrollerMorph class methodsFor: 'as yet unclassified' stamp: 'len 21/Jun/2026, 9:02:22 am (UTC)'!
+scrollbarThickness
+	^ 6.0! !
+
 !TruncatingLabelMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 4:11:00 pm (UTC)'!
 color: aColor
 	color := aColor.
@@ -13803,7 +13860,7 @@ minimumExtent
 drawOn: aCanvas
 "	aCanvas fillRectangle: self localBounds color: Color black"! !
 
-!ZoomerMorph methodsFor: 'drawing' stamp: 'len 18/Jun/2026, 4:44:18 pm (UTC)'!
+!ZoomerMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 8:58:31 am (UTC)'!
 postDrawOn: aCanvas
 	"Draw indicative scrollbars if needed."
 	| zoomable zoomableBounds viewport thickness color x1 x2 y1 y2 maxHeight maxWidth maxX maxY |
@@ -13812,19 +13869,23 @@ postDrawOn: aCanvas
 	zoomableBounds := zoomable fullBoundsInOwner insetBy: 1.
 	viewport := self localBounds.
 	(viewport containsRect: zoomableBounds) ifTrue: [^ false].
-	thickness := 4.
-	color := Color white alpha: 0.4.
-	maxWidth := extent x - 8.0.
-	maxHeight := extent y - 8.0.
+	thickness := ScrollerMorph scrollbarThickness.
+	color := ScrollerMorph scrollbarColor.
+	maxWidth := extent x - thickness - 4.0.
+	maxHeight := extent y - thickness - 4.0.
 	maxX := extent x - 4.0.
 	maxY := extent y - 4.0.
 	x1 := (viewport left - zoomableBounds left / zoomableBounds width asFloat * maxWidth max: 0.0) + 4.0.
 	x2 := extent x - (zoomableBounds right - viewport right / zoomableBounds width asFloat * maxWidth) min: maxX - thickness.
-	aCanvas fillRectangle: (x1 @ (maxY - thickness) corner: x2 @ maxY) color: color.
+	aCanvas fillRectangle: (x1 @ (maxY - thickness) corner: x2 @ maxY) color: color cornerRadius: ScrollerMorph scrollbarCornerRadius.
 	y1 := (viewport top - zoomableBounds top / zoomableBounds height asFloat * maxHeight max: 0.0) + 4.0.
 	y2 := extent y - (zoomableBounds bottom - viewport bottom / zoomableBounds height asFloat * maxHeight) min: maxY - thickness.
-	aCanvas fillRectangle: (maxX - thickness @ y1 corner: maxX @ y2) color: color.
+	aCanvas fillRectangle: (maxX - thickness @ y1 corner: maxX @ y2) color: color cornerRadius: ScrollerMorph scrollbarCornerRadius.
 	^ true! !
+
+!ZoomerMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 8:49:38 am (UTC)'!
+requiresVectorCanvas
+	^ true ! !
 
 !ZoomerMorph methodsFor: 'events' stamp: 'len 9/Feb/2026, 2:01:23 pm (UTC)'!
 allowsSubmorphDrag

@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 21 June 2026 at 7:41:54 pm'!
+'From Cuis7.9 [latest update: #8014] on 21 June 2026 at 9:46:40 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 607!
+!provides: 'Signals' 1 608!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -11822,25 +11822,26 @@ drawOn: aCanvas
 defaultExtent
 	^ `36 @ 36`! !
 
-!KnobControlMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 12:41:13 pm (UTC)'!
+!KnobControlMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 12:56:13 pm (UTC)'!
 drawOn: aCanvas
-	| v vMod center radius zeroPosition dialPosition |
+	| v vMod center radius zeroPosition dialPosition borderWidth |
 "	self hasKeyboardFocus ifTrue: [self drawFocusIndicatorOn: aCanvas]."
 	v := control basePosition.
 	vMod := v + control modulation min: 1.0 max: 0.0.
-	center := self morphExtent / 2.0.
-	radius := center - 2.
+	center := extent / 2.0.
+	radius := center - 2.0.
 "	aCanvas ellipseCenter: center radius: radius - 4 borderWidth: 0 borderColor: nil fillColor: Color gray."
-	zeroPosition := (0 @ (radius y * 1.3) rotatedBy: Float pi * 0.2) + center.
+	zeroPosition := (0.0 @ (radius y * 1.3) rotatedBy: Float pi * 0.2) + center.
 	dialPosition := (zeroPosition - center / 2.0 rotatedBy: Float pi * 1.6 * v) + center.
+	borderWidth := extent x / 36.0 * 2.5.
 	"draw the background gray arc:"
-	aCanvas strokeWidth: 2.0 color: self inactiveColor do:
+	aCanvas strokeWidth: borderWidth color: self inactiveColor do:
 		[aCanvas arcCenter: center radius: radius rotationAngle: Float pi / 2.0 start: Float pi * 1.8 sweep: Float pi * -1.6].
 	"draw the dial on the base value:"
-	aCanvas strokeWidth: 3.0 color: (self hasKeyboardFocus ifTrue: [color] ifFalse: [self inactiveColor]) do:
+	aCanvas strokeWidth: borderWidth color: (self hasKeyboardFocus ifTrue: [color] ifFalse: [self inactiveColor]) do:
 		[aCanvas moveTo: dialPosition; lineTo: center].
 	"and here show the modulated value, not the base value:"
-	aCanvas strokeWidth: 2.0 color: color do:
+	aCanvas strokeWidth: borderWidth color: color do:
 		[control isBipolar
 			ifTrue: [aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: Float pi sweep: Float pi * 1.6 * (vMod - 0.5)]
 			ifFalse: [aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: Float pi * 0.2 sweep: Float pi * 1.6 * vMod]]! !
@@ -13970,10 +13971,10 @@ moveUp
 	lfo shape: (options atPin: (options indexOf: lfo shape ifAbsent: [^ self]) - 1).
 	self redrawNeeded! !
 
-!LFOWaveMorph methodsFor: 'drawing' stamp: 'len 3/Jun/2026, 9:40:22 am (UTC)'!
+!LFOWaveMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 2:23:50 pm (UTC)'!
 drawOn: aCanvas
 	| step stepX t₀ t x y h steps |
-	steps := 16.
+	steps := 64.
 	step := 1.0 / steps.
 	stepX := self morphWidth - 8.0 * step.
 	h := self morphHeight - 6.0 / 2.0.
@@ -14045,9 +14046,9 @@ mouseScroll: anEvent localPosition: localEventPosition
 balloonText
 	^ lfo shape asPlainString! !
 
-!LFOWaveMorph methodsFor: 'initialization' stamp: 'len 23/Apr/2026, 12:36:35 pm (UTC)'!
+!LFOWaveMorph methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 2:25:53 pm (UTC)'!
 defaultExtent
-	^ `48 @ 24`! !
+	^ `36 @ 20`! !
 
 !LFOWaveMorph methodsFor: 'initialization' stamp: 'len 3/Jun/2026, 9:39:23 am (UTC)'!
 initialize

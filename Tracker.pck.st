@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 21 June 2026 at 7:41:58 pm'!
+'From Cuis7.9 [latest update: #8014] on 21 June 2026 at 9:46:43 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 59!
+!provides: 'Tracker' 1 60!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -604,7 +604,7 @@ setBPM
 setSwing
 	self request: 'Swing' initialAnswer: (model swing * 100) truncated printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 0 and: 100]] do: [:s| model swing: s asNumber / 100.0]! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 21/Jun/2026, 7:42:34 am (UTC)'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 21/Jun/2026, 2:08:08 pm (UTC)'!
 toggleInstrumentRackOrEditor
 	| editorMode |
 	editorMode := instrumentEditor visible not.
@@ -613,20 +613,20 @@ toggleInstrumentRackOrEditor
 	instrumentRack visible: editorMode not.
 	"why need to do this? otherwise the lower pane doesn't expand properly when going to the smaller instrument rack:"
 	lowerPane delete.
-	layoutMorph addMorph: lowerPane proportionalHeight: 1.0! !
+	layoutMorph addMorph: lowerPane proportionalHeight: (editorMode ifTrue: [0.5] ifFalse: [1.0])! !
 
 !TrackerWindow methodsFor: 'actions' stamp: 'len 18/Jun/2026, 3:25:10 pm (UTC)'!
 toggleLowerPane
 	lowerPane visible: lowerPane visible not.
 	instrumentEditor layoutSpec proportionalHeight: (lowerPane visible ifTrue: [0.38] ifFalse: [1.0])! !
 
-!TrackerWindow methodsFor: 'events' stamp: 'len 21/Jun/2026, 11:52:51 am (UTC)'!
+!TrackerWindow methodsFor: 'events' stamp: 'len 21/Jun/2026, 2:43:48 pm (UTC)'!
 handleCommandHotkey: anEvent
 	anEvent keyCharacter = $f ifTrue: [self setBPM. ^ true].
 	anEvent keyCharacter = $g ifTrue: [self setSwing. ^ true].
 	anEvent keyCharacter = $o ifTrue: [self openProject. ^ true].
 	anEvent keyCharacter = $s ifTrue: [self saveProject. ^ true].
-	anEvent keyCharacter = $k ifTrue:
+	anEvent keyCharacter = $e ifTrue:
 		[| oldKeyboardFocus focusedModule |
 		oldKeyboardFocus := anEvent hand keyboardFocus.
 		focusedModule := (oldKeyboardFocus ownerChain detect: [:one| one isKindOf: RackableMorph] ifNone: []) ifNotNil: [:aRackableMorph| aRackableMorph model].
@@ -634,12 +634,12 @@ handleCommandHotkey: anEvent
 		anEvent hand newKeyboardFocus: ((oldKeyboardFocus notNil and: [oldKeyboardFocus isInWorld]) ifTrue: [oldKeyboardFocus] ifFalse: [self]).
 		layoutMorph layoutSubmorphs.
 		focusedModule ifNotNil: [instrumentEditor focusOnModule: focusedModule].
+		anEvent hand deleteBalloon.
 		^ true].
-"	anEvent keyCharacter = $j ifTrue: [self toggleLowerPane. ^ true]."
 	anEvent keyCharacter = $d ifTrue: [instrumentEditor duplicateInstrument. ^ true].
 	anEvent keyCharacter = $r ifTrue: [instrumentEditor renameInstrument. ^ true].
-	anEvent keyCharacter = $e ifTrue: [instrumentEditor exportInstrument. ^ true].
-	anEvent keyCharacter = $i ifTrue: [instrumentEditor importInstrument. ^ true].
+"	anEvent keyCharacter = $e ifTrue: [instrumentEditor exportInstrument. ^ true].
+	anEvent keyCharacter = $i ifTrue: [instrumentEditor importInstrument. ^ true]."
 	anEvent keyCharacter = $] ifTrue: [model inputOctaveUp. ^ true].
 	anEvent keyCharacter = $[ ifTrue: [model inputOctaveDown. ^ true].
 	anEvent keyCharacter = $n ifTrue: [model insertPattern. ^ true].
@@ -649,15 +649,15 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $m ifTrue: [model toggleTrackMask. ^ true].
 	^ false! !
 
-!TrackerWindow methodsFor: 'events' stamp: 'len 13/Jun/2026, 5:51:45 pm (UTC)'!
+!TrackerWindow methodsFor: 'events' stamp: 'len 21/Jun/2026, 2:42:50 pm (UTC)'!
 keyStroke: anEvent
-	anEvent isSpace ifTrue: [model isPlaying ifTrue: [model stop] ifFalse: [model loop: anEvent secondaryModifierPressed not; followPlayhead: true; play]. ^ true].
+	anEvent isSpace ifTrue: [model isPlaying ifTrue: [model stop] ifFalse: [model loop: anEvent secondaryModifierPressed not; followPlayhead: true; play]. anEvent wasHandled: true. ^ self].
 	(anEvent primaryModifierPressed and: [self handleCommandHotkey: anEvent]) ifTrue:
 		[anEvent wasHandled: true.
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 7:33:49 am (UTC)'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 2:06:19 pm (UTC)'!
 buildMorphicWindow
 	| lowerLeftPane sequencerScroller patternEditorScroller bar |
 	instrumentEditor := InstrumentEditorMorph new setTracker: model.
@@ -680,7 +680,7 @@ buildMorphicWindow
 	layoutMorph
 		addMorph: bar fixedHeight: 24;
 		addMorph: instrumentRack fixedHeight: 176.
-	layoutMorph addMorph: instrumentEditor proportionalHeight: 0.38.
+	layoutMorph addMorph: instrumentEditor proportionalHeight: 0.5.
 	adjuster := layoutMorph addAdjusterMorph submorphs first.
 	layoutMorph addMorph: lowerPane "proportionalHeight: 1.0".
 	instrumentEditor visible: false.
@@ -994,7 +994,7 @@ activeBounds
 	blockHeight := charWidth * 3.
 	^ 0 @ ((tracker cursorPattern - 1) * blockHeight) extent: self morphWidth @ blockHeight! !
 
-!ArrangerMorph methodsFor: 'drawing' stamp: 'len 16/Jun/2026, 7:37:27 am (UTC)'!
+!ArrangerMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 2:03:41 pm (UTC)'!
 drawOn: aCanvas
 	| x y s charWidth blockHeight blockWidth space cursorTrack cursorPattern patternNumbers oldPatternNumbers |
 	charWidth := font widthOf: $X.
@@ -1037,10 +1037,10 @@ drawOn: aCanvas
 		y := y + blockHeight].
 	y := tracker cursorPattern - 1 * blockHeight + (tracker cursorLine * blockHeight / tracker selectedPattern length asFloat).
 	"draw pattern line cursor and playhead:"
-	aCanvas line: blockHeight + 1 @ y to: extent x @ y width: 2 color: PatternEditorMorph cursorColor.
+	aCanvas line: blockHeight + 1 @ y to: extent x - 4 @ y width: 2 color: Color veryLightGray.
 	tracker isPlaying ifTrue:
 		[y := tracker playheadPattern - 1 * blockHeight + (tracker playheadLine * blockHeight / tracker playingPattern length asFloat).
-		aCanvas line: blockHeight + 1 @ y to: extent x @ y width: 2 color: Color white]! !
+		aCanvas line: blockHeight + 1 @ y to: extent x - 4 @ y width: 2 color: Color white]! !
 
 !ArrangerMorph methodsFor: 'drawing' stamp: 'len 19/Feb/2026, 2:44:53 pm (UTC)'!
 requiresVectorCanvas

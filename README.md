@@ -78,10 +78,10 @@ Commands Rxy and Cxy interpret the nibble x as a time span in units of 1/12 of a
 ### Hotkeys and keyboard mapping
 Trackers are heavily keyboard-oriented. The following hotkeys are the most commonly used (in PC, Command and Option are Control and Alt).
 
-General (tracker window):
+Global (tracker window):
 
 * Cmd-o and Cmd-s open and save a project (the whole song)
-* Cmd-k switch the upper pane between instrument editor (the DSP graph) and instrument rack (just the modules in a row)
+* Cmd-e switch the upper pane between instrument editor (the DSP graph) and instrument rack (just the modules in a row)
 * Cmd-f set tracker BPM
 * Cmd-g set tracker swing
 * Cmd-[/] change octave for entering notes with the computer keyboard

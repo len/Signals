@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 21 June 2026 at 9:46:40 pm'!
+'From Cuis7.9 [latest update: #8014] on 22 June 2026 at 5:06:26 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 608!
+!provides: 'Signals' 1 611!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1024,33 +1024,23 @@ LinearLayoutMorph subclass: #RoundedLinearLayoutMorph
 RoundedLinearLayoutMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #PluggableChoiceMorph category: #'Signals-Morphic-Support'!
+!classDefinition: #PluggableChoiceMorph category: #'Signals-Trash'!
 PluggableMorph subclass: #PluggableChoiceMorph
 	instanceVariableNames: 'font options getter setter'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Morphic-Support'!
-!classDefinition: 'PluggableChoiceMorph class' category: #'Signals-Morphic-Support'!
+	category: 'Signals-Trash'!
+!classDefinition: 'PluggableChoiceMorph class' category: #'Signals-Trash'!
 PluggableChoiceMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #PluggablePushButtonMorph category: #'Signals-Morphic-Support'!
-PluggableMorph subclass: #PluggablePushButtonMorph
-	instanceVariableNames: 'label font icon stateSelector enableSelector actionSelector isPressed mouseIsOver magnifiedIcon actWhen iconName secondaryActionSelector stateArgument actionArgument mouseOverColor'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Support'!
-!classDefinition: 'PluggablePushButtonMorph class' category: #'Signals-Morphic-Support'!
-PluggablePushButtonMorph class
-	instanceVariableNames: ''!
-
-!classDefinition: #PluggableToggleMorph category: #'Signals-Morphic-Support'!
+!classDefinition: #PluggableToggleMorph category: #'Signals-Trash'!
 PluggableMorph subclass: #PluggableToggleMorph
 	instanceVariableNames: 'font getter setter label'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Morphic-Support'!
-!classDefinition: 'PluggableToggleMorph class' category: #'Signals-Morphic-Support'!
+	category: 'Signals-Trash'!
+!classDefinition: 'PluggableToggleMorph class' category: #'Signals-Trash'!
 PluggableToggleMorph class
 	instanceVariableNames: ''!
 
@@ -1394,6 +1384,26 @@ BoxMorph subclass: #RackableMorph
 RackableMorph class
 	instanceVariableNames: ''!
 
+!classDefinition: #PulldownListMorph category: #'Signals-Morphic-Support'!
+BoxMorph subclass: #PulldownListMorph
+	instanceVariableNames: 'options font color state'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Support'!
+!classDefinition: 'PulldownListMorph class' category: #'Signals-Morphic-Support'!
+PulldownListMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #PushButtonMorph category: #'Signals-Morphic-Support'!
+BoxMorph subclass: #PushButtonMorph
+	instanceVariableNames: 'label color labelColor font isPressed isHovered'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Support'!
+!classDefinition: 'PushButtonMorph class' category: #'Signals-Morphic-Support'!
+PushButtonMorph class
+	instanceVariableNames: ''!
+
 !classDefinition: #ScrollerMorph category: #'Signals-Morphic-Support'!
 BoxMorph subclass: #ScrollerMorph
 	instanceVariableNames: 'horizontal vertical scrollable showScrollbars'
@@ -1402,6 +1412,16 @@ BoxMorph subclass: #ScrollerMorph
 	category: 'Signals-Morphic-Support'!
 !classDefinition: 'ScrollerMorph class' category: #'Signals-Morphic-Support'!
 ScrollerMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #ToggleButtonMorph category: #'Signals-Morphic-Support'!
+BoxMorph subclass: #ToggleButtonMorph
+	instanceVariableNames: 'label color font state'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Support'!
+!classDefinition: 'ToggleButtonMorph class' category: #'Signals-Morphic-Support'!
+ToggleButtonMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #TruncatingLabelMorph category: #'Signals-Morphic-Support'!
@@ -2294,25 +2314,6 @@ Virtual analog model of the Oberheim state variable filter. It has low-pass, hig
 
 See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 
-!PluggablePushButtonMorph commentStamp: '<historical>' prior: 0!
-A PluggableButtonMorph is a combination of an indicator for a boolean value and an action button. The action of a button is often, but not always, to toggle the boolean value that it shows.  Models may range from simple to sophisticated.
-
-Its pluggable selectors are:
-	enableSelector a boolean value or a selector to query the model (Am I enabled, i.e. Can I be activated?)
-	stateSelector		 fetch a boolean value from the model (Am I selected?)
-	actionSelector			invoke this button's action on the model
-	secondaryActionSelector invoke this action when the button-up event occures
-
-Any of the above selectors can be nil, meaning that the model does not supply behavior for the given action, and the default behavior should be used. For example, if stateSelector is nil, then this button shows the state of a read-only boolean that is always false.  if enableSelector is nil, then this button is always enabled.
-
-The model informs its view(s) of changes by sending #changed: to itself with stateSelector as a parameter. The view tells the model when the button is pressed by sending actionSelector.
-
-If the actionSelector takes one or more arguments, then the following are relevant:
-	arguments			          A list of arguments to provide when the actionSelector is called.
-	argumentsProvider	 The object that is sent the argumentSelector to obtain arguments, if dynamic
-	argumentsSelector	 The message sent to the argumentProvider to obtain the arguments.
-		!
-
 !AllpassComb commentStamp: '<historical>' prior: 0!
 Schroeder allpass filter.!
 
@@ -2430,10 +2431,12 @@ basePosition
 	"Answer the base value of the receiver mapped to a number between 0.0 and 1.0."
 	^ base! !
 
-!Control methodsFor: 'accessing' stamp: 'len 8/Mar/2026, 8:22:05 am (UTC)'!
+!Control methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 5:45:42 pm (UTC)'!
 basePosition: aNumber
 	"Set the base value of the receiver from a number between 0.0 and 1.0."
-	base := aNumber min: 1.0 max: 0.0.
+	| newBase |
+	base = (newBase := aNumber min: 1.0 max: 0.0) ifTrue: [^ self].
+	base := newBase.
 	self changed: self baseValue! !
 
 !Control methodsFor: 'accessing' stamp: 'len 8/Mar/2026, 8:22:22 am (UTC)'!
@@ -2865,9 +2868,10 @@ setOutput: aBuffer
 mode
 	^ mode! !
 
-!Compressor methodsFor: 'accessing' stamp: 'len 2/Jun/2026, 6:59:52 pm (UTC)'!
+!Compressor methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:27:03 pm (UTC)'!
 mode: aSymbol
-	mode := aSymbol! !
+	mode := aSymbol.
+	self triggerEvent: #modeChanged: with: mode! !
 
 !Compressor methodsFor: 'controlling' stamp: 'len 25/May/2026, 7:20:38 am (UTC)'!
 reset
@@ -2948,14 +2952,14 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #mode ifPresent: [:aSymbol| mode := aSymbol]! !
 
-!Compressor methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:05:19 am (UTC)'!
+!Compressor methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:26:44 pm (UTC)'!
 panel
 	| answer |
 	answer := ControlPanel newColumn.
 	answer addRow
 "		addTextualControl: (controls at: #threshold);"
 		addTextualControl: (controls at: #ratio);
-		addMorph: (PluggableChoiceMorph new options: #(Peak RMS); model: self; getter: #mode; setter: #mode:; setBalloonText: 'Mode').
+		addMorph: (PulldownListMorph new state: mode; when: #changed: send: #mode: to: self; receive: #state: from: self when: #modeChanged:; options: #(Peak RMS); setBalloonText: 'Mode').
 "	answer addRow
 		addSmallKnob: (controls at: #attack) label: 'Attack';
 		addSmallKnob: (controls at: #release) label: 'Release'."
@@ -2984,7 +2988,7 @@ patchable
 		addAudioOutput: #setOutputR: label: 'R'.
 	^ answer! !
 
-!Compressor methodsFor: 'ui' stamp: 'len 20/Jun/2026, 4:43:51 pm (UTC)'!
+!Compressor methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:27:23 pm (UTC)'!
 rackable
 	| answer row |
 	answer := RackableMorph new model: self.
@@ -3003,7 +3007,7 @@ rackable
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #release) label: 'R';
 		addSmallKnob: (controls at: #makeup) label: 'Makeup';
-		addMorph: (PluggableChoiceMorph new options: #(Peak RMS); model: self; getter: #mode; setter: #mode:; setBalloonText: 'Mode').
+		addMorph: (PulldownListMorph new state: mode; when: #changed: send: #mode: to: self; receive: #state: from: self when: #modeChanged:; options: #(Peak RMS); setBalloonText: 'Mode').
 	^ answer! !
 
 !Compressor methodsFor: 'ui' stamp: 'len 11/Apr/2026, 8:58:05 pm (UTC)'!
@@ -3039,9 +3043,10 @@ setOutputR: aBuffer
 mode
 	^ mode! !
 
-!Gate methodsFor: 'accessing' stamp: 'len 2/Jun/2026, 7:06:54 pm (UTC)'!
+!Gate methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:27:59 pm (UTC)'!
 mode: aSymbol
-	mode := aSymbol! !
+	mode := aSymbol.
+	self triggerEvent: #modeChanged: with: mode! !
 
 !Gate methodsFor: 'controlling' stamp: 'len 26/May/2026, 9:24:45 am (UTC)'!
 reset
@@ -3132,10 +3137,10 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #mode ifPresent: [:aSymbol| mode := aSymbol]! !
 
-!Gate methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:05:38 am (UTC)'!
+!Gate methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:27:34 pm (UTC)'!
 panel
 	^​ ControlPanel new
-		addMorph: (PluggableChoiceMorph new options: #(Peak RMS); model: self; getter: #mode; setter: #mode:; setBalloonText: 'Mode')! !
+		addMorph: (PulldownListMorph new state: mode; when: #changed: send: #mode: to: self; receive: #state: from: self when: #modeChanged:; options: #(Peak RMS); setBalloonText: 'Mode')! !
 
 !Gate methodsFor: 'ui' stamp: 'len 26/May/2026, 9:04:21 am (UTC)'!
 panel2
@@ -3161,7 +3166,7 @@ patchable
 		addAudioOutput: #setOutputR: label: 'R'.
 	^ answer! !
 
-!Gate methodsFor: 'ui' stamp: 'len 20/Jun/2026, 4:44:02 pm (UTC)'!
+!Gate methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:27:43 pm (UTC)'!
 rackable
 	| answer row |
 	answer := RackableMorph new model: self.
@@ -3180,7 +3185,7 @@ rackable
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #hold) label: 'H';
 		addSmallKnob: (controls at: #release) label: 'R';
-		addMorph: (PluggableChoiceMorph new options: #(Peak RMS); model: self; getter: #mode; setter: #mode:; setBalloonText: 'Mode').
+		addMorph: (PulldownListMorph new state: mode; when: #changed: send: #mode: to: self; receive: #state: from: self when: #modeChanged:; options: #(Peak RMS); setBalloonText: 'Mode').
 	^ answer! !
 
 !Gate methodsFor: 'ui' stamp: 'len 26/May/2026, 9:04:39 am (UTC)'!
@@ -4076,9 +4081,10 @@ meterValue
 port
 	^ port! !
 
-!AudioIn methodsFor: 'accessing' stamp: 'len 2/Jun/2026, 7:08:01 pm (UTC)'!
+!AudioIn methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:28:57 pm (UTC)'!
 port: anInteger
-	port := anInteger! !
+	port := anInteger.
+	self triggerEvent: #portChanged: with: port! !
 
 !AudioIn methodsFor: 'initialization' stamp: 'len 2/Jun/2026, 7:07:33 pm (UTC)'!
 initialize
@@ -4110,12 +4116,12 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #port ifPresent: [:anInteger| port := anInteger]! !
 
-!AudioIn methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:08:29 am (UTC)'!
+!AudioIn methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:28:40 pm (UTC)'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
 	display := ControlPanel new gap: 0;
-		addMorph: (PluggableChoiceMorph new color: PatchMorph waveformColor; options: (0 to: 9); model: self; getter: #port; setter: #port:; setBalloonText: 'Input Bus');
+		addMorph: (PulldownListMorph new color: PatchMorph waveformColor; options: (0 to: 9); state: port; when: #changed: send: #port: to: self; receive: #state: from: self when: #portChanged:; setBalloonText: 'Input Bus');
 		addMorph: self scope.
 	answer body addMorph: display.
 	answer
@@ -4171,9 +4177,10 @@ meterValue
 port
 	^ port! !
 
-!AudioOut methodsFor: 'accessing' stamp: 'len 15/Jun/2026, 7:28:45 pm (UTC)'!
+!AudioOut methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:29:17 pm (UTC)'!
 port: anInteger
-	port := anInteger! !
+	port := anInteger.
+	self triggerEvent: #portChanged: with: port! !
 
 !AudioOut methodsFor: 'controlling' stamp: 'len 28/Apr/2026, 10:31:11 am (UTC)'!
 adjustLevelBy: aNumber
@@ -4274,12 +4281,12 @@ panel
 		addHorizontalSlider: (controls at: #pan).
 	^ answer! !
 
-!AudioOut methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:08:34 am (UTC)'!
+!AudioOut methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:29:42 pm (UTC)'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
 	display := ControlPanel new gap: 0;
-		addMorph: (PluggableChoiceMorph new color: PatchMorph waveformColor; options: (0 to: 9); model: self; getter: #port; setter: #port:; setBalloonText: 'Output Bus (0 = master)');
+		addMorph: (PulldownListMorph new color: PatchMorph waveformColor; options: (0 to: 9); state: port; when: #changed: send: #port: to: self; receive: #state: from: self when: #portChanged:; setBalloonText: 'Output Bus (0 = master)');
 		addMorph: self scope.
 	answer body addMorph: display; addMorph: self panel.
 	answer
@@ -4379,9 +4386,10 @@ patchable
 retrigger
 	^ retrigger! !
 
-!Operator methodsFor: 'accessing' stamp: 'len 2/Jun/2026, 7:54:51 pm (UTC)'!
+!Operator methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:14:05 pm (UTC)'!
 retrigger: aBoolean
-	retrigger := aBoolean! !
+	retrigger := aBoolean.
+	self triggerEvent: #retriggerChanged: with: retrigger! !
 
 !Operator methodsFor: 'controlling' stamp: 'len 24/Apr/2026, 11:04:15 am (UTC)'!
 gateOff
@@ -4447,13 +4455,13 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #reset ifPresent: [:aBoolean| retrigger := aBoolean]! !
 
-!Operator methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:09:18 am (UTC)'!
+!Operator methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:14:35 pm (UTC)'!
 panel
 	^​ super panel
 		addTextualControl: (controls at: #ratio);
 		addTextualControl: (controls at: #level);
 		addTextualControl: (controls at: #feedback);
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger')! !
+		addMorph: (ToggleButtonMorph new state: retrigger; when: #changed: send: #retrigger: to: self; receive: #state: from: self when: #retriggerChanged:; label: 'R'; setBalloonText: 'Retrigger')! !
 
 !Operator methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:35:04 pm (UTC)'!
 panelBottom
@@ -4461,10 +4469,10 @@ panelBottom
 		addTextualControl: (controls at: #ratio);
 		addTextualControl: (controls at: #feedback)! !
 
-!Operator methodsFor: 'ui' stamp: 'len 20/Jun/2026, 1:57:12 pm (UTC)'!
+!Operator methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:14:45 pm (UTC)'!
 panelRight
 	^ ControlPanel newColumn
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger');
+		addMorph: (ToggleButtonMorph new state: retrigger; when: #changed: send: #retrigger: to: self; receive: #state: from: self when: #retriggerChanged:; label: 'R'; setBalloonText: 'Retrigger');
 		addTextualControl: (controls at: #level)! !
 
 !Operator methodsFor: 'ui' stamp: 'len 17/May/2026, 7:46:14 am (UTC)'!
@@ -5207,9 +5215,10 @@ label: aString
 legato
 	^ legato! !
 
-!Multisample methodsFor: 'accessing' stamp: 'len 2/Jun/2026, 8:09:36 pm (UTC)'!
+!Multisample methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:15:59 pm (UTC)'!
 legato: aBoolean
-	legato := aBoolean! !
+	legato := aBoolean.
+	self triggerEvent: #legatoChanged: with: legato! !
 
 !Multisample methodsFor: 'controlling' stamp: 'len 23/Mar/2026, 12:21:00 pm (UTC)'!
 gateOff
@@ -5305,11 +5314,11 @@ readFromJson: json buffers: aList
 	label := json at: #label.
 	label isEmpty ifTrue: [label := nil]! !
 
-!Multisample methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:19:12 pm (UTC)'!
+!Multisample methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:15:31 pm (UTC)'!
 panel
 	^ super panel
 		addTextualControl: (controls at: #speed);
-		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'L'; setBalloonText: 'Legato')! !
+		addMorph: (ToggleButtonMorph new  state: legato; when: #changed: send: #legato: to: self; receive: #state: from: self when: #legatoChanged:; label: 'L'; setBalloonText: 'Legato')! !
 
 !Multisample methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:35:46 am (UTC)'!
 patchable
@@ -5410,9 +5419,10 @@ label: aString
 legato
 	^ legato! !
 
-!Sample methodsFor: 'accessing' stamp: 'len 2/Jun/2026, 8:03:03 pm (UTC)'!
+!Sample methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:16:16 pm (UTC)'!
 legato: aBoolean
-	legato := aBoolean! !
+	legato := aBoolean.
+	self triggerEvent: #legatoChanged: with: legato! !
 
 !Sample methodsFor: 'accessing' stamp: 'len 6/Oct/2025, 12:45:00 pm (UTC)'!
 loopEnd
@@ -5599,12 +5609,11 @@ settings: aDictionary
 	aDictionary at: #warp ifPresent: [:aBoolean| warp := aBoolean].
 	aDictionary at: #legato ifPresent: [:aBoolean| legato := aBoolean]! !
 
-!Sample methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:19:06 pm (UTC)'!
+!Sample methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:15:42 pm (UTC)'!
 panel
 	^ super panel
 		addTextualControl: (controls at: #speed);
-"		addMorph: (PluggableToggleMorph new model: self; getter: #warp; setter: #warp:; label: 'Warp');"
-		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'L'; setBalloonText: 'Legato')! !
+		addMorph: (ToggleButtonMorph new  state: legato; when: #changed: send: #legato: to: self; receive: #state: from: self when: #legatoChanged:; label: 'L'; setBalloonText: 'Legato')! !
 
 !Sample methodsFor: 'ui' stamp: 'len 18/Jun/2026, 7:31:24 pm (UTC)'!
 patchable
@@ -6243,17 +6252,19 @@ screen
 bipolar
 	^ bipolar! !
 
-!ControlIn methodsFor: 'accessing' stamp: 'len 9/Jun/2026, 2:31:29 pm (UTC)'!
+!ControlIn methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:17:34 pm (UTC)'!
 bipolar: aBoolean
-	bipolar := aBoolean! !
+	bipolar := aBoolean.
+	self triggerEvent: #bipolarChanged: with: bipolar! !
 
 !ControlIn methodsFor: 'accessing' stamp: 'len 2/Jun/2026, 7:14:12 pm (UTC)'!
 port
 	^ port! !
 
-!ControlIn methodsFor: 'accessing' stamp: 'len 2/Jun/2026, 7:14:21 pm (UTC)'!
+!ControlIn methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:17:22 pm (UTC)'!
 port: anInteger
-	port := anInteger! !
+	port := anInteger.
+	self triggerEvent: #portChanged: with: port! !
 
 !ControlIn methodsFor: 'initialization' stamp: 'len 9/Jun/2026, 2:31:41 pm (UTC)'!
 initialize
@@ -6277,13 +6288,13 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #port ifPresent: [:anInteger| port := anInteger]! !
 
-!ControlIn methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:07:05 am (UTC)'!
+!ControlIn methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:18:14 pm (UTC)'!
 patchable
 	| answer screen |
 	answer := PatchableMorph new model: self.
 	screen := ControlPanel new gap: 0;
-		addMorph: (PluggableChoiceMorph new color: PatchMorph waveformColor3; options: (0 to: 9); model: self; getter: #port; setter: #port:; setBalloonText: 'Port');
-		addMorph: (PluggableToggleMorph new label: '±'; model: self; getter: #bipolar; setter: #bipolar:; setBalloonText: 'Bipolar');
+		addMorph: (PulldownListMorph new color: PatchMorph waveformColor; options: (0 to: 9); state: port; when: #changed: send: #port: to: self; receive: #state: from: self when: #portChanged:; setBalloonText: 'Port');
+		addMorph: (ToggleButtonMorph new state: bipolar; when: #changed: send: #bipolar: to: self; receive: #state: from: self when: #bipolarChanged:; label: '±'; setBalloonText: 'Bipolar');
 		addMorph: (RollingMeterMorph new color: PatchMorph waveformColor3; meterBlock: [lastValue]).
 	answer body addMorph: screen.
 	answer addControlOutput.
@@ -6422,9 +6433,10 @@ screen
 retrigger
 	^ retrigger! !
 
-!Envelope methodsFor: 'accessing' stamp: 'len 3/Jun/2026, 8:08:44 am (UTC)'!
+!Envelope methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:21:29 pm (UTC)'!
 retrigger: aBoolean
-	retrigger := aBoolean! !
+	retrigger := aBoolean.
+	self triggerEvent: #retriggerChanged: with: retrigger! !
 
 !Envelope methodsFor: 'accessing' stamp: 'len 6/Jan/2026, 11:33:45 am (UTC)'!
 stage
@@ -6555,12 +6567,12 @@ next
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value! !
 
-!AD methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:15:52 pm (UTC)'!
+!AD methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:18:39 pm (UTC)'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #decay) label: 'D';
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger');
+		addMorph: (ToggleButtonMorph new state: retrigger; when: #changed: send: #retrigger: to: self; receive: #state: from: self when: #retriggerChanged:; label: 'R'; setBalloonText: 'Retrigger');
 		addTextualControl: (controls at: #velocitySensitivity)! !
 
 !AD methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:38:49 pm (UTC)'!
@@ -6570,10 +6582,10 @@ panelBottom
 		addSmallKnob: (controls at: #decay) label: 'D';
 		addTextualControl: (controls at: #velocitySensitivity)! !
 
-!AD methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:53:53 am (UTC)'!
+!AD methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:18:59 pm (UTC)'!
 panelRight
 	^ ControlPanel newColumn
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger')! !
+		addMorph: (ToggleButtonMorph new state: retrigger; when: #changed: send: #retrigger: to: self; receive: #state: from: self when: #retriggerChanged:; label: 'R'; setBalloonText: 'Retrigger')! !
 
 !AD methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:02:03 pm (UTC)'!
 patchable
@@ -6585,9 +6597,10 @@ patchable
 legato
 	^ legato! !
 
-!ADSR methodsFor: 'accessing' stamp: 'len 3/Jun/2026, 8:17:02 am (UTC)'!
+!ADSR methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:21:17 pm (UTC)'!
 legato: aBoolean
-	legato := aBoolean! !
+	legato := aBoolean.
+	self triggerEvent: #legatoChanged: with: legato! !
 
 !ADSR methodsFor: 'controlling' stamp: 'len 23/Mar/2026, 12:21:00 pm (UTC)'!
 gateOff
@@ -6649,15 +6662,15 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #legato ifPresent: [:aBoolean| legato := aBoolean]! !
 
-!ADSR methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:17:55 pm (UTC)'!
+!ADSR methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:22:43 pm (UTC)'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #decay) label: 'D';
 		addSmallKnob: (controls at: #sustain) label: 'S';
 		addSmallKnob: (controls at: #release) label: 'R';
-		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'L'; setBalloonText: 'Legato');
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger');
+		addMorph: (ToggleButtonMorph new  state: legato; when: #changed: send: #legato: to: self; receive: #state: from: self when: #legatoChanged:; label: 'L'; setBalloonText: 'Legato');
+		addMorph: (ToggleButtonMorph new state: retrigger; when: #changed: send: #retrigger: to: self; receive: #state: from: self when: #retriggerChanged:; label: 'R'; setBalloonText: 'Retrigger');
 		addTextualControl: (controls at: #velocitySensitivity)! !
 
 !ADSR methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:52:56 am (UTC)'!
@@ -6669,11 +6682,11 @@ panelBottom
 		addSmallKnob: (controls at: #release) label: 'R';
 		addTextualControl: (controls at: #velocitySensitivity)! !
 
-!ADSR methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:53:43 am (UTC)'!
+!ADSR methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:22:50 pm (UTC)'!
 panelRight
 	^ ControlPanel newColumn
-		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'L'; setBalloonText: 'Legato');
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger')! !
+		addMorph: (ToggleButtonMorph new  state: legato; when: #changed: send: #legato: to: self; receive: #state: from: self when: #legatoChanged:; label: 'L'; setBalloonText: 'Legato');
+		addMorph: (ToggleButtonMorph new state: retrigger; when: #changed: send: #retrigger: to: self; receive: #state: from: self when: #retriggerChanged:; label: 'R'; setBalloonText: 'Retrigger')! !
 
 !ADSR methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:02:14 pm (UTC)'!
 patchable
@@ -6710,13 +6723,13 @@ next
 		value <= 0.00001 "-100 dB" ifTrue: [value := 0.0. stage := #idle]].
 	^ value! !
 
-!AHD methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:16:45 pm (UTC)'!
+!AHD methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:19:26 pm (UTC)'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #hold) label: 'H';
 		addSmallKnob: (controls at: #decay) label: 'D';
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger');
+		addMorph: (ToggleButtonMorph new state: retrigger; when: #changed: send: #retrigger: to: self; receive: #state: from: self when: #retriggerChanged:; label: 'R'; setBalloonText: 'Retrigger');
 		addTextualControl: (controls at: #velocitySensitivity)! !
 
 !AHD methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:54:36 am (UTC)'!
@@ -6727,10 +6740,10 @@ panelBottom
 		addSmallKnob: (controls at: #decay) label: 'D';
 		addTextualControl: (controls at: #velocitySensitivity)! !
 
-!AHD methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:54:46 am (UTC)'!
+!AHD methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:19:31 pm (UTC)'!
 panelRight
 	^ ControlPanel newColumn
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger')! !
+		addMorph: (ToggleButtonMorph new state: retrigger; when: #changed: send: #retrigger: to: self; receive: #state: from: self when: #retriggerChanged:; label: 'R'; setBalloonText: 'Retrigger')! !
 
 !AHD methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:02:18 pm (UTC)'!
 patchable
@@ -6743,9 +6756,10 @@ patchable
 legato
 	^ legato! !
 
-!AR methodsFor: 'accessing' stamp: 'len 3/Jun/2026, 8:21:26 am (UTC)'!
+!AR methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:21:52 pm (UTC)'!
 legato: aBoolean
-	legato := aBoolean! !
+	legato := aBoolean.
+	self triggerEvent: #legatoChanged: with: legato! !
 
 !AR methodsFor: 'controlling' stamp: 'len 23/Mar/2026, 12:21:00 pm (UTC)'!
 gateOff
@@ -6797,13 +6811,13 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #legato ifPresent: [:aBoolean| legato := aBoolean]! !
 
-!AR methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:18:02 pm (UTC)'!
+!AR methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:23:06 pm (UTC)'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #release) label: 'R';
-		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'L'; setBalloonText: 'Legato');
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger');
+		addMorph: (ToggleButtonMorph new  state: legato; when: #changed: send: #legato: to: self; receive: #state: from: self when: #legatoChanged:; label: 'L'; setBalloonText: 'Legato');
+		addMorph: (ToggleButtonMorph new state: retrigger; when: #changed: send: #retrigger: to: self; receive: #state: from: self when: #retriggerChanged:; label: 'R'; setBalloonText: 'Retrigger');
 		addTextualControl: (controls at: #velocitySensitivity)! !
 
 !AR methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:55:04 am (UTC)'!
@@ -6813,11 +6827,11 @@ panelBottom
 		addSmallKnob: (controls at: #release) label: 'R';
 		addTextualControl: (controls at: #velocitySensitivity)! !
 
-!AR methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:55:12 am (UTC)'!
+!AR methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:23:17 pm (UTC)'!
 panelRight
 	^ ControlPanel newColumn
-		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'L'; setBalloonText: 'Legato');
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger')! !
+		addMorph: (ToggleButtonMorph new  state: legato; when: #changed: send: #legato: to: self; receive: #state: from: self when: #legatoChanged:; label: 'L'; setBalloonText: 'Legato');
+		addMorph: (ToggleButtonMorph new state: retrigger; when: #changed: send: #retrigger: to: self; receive: #state: from: self when: #retriggerChanged:; label: 'R'; setBalloonText: 'Retrigger')! !
 
 !AR methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:02:22 pm (UTC)'!
 patchable
@@ -6829,9 +6843,10 @@ patchable
 legato
 	^ legato! !
 
-!ASR methodsFor: 'accessing' stamp: 'len 3/Jun/2026, 8:23:22 am (UTC)'!
+!ASR methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:22:14 pm (UTC)'!
 legato: aBoolean
-	legato := aBoolean! !
+	legato := aBoolean.
+	self triggerEvent: #legatoChanged: with: legato! !
 
 !ASR methodsFor: 'controlling' stamp: 'len 23/Mar/2026, 12:21:00 pm (UTC)'!
 gateOff
@@ -6885,14 +6900,14 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #legato ifPresent: [:aBoolean| legato := aBoolean]! !
 
-!ASR methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:18:10 pm (UTC)'!
+!ASR methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:23:23 pm (UTC)'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #sustain) label: 'S';
 		addSmallKnob: (controls at: #release) label: 'R';
-		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'L'; setBalloonText: 'Legato');
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger');
+		addMorph: (ToggleButtonMorph new  state: legato; when: #changed: send: #legato: to: self; receive: #state: from: self when: #legatoChanged:; label: 'L'; setBalloonText: 'Legato');
+		addMorph: (ToggleButtonMorph new state: retrigger; when: #changed: send: #retrigger: to: self; receive: #state: from: self when: #retriggerChanged:; label: 'R'; setBalloonText: 'Retrigger');
 		addTextualControl: (controls at: #velocitySensitivity)! !
 
 !ASR methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:55:22 am (UTC)'!
@@ -6903,11 +6918,11 @@ panelBottom
 		addSmallKnob: (controls at: #release) label: 'R';
 		addTextualControl: (controls at: #velocitySensitivity)! !
 
-!ASR methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:55:30 am (UTC)'!
+!ASR methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:23:28 pm (UTC)'!
 panelRight
 	^ ControlPanel newColumn
-		addMorph: (PluggableToggleMorph new model: self; getter: #legato; setter: #legato:; label: 'L'; setBalloonText: 'Legato');
-		addMorph: (PluggableToggleMorph new model: self; getter: #retrigger; setter: #retrigger:; label: 'R'; setBalloonText: 'Retrigger')! !
+		addMorph: (ToggleButtonMorph new  state: legato; when: #changed: send: #legato: to: self; receive: #state: from: self when: #legatoChanged:; label: 'L'; setBalloonText: 'Legato');
+		addMorph: (ToggleButtonMorph new state: retrigger; when: #changed: send: #retrigger: to: self; receive: #state: from: self when: #retriggerChanged:; label: 'R'; setBalloonText: 'Retrigger')! !
 
 !ASR methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:02:25 pm (UTC)'!
 patchable
@@ -6919,9 +6934,10 @@ patchable
 mode
 	^ mode! !
 
-!EnvelopeFollower methodsFor: 'accessing' stamp: 'len 2/Jun/2026, 7:17:42 pm (UTC)'!
+!EnvelopeFollower methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:30:07 pm (UTC)'!
 mode: aSymbol
-	mode := aSymbol! !
+	mode := aSymbol.
+	self triggerEvent: #modeChanged: with: aSymbol! !
 
 !EnvelopeFollower methodsFor: 'controlling' stamp: 'len 9/Feb/2026, 5:14:45 pm (UTC)'!
 reset
@@ -6963,12 +6979,13 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #mode ifPresent: [:aSymbol| mode := aSymbol]! !
 
-!EnvelopeFollower methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:07:16 am (UTC)'!
+!EnvelopeFollower methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:30:23 pm (UTC)'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #attack) label: 'A';
 		addSmallKnob: (controls at: #release) label: 'R';
-		addMorph: (PluggableChoiceMorph new options: #(Peak RMS); model: self; getter: #mode; setter: #mode:; setBalloonText: 'Mode')! !
+		addMorph: (PulldownListMorph new state: mode; when: #changed: send: #mode: to: self; receive: #state: from: self when: #modeChanged:; options: #(Peak RMS); setBalloonText: 'Mode').
+! !
 
 !EnvelopeFollower methodsFor: 'ui' stamp: 'len 30/Apr/2026, 9:14:03 am (UTC)'!
 patchable
@@ -7034,9 +7051,10 @@ bipolar: aBoolean
 mode
 	^ mode! !
 
-!LFO methodsFor: 'accessing' stamp: 'len 3/Jun/2026, 9:01:41 am (UTC)'!
+!LFO methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:24:23 pm (UTC)'!
 mode: aSymbol
-	mode := aSymbol! !
+	mode := aSymbol.
+	self triggerEvent: #modeChanged: with: mode! !
 
 !LFO methodsFor: 'accessing' stamp: 'len 25/Nov/2025, 11:59:00 am (UTC)'!
 phase
@@ -7138,14 +7156,14 @@ settings: aDictionary
 	aDictionary at: #bipolar ifPresent: [:aBoolean| bipolar := aBoolean].
 	aDictionary at: #mode ifPresent: [:aSymbol| mode := aSymbol]! !
 
-!LFO methodsFor: 'ui' stamp: 'len 3/Jun/2026, 9:37:31 am (UTC)'!
+!LFO methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:24:48 pm (UTC)'!
 panel
 	^ ControlPanel new
 		addMorph: (LFOWaveMorph new lfo: self);
 		addTextualControl: (controls at: #speed);
 		addTextualControl: (controls at: #offset);
-		addMorph: (PluggableToggleMorph new model: self; getter: #bipolar; setter: #bipolar:; label: '±'; setBalloonText: 'Bipolar');
-		addMorph: (PluggableChoiceMorph new options: #(Free Reset Hold); model: self; getter: #mode; setter: #mode:; setBalloonText: 'Mode')! !
+		addMorph: (ToggleButtonMorph new state: bipolar; when: #changed: send: #bipolar: to: self; receive: #state: from: self when: #bipolarChanged:; label: '±'; setBalloonText: 'Bipolar');
+		addMorph: (PulldownListMorph new state: mode; when: #changed: send: #mode: to: self; receive: #state: from: self when: #modeChanged:; options: #(Free Reset Hold); setBalloonText: 'Mode')! !
 
 !LFO methodsFor: 'ui' stamp: 'len 26/Apr/2026, 8:02:47 pm (UTC)'!
 patchable
@@ -7158,7 +7176,7 @@ patchable
 		addControlOutput.
 	^ answer! !
 
-!LFO methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:01:54 pm (UTC)'!
+!LFO methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:25:16 pm (UTC)'!
 rackable
 	| answer |
 	answer := RackableMorph new model: self.
@@ -7169,8 +7187,8 @@ rackable
 	answer flap addMorph:
 		(ControlPanel new gap: 0;
 			addTextualControl: (controls at: #offset);
-			addMorph: (PluggableToggleMorph new model: self; getter: #bipolar; setter: #bipolar:; label: '±'; setBalloonText: 'Bipolar');
-			addMorph: (PluggableChoiceMorph new options: #(Free Reset Hold); model: self; getter: #mode; setter: #mode:; setBalloonText: 'Mode')).
+		addMorph: (ToggleButtonMorph new state: bipolar; when: #changed: send: #bipolar: to: self; receive: #state: from: self when: #bipolarChanged:; label: '±'; setBalloonText: 'Bipolar');
+		addMorph: (PulldownListMorph new state: mode; when: #changed: send: #mode: to: self; receive: #state: from: self when: #modeChanged:; options: #(Free Reset Hold); setBalloonText: 'Mode')).
 	^ answer! !
 
 !LFO methodsFor: 'ui' stamp: 'len 2/Jun/2026, 8:15:08 pm (UTC)'!
@@ -7872,9 +7890,10 @@ screen
 reverse
 	^ reverse! !
 
-!PitchShifter methodsFor: 'accessing' stamp: 'len 3/Jun/2026, 8:26:15 am (UTC)'!
+!PitchShifter methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:25:39 pm (UTC)'!
 reverse: aBoolean
-	reverse := aBoolean! !
+	reverse := aBoolean.
+	self triggerEvent: #reverseChanged: with: reverse! !
 
 !PitchShifter methodsFor: 'controlling' stamp: 'len 28/May/2026, 2:43:31 pm (UTC)'!
 reset
@@ -7951,13 +7970,13 @@ panel
 		addKnob: (controls at: #feedback) label: 'FB';
 		addKnob: (controls at: #mix) label: 'Mix'! !
 
-!PitchShifter methodsFor: 'ui' stamp: 'len 3/Jun/2026, 8:29:14 am (UTC)'!
+!PitchShifter methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:26:03 pm (UTC)'!
 panel2
 	^ ControlPanel new
 		addSmallKnob: (controls at: #delay) label: 'Delay';
 		addSmallKnob: (controls at: #grainSize) label: 'Grain';
 		addSmallKnob: (controls at: #damp) label: 'Damp';
-		addMorph: (PluggableToggleMorph new model: self; getter: #reverse; setter: #reverse:; label: '◀'; setBalloonText: 'Reverse Mode')! !
+		addMorph: (ToggleButtonMorph new state: reverse; when: #changed: send: #reverse: to: self; receive: #state: from: self when: #reverseChanged:; label: '◀'; setBalloonText: 'Reverse Mode')! !
 
 !PitchShifter methodsFor: 'ui' stamp: 'len 28/May/2026, 2:45:49 pm (UTC)'!
 patchable
@@ -9706,17 +9725,19 @@ setInput: aBuffer
 frequencyScale
 	^ frequencyScale! !
 
-!Spectrogram methodsFor: 'accessing' stamp: 'len 3/Jun/2026, 8:54:16 am (UTC)'!
+!Spectrogram methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:32:04 pm (UTC)'!
 frequencyScale: aSymbol
-	frequencyScale := aSymbol! !
+	frequencyScale := aSymbol.
+	self triggerEvent: #frequencyScaleChanged: with: aSymbol! !
 
 !Spectrogram methodsFor: 'accessing' stamp: 'len 3/Jun/2026, 8:53:42 am (UTC)'!
 windowSize
 	^ windowSize! !
 
-!Spectrogram methodsFor: 'accessing' stamp: 'len 3/Jun/2026, 8:53:50 am (UTC)'!
+!Spectrogram methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:32:18 pm (UTC)'!
 windowSize: anInteger
-	windowSize := anInteger! !
+	windowSize := anInteger.
+	self triggerEvent: #windowSizeChanged: with: anInteger! !
 
 !Spectrogram methodsFor: 'controlling' stamp: 'len 3/Apr/2026, 8:52:40 am (UTC)'!
 reset
@@ -9779,11 +9800,11 @@ settings: aDictionary
 	aDictionary at: #windowSize ifPresent: [:anInteger| windowSize := anInteger].
 	aDictionary at: #frequencyScale ifPresent: [:aSymbol| frequencyScale := aSymbol]! !
 
-!Spectrogram methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:07:50 am (UTC)'!
+!Spectrogram methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:31:46 pm (UTC)'!
 panel
 	^ ControlPanel new
-		addMorph: (PluggableChoiceMorph new options: #(256 512 1024 2048 4096); model: self; getter: #windowSize; setter: #windowSize:; setBalloonText: 'Window Size');
-		addMorph: (PluggableChoiceMorph new options: #(linear log); model: self; getter: #frequencyScale; setter: #frequencyScale:; setBalloonText: 'Frequency Scale')! !
+		addMorph: (PulldownListMorph new state: windowSize; options: #(256 512 1024 2048 4096); when: #changed: send: #windowSize: to: self; receive: #state: from: self when: #windowSizeChanged:; setBalloonText: 'WIndow Size');
+		addMorph: (PulldownListMorph new state: frequencyScale; options: #(linear log); when: #changed: send: #frequencyScale: to: self; receive: #state: from: self when: #frequencyScaleChanged; setBalloonText: 'Frequency Scale')! !
 
 !Spectrogram methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:05:57 pm (UTC)'!
 patchable
@@ -10369,9 +10390,10 @@ initializeViridis
 windowSize
 	^ windowSize! !
 
-!SpectrumAnalyzer methodsFor: 'accessing' stamp: 'len 3/Jun/2026, 8:46:14 am (UTC)'!
+!SpectrumAnalyzer methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:33:19 pm (UTC)'!
 windowSize: anInteger
-	windowSize := anInteger! !
+	windowSize := anInteger.
+	self triggerEvent: #windowSizeChanged: with: windowSize! !
 
 !SpectrumAnalyzer methodsFor: 'controlling' stamp: 'len 11/May/2026, 1:14:23 pm (UTC)'!
 reset
@@ -10416,7 +10438,7 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #windowSize ifPresent: [:anInteger| windowSize := anInteger]! !
 
-!SpectrumAnalyzer methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:08:18 am (UTC)'!
+!SpectrumAnalyzer methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:32:45 pm (UTC)'!
 patchable
 	| answer screen panel |
 	answer := PatchableMorph new model: self.
@@ -10425,14 +10447,14 @@ patchable
 	answer body addMorph: screen.
 	panel := ControlPanel new.
 	panel
-		addMorph: (PluggableChoiceMorph new options: #(256 512 1024 2048 4096); model: self; getter: #windowSize; setter: #windowSize:; setBalloonText: 'WIndow Size');
-		addMorph: (PluggableChoiceMorph new options: #(linear log); model: screen; getter: #frequencyScale; setter: #frequencyScale:; setBalloonText: 'Frequency Scale');
-		addMorph: (PluggableChoiceMorph new options: #(bars outline); model: screen; getter: #displayMode; setter: #displayMode:; setBalloonText: 'Display Mode').
+		addMorph: (PulldownListMorph new state: windowSize; options: #(256 512 1024 2048 4096); when: #changed: send: #windowSize: to: self; receive: #state: from: self when: #windowSizeChanged:; setBalloonText: 'WIndow Size');
+		addMorph: (PulldownListMorph new state: screen frequencyScale; options: #(linear log); when: #changed: send: #frequencyScale: to: screen; setBalloonText: 'Frequency Scale');
+		addMorph: (PulldownListMorph new state: screen displayMode; when: #changed: send: #displayMode: to: screen; options: #(bars outline); setBalloonText: 'Display Mode').
 	answer flap addMorph: panel.
 	answer addAudioInput: #setInput:.
 	^ answer! !
 
-!SpectrumAnalyzer methodsFor: 'ui' stamp: 'len 20/Jun/2026, 5:34:24 pm (UTC)'!
+!SpectrumAnalyzer methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:33:01 pm (UTC)'!
 rackable
 	| screen answer flapPanel |
 	screen := SpectrumMorph new.
@@ -10441,9 +10463,9 @@ rackable
 	answer addRow: screen.
 	flapPanel := ControlPanel new.
 	flapPanel
-		addMorph: (PluggableChoiceMorph new options: #(256 512 1024 2048 4096); model: self; getter: #windowSize; setter: #windowSize:; setBalloonText: 'WIndow Size');
-		addMorph: (PluggableChoiceMorph new options: #(linear log); model: screen; getter: #frequencyScale; setter: #frequencyScale:; setBalloonText: 'Frequency Scale');
-		addMorph: (PluggableChoiceMorph new options: #(bars outline); model: screen; getter: #displayMode; setter: #displayMode:; setBalloonText: 'Display Mode').
+		addMorph: (PulldownListMorph new state: windowSize; options: #(256 512 1024 2048 4096); when: #changed: send: #windowSize: to: self; receive: #state: from: self when: #windowSizeChanged:; setBalloonText: 'WIndow Size');
+		addMorph: (PulldownListMorph new state: screen frequencyScale; options: #(linear log); when: #changed: send: #frequencyScale: to: screen; setBalloonText: 'Frequency Scale');
+		addMorph: (PulldownListMorph new state: screen displayMode; when: #changed: send: #displayMode: to: screen; options: #(bars outline); setBalloonText: 'Display Mode').
 	answer flap addMorph: flapPanel.
 	^ answer! !
 
@@ -10793,10 +10815,11 @@ defaultColor
 defaultGap
 	^ 12! !
 
-!ControlPanel methodsFor: 'initialization' stamp: 'len 12/Mar/2026, 10:54:58 am (UTC)'!
+!ControlPanel methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 5:48:22 pm (UTC)'!
 initialize
 	super initialize.
-	color := Color transparent! !
+	color := Color transparent.
+"	self axisEdgeWeight: 0.5"! !
 
 !ControlPanel class methodsFor: 'instance creation' stamp: 'len 12/Mar/2026, 10:56:12 am (UTC)'!
 new
@@ -10825,6 +10848,10 @@ initialize
 	self gap: 4.
 	self padding: 4@8! !
 
+!RackMorph methodsFor: 'private' stamp: 'len 21/Jun/2026, 10:01:32 pm (UTC)'!
+addNewModule
+! !
+
 !RackMorph methodsFor: 'private' stamp: 'len 20/Jun/2026, 9:35:12 pm (UTC)'!
 patch: aPatchMorph
 	patch = aPatchMorph ifTrue: [^ self].
@@ -10832,7 +10859,7 @@ patch: aPatchMorph
 "	aPatchMorph when: #recomputeNeeded send: #update to: self."
 	self update! !
 
-!RackMorph methodsFor: 'private' stamp: 'len 21/Jun/2026, 9:01:19 am (UTC)'!
+!RackMorph methodsFor: 'private' stamp: 'len 21/Jun/2026, 9:59:29 pm (UTC)'!
 update
 	self removeAllMorphs.
 	self morphExtent: 10@10. "and let it grow from that"
@@ -10840,7 +10867,7 @@ update
 	((patch submorphs select: [:each| each isKindOf: PatchableMorph])
 		sorted: [:a :b| a morphPosition x < b morphPosition x])
 			do: [:each| self addMorph: each rackable layoutSpec: LayoutSizeSpec new useMorphWidth "useMorphHeight"].
-	self addMorph: (PluggablePushButtonMorph new model: self; action: #addNewModule; label: '+'; setBalloonText: 'Add new module'; morphExtent: 10 @ 10) layoutSpec: LayoutSizeSpec new useMorphWidth.
+	self addMorph: (PushButtonMorph new when: #buttonUp send: #addNewModule to: self; label: '+'; setBalloonText: 'Add new module'; morphExtent: 10 @ 10) layoutSpec: LayoutSizeSpec new useMorphWidth.
 	self redrawNeeded! !
 
 !RackMorph class methodsFor: 'as yet unclassified' stamp: 'len 20/Jun/2026, 8:51:00 pm (UTC)'!
@@ -10985,573 +11012,6 @@ defaultFontSize
 initialize
 	super initialize.
 	font := FontFamily defaultFamilyPointSize: self defaultFontSize! !
-
-!PluggablePushButtonMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-actWhen: condition
-	"Accepts symbols:  #buttonDown, #buttonStillDown or #buttonUp (default)"
-	actWhen := condition! !
-
-!PluggablePushButtonMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-action: aSymbol 
-	"Set actionSelector to be the action defined by aSymbol."
-
-	actionSelector := aSymbol.
-! !
-
-!PluggablePushButtonMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-actionSelector
-	"Answer the receiver's actionSelector"
-
-	^ actionSelector! !
-
-!PluggablePushButtonMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-borderWidth: anInteger
-	super borderWidth: anInteger.
-	magnifiedIcon := nil.
-	self redrawNeeded ! !
-
-!PluggablePushButtonMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 11:16:43 am (UTC)'!
-color: aColor
-	super color: aColor! !
-
-!PluggablePushButtonMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 9:48:58 am (UTC)'!
-font
-	^ font ifNil: [Preferences at: #standardButtonFont]! !
-
-!PluggablePushButtonMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 9:50:09 am (UTC)'!
-font: aFont
-	font := aFont.
-	self redrawNeeded! !
-
-!PluggablePushButtonMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 9:45:13 am (UTC)'!
-icon: aForm
-	icon := aForm.
-	magnifiedIcon := nil.
-	aForm notNil ifTrue:[self morphExtent: icon extent + 5].
-	self redrawNeeded.! !
-
-!PluggablePushButtonMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-label
-
-	^ label! !
-
-!PluggablePushButtonMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-label: aString
-	"Label this button with the given string."
-
-	self label: aString font: nil! !
-
-!PluggablePushButtonMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 9:54:29 am (UTC)'!
-label: aStringOrNil font: aFontOrNil
-	"Label this button with the given string."
-	label := aStringOrNil.
-	font := aFontOrNil.
-	(self font notNil and: [label notNil])
-		ifTrue: [ "Add a bit of padding"
-			self morphExtent: (self font widthOfString: label) + 10 @ (self font lineSpacing + 10) ]
-		ifFalse: [self redrawNeeded]! !
-
-!PluggablePushButtonMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-magnifiedIcon: aForm
-	"Meaning: Don't magnify aForm to adapt it to our extent."
-
-	icon := nil.
-	magnifiedIcon := aForm.
-	self redrawNeeded.! !
-
-!PluggablePushButtonMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-mouseOverColor: aColor
-	"If set, ignore #adoptWidgetsColor: for mouse over!!"
-
-	mouseOverColor := aColor! !
-
-!PluggablePushButtonMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-padding: numberOrPoint
-	super padding: numberOrPoint .
-	magnifiedIcon := nil.
-	self redrawNeeded ! !
-
-!PluggablePushButtonMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-performAction
-	"Inform the model that this button has been pressed. "
-	self isEnabled ifFalse: [^ self ].
-	actionSelector ifNil: [ ^ self ].
-	
-	self actionBlock value.! !
-
-!PluggablePushButtonMorph methodsFor: 'drawing' stamp: 'len 20/Jun/2026, 9:50:26 am (UTC)'!
-drawEmbossedLabelOn: aCanvas
-
-	| availableW center colorForLabel f l labelMargin targetSize w x y |
-	label ifNotNil: [
-		colorForLabel := self enableLabelColorWith: Theme current buttonLabel.
-		self isPressed
-			ifFalse: [
-				self mouseIsOver
-					ifFalse: [ colorForLabel := colorForLabel adjustSaturation: -0.10 brightness: 0.10 ]]
-			ifTrue: [ colorForLabel := colorForLabel adjustSaturation: 0.0 brightness: -0.07 ].
-		f := self font.
-		center := extent // 2.
-		labelMargin := 3.
-		w := f widthOfString: label.
-		availableW := extent x - labelMargin - labelMargin.
-		availableW >= w
-			ifTrue: [
-				l := label ]
-			ifFalse: [
-				x := labelMargin.
-				targetSize := label size * availableW // w.
-				l := label squeezedTo: targetSize.
-				(f widthOfString: l) > availableW ifTrue: [
-					targetSize := targetSize - 1.
-					l := label squeezedTo: targetSize ]].
-		
-		w := f widthOfString: l.
-		x := center x - (w // 2).
-		y := center y - (f lineSpacing // 2).
-		aCanvas
-			drawString: l
-			at: x@y
-			font: f
-			color: colorForLabel
-			embossed: true ]! !
-
-!PluggablePushButtonMorph methodsFor: 'drawing' stamp: 'len 20/Jun/2026, 9:46:41 am (UTC)'!
-drawOn: aCanvas
-	| r colorForButton rect |
-	colorForButton := self isPressed
-		ifFalse: [
-			self mouseIsOver
-				ifTrue: [	 mouseOverColor ifNil: [ Color h: color hue s: color saturation * 1.2 v: color brightness * 0.92 ]]
-				ifFalse: [ color ]]
-		ifTrue: [ mouseOverColor ifNil: [ color adjustSaturation: 0.1 brightness: -0.15 ]].
-
-	r := Theme current roundedButtonRadius.
-	rect := self roundButtonRect.
-	r := r min: (rect width min: rect height) * 0.5.
-	aCanvas roundRect: rect color: (self enableColorWith: colorForButton) radius: r.
-
-	Theme current embossedButtonLabels
-		ifTrue: [ self drawEmbossedLabelOn: aCanvas ]
-		ifFalse: [ self drawRegularLabelOn: aCanvas ].! !
-
-!PluggablePushButtonMorph methodsFor: 'drawing' stamp: 'len 20/Jun/2026, 9:52:19 am (UTC)'!
-drawRegularLabelOn: aCanvas
-	| w f center x y  availableW l labelMargin |
-	label ifNil: [^ self].
-	f := self font.
-	center := extent // 2.
-	labelMargin := 4.
-	w := f widthOfString: label.
-	availableW := extent x - labelMargin - labelMargin - 1.
-	availableW >= w
-		ifTrue:
-			[x := center x - (w // 2) - 1.
-			l := label]
-		ifFalse:
-			[x := labelMargin.
-			l := label squeezedTo: (label size * availableW / w) rounded].
-	y := center y - (f lineSpacing // 2).
-	self isPressed ifTrue:
-		[x := x + 1.
-		y := y + 1].
-	aCanvas drawString: l at: x@y font: f color: (self enableLabelColorWith: Theme current buttonLabel)! !
-
-!PluggablePushButtonMorph methodsFor: 'drawing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-enableColorWith: aColor
-	^ self isEnabled 
-		ifTrue: [aColor] ifFalse: [aColor duller]! !
-
-!PluggablePushButtonMorph methodsFor: 'drawing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-enableLabelColorWith: aColor
-	^ self isEnabled 
-		ifTrue: [aColor] ifFalse: [aColor paler "twiceLighter" ]! !
-
-!PluggablePushButtonMorph methodsFor: 'drawing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-roundButtonRect
-	^self localBounds insetBy: 3! !
-
-!PluggablePushButtonMorph methodsFor: 'events' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
-
-	self isEnabled ifFalse: [^self].  "guard condition"
-	isPressed := true.
-	self redrawNeeded.
-	(actWhen == #buttonDown or: [ actWhen == #buttonStillDown ])
-		ifTrue: [
-			self performAction ]
-		ifFalse: [
-			"Don't make multi-click slower if we act on button down, just do multiple actions"
-			aMouseButtonEvent hand
-				waitForClicksOrDragOrSimulatedMouseButton2: self
-				event: aMouseButtonEvent
-				clkSel: nil
-				clkNHalf: nil
-				dblClkSel: #doubleClick:localPosition:
-				dblClkNHalfSel: nil
-				tripleClkSel: nil ]! !
-
-!PluggablePushButtonMorph methodsFor: 'events' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-mouseButton1Up: aMouseButtonEvent localPosition: localEventPosition
-
-	isPressed := false.
-	mouseIsOver := false.
-	(actWhen == #buttonUp and: [ 
-		self includesPixel: aMouseButtonEvent eventPosition ])
-		ifTrue: [ self performAction ].
-	self redrawNeeded! !
-
-!PluggablePushButtonMorph methodsFor: 'events' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-mouseButton2Up: aMouseButtonEvent localPosition: localEventPosition
-
-	secondaryActionSelector ifNotNil: [
-		model perform: secondaryActionSelector ].
-	self redrawNeeded! !
-
-!PluggablePushButtonMorph methodsFor: 'events' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-mouseEnter: aMouseEnterEvent
-	"The mouse entered the receiver"
-	mouseIsOver := true.
-	self redrawNeeded.
-	super mouseEnter: aMouseEnterEvent! !
-
-!PluggablePushButtonMorph methodsFor: 'events' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-mouseLeave: aMouseLeaveEvent
-	"The mouse has left the area of the receiver"
-	mouseIsOver := false.
-	self redrawNeeded.
-	super mouseLeave: aMouseLeaveEvent.! !
-
-!PluggablePushButtonMorph methodsFor: 'events' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-mouseStillDown
-	"Acting when down (instead of waiting until releasing the button)
-	also means that the button actin is repeated if the button is kept pressed.
-	See #handlesMouseStillDown:"
-	self performAction! !
-
-!PluggablePushButtonMorph methodsFor: 'event handling testing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-handlesMouseDown: evt
-	"False if not enabled"
-	
-	^self isEnabled ! !
-
-!PluggablePushButtonMorph methodsFor: 'event handling testing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-handlesMouseOver: evt
-	"Do I want to receive mouseEnter: and mouseLeave: when the button is up and the hand is empty?" 
-	^self isEnabled ! !
-
-!PluggablePushButtonMorph methodsFor: 'event handling testing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-handlesMouseStillDown: evt
-	"Return true if the receiver wants to get repeated #mouseStillDown messages between #mouseDown: and #mouseUp"
-	"Acting when down (instead of waiting until releasing the button)
-	also means that the button action is repeated if the button is kept pressed"
-	^actWhen == #buttonStillDown and: [self isEnabled ]! !
-
-!PluggablePushButtonMorph methodsFor: 'event handling' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-mouseStillDownStepRate
-	"At what rate do I want to receive #mouseStillDown notifications?
-	This is actually the time interval between notifications, in milliseconds."
-	^40! !
-
-!PluggablePushButtonMorph methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-actionArgument: actionArg
-
-	actionArgument := actionArg.! !
-
-!PluggablePushButtonMorph methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-actionTarget: anObject
-	"Set my model.
-	We will not observe the model. We will not receive #update: or other notifications from them.
-	Call #model: if observing the model for updates is required."
-
-	model ifNotNil: [model removeActionsWithReceiver: self].
-	model := anObject.! !
-
-!PluggablePushButtonMorph methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-defaultBorderColor
-	"answer the default border color/fill style for the receiver"
-	^ nil! !
-
-!PluggablePushButtonMorph methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-defaultBorderWidth
-	^ Theme current buttonBorderWidth! !
-
-!PluggablePushButtonMorph methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-defaultColor
-	^Theme current defaultButtonColor! !
-
-!PluggablePushButtonMorph methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-enableSelector: aSymbol
-
-	enableSelector := aSymbol.
-	enableSelector notNil ifTrue: [
-		model ifNotNil: [
-			"So we get #update: called"
-			model addDependent: self]].! !
-
-!PluggablePushButtonMorph methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 9:45:56 am (UTC)'!
-initialize
-	super initialize.
-	model := nil.
-	enableSelector := nil.
-	stateSelector := nil.
-	stateArgument := nil.
-	actionSelector := nil.
-	actionArgument := nil.
-	isPressed := false.
-	mouseIsOver := false.
-	mouseOverColor := nil.
-	actWhen := #buttonUp.
-	extent :=  `20 @ 15`! !
-
-!PluggablePushButtonMorph methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-model: anObject stateGetter: getStateSel action: actionSel label: aString
-
-	stateSelector := getStateSel.
-	stateArgument := nil.
-	actionSelector := actionSel.
-	actionArgument := nil.
-	stateSelector notNil
-		ifTrue: [
-			"So we get #update: called"
-			self model: anObject ]
-		ifFalse: [ self actionTarget: anObject ].
-	self label: aString.! !
-
-!PluggablePushButtonMorph methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-model: anObject stateGetter: getStateSel stateArgument: getStateArg action: actionSel actionArgument: actionArg label: aString
-
-	stateSelector := getStateSel.
-	stateArgument := getStateArg.
-	actionSelector := actionSel.
-	actionArgument := actionArg.
-	stateSelector notNil
-		ifTrue: [
-			"So we get #update: called"
-			self model: anObject ]
-		ifFalse: [ self actionTarget: anObject ].
-	self label: aString.! !
-
-!PluggablePushButtonMorph methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-secondaryActionSelector: actionSel
-
-	secondaryActionSelector := actionSel.! !
-
-!PluggablePushButtonMorph methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-stateArgument: getStateArg
-
-	stateArgument := getStateArg.! !
-
-!PluggablePushButtonMorph methodsFor: 'updating' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-update: aSymbol
-	super update: aSymbol.
-	"Note: if any of these selectors is not nil, then we need to observe on the model,
-	setting it with #model: and not with #actionTarget:"
-	(aSymbol == stateSelector or: [aSymbol == enableSelector ]) ifTrue: [
-		self redrawNeeded ].! !
-
-!PluggablePushButtonMorph methodsFor: 'private' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-actionBlock
-
-	actionArgument
-		ifNil: [ ^ [ model perform: actionSelector ]]
-		ifNotNil: [ ^ [ model perform: actionSelector with: actionArgument ]]! !
-
-!PluggablePushButtonMorph methodsFor: 'private' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-getEnabled
-	
-		^self isEnabled ! !
-
-!PluggablePushButtonMorph methodsFor: 'private' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-getState
-	"Answer the result of sending the receiver's model the stateSelector message."
-
-	^ stateSelector 
-		ifNil: [false]
-		ifNotNil: [
-			stateArgument
-				ifNil: [	model perform: stateSelector]
-				ifNotNil: [	model perform: stateSelector with: stateArgument]].! !
-
-!PluggablePushButtonMorph methodsFor: 'private' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-magnifiedIcon
-	| factor magnifiedExtent w h interiorExtent |
-
-	magnifiedIcon ifNotNil: [ ^magnifiedIcon ].
-	icon ifNil: [ ^nil ].
-	magnifiedIcon ifNil: [
-		interiorExtent := self interiorExtent.
-		magnifiedIcon := icon.
-		w := icon width.
-		h := icon height.
-		w*h = 0 ifFalse: [
-			factor := 1.0 * interiorExtent x / w min: 1.0 * interiorExtent y / h.
-			factor = 1.0 ifFalse: [
-				magnifiedExtent := (icon extent * factor) rounded.
-				magnifiedIcon := icon magnifyTo: magnifiedExtent ]]].
-	^magnifiedIcon! !
-
-!PluggablePushButtonMorph methodsFor: 'testing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-is: aSymbol
-	^ aSymbol == #PluggableButtonMorph or: [ super is: aSymbol ]! !
-
-!PluggablePushButtonMorph methodsFor: 'testing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-isDisabled
-	
-	^ self isEnabled not! !
-
-!PluggablePushButtonMorph methodsFor: 'testing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-isEnabled
-	"My enableSelector may be nil, in which case I answer the default: true.
-	My  enableSelector may be a selector, which I and to the model to answer.
-	Then again, my enableSelector may be simply true or false.
-	"
-
-	enableSelector ifNil: [^true].
-	^(enableSelector isKindOf: Boolean)
-		ifTrue: [enableSelector] 
-		ifFalse: [model perform: enableSelector ]! !
-
-!PluggablePushButtonMorph methodsFor: 'testing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-isPressed
-	^isPressed or: [ self getState ]! !
-
-!PluggablePushButtonMorph methodsFor: 'testing' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-mouseIsOver
-	^mouseIsOver and: [self isEnabled ]! !
-
-!PluggablePushButtonMorph methodsFor: 'geometry' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-extentChanged: oldExtent
-	"Our extent changed."
-
-	super extentChanged: oldExtent.
-	icon ifNotNil: [
-		magnifiedIcon := nil ]! !
-
-!PluggablePushButtonMorph methodsFor: 'geometry' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-minimumExtent
-	| unit |
-	label ifNil: [^ super minimumExtent].
-	"Assure some space for text."
-	unit :=  (Preferences at: #windowTitleFont) pointSize.
-	^(4 * unit min: (self font widthOfString: label) + 8 + (borderWidth*2)) @ (3 * unit).! !
-
-!PluggablePushButtonMorph methodsFor: 'enabling' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-disable
-
-	enableSelector := false.
-	self redrawNeeded.! !
-
-!PluggablePushButtonMorph methodsFor: 'enabling' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-enable
-
-	enableSelector := true.
-	self redrawNeeded.! !
-
-!PluggablePushButtonMorph methodsFor: 'debug and other' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-buildDebugMenu: aHand 
-	
-	| aMenu |
-	aMenu := super buildDebugMenu: aHand.
-	
-	aMenu addLine.
-	aMenu add: 'debug action' action: #debugAction.
-	
-	^aMenu! !
-
-!PluggablePushButtonMorph methodsFor: 'debug and other' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-debugAction
-	| debugger |
-	(self isEnabled or: [ PopUpMenu confirm: 'The button is disabled, do you want to continue?' ])
-		ifFalse: [ ^ self ].
-	
-	debugger := Debugger
-		openDebugging: self actionBlock
-		label: 'Debugging action #', actionSelector.
-	
-	[debugger interruptedContext receiver == model]
-		whileFalse: [debugger send].! !
-
-!PluggablePushButtonMorph class methodsFor: 'instance creation' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-model: anObject action: actionSel
-
-	^ self new
-		model: anObject
-		stateGetter: nil
-		action: actionSel
-		label: nil
-! !
-
-!PluggablePushButtonMorph class methodsFor: 'instance creation' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-model: anObject action: actionSel actionArgument: actionArg
-
-	^ self new
-		model: anObject
-		stateGetter: nil
-		stateArgument: nil
-		action: actionSel
-		actionArgument: actionArg
-		label: nil
-! !
-
-!PluggablePushButtonMorph class methodsFor: 'instance creation' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-model: anObject action: actionSel actionArgument: actionArg label: aString
-
-	^ self new
-		model: anObject
-		stateGetter: nil
-		stateArgument: nil
-		action: actionSel
-		actionArgument: actionArg
-		label: aString
-! !
-
-!PluggablePushButtonMorph class methodsFor: 'instance creation' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-model: anObject action: actionSel label: aString
-
-	^ self new
-		model: anObject
-		stateGetter: nil
-		action: actionSel
-		label: aString! !
-
-!PluggablePushButtonMorph class methodsFor: 'instance creation' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-model: anObject stateGetter: getStateSel action: actionSel
-
-	^ self new
-		model: anObject
-		stateGetter: getStateSel
-		action: actionSel
-		label: nil
-! !
-
-!PluggablePushButtonMorph class methodsFor: 'instance creation' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-model: anObject stateGetter: getStateSel action: actionSel label: aString
-	^ self new
-		model: anObject
-		stateGetter: getStateSel
-		action: actionSel
-		label: aString! !
-
-!PluggablePushButtonMorph class methodsFor: 'instance creation' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-model: anObject stateGetter: getStateSel action: actionSel label: aString balloonText: aBallonText
-	^ (self 
-		model: anObject
-		stateGetter: getStateSel
-		action: actionSel
-		label: aString)
-		setBalloonText: aBallonText;
-		yourself! !
-
-!PluggablePushButtonMorph class methodsFor: 'instance creation' stamp: 'len 20/Jun/2026, 9:40:14 am (UTC)'!
-model: anObject stateGetter: getStateSel stateArgument: getStateArg action: actionSel actionArgument: actionArg label: aString
-	^ self new
-		model: anObject
-		stateGetter: getStateSel
-		stateArgument: getStateArg
-		action: actionSel
-		actionArgument: actionArg
-		label: aString! !
 
 !PluggableToggleMorph methodsFor: 'accessing' stamp: 'len 20/Jan/2026, 11:35:12 am (UTC)'!
 getter: aSymbol
@@ -13602,6 +13062,246 @@ initialize
 	self addMorph: flap.
 	flap visible: false! !
 
+!PulldownListMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 6:45:48 pm (UTC)'!
+color: aColor
+	color := aColor.
+	self redrawNeeded! !
+
+!PulldownListMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 6:34:53 pm (UTC)'!
+inactiveColor
+	^ Color veryLightGray! !
+
+!PulldownListMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 7:04:10 pm (UTC)'!
+options: anArray
+	options := anArray.
+	extent := self minimumExtent! !
+
+!PulldownListMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 6:38:41 pm (UTC)'!
+state: anObject
+	state = anObject ifTrue: [^ self].
+	state := anObject.
+	self redrawNeeded.
+	self triggerEvent: #changed: with: state! !
+
+!PulldownListMorph methodsFor: 'actions' stamp: 'len 21/Jun/2026, 6:37:40 pm (UTC)'!
+moveDown
+	self state: (options atPin: (options indexOf: state ifAbsent: [^ self]) + 1)! !
+
+!PulldownListMorph methodsFor: 'actions' stamp: 'len 21/Jun/2026, 6:38:03 pm (UTC)'!
+moveUp
+	self state: (options atPin: (options indexOf: state ifAbsent: [^ self]) - 1)! !
+
+!PulldownListMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 6:41:48 pm (UTC)'!
+drawOn: aCanvas
+	| label |
+"	aCanvas
+		frameRectangle: (0@0 extent: self minimumExtent) borderWidth: 1 color: color;
+		drawString: control value asString at: 4@0 font: font color: color
+"
+	label := state asString.
+	aCanvas
+"		frameRectangle: (0@0 extent: self minimumExtent) borderWidth: 1 color: color cornerRadius: 6;"
+		drawString: label at: 3@0 font: font color: color.
+"	aCanvas frameRectangle: (0@0 extent: self minimumExtent) borderWidth: 1 color: color.
+	aCanvas drawString: string asString at: 3 @ 0 font: font color: color.
+	aCanvas
+		roundRect: (0 @ 0 extent: self minimumExtent) color: color radius: 6;
+		drawString: string asString at: 3 @ 0 font: font color: Color black."
+	self hasKeyboardFocus ifTrue:
+		[| y |
+		y := font ascent + 2.
+		aCanvas line: 3 @ y to: (font widthOfString: label) + 3 @ y width: 2 color: color]! !
+
+!PulldownListMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 6:34:34 pm (UTC)'!
+handlesMouseDown: anEvent
+	^ true
+! !
+
+!PulldownListMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 6:34:34 pm (UTC)'!
+handlesMouseOver: anEvent
+	^ true! !
+
+!PulldownListMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 6:34:34 pm (UTC)'!
+handlesMouseScroll: anEvent
+	^ anEvent anyModifierKeyPressed not! !
+
+!PulldownListMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 6:34:34 pm (UTC)'!
+keyStroke: anEvent
+	(anEvent isArrowUp or: [anEvent isArrowLeft]) ifTrue:
+		[anEvent wasHandled: true. ^ self moveUp].
+	(anEvent isArrowDown or: [anEvent isArrowRight]) ifTrue:
+		[anEvent wasHandled: true. self moveDown]! !
+
+!PulldownListMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 6:42:21 pm (UTC)'!
+mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
+	| menu |
+	menu := MenuMorph new.
+	options do: [:each| menu add: each asString target: self action: #state: argument: each].
+	menu invokeModal! !
+
+!PulldownListMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 6:34:34 pm (UTC)'!
+mouseEnter: anEvent
+	super mouseEnter: anEvent.
+	(Cursor cursorAt: #webLinkCursor) activateCursor! !
+
+!PulldownListMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 6:34:34 pm (UTC)'!
+mouseLeave: anEvent
+	super mouseLeave: anEvent.
+	Cursor defaultCursor activateCursor! !
+
+!PulldownListMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 6:34:34 pm (UTC)'!
+mouseScroll: aMouseEvent localPosition: localEventPosition
+	(aMouseEvent direction = #up or: [aMouseEvent direction = #right]) ifTrue: [self moveUp] ifFalse: [self moveDown]! !
+
+!PulldownListMorph methodsFor: 'focus handling' stamp: 'len 21/Jun/2026, 6:34:34 pm (UTC)'!
+keyboardFocusChange: aBoolean
+	self redrawNeeded! !
+
+!PulldownListMorph methodsFor: 'geometry' stamp: 'len 21/Jun/2026, 6:34:34 pm (UTC)'!
+minimumExtent
+	^ (options max: [:each| font widthOfString: each asString]) + 6 @ font lineSpacing! !
+
+!PulldownListMorph methodsFor: 'geometry' stamp: 'len 21/Jun/2026, 6:34:34 pm (UTC)'!
+requiresVectorCanvas
+	^ true! !
+
+!PulldownListMorph methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 6:34:34 pm (UTC)'!
+defaultExtent
+	^ 24 @ 24! !
+
+!PulldownListMorph methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 6:34:34 pm (UTC)'!
+defaultFontSize
+	^ (FontFamily defaultPointSize * 0.8) truncated! !
+
+!PulldownListMorph methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 6:42:37 pm (UTC)'!
+initialize
+	super initialize.
+	font := FontFamily defaultFamilyPointSize: self defaultFontSize.
+	color := Color white! !
+
+!PushButtonMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 7:28:15 pm (UTC)'!
+color: aColor
+	color := aColor.
+	self redrawNeeded! !
+
+!PushButtonMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 7:28:15 pm (UTC)'!
+label: aString
+	label := aString.
+	self redrawNeeded! !
+
+!PushButtonMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:39:39 pm (UTC)'!
+labelColor: aColor
+	labelColor := aColor.
+	self redrawNeeded! !
+
+!PushButtonMorph methodsFor: 'alarms' stamp: 'len 21/Jun/2026, 9:55:28 pm (UTC)'!
+buttonUpAlarm
+	isPressed := false.
+	self redrawNeeded! !
+
+!PushButtonMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 10:03:30 pm (UTC)'!
+drawOn: aCanvas
+	| fillColor availableW center l labelMargin w x y |
+	fillColor := isPressed ifTrue: [color adjustSaturation: 0.1 brightness: -0.15] ifFalse: [isHovered ifTrue: [Color h: color hue s: color saturation * 1.2 v: color brightness * 0.92] ifFalse: [color]].
+	aCanvas fillRectangle: self localBounds color: fillColor cornerRadius: 4.0.
+	center := extent - 1 // 2.
+	labelMargin := 0.
+	w := font widthOfString: label.
+	availableW := extent x - labelMargin - labelMargin - 1.
+	availableW >= w
+		ifTrue:
+			[x := center x - (w // 2).
+			l := label]
+		ifFalse:
+			[x := labelMargin. l := label squeezedTo: (label size * availableW / w) rounded].
+	y := center y - (font lineSpacing // 2).
+	isPressed ifTrue: [x := x + 1. y := y + 1].
+	aCanvas drawString: l at: x @ y font: font color: labelColor.
+"	self hasKeyboardFocus ifTrue:
+		[| y |
+		y := font ascent + 2.
+		aCanvas line: 3 @ y to: (font widthOfString: label) + 3 @ y width: 2 color: labelColor]"! !
+
+!PushButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 7:28:15 pm (UTC)'!
+handlesMouseDown: anEvent
+	^ true
+! !
+
+!PushButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 7:28:15 pm (UTC)'!
+handlesMouseOver: anEvent
+	^ true! !
+
+!PushButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 7:28:15 pm (UTC)'!
+handlesMouseScroll: anEvent
+	^ anEvent anyModifierKeyPressed not! !
+
+!PushButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 7:28:15 pm (UTC)'!
+keyStroke: anEvent
+	(anEvent isArrowUp or: [anEvent isArrowLeft]) ifTrue:
+		[anEvent wasHandled: true. ^ self moveUp].
+	(anEvent isArrowDown or: [anEvent isArrowRight]) ifTrue:
+		[anEvent wasHandled: true. self moveDown]! !
+
+!PushButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 9:35:33 pm (UTC)'!
+mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
+	isPressed := true.
+	self redrawNeeded.
+	self triggerEvent: #buttonDown! !
+
+!PushButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 9:56:28 pm (UTC)'!
+mouseButton1Up: aMouseButtonEvent localPosition: localEventPosition
+	self addAlarm: #buttonUpAlarm after: 100 "wait 100 ms".
+	(self includesPixel: aMouseButtonEvent eventPosition) ifTrue: [self triggerEvent: #buttonUp]! !
+
+!PushButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 9:37:47 pm (UTC)'!
+mouseEnter: anEvent
+	super mouseEnter: anEvent.
+	(Cursor cursorAt: #webLinkCursor) activateCursor.
+	isHovered := true.
+	self redrawNeeded! !
+
+!PushButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 9:38:13 pm (UTC)'!
+mouseLeave: anEvent
+	super mouseLeave: anEvent.
+	Cursor defaultCursor activateCursor.
+	isHovered := false.
+	self redrawNeeded! !
+
+!PushButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 7:28:15 pm (UTC)'!
+mouseScroll: aMouseEvent localPosition: localEventPosition
+	(aMouseEvent direction = #up or: [aMouseEvent direction = #right]) ifTrue: [self moveUp] ifFalse: [self moveDown]! !
+
+!PushButtonMorph methodsFor: 'focus handling' stamp: 'len 21/Jun/2026, 7:28:15 pm (UTC)'!
+keyboardFocusChange: aBoolean
+	self redrawNeeded! !
+
+!PushButtonMorph methodsFor: 'geometry' stamp: 'len 21/Jun/2026, 7:28:15 pm (UTC)'!
+minimumExtent
+	^ (font widthOfString: label) + 6 @ font lineSpacing! !
+
+!PushButtonMorph methodsFor: 'geometry' stamp: 'len 21/Jun/2026, 7:28:15 pm (UTC)'!
+requiresVectorCanvas
+	^ true! !
+
+!PushButtonMorph methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 7:28:15 pm (UTC)'!
+defaultExtent
+	^ 24 @ 24! !
+
+!PushButtonMorph methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 7:28:15 pm (UTC)'!
+defaultFontSize
+	^ (FontFamily defaultPointSize * 0.8) truncated! !
+
+!PushButtonMorph methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 9:59:16 pm (UTC)'!
+initialize
+	super initialize.
+	font := FontFamily defaultFamilyPointSize: self defaultFontSize.
+	color := Color gray.
+	labelColor := Color white.
+	extent := self minimumExtent.
+	isPressed := false.
+	isHovered := false.
+	label := 'push me'! !
+
 !ScrollerMorph methodsFor: 'drawing' stamp: 'len 10/Jan/2026, 8:31:15 am (UTC)'!
 drawOn: aCanvas
 "	aCanvas fillRectangle: self localBounds color: Color black"! !
@@ -13767,6 +13467,118 @@ scrollbarCornerRadius
 !ScrollerMorph class methodsFor: 'as yet unclassified' stamp: 'len 21/Jun/2026, 9:02:22 am (UTC)'!
 scrollbarThickness
 	^ 6.0! !
+
+!ToggleButtonMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 6:46:09 pm (UTC)'!
+color: aColor
+	color := aColor.
+	self redrawNeeded! !
+
+!ToggleButtonMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 6:31:53 pm (UTC)'!
+label: aString
+	label := aString.
+	self redrawNeeded! !
+
+!ToggleButtonMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 6:33:48 pm (UTC)'!
+state: aBoolean
+	state = aBoolean ifTrue: [^ self].
+	state := aBoolean.
+	self redrawNeeded.
+	self triggerEvent: #changed: with: state! !
+
+!ToggleButtonMorph methodsFor: 'actions' stamp: 'len 21/Jun/2026, 6:33:12 pm (UTC)'!
+moveDown
+	self state: false! !
+
+!ToggleButtonMorph methodsFor: 'actions' stamp: 'len 21/Jun/2026, 6:33:20 pm (UTC)'!
+moveUp
+	self state: true! !
+
+!ToggleButtonMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 6:27:49 pm (UTC)'!
+backgroundColor
+	^ Color gray! !
+
+!ToggleButtonMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 6:27:28 pm (UTC)'!
+drawOn: aCanvas
+	| labelColor |
+	aCanvas fillRectangle: (0@0 extent: self minimumExtent) color: self backgroundColor cornerRadius: 4.0.
+	labelColor := state = true ifTrue: [color] ifFalse: [self inactiveColor].
+	aCanvas drawString: label at: 2 @ 1 font: font color: labelColor.
+	self hasKeyboardFocus ifTrue:
+		[| y |
+		y := font ascent + 2.
+		aCanvas line: 3 @ y to: (font widthOfString: label) + 3 @ y width: 2 color: labelColor]! !
+
+!ToggleButtonMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 6:25:55 pm (UTC)'!
+inactiveColor
+	^ Color veryLightGray! !
+
+!ToggleButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 6:25:06 pm (UTC)'!
+handlesMouseDown: anEvent
+	^ true
+! !
+
+!ToggleButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 6:25:06 pm (UTC)'!
+handlesMouseOver: anEvent
+	^ true! !
+
+!ToggleButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 6:25:06 pm (UTC)'!
+handlesMouseScroll: anEvent
+	^ anEvent anyModifierKeyPressed not! !
+
+!ToggleButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 6:25:06 pm (UTC)'!
+keyStroke: anEvent
+	(anEvent isArrowUp or: [anEvent isArrowLeft]) ifTrue:
+		[anEvent wasHandled: true. ^ self moveUp].
+	(anEvent isArrowDown or: [anEvent isArrowRight]) ifTrue:
+		[anEvent wasHandled: true. self moveDown]! !
+
+!ToggleButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 6:30:00 pm (UTC)'!
+mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
+	state := state not.
+	self redrawNeeded.
+	self triggerEvent: #changed: with: state! !
+
+!ToggleButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 6:25:06 pm (UTC)'!
+mouseEnter: anEvent
+	super mouseEnter: anEvent.
+	(Cursor cursorAt: #webLinkCursor) activateCursor! !
+
+!ToggleButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 6:25:06 pm (UTC)'!
+mouseLeave: anEvent
+	super mouseLeave: anEvent.
+	Cursor defaultCursor activateCursor! !
+
+!ToggleButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 6:25:06 pm (UTC)'!
+mouseScroll: aMouseEvent localPosition: localEventPosition
+	(aMouseEvent direction = #up or: [aMouseEvent direction = #right]) ifTrue: [self moveUp] ifFalse: [self moveDown]! !
+
+!ToggleButtonMorph methodsFor: 'focus handling' stamp: 'len 21/Jun/2026, 6:25:06 pm (UTC)'!
+keyboardFocusChange: aBoolean
+	self redrawNeeded! !
+
+!ToggleButtonMorph methodsFor: 'geometry' stamp: 'len 21/Jun/2026, 6:25:06 pm (UTC)'!
+minimumExtent
+	^ (font widthOfString: label) + 6 @ font lineSpacing! !
+
+!ToggleButtonMorph methodsFor: 'geometry' stamp: 'len 21/Jun/2026, 6:25:06 pm (UTC)'!
+requiresVectorCanvas
+	^ true! !
+
+!ToggleButtonMorph methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 6:25:06 pm (UTC)'!
+defaultExtent
+	^ 24 @ 24! !
+
+!ToggleButtonMorph methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 6:25:06 pm (UTC)'!
+defaultFontSize
+	^ (FontFamily defaultPointSize * 0.8) truncated! !
+
+!ToggleButtonMorph methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 6:42:48 pm (UTC)'!
+initialize
+	super initialize.
+	font := FontFamily defaultFamilyPointSize: self defaultFontSize.
+	color := Color white.
+	extent := self minimumExtent.
+	state := false! !
 
 !TruncatingLabelMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 4:11:00 pm (UTC)'!
 color: aColor
@@ -16993,6 +16805,10 @@ mixInto: anAudioBuffer startingAt: startIndex
 			s < -32767 ifTrue: [s := -32767].  "clipping!!"
 			anAudioBuffer at: j put: s].	
 		j := j + 1]! !
+
+!Object methodsFor: '*signals' stamp: 'len 21/Jun/2026, 9:13:41 pm (UTC)'!
+receive: aMessageSelector from: anObject when: anEventNameSymbol
+	anObject when: anEventNameSymbol send: aMessageSelector to: self! !
 
 !SequenceableCollection methodsFor: '*signals' stamp: 'len 2/Oct/2025, 2:40:00 pm (UTC)'!
 plot

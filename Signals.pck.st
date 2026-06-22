@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 22 June 2026 at 7:10:56 pm'!
+'From Cuis7.9 [latest update: #8014] on 23 June 2026 at 1:59:09 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 613!
+!provides: 'Signals' 1 614!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -322,6 +322,16 @@ TunedGenerator subclass: #Sample
 	category: 'Signals-Samples'!
 !classDefinition: 'Sample class' category: #'Signals-Samples'!
 Sample class
+	instanceVariableNames: ''!
+
+!classDefinition: #Clip category: #'Signals-Samples'!
+Sample subclass: #Clip
+	instanceVariableNames: 'frames'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Samples'!
+!classDefinition: 'Clip class' category: #'Signals-Samples'!
+Clip class
 	instanceVariableNames: ''!
 
 !classDefinition: #Wavetable category: #'Signals-Samples'!
@@ -1454,6 +1464,16 @@ BoxMorph subclass: #ZoomerMorph
 ZoomerMorph class
 	instanceVariableNames: ''!
 
+!classDefinition: #ClipMorph category: #'Signals-Morphic-Widgets'!
+BoxMorph subclass: #ClipMorph
+	instanceVariableNames: 'clip color image lastPosition needsRecomputingImage'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Widgets'!
+!classDefinition: 'ClipMorph class' category: #'Signals-Morphic-Widgets'!
+ClipMorph class
+	instanceVariableNames: ''!
+
 !classDefinition: #LFOWaveMorph category: #'Signals-Morphic-Widgets'!
 BoxMorph subclass: #LFOWaveMorph
 	instanceVariableNames: 'color lfo currentPhase'
@@ -1514,14 +1534,14 @@ BoxMorph subclass: #RollingMeterMorph
 RollingMeterMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #SampleWaveformMorph category: #'Signals-Morphic-Widgets'!
-BoxMorph subclass: #SampleWaveformMorph
+!classDefinition: #SampleMorph category: #'Signals-Morphic-Widgets'!
+BoxMorph subclass: #SampleMorph
 	instanceVariableNames: 'sample color image lastPosition needsRecomputingImage'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Widgets'!
-!classDefinition: 'SampleWaveformMorph class' category: #'Signals-Morphic-Widgets'!
-SampleWaveformMorph class
+!classDefinition: 'SampleMorph class' category: #'Signals-Morphic-Widgets'!
+SampleMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #SpectrumMorph category: #'Signals-Morphic-Widgets'!
@@ -5340,10 +5360,10 @@ rackable
 	answer flap addMorph: self panel.
 	^ answer! !
 
-!Multisample methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:58:03 am (UTC)'!
+!Multisample methodsFor: 'ui' stamp: 'len 22/Jun/2026, 3:08:16 pm (UTC)'!
 screen
 	| answer |
-	answer := SampleWaveformMorph new.
+	answer := SampleMorph new.
 	sample ifNotNil: [:aSample| answer sample: aSample].
 	self when: #sampleChanged: send: #sample: to: answer.
 	^ answer! !
@@ -5639,9 +5659,9 @@ rackable
 	answer flap addMorph: self panel.
 	^ answer! !
 
-!Sample methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:01:23 pm (UTC)'!
+!Sample methodsFor: 'ui' stamp: 'len 22/Jun/2026, 3:08:16 pm (UTC)'!
 screen
-	^ SampleWaveformMorph new sample: self! !
+	^ SampleMorph new sample: self! !
 
 !Sample methodsFor: 'ui' stamp: 'len 18/Jun/2026, 7:31:27 pm (UTC)'!
 title
@@ -5756,6 +5776,55 @@ serviceLoadSample
 		selector: #load:
 		description:'load the sample to the samples library'
 		buttonLabel: 'load sample') argumentGetter: [:fileList| fileList selectedFileEntry]! !
+
+!Clip methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:09:40 pm (UTC)'!
+copy
+	^ super copy frames: frames! !
+
+!Clip methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:09:05 pm (UTC)'!
+currentFrame
+	^ frames at: (((position ifNil: [1.0]) - 1.0 max: 0.0) / buffer size * (frames size - 1) + 1.0) truncated! !
+
+!Clip methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 2:46:16 pm (UTC)'!
+frames
+	^ frames! !
+
+!Clip methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 2:46:08 pm (UTC)'!
+frames: anArray
+	frames := anArray! !
+
+!Clip methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:15:07 pm (UTC)'!
+rackable
+	| answer |
+	answer := RackableMorph new model: self.
+	answer body addMorph: self screen.
+	answer flap addMorph: self panel.
+	^ answer! !
+
+!Clip methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:08:03 pm (UTC)'!
+screen
+	^ ClipMorph new clip: self! !
+
+!Clip class methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 2:57:32 pm (UTC)'!
+clipsDirectory
+	^ self package packageDirectory / 'data' / 'clips'! !
+
+!Clip class methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 2:56:22 pm (UTC)'!
+fromFileEntry: fileEntry
+	| answer frames |
+	answer := super fromFileEntry: fileEntry.
+	frames := ((fileEntry parent / 'frames') files sorted: [:a :b| (a name findTokens: '.') first asNumber <= (b name findTokens: '.') first asNumber]) collect: [:each|
+		| bigFrame |
+		bigFrame := Form fromFileEntry: each.
+		bigFrame magnifyBy: 128.0 / bigFrame height].
+	answer frames: frames.
+	^ answer! !
+
+!Clip class methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:02:40 pm (UTC)'!
+loadClipNamed: directoryName
+	| clip |
+	clip := self fromFileEntry: self clipsDirectory / directoryName // (directoryName, '.wav').
+	Library at: directoryName put: (clip label: directoryName)! !
 
 !Wavetable methodsFor: 'accessing' stamp: 'len 29/Mar/2026, 8:29:29 am (UTC)'!
 frameCount
@@ -13780,6 +13849,60 @@ someSubmorphPositionOrExtentChanged
 wantsSteps
 	^ true! !
 
+!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:09:55 pm (UTC)'!
+clip: aClip
+	| isNewClip |
+	isNewClip := clip isNil or: [clip buffer ~= aClip buffer].
+	clip := aClip.
+	lastPosition := clip position.
+	self morphExtent: clip currentFrame extent.
+	self redrawNeeded! !
+
+!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:04:20 pm (UTC)'!
+defaultExtent
+	^ `128 @ 128`! !
+
+!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:05:55 pm (UTC)'!
+drawOn: aCanvas
+	clip ifNil: [^ self].
+	aCanvas image: clip currentFrame at: 0@0! !
+
+!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:03:56 pm (UTC)'!
+extentChanged: oldExtent
+	needsRecomputingImage := true! !
+
+!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:03:56 pm (UTC)'!
+initialize
+	super initialize.
+	color := PatchMorph waveformColor.
+	image := Form extent: self defaultExtent depth: Display depth.
+	needsRecomputingImage := false! !
+
+!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:04:33 pm (UTC)'!
+sample: aSample
+	| isNewSample |
+	isNewSample := clip isNil or: [clip buffer ~= aSample buffer].
+	clip := aSample.
+	lastPosition := clip position.
+	needsRecomputingImage := needsRecomputingImage | isNewSample.
+	self redrawNeeded! !
+
+!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:04:33 pm (UTC)'!
+step
+	| position |
+	clip ifNil: [^ self].
+	(position := clip position) = lastPosition ifTrue: [^ self].
+	lastPosition := position.
+	self redrawNeeded! !
+
+!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:03:56 pm (UTC)'!
+stepTime
+	^ 30! !
+
+!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:03:56 pm (UTC)'!
+wantsSteps
+	^ true! !
+
 !LFOWaveMorph methodsFor: 'actions' stamp: 'len 3/Jun/2026, 9:54:04 am (UTC)'!
 moveDown
 	| options |
@@ -14163,7 +14286,7 @@ stepTime
 wantsSteps
 	^ true! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Jun/2026, 7:24:14 pm (UTC)'!
+!SampleMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Jun/2026, 7:24:14 pm (UTC)'!
 computeImage
 	| h canvas i step waveform frame |
 	needsRecomputingImage := false.
@@ -14186,11 +14309,11 @@ computeImage
 			canvas line: x @ (h - v) to: x @ h width: 1 color: peakColor].
 		i := i + step]! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Feb/2026, 6:46:54 pm (UTC)'!
+!SampleMorph methodsFor: 'as yet unclassified' stamp: 'len 18/Feb/2026, 6:46:54 pm (UTC)'!
 defaultExtent
 	^ `384 @ 92`! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 10:35:42 am (UTC)'!
+!SampleMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 10:35:42 am (UTC)'!
 drawOn: aCanvas
 	| x n h |
 	sample ifNil: [^ self].
@@ -14207,18 +14330,18 @@ drawOn: aCanvas
 	x := (lastPosition ifNil: [^ self]) - 1.0 /  n * self morphWidth.
 	aCanvas line: x @ 1 to: x @ (extent y - 1) width: 2 color: Color white! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Jun/2026, 6:48:30 pm (UTC)'!
+!SampleMorph methodsFor: 'as yet unclassified' stamp: 'len 20/Jun/2026, 6:48:30 pm (UTC)'!
 extentChanged: oldExtent
 	needsRecomputingImage := true! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 7:34:20 am (UTC)'!
+!SampleMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 7:34:20 am (UTC)'!
 initialize
 	super initialize.
 	color := PatchMorph waveformColor.
 	image := Form extent: self defaultExtent depth: Display depth.
 	needsRecomputingImage := false! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 2:10:49 pm (UTC)'!
+!SampleMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 2:10:49 pm (UTC)'!
 sample: aSample
 	| isNewSample |
 	isNewSample := sample isNil or: [sample buffer ~= aSample buffer].
@@ -14227,7 +14350,7 @@ sample: aSample
 	needsRecomputingImage := needsRecomputingImage | isNewSample.
 	self redrawNeeded! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 7:37:17 am (UTC)'!
+!SampleMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 7:37:17 am (UTC)'!
 step
 	| position |
 	sample ifNil: [^ self].
@@ -14235,11 +14358,11 @@ step
 	lastPosition := position.
 	self redrawNeeded! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 1:44:40 pm (UTC)'!
+!SampleMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 1:44:40 pm (UTC)'!
 stepTime
 	^ 30! !
 
-!SampleWaveformMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Jan/2026, 9:39:33 am (UTC)'!
+!SampleMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Jan/2026, 9:39:33 am (UTC)'!
 wantsSteps
 	^ true! !
 

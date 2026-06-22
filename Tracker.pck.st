@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 22 June 2026 at 7:10:59 pm'!
+'From Cuis7.9 [latest update: #8014] on 23 June 2026 at 1:58:52 am'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 67!
+!provides: 'Tracker' 1 68!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -1233,19 +1233,19 @@ toggleInstrumentRackOrEditor
 	lowerPane delete.
 	layoutMorph addMorph: lowerPane proportionalHeight: (editorMode ifTrue: [0.5] ifFalse: [1.0])! !
 
-!TrackerWindow methodsFor: 'events' stamp: 'len 22/Jun/2026, 11:21:18 am (UTC)'!
+!TrackerWindow methodsFor: 'events' stamp: 'len 22/Jun/2026, 12:21:16 pm (UTC)'!
 handleCommandHotkey: anEvent
 	anEvent keyCharacter = $o ifTrue: [self openProject. ^ true].
 	anEvent keyCharacter = $s ifTrue: [self saveProject. ^ true].
 	anEvent keyCharacter = $e ifTrue: "switch between instrument editor and rack"
 		[| oldKeyboardFocus focusedModule |
+		anEvent hand deleteBalloon. "because it doesn't disappear by itself, it's a bug in morphic"
 		oldKeyboardFocus := anEvent hand keyboardFocus.
 		focusedModule := (oldKeyboardFocus ownerChain detect: [:one| one isKindOf: RackableMorph] ifNone: []) ifNotNil: [:aRackableMorph| aRackableMorph model].
 		self toggleInstrumentRackOrEditor.
 		anEvent hand newKeyboardFocus: ((oldKeyboardFocus notNil and: [oldKeyboardFocus isInWorld]) ifTrue: [oldKeyboardFocus] ifFalse: [self]).
 		layoutMorph layoutSubmorphs.
 		focusedModule ifNotNil: [instrumentEditor focusOnModule: focusedModule].
-		anEvent hand deleteBalloon.
 		^ true].
 	anEvent keyCharacter = $d ifTrue: [instrumentEditor duplicateInstrument. ^ true].
 	anEvent keyCharacter = $r ifTrue: [instrumentEditor renameInstrument. ^ true].
@@ -1480,7 +1480,7 @@ exportInstrument
 fitPatchToBounds
 	self patch ifNotNil: [:aPatchMorph| aPatchMorph fitTo: (self localBounds insetBy: 8)]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 21/Jun/2026, 11:54:02 am (UTC)'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 22/Jun/2026, 12:33:46 pm (UTC)'!
 focusOnModule: aModule
 	| patchMorph patchable boundsInPatch boundsInZoomer zoomerCenter |
 	patchMorph := self patch ifNil: [^ self].
@@ -1490,7 +1490,7 @@ focusOnModule: aModule
 	boundsInZoomer := patchMorph externalizeBoundingRectOf: boundsInPatch.
 	zoomerCenter := extent / 2.0.
 	patchMorph translateBy: zoomerCenter - boundsInZoomer center.
-"	patchMorph scaleBy: ((extent x / boundsInZoomer width asFloat min: extent y / boundsInZoomer height asFloat) min: 1.5) around: zoomerCenter"! !
+	"patchMorph scaleBy: ((extent x / boundsInZoomer width asFloat min: extent y / boundsInZoomer height asFloat) * 0.3) around: zoomerCenter"! !
 
 !InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 21/Jun/2026, 7:26:20 am (UTC)'!
 importInstrument
@@ -2896,7 +2896,7 @@ writeOn: aStream
 	bufferList do: [:each| each writeOn: aStream].
 	json jsonWriteOn: aStream! !
 
-!Instrument methodsFor: 'private' stamp: 'len 15/Jun/2026, 9:07:39 pm (UTC)'!
+!Instrument methodsFor: 'private' stamp: 'len 22/Jun/2026, 3:13:13 pm (UTC)'!
 modules
 	| currentModules buses |
 	modules ifNotNil: [:anArray| ^ anArray].
@@ -2905,7 +2905,7 @@ modules
 	noteReceivers := currentModules select: [:each| each respondsTo: #setNote:].
 	velocityReceivers := currentModules select: [:any| any respondsTo: #setVelocity:].
 	gateReceivers := currentModules select: [:any| any respondsTo: #gateOn].
-	samples := currentModules select: [:each| (each isMemberOf: Sample) or: [each isMemberOf: Multisample]].
+	samples := currentModules select: [:each| (each isMemberOf: Sample) or: [(each isMemberOf: Multisample) or: [each isMemberOf: Clip]]].
 	audioOutput := nil.
 	buses := track tracker buses.
 	currentModules do: [:each|

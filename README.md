@@ -80,11 +80,9 @@ Trackers are heavily keyboard-oriented. The following hotkeys are the most commo
 
 Global (tracker window):
 
-* Cmd-o and Cmd-s open and save a project (the whole song)
+* Cmd-o and Cmd-s open and save a project (the whole song with instruments and patterns, including all samples used)
 * Cmd-e switch the upper pane between instrument editor (the DSP graph) and instrument rack (just the modules in a row)
-* Cmd-f set tracker BPM
-* Cmd-g set tracker swing
-* Cmd-[/] change octave for entering notes with the computer keyboard
+* Cmd-[/] change octave for notes input with the computer keyboard
 
 Pattern editor:
 

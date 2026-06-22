@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 22 June 2026 at 3:41:12 am'!
+'From Cuis7.9 [latest update: #8014] on 22 June 2026 at 7:10:59 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 63!
+!provides: 'Tracker' 1 67!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -576,10 +576,10 @@ initialize
 bpm
 	^ bpm! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 9/Jun/2026, 3:11:33 pm (UTC)'!
+!Tracker methodsFor: 'accessing' stamp: 'len 22/Jun/2026, 11:28:20 am (UTC)'!
 bpm: anInteger
 	bpm := anInteger.
-	self triggerEvent: #tempoChanged! !
+	self triggerEvent: #bpmChanged: with: bpm! !
 
 !Tracker methodsFor: 'accessing' stamp: 'len 5/Mar/2026, 8:36:52 am (UTC)'!
 buses
@@ -592,6 +592,11 @@ followPlayhead
 !Tracker methodsFor: 'accessing' stamp: 'len 10/Jun/2026, 5:09:15 pm (UTC)'!
 inputOctave
 	^ inputOctave! !
+
+!Tracker methodsFor: 'accessing' stamp: 'len 22/Jun/2026, 11:59:12 am (UTC)'!
+inputOctave: anInteger
+	inputOctave := anInteger.
+	self triggerEvent: #inputOctaveChanged: with: inputOctave! !
 
 !Tracker methodsFor: 'accessing' stamp: 'len 18/Feb/2026, 9:58:40 am (UTC)'!
 instruments
@@ -644,10 +649,10 @@ sequenceUniquePatterns
 swing
 	^ swing! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 9/Jun/2026, 3:11:08 pm (UTC)'!
+!Tracker methodsFor: 'accessing' stamp: 'len 22/Jun/2026, 11:28:24 am (UTC)'!
 swing: aNumber
 	swing := aNumber min: 1.0 max: 0.0.
-	self triggerEvent: #tempoChanged! !
+	self triggerEvent: #swingChanged: with: swing! !
 
 !Tracker methodsFor: 'accessing' stamp: 'len 14/Mar/2026, 11:24:45 am (UTC)'!
 tpl
@@ -670,17 +675,15 @@ cursorPattern
 cursorTrack
 	^ cursorTrack! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 10/Jun/2026, 5:08:32 pm (UTC)'!
+!Tracker methodsFor: 'cursor' stamp: 'len 22/Jun/2026, 11:59:35 am (UTC)'!
 inputOctaveDown
 	inputOctave > 0 ifFalse: [^ self].
-	inputOctave := inputOctave - 1.
-	self triggerEvent: #inputOctaveChanged! !
+	self inputOctave: inputOctave - 1! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 10/Jun/2026, 5:09:02 pm (UTC)'!
+!Tracker methodsFor: 'cursor' stamp: 'len 22/Jun/2026, 11:59:57 am (UTC)'!
 inputOctaveUp
 	inputOctave < 9 ifFalse: [^ self].
-	inputOctave := inputOctave + 1.
-	self triggerEvent: #inputOctaveChanged! !
+	self inputOctave: inputOctave + 1! !
 
 !Tracker methodsFor: 'cursor' stamp: 'len 14/Mar/2026, 11:22:50 am (UTC)'!
 moveCursorBeatDown
@@ -762,11 +765,12 @@ moveCursorTrackLeft
 moveCursorTrackRight
 	self setCursorTrack: cursorTrack + 1! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 13/Jun/2026, 5:46:39 pm (UTC)'!
+!Tracker methodsFor: 'cursor' stamp: 'len 22/Jun/2026, 9:27:57 am (UTC)'!
 setCursorTrack: anInteger
 	((anInteger between: 1 and: tracks size) and: [cursorTrack ~= anInteger]) ifFalse: [^ self].
 	cursorTrack := anInteger.
-	self triggerEvent: #cursorChanged! !
+	self triggerEvent: #cursorChanged.
+	self triggerEvent: #selectedTrackTuningChanged: with: self selectedTrack tuning! !
 
 !Tracker methodsFor: 'initialization' stamp: 'len 10/Jun/2026, 5:07:12 pm (UTC)'!
 initialize
@@ -884,11 +888,11 @@ swapPattern: anInteger with: anotherInteger
 	sequence swap: anInteger with: anotherInteger.
 	self triggerEvent: #sequenceChanged! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 13/Jun/2026, 5:45:00 pm (UTC)'!
+!Tracker methodsFor: 'playing' stamp: 'len 22/Jun/2026, 10:49:25 am (UTC)'!
 followPlayhead: aBoolean
 	followPlayhead = aBoolean ifTrue: [^ self].
 	followPlayhead := aBoolean.
-	self triggerEvent: #followPlayheadChanged! !
+	self triggerEvent: #followPlayheadChanged: with: aBoolean! !
 
 !Tracker methodsFor: 'playing' stamp: 'len 2/Jan/2026, 8:12:17 am (UTC)'!
 isPlaying
@@ -1115,10 +1119,10 @@ selectedMask
 selectedTrack
 	^ tracks at: cursorTrack! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 9/Jun/2026, 3:13:47 pm (UTC)'!
+!Tracker methodsFor: 'tracks' stamp: 'len 22/Jun/2026, 9:21:56 am (UTC)'!
 setSelectedTrackTuning: aTuningOrNil
 	self selectedTrack tuning: aTuningOrNil.
-	self triggerEvent: #tracksChanged "perhaps we could have a more precise event for this like #tuningChanged"! !
+	self triggerEvent: #selectedTrackTuningChanged: with: self selectedTrack tuning! !
 
 !Tracker methodsFor: 'tracks' stamp: 'len 10/Jun/2026, 10:05:54 am (UTC)'!
 swapTrack: anInteger with: anotherInteger
@@ -1217,34 +1221,20 @@ saveProject
 		(self class package packageDirectory / 'data' / 'projects' // (newName, '.song')) writeStreamDo: [:s| model writeOn: s].
 		self setLabel: newName]! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 15/Jun/2026, 6:20:37 pm (UTC)'!
-setBPM
-	self request: 'BPM' initialAnswer: model bpm printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| model bpm: s asNumber]! !
-
-!TrackerWindow methodsFor: 'actions' stamp: 'len 15/Mar/2026, 8:08:22 am (UTC)'!
-setSwing
-	self request: 'Swing' initialAnswer: (model swing * 100) truncated printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 0 and: 100]] do: [:s| model swing: s asNumber / 100.0]! !
-
-!TrackerWindow methodsFor: 'actions' stamp: 'len 21/Jun/2026, 2:08:08 pm (UTC)'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 22/Jun/2026, 8:47:34 am (UTC)'!
 toggleInstrumentRackOrEditor
 	| editorMode |
 	editorMode := instrumentEditor visible not.
 	instrumentEditor visible: editorMode.
 	adjuster visible: editorMode.
 	instrumentRack visible: editorMode not.
+	editorMode ifFalse: [instrumentRack forceUpdate]. "in case the order of the modules changed"
 	"why need to do this? otherwise the lower pane doesn't expand properly when going to the smaller instrument rack:"
 	lowerPane delete.
 	layoutMorph addMorph: lowerPane proportionalHeight: (editorMode ifTrue: [0.5] ifFalse: [1.0])! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 18/Jun/2026, 3:25:10 pm (UTC)'!
-toggleLowerPane
-	lowerPane visible: lowerPane visible not.
-	instrumentEditor layoutSpec proportionalHeight: (lowerPane visible ifTrue: [0.38] ifFalse: [1.0])! !
-
-!TrackerWindow methodsFor: 'events' stamp: 'len 21/Jun/2026, 5:05:15 pm (UTC)'!
+!TrackerWindow methodsFor: 'events' stamp: 'len 22/Jun/2026, 11:21:18 am (UTC)'!
 handleCommandHotkey: anEvent
-	anEvent keyCharacter = $f ifTrue: [self setBPM. ^ true].
-	anEvent keyCharacter = $g ifTrue: [self setSwing. ^ true].
 	anEvent keyCharacter = $o ifTrue: [self openProject. ^ true].
 	anEvent keyCharacter = $s ifTrue: [self saveProject. ^ true].
 	anEvent keyCharacter = $e ifTrue: "switch between instrument editor and rack"
@@ -1278,18 +1268,48 @@ keyStroke: anEvent
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 5:28:02 pm (UTC)'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 22/Jun/2026, 11:57:06 am (UTC)'!
 buildMorphicWindow
-	| lowerLeftPane sequencerScroller patternEditorScroller bar transport |
+	| lowerLeftPane sequencerScroller patternEditorScroller bar transport bpmControl swingControl |
 	instrumentEditor := InstrumentEditorMorph new setTracker: model.
 	instrumentRack := InstrumentRackMorph new setTracker: model.
 	meter := MultitrackMeterMorph new setTracker: model.
 	arranger := ArrangerMorph new setTracker: model.
 	patternEditor := PatternEditorMorph new setTracker: model.
 	model when: #cursorChanged send: #ensureCursorVisible to: self.
-	bar := ControlPanel newRow gap: 0; axisEdgeWeight: 0.0. "color: Color gray."
+	bar := ControlPanel newRow gap: 24; axisEdgeWeight: 0.0; color: Color darkGray.
 	transport := TransportMorph new setTracker: model.
 	bar addMorph: transport.
+	(bpmControl := Control min: 10.0 max: 360.0 value: 120.0)
+		label: 'Beats per minute';
+		printer: [:x| (x printStringFractionDigits: 1), ' BPM'];
+		fineStep: 0.1 / 255.0;
+		baseValue: model bpm;
+		receive: #baseValue: from: model when: #bpmChanged:;
+		when: #changed: send: #bpm: to: model.
+	bar addMorph: (TextualControlMorph new control: bpmControl).
+	(swingControl := Control min: 0.0 max: 1.0 value: 0.0)
+		label: 'Swing';
+		printer: [:x| '⇄ ', (x * 100) rounded printString, '%'];
+		baseValue: model swing;
+		receive: #baseValue: from: model when: #swingChanged:;
+		when: #changed: send: #swing: to: model.
+	bar addMorph: (TextualControlMorph new control: swingControl).
+	bar addMorph: (ToggleButtonMorph new state: model followPlayhead; when: #changed: send: #followPlayhead: to: model; receive: #state: from: model when: #followPlayheadChanged:; label: '⇩'; setBalloonText: 'Follow playhead').
+	bar addMorph: (PulldownListMorph new
+		options: (0 to: 9);
+		state: model inputOctave;
+		labels: ((0 to: 9) collect: [:each| 'C', each printString]);
+		when: #changed: send: #inputOctave: to: model;
+		receive: #state: from: model when: #inputOctaveChanged:;
+		setBalloonText: 'Octave for keyboard input').
+	bar addMorph: (PulldownListMorph new
+		options: Tuning library;
+		state: model selectedTrack tuning;
+		when: #changed: send: #setSelectedTrackTuning: to: model;
+		receive: #state: from: model when: #selectedTrackTuningChanged:;
+"		receive: #options: from: Tuning when: #tuningsLibraryChanged:;"
+		setBalloonText: 'Tuning system').
 	lowerPane := LinearLayoutMorph newRow color: Color transparent.
 	lowerLeftPane := LinearLayoutMorph newColumn color: Color transparent.
 	sequencerScroller := ScrollerMorph new vertical: true; scrollable: arranger.
@@ -1420,7 +1440,7 @@ forceUpdate
 rack
 	^ scrollable! !
 
-!InstrumentRackMorph methodsFor: 'private' stamp: 'len 21/Jun/2026, 9:00:48 am (UTC)'!
+!InstrumentRackMorph methodsFor: 'private' stamp: 'len 22/Jun/2026, 8:47:08 am (UTC)'!
 update
 	scrollable patch: (tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument patch])! !
 
@@ -2418,7 +2438,7 @@ initialize
 	pauseBlinking := false.
 	showFXColumns := true! !
 
-!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 7:27:34 am (UTC)'!
+!PatternEditorMorph methodsFor: 'initialization' stamp: 'len 22/Jun/2026, 9:20:55 am (UTC)'!
 setTracker: aTracker
 	tracker := aTracker.
 	cursorPosition := 1.
@@ -2427,6 +2447,7 @@ setTracker: aTracker
 	aTracker when: #cursorChanged send: #updateCursor to: self.
 	aTracker when: #playheadChanged send: #redrawNeeded to: self.
 	aTracker when: #instrumentLabelChanged send: #redrawNeeded to: self.
+	aTracker when: #selectedTrackTuningChanged: send: #redrawNeeded to: self.
 	self updateTracks! !
 
 !PatternEditorMorph methodsFor: 'private' stamp: 'len 15/Jun/2026, 8:11:38 pm (UTC)'!
@@ -2579,48 +2600,29 @@ unsetColor
 velocityColor
 	^ `Color okl: 0.95 c: 0.2 h: 120`! !
 
-!TransportMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 5:17:34 pm (UTC)'!
+!TransportMorph methodsFor: 'drawing' stamp: 'len 22/Jun/2026, 12:09:50 pm (UTC)'!
 drawOn: aCanvas
-	| color |
-"	aCanvas fillRectangle: (0 @ 0 extent: extent) color: Color darkGray.
-	aCanvas line: 0@(extent y-1) to: extent-(0@1) width: 1 color: Color gray."
-	color := Color white.
-	aCanvas
-		drawString: (tracker isPlaying ifTrue: ['▶'] ifFalse: ['◼']) at: 4 @ 0 font: font color: color;
-		drawString: (tracker bpm printStringFractionDigits: 1), ' BPM ⇄ ', (tracker swing * 100) truncated printString, '%' at: 32 @ 2 font: font color: color;
-		drawString: '⇩' "↧" at: 240 @ 3 font: font color: (tracker followPlayhead ifTrue: [color] ifFalse: [Color lightGray]);
-		drawString: 'C', tracker inputOctave printString at: 280 @ 3 font: font color: color;
-		drawString: tracker selectedTrack tuning label at: 340 @ 3 font: font color: color.
-"	tracker selectedInstrumentNumber ifNotNil: [:instrumentNumber|
-		patchLabel := (instrumentNumber printStringBase: 16 nDigits: 2), ' ', (tracker selectedInstrument ifNil: ['EMPTY'] ifNotNil: [:anInstrument| anInstrument label ifNil: ['']]).
-		aCanvas drawString: patchLabel at: (extent x - 4 - (font widthOfString: patchLabel)) @ 2 font: font color: color]"! !
+	aCanvas drawString: (tracker isPlaying ifTrue: ['▶'] ifFalse: ['◼']) at: 4 @ 0 font: font color: PatchMorph waveformColor4! !
 
 !TransportMorph methodsFor: 'events' stamp: 'len 24/Feb/2026, 10:31:36 am (UTC)'!
 handlesKeyboardFocus
 	^ false! !
 
-!TransportMorph methodsFor: 'geometry' stamp: 'len 21/Jun/2026, 5:10:29 pm (UTC)'!
+!TransportMorph methodsFor: 'geometry' stamp: 'len 22/Jun/2026, 11:23:36 am (UTC)'!
 minimumExtent
-	^ 300 @ font lineSpacing! !
+	^ (font widthOfString: 'X') *  1.5 @ font lineSpacing! !
 
-!TransportMorph methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 5:21:39 pm (UTC)'!
+!TransportMorph methodsFor: 'initialization' stamp: 'len 22/Jun/2026, 11:23:50 am (UTC)'!
 initialize
 	super initialize.
 	font := FontFamily defaultFamilyPointSize: 15.
+"	font := FontFamily familyName: 'JetBrains Mono NL' pointSize: 15."
 	self morphExtent: self minimumExtent! !
 
-!TransportMorph methodsFor: 'initialization' stamp: 'len 10/Jun/2026, 5:08:18 pm (UTC)'!
+!TransportMorph methodsFor: 'initialization' stamp: 'len 22/Jun/2026, 11:58:31 am (UTC)'!
 setTracker: aTracker
 	tracker := aTracker.
-	tracker
-		when: #playingStatusChanged send: #redrawNeeded to: self;
-		when: #tempoChanged send: #redrawNeeded to: self; "BPM or swing changed"
-		when: #followPlayheadChanged send: #redrawNeeded to: self;
-		when: #inputOctaveChanged send: #redrawNeeded to: self.
-	"for updating the tuning status:"
-	tracker
-		when: #tracksChanged send: #redrawNeeded to: self;
-		when: #cursorChanged send: #redrawNeeded to: self! !
+	tracker when: #playingStatusChanged send: #redrawNeeded to: self! !
 
 !Instrument methodsFor: 'accessing' stamp: 'len 28/Dec/2025, 8:47:17 am (UTC)'!
 label
@@ -2774,7 +2776,7 @@ playTrigger
 			trigger isNoteOff ifTrue: [self noteOff]].
 	trigger := nil! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 19/Jun/2026, 4:37:02 pm (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 22/Jun/2026, 8:48:50 am (UTC)'!
 recomputeNeeded
 	"!!!!!! this doesn't work, the morph forgets the action map when deleted"
 	modules := nil! !
@@ -3374,6 +3376,10 @@ label: aString
 !Tuning methodsFor: 'private' stamp: 'len 10/Jun/2026, 7:12:06 pm (UTC)'!
 noteNames: anArray
 	noteNames := anArray! !
+
+!Tuning methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 9:23:34 am (UTC)'!
+printOn: aStream
+	aStream nextPutAll: (label ifNil: [^ super printOn: aStream])! !
 
 !Tuning class methodsFor: 'library' stamp: 'len 9/Jun/2026, 3:14:43 pm (UTC)'!
 library

@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 22 June 2026 at 5:06:26 am'!
+'From Cuis7.9 [latest update: #8014] on 22 June 2026 at 7:10:56 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 611!
+!provides: 'Signals' 1 613!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1386,7 +1386,7 @@ RackableMorph class
 
 !classDefinition: #PulldownListMorph category: #'Signals-Morphic-Support'!
 BoxMorph subclass: #PulldownListMorph
-	instanceVariableNames: 'options font color state'
+	instanceVariableNames: 'options labels font color state'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Support'!
@@ -10744,6 +10744,10 @@ setOutputHP: aBuffer
 setOutputLP: aBuffer
 	outputLP := aBuffer! !
 
+!ControlPanel methodsFor: 'accessing' stamp: 'len 22/Jun/2026, 8:18:42 am (UTC)'!
+adoptWidgetsColor: aColor
+	^ self! !
+
 !ControlPanel methodsFor: 'building' stamp: 'len 12/Mar/2026, 10:50:50 am (UTC)'!
 addColumn
 	| column |
@@ -13071,6 +13075,11 @@ color: aColor
 inactiveColor
 	^ Color veryLightGray! !
 
+!PulldownListMorph methodsFor: 'accessing' stamp: 'len 22/Jun/2026, 12:01:21 pm (UTC)'!
+labels: anArray
+	labels := anArray.
+	extent := self minimumExtent! !
+
 !PulldownListMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 7:04:10 pm (UTC)'!
 options: anArray
 	options := anArray.
@@ -13091,14 +13100,16 @@ moveDown
 moveUp
 	self state: (options atPin: (options indexOf: state ifAbsent: [^ self]) - 1)! !
 
-!PulldownListMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 6:41:48 pm (UTC)'!
+!PulldownListMorph methodsFor: 'drawing' stamp: 'len 22/Jun/2026, 12:04:24 pm (UTC)'!
 drawOn: aCanvas
 	| label |
 "	aCanvas
 		frameRectangle: (0@0 extent: self minimumExtent) borderWidth: 1 color: color;
 		drawString: control value asString at: 4@0 font: font color: color
 "
-	label := state asString.
+	label := (labels isNil or: [(options includes: state) not])
+		ifTrue: [state asString]
+		ifFalse: [labels at: (options indexOf: state)].
 	aCanvas
 "		frameRectangle: (0@0 extent: self minimumExtent) borderWidth: 1 color: color cornerRadius: 6;"
 		drawString: label at: 3@0 font: font color: color.
@@ -13157,9 +13168,9 @@ mouseScroll: aMouseEvent localPosition: localEventPosition
 keyboardFocusChange: aBoolean
 	self redrawNeeded! !
 
-!PulldownListMorph methodsFor: 'geometry' stamp: 'len 21/Jun/2026, 6:34:34 pm (UTC)'!
+!PulldownListMorph methodsFor: 'geometry' stamp: 'len 22/Jun/2026, 12:05:30 pm (UTC)'!
 minimumExtent
-	^ (options max: [:each| font widthOfString: each asString]) + 6 @ font lineSpacing! !
+	^ ((labels ifNil: [options collect: [:each| each asString]]) max: [:each| font widthOfString: each asString]) + 6 @ font lineSpacing! !
 
 !PulldownListMorph methodsFor: 'geometry' stamp: 'len 21/Jun/2026, 6:34:34 pm (UTC)'!
 requiresVectorCanvas
@@ -13464,9 +13475,9 @@ scrollbarColor
 scrollbarCornerRadius
 	^ 4.0! !
 
-!ScrollerMorph class methodsFor: 'as yet unclassified' stamp: 'len 21/Jun/2026, 9:02:22 am (UTC)'!
+!ScrollerMorph class methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 8:23:15 am (UTC)'!
 scrollbarThickness
-	^ 6.0! !
+	^ 8.0! !
 
 !ToggleButtonMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 6:46:09 pm (UTC)'!
 color: aColor

@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 23 June 2026 at 1:59:09 am'!
+'From Cuis7.9 [latest update: #8014] on 23 June 2026 at 3:00:22 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 614!
+!provides: 'Signals' 1 615!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1474,14 +1474,14 @@ BoxMorph subclass: #ClipMorph
 ClipMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #LFOWaveMorph category: #'Signals-Morphic-Widgets'!
-BoxMorph subclass: #LFOWaveMorph
-	instanceVariableNames: 'color lfo currentPhase'
+!classDefinition: #LFOShapeMorph category: #'Signals-Morphic-Widgets'!
+BoxMorph subclass: #LFOShapeMorph
+	instanceVariableNames: 'color lfo'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Widgets'!
-!classDefinition: 'LFOWaveMorph class' category: #'Signals-Morphic-Widgets'!
-LFOWaveMorph class
+!classDefinition: 'LFOShapeMorph class' category: #'Signals-Morphic-Widgets'!
+LFOShapeMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #MiniscopeMorph category: #'Signals-Morphic-Widgets'!
@@ -7133,9 +7133,10 @@ phase
 shape
 	^ shape! !
 
-!LFO methodsFor: 'accessing' stamp: 'len 3/Jun/2026, 9:36:21 am (UTC)'!
+!LFO methodsFor: 'accessing' stamp: 'len 22/Jun/2026, 8:54:50 pm (UTC)'!
 shape: aSymbol
-	shape := aSymbol! !
+	shape := aSymbol.
+	self triggerEvent: #shapeChanged: with: shape! !
 
 !LFO methodsFor: 'controlling' stamp: 'len 23/Mar/2026, 12:21:00 pm (UTC)'!
 gateOff
@@ -7225,10 +7226,10 @@ settings: aDictionary
 	aDictionary at: #bipolar ifPresent: [:aBoolean| bipolar := aBoolean].
 	aDictionary at: #mode ifPresent: [:aSymbol| mode := aSymbol]! !
 
-!LFO methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:24:48 pm (UTC)'!
+!LFO methodsFor: 'ui' stamp: 'len 22/Jun/2026, 9:12:55 pm (UTC)'!
 panel
 	^ ControlPanel new
-		addMorph: (LFOWaveMorph new lfo: self);
+		addMorph: (LFOShapeMorph new lfo: self);
 		addTextualControl: (controls at: #speed);
 		addTextualControl: (controls at: #offset);
 		addMorph: (ToggleButtonMorph new state: bipolar; when: #changed: send: #bipolar: to: self; receive: #state: from: self when: #bipolarChanged:; label: '±'; setBalloonText: 'Bipolar');
@@ -7245,19 +7246,20 @@ patchable
 		addControlOutput.
 	^ answer! !
 
-!LFO methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:25:16 pm (UTC)'!
+!LFO methodsFor: 'ui' stamp: 'len 22/Jun/2026, 9:13:40 pm (UTC)'!
 rackable
 	| answer |
 	answer := RackableMorph new model: self.
-	answer addRow
-		addMorph: (LFOWaveMorph new lfo: self);
-		addTextualControl: (controls at: #speed).
 	answer addRow: self screen.
-	answer flap addMorph:
+	answer addRow
+		addMorph: (LFOShapeMorph new lfo: self);
+"		addMorph: (LFOWaveMorph new lfo: self);"
+		addTextualControl: (controls at: #speed).
+"	answer flap addMorph:
 		(ControlPanel new gap: 0;
 			addTextualControl: (controls at: #offset);
 		addMorph: (ToggleButtonMorph new state: bipolar; when: #changed: send: #bipolar: to: self; receive: #state: from: self when: #bipolarChanged:; label: '±'; setBalloonText: 'Bipolar');
-		addMorph: (PulldownListMorph new state: mode; when: #changed: send: #mode: to: self; receive: #state: from: self when: #modeChanged:; options: #(Free Reset Hold); setBalloonText: 'Mode')).
+		addMorph: (PulldownListMorph new state: mode; when: #changed: send: #mode: to: self; receive: #state: from: self when: #modeChanged:; options: #(Free Reset Hold); setBalloonText: 'Mode'))."
 	^ answer! !
 
 !LFO methodsFor: 'ui' stamp: 'len 2/Jun/2026, 8:15:08 pm (UTC)'!
@@ -13903,21 +13905,21 @@ stepTime
 wantsSteps
 	^ true! !
 
-!LFOWaveMorph methodsFor: 'actions' stamp: 'len 3/Jun/2026, 9:54:04 am (UTC)'!
+!LFOShapeMorph methodsFor: 'actions' stamp: 'len 22/Jun/2026, 9:05:25 pm (UTC)'!
 moveDown
 	| options |
 	options := lfo shapeOptions.
 	lfo shape: (options atPin: (options indexOf: lfo shape ifAbsent: [^ self]) + 1).
 	self redrawNeeded! !
 
-!LFOWaveMorph methodsFor: 'actions' stamp: 'len 3/Jun/2026, 9:54:07 am (UTC)'!
+!LFOShapeMorph methodsFor: 'actions' stamp: 'len 22/Jun/2026, 9:05:25 pm (UTC)'!
 moveUp
 	| options |
 	options := lfo shapeOptions.
 	lfo shape: (options atPin: (options indexOf: lfo shape ifAbsent: [^ self]) - 1).
 	self redrawNeeded! !
 
-!LFOWaveMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 2:23:50 pm (UTC)'!
+!LFOShapeMorph methodsFor: 'drawing' stamp: 'len 22/Jun/2026, 9:15:43 pm (UTC)'!
 drawOn: aCanvas
 	| step stepX t₀ t x y h steps |
 	steps := 64.
@@ -13926,7 +13928,7 @@ drawOn: aCanvas
 	h := self morphHeight - 6.0 / 2.0.
 	t₀ := lfo get: #offset.
 	lfo shape = #Random ifTrue:
-		[t := currentPhase.
+		[t := lfo phase.
 		y := 1.0 - (lfo bipolar ifTrue: [lfo peek] ifFalse: [lfo peek * 2.0 - 1.0]) * h + 3.0.
 		x := 4.0 + (t - t₀ \\ 1.0 * stepX * steps).
 		aCanvas line: x @ y to: x @ y width: 6.0 color: color.
@@ -13944,16 +13946,16 @@ drawOn: aCanvas
 			y := 1.0 - (self waveAt: t \\ 1.0) * h + 3.0.
 			x := x + stepX.
 			aCanvas lineTo: x @ y]].
-	t := currentPhase.
+	t := lfo phase.
 	y := 1.0 - (self waveAt: t) * h + 3.0.
 	x := 4.0 + (t - t₀ \\ 1.0 * stepX * steps).
 	aCanvas line: x @ y to: x @ y width: 6.0 color: PatchMorph waveformColor3! !
 
-!LFOWaveMorph methodsFor: 'drawing' stamp: 'len 3/Jun/2026, 9:41:45 am (UTC)'!
+!LFOShapeMorph methodsFor: 'drawing' stamp: 'len 22/Jun/2026, 9:05:25 pm (UTC)'!
 requiresVectorCanvas
 	^ true! !
 
-!LFOWaveMorph methodsFor: 'drawing' stamp: 'len 3/Jun/2026, 9:38:01 am (UTC)'!
+!LFOShapeMorph methodsFor: 'drawing' stamp: 'len 22/Jun/2026, 9:05:25 pm (UTC)'!
 waveAt: t
 	| v |
 	v := lfo shape.
@@ -13964,11 +13966,11 @@ waveAt: t
 	v == #Fall ifTrue: [^ (0.5 - t) * 2.0].
 	self notYetImplemented! !
 
-!LFOWaveMorph methodsFor: 'events' stamp: 'len 3/Jun/2026, 9:51:50 am (UTC)'!
+!LFOShapeMorph methodsFor: 'events' stamp: 'len 22/Jun/2026, 9:05:25 pm (UTC)'!
 handlesMouseScroll: anEvent
 	^ anEvent anyModifierKeyPressed not! !
 
-!LFOWaveMorph methodsFor: 'events' stamp: 'len 3/Jun/2026, 9:44:23 am (UTC)'!
+!LFOShapeMorph methodsFor: 'events' stamp: 'len 22/Jun/2026, 9:05:25 pm (UTC)'!
 keyStroke: anEvent
 	(anEvent isArrowUp or: [anEvent isArrowRight]) ifTrue:
 		[anEvent wasHandled: true.
@@ -13982,48 +13984,42 @@ keyStroke: anEvent
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!LFOWaveMorph methodsFor: 'events' stamp: 'len 3/Jun/2026, 9:45:12 am (UTC)'!
+!LFOShapeMorph methodsFor: 'events' stamp: 'len 22/Jun/2026, 9:05:25 pm (UTC)'!
 mouseScroll: anEvent localPosition: localEventPosition
 	(anEvent direction = #down or: [anEvent direction = #left])
 		ifTrue: [self moveUp] ifFalse: [self moveDown].
 	self wantsBalloon ifTrue: [self showBalloon]! !
 
-!LFOWaveMorph methodsFor: 'halos and balloon help' stamp: 'len 3/Jun/2026, 9:35:54 am (UTC)'!
+!LFOShapeMorph methodsFor: 'halos and balloon help' stamp: 'len 22/Jun/2026, 9:05:25 pm (UTC)'!
 balloonText
 	^ lfo shape asPlainString! !
 
-!LFOWaveMorph methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 2:25:53 pm (UTC)'!
+!LFOShapeMorph methodsFor: 'initialization' stamp: 'len 22/Jun/2026, 9:05:25 pm (UTC)'!
 defaultExtent
 	^ `36 @ 20`! !
 
-!LFOWaveMorph methodsFor: 'initialization' stamp: 'len 3/Jun/2026, 9:39:23 am (UTC)'!
+!LFOShapeMorph methodsFor: 'initialization' stamp: 'len 22/Jun/2026, 9:08:57 pm (UTC)'!
 initialize
 	super initialize.
-	color := Color white.
-	currentPhase := 0.0! !
+	color := Color white! !
 
-!LFOWaveMorph methodsFor: 'initialization' stamp: 'len 3/Jun/2026, 9:38:59 am (UTC)'!
+!LFOShapeMorph methodsFor: 'initialization' stamp: 'len 22/Jun/2026, 9:10:55 pm (UTC)'!
 lfo: anLFO
-	lfo removeDependent: self.
+	lfo removeActionsWithReceiver: self.
 	lfo := anLFO.
-	lfo addDependent: self! !
+	lfo when: #shapeChanged: send: #redrawNeeded to: self! !
 
-!LFOWaveMorph methodsFor: 'stepping' stamp: 'len 23/Apr/2026, 12:07:43 pm (UTC)'!
+!LFOShapeMorph methodsFor: 'stepping' stamp: 'len 22/Jun/2026, 9:09:02 pm (UTC)'!
 step
-	currentPhase := lfo phase.
 	self redrawNeeded! !
 
-!LFOWaveMorph methodsFor: 'stepping' stamp: 'len 25/Apr/2026, 2:47:04 pm (UTC)'!
+!LFOShapeMorph methodsFor: 'stepping' stamp: 'len 22/Jun/2026, 9:05:25 pm (UTC)'!
 stepTime
 	^ 150! !
 
-!LFOWaveMorph methodsFor: 'stepping' stamp: 'len 23/Apr/2026, 12:07:43 pm (UTC)'!
+!LFOShapeMorph methodsFor: 'stepping' stamp: 'len 22/Jun/2026, 9:05:25 pm (UTC)'!
 wantsSteps
 	^ true! !
-
-!LFOWaveMorph methodsFor: 'updating' stamp: 'len 3/Jun/2026, 9:42:42 am (UTC)'!
-update: anObject
-	self redrawNeeded! !
 
 !MiniscopeMorph methodsFor: 'drawing' stamp: 'len 19/Apr/2026, 10:03:36 am (UTC)'!
 drawFrame: aBuffer on: aCanvas color: color

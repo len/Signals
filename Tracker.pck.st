@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 23 June 2026 at 1:58:52 am'!
+'From Cuis7.9 [latest update: #8014] on 23 June 2026 at 3:00:26 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 68!
+!provides: 'Tracker' 1 69!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -87,14 +87,14 @@ BoxMorph subclass: #PatternEditorMorph
 PatternEditorMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #TransportMorph category: #'Tracker-Morphic'!
-BoxMorph subclass: #TransportMorph
+!classDefinition: #TransportStatusMorph category: #'Tracker-Morphic'!
+BoxMorph subclass: #TransportStatusMorph
 	instanceVariableNames: 'tracker font'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Tracker-Morphic'!
-!classDefinition: 'TransportMorph class' category: #'Tracker-Morphic'!
-TransportMorph class
+!classDefinition: 'TransportStatusMorph class' category: #'Tracker-Morphic'!
+TransportStatusMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #Instrument category: #'Tracker-Kernel'!
@@ -1268,7 +1268,7 @@ keyStroke: anEvent
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 22/Jun/2026, 11:57:06 am (UTC)'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 22/Jun/2026, 8:18:09 pm (UTC)'!
 buildMorphicWindow
 	| lowerLeftPane sequencerScroller patternEditorScroller bar transport bpmControl swingControl |
 	instrumentEditor := InstrumentEditorMorph new setTracker: model.
@@ -1278,7 +1278,7 @@ buildMorphicWindow
 	patternEditor := PatternEditorMorph new setTracker: model.
 	model when: #cursorChanged send: #ensureCursorVisible to: self.
 	bar := ControlPanel newRow gap: 24; axisEdgeWeight: 0.0; color: Color darkGray.
-	transport := TransportMorph new setTracker: model.
+	transport := TransportStatusMorph new setTracker: model.
 	bar addMorph: transport.
 	(bpmControl := Control min: 10.0 max: 360.0 value: 120.0)
 		label: 'Beats per minute';
@@ -2600,26 +2600,27 @@ unsetColor
 velocityColor
 	^ `Color okl: 0.95 c: 0.2 h: 120`! !
 
-!TransportMorph methodsFor: 'drawing' stamp: 'len 22/Jun/2026, 12:09:50 pm (UTC)'!
+!TransportStatusMorph methodsFor: 'drawing' stamp: 'len 22/Jun/2026, 8:17:20 pm (UTC)'!
 drawOn: aCanvas
-	aCanvas drawString: (tracker isPlaying ifTrue: ['▶'] ifFalse: ['◼']) at: 4 @ 0 font: font color: PatchMorph waveformColor4! !
+	tracker isPlaying ifTrue:
+		[aCanvas drawString: '▶'"'◼'" at: 4 @ 0 font: font color: PatchMorph waveformColor]! !
 
-!TransportMorph methodsFor: 'events' stamp: 'len 24/Feb/2026, 10:31:36 am (UTC)'!
+!TransportStatusMorph methodsFor: 'events' stamp: 'len 24/Feb/2026, 10:31:36 am (UTC)'!
 handlesKeyboardFocus
 	^ false! !
 
-!TransportMorph methodsFor: 'geometry' stamp: 'len 22/Jun/2026, 11:23:36 am (UTC)'!
+!TransportStatusMorph methodsFor: 'geometry' stamp: 'len 22/Jun/2026, 11:23:36 am (UTC)'!
 minimumExtent
 	^ (font widthOfString: 'X') *  1.5 @ font lineSpacing! !
 
-!TransportMorph methodsFor: 'initialization' stamp: 'len 22/Jun/2026, 11:23:50 am (UTC)'!
+!TransportStatusMorph methodsFor: 'initialization' stamp: 'len 22/Jun/2026, 11:23:50 am (UTC)'!
 initialize
 	super initialize.
 	font := FontFamily defaultFamilyPointSize: 15.
 "	font := FontFamily familyName: 'JetBrains Mono NL' pointSize: 15."
 	self morphExtent: self minimumExtent! !
 
-!TransportMorph methodsFor: 'initialization' stamp: 'len 22/Jun/2026, 11:58:31 am (UTC)'!
+!TransportStatusMorph methodsFor: 'initialization' stamp: 'len 22/Jun/2026, 11:58:31 am (UTC)'!
 setTracker: aTracker
 	tracker := aTracker.
 	tracker when: #playingStatusChanged send: #redrawNeeded to: self! !
@@ -3377,7 +3378,15 @@ label: aString
 noteNames: anArray
 	noteNames := anArray! !
 
-!Tuning methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 9:23:34 am (UTC)'!
+!Tuning methodsFor: 'comparing' stamp: 'len 22/Jun/2026, 9:20:21 pm (UTC)'!
+= aTuning
+	^ self class = aTuning class and: [intervals = aTuning intervals]! !
+
+!Tuning methodsFor: 'comparing' stamp: 'len 22/Jun/2026, 9:20:29 pm (UTC)'!
+hash
+	^ intervals hash! !
+
+!Tuning methodsFor: 'printing' stamp: 'len 22/Jun/2026, 9:23:34 am (UTC)'!
 printOn: aStream
 	aStream nextPutAll: (label ifNil: [^ super printOn: aStream])! !
 

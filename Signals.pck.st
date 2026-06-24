@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 23 June 2026 at 3:00:22 pm'!
+'From Cuis7.9 [latest update: #8014] on 25 June 2026 at 12:40:29 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 615!
+!provides: 'Signals' 1 617!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1074,6 +1074,16 @@ ControlMorph subclass: #AttackControlMorph
 AttackControlMorph class
 	instanceVariableNames: ''!
 
+!classDefinition: #CircularControlMorph category: #'Signals-Morphic-Controls'!
+ControlMorph subclass: #CircularControlMorph
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Controls'!
+!classDefinition: 'CircularControlMorph class' category: #'Signals-Morphic-Controls'!
+CircularControlMorph class
+	instanceVariableNames: ''!
+
 !classDefinition: #DecayControlMorph category: #'Signals-Morphic-Controls'!
 ControlMorph subclass: #DecayControlMorph
 	instanceVariableNames: ''
@@ -1112,16 +1122,6 @@ ControlMorph subclass: #OscilloscopeControlMorph
 	category: 'Signals-Morphic-Controls'!
 !classDefinition: 'OscilloscopeControlMorph class' category: #'Signals-Morphic-Controls'!
 OscilloscopeControlMorph class
-	instanceVariableNames: ''!
-
-!classDefinition: #PhaseOffsetControlMorph category: #'Signals-Morphic-Controls'!
-ControlMorph subclass: #PhaseOffsetControlMorph
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Controls'!
-!classDefinition: 'PhaseOffsetControlMorph class' category: #'Signals-Morphic-Controls'!
-PhaseOffsetControlMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #PulseWidthControlMorph category: #'Signals-Morphic-Controls'!
@@ -1426,7 +1426,7 @@ ScrollerMorph class
 
 !classDefinition: #ToggleButtonMorph category: #'Signals-Morphic-Support'!
 BoxMorph subclass: #ToggleButtonMorph
-	instanceVariableNames: 'label color font state'
+	instanceVariableNames: 'icon label color font state'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Support'!
@@ -1932,6 +1932,16 @@ Object subclass: #Bus
 	category: 'Signals-IO'!
 !classDefinition: 'Bus class' category: #'Signals-IO'!
 Bus class
+	instanceVariableNames: ''!
+
+!classDefinition: #Icon category: #'Signals-Morphic-Support'!
+Object subclass: #Icon
+	instanceVariableNames: 'path'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Support'!
+!classDefinition: 'Icon class' category: #'Signals-Morphic-Support'!
+Icon class
 	instanceVariableNames: ''!
 
 
@@ -4045,14 +4055,14 @@ patchable
 		addAudioOutput: #setOutputBPN: label: 'BPN'.
 	^ answer! !
 
-!SVF methodsFor: 'ui' stamp: 'len 20/Jun/2026, 11:59:57 am (UTC)'!
+!SVF methodsFor: 'ui' stamp: 'len 24/Jun/2026, 3:45:17 pm (UTC)'!
 rackable
 	| answer |
 	answer := RackableMorph new model: self.
 	answer addRow: self screen.
 	answer addRow
-		addTextualControl: (controls at: #frequency);
-		addTextualControl: (controls at: #Q).
+		addKnob: (controls at: #frequency) label: 'Freq';
+		addKnob: (controls at: #Q) label: 'Q'.
 	^ answer! !
 
 !SVF methodsFor: 'ui' stamp: 'len 11/Apr/2026, 8:59:30 pm (UTC)'!
@@ -6599,12 +6609,12 @@ patchable
 		addControlOutput.
 	^ answer! !
 
-!Envelope methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:41:49 pm (UTC)'!
+!Envelope methodsFor: 'ui' stamp: 'len 24/Jun/2026, 5:37:20 pm (UTC)'!
 rackable
 	| answer |
 	answer := RackableMorph new model: self.
 	answer addRow addMorph: self screen; addMorph: self panelRight.
-	answer addRow: (self panelBottom separation: 0 @ 8).
+	answer addRow: (self panelBottom gap: 0).
 	^ answer! !
 
 !Envelope methodsFor: 'wiring' stamp: 'len 17/Jun/2026, 4:10:34 pm (UTC)'!
@@ -7246,20 +7256,20 @@ patchable
 		addControlOutput.
 	^ answer! !
 
-!LFO methodsFor: 'ui' stamp: 'len 22/Jun/2026, 9:13:40 pm (UTC)'!
+!LFO methodsFor: 'ui' stamp: 'len 23/Jun/2026, 10:53:45 am (UTC)'!
 rackable
 	| answer |
 	answer := RackableMorph new model: self.
-	answer addRow: self screen.
+	answer addRow
+		addMorph: self screen;
+		addMorph:
+			(ControlPanel newColumn
+				addMorph: (ToggleButtonMorph new state: bipolar; when: #changed: send: #bipolar: to: self; receive: #state: from: self when: #bipolarChanged:; label: '±'; setBalloonText: 'Bipolar');
+				addMorph: (PulldownListMorph new state: mode; when: #changed: send: #mode: to: self; receive: #state: from: self when: #modeChanged:; options: #(Free Reset Hold); labels: #(F R H); setBalloonText: 'Mode')).
 	answer addRow
 		addMorph: (LFOShapeMorph new lfo: self);
-"		addMorph: (LFOWaveMorph new lfo: self);"
+		addMorph: (CircularControlMorph new control: (controls at: #offset));
 		addTextualControl: (controls at: #speed).
-"	answer flap addMorph:
-		(ControlPanel new gap: 0;
-			addTextualControl: (controls at: #offset);
-		addMorph: (ToggleButtonMorph new state: bipolar; when: #changed: send: #bipolar: to: self; receive: #state: from: self when: #bipolarChanged:; label: '±'; setBalloonText: 'Bipolar');
-		addMorph: (PulldownListMorph new state: mode; when: #changed: send: #mode: to: self; receive: #state: from: self when: #modeChanged:; options: #(Free Reset Hold); setBalloonText: 'Mode'))."
 	^ answer! !
 
 !LFO methodsFor: 'ui' stamp: 'len 2/Jun/2026, 8:15:08 pm (UTC)'!
@@ -7929,7 +7939,7 @@ tick
 	phase := phase \\ twoPi.
 	self triggerEvent: #lfo: with: phase sin! !
 
-!Phaser methodsFor: 'ui' stamp: 'len 30/Apr/2026, 9:26:13 am (UTC)'!
+!Phaser methodsFor: 'ui' stamp: 'len 23/Jun/2026, 4:46:04 pm (UTC)'!
 panel
 	^ ControlPanel new
 		addSmallKnob: (controls at: #speed) label: 'Speed';
@@ -8238,14 +8248,14 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!BPF methodsFor: 'ui' stamp: 'len 20/Jun/2026, 12:01:33 pm (UTC)'!
+!BPF methodsFor: 'ui' stamp: 'len 24/Jun/2026, 3:45:53 pm (UTC)'!
 rackable
 	| answer |
 	answer := RackableMorph new model: self.
 	answer addRow: self screen.
 	answer addRow
-		addTextualControl: (controls at: #frequency);
-		addTextualControl: (controls at: #bandwidth).
+		addKnob: (controls at: #frequency) label: 'Freq';
+		addKnob: (controls at: #bandwidth) label: 'BW'.
 	^ answer! !
 
 !BPF methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:03:46 pm (UTC)'!
@@ -8291,14 +8301,14 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!BSF methodsFor: 'ui' stamp: 'len 20/Jun/2026, 12:01:23 pm (UTC)'!
+!BSF methodsFor: 'ui' stamp: 'len 24/Jun/2026, 3:46:26 pm (UTC)'!
 rackable
 	| answer |
 	answer := RackableMorph new model: self.
 	answer addRow: self screen.
 	answer addRow
-		addTextualControl: (controls at: #frequency);
-		addTextualControl: (controls at: #bandwidth).
+		addKnob: (controls at: #frequency) label: 'Freq';
+		addKnob: (controls at: #bandwidth) label: 'BW'.
 	^ answer! !
 
 !BSF methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:03:59 pm (UTC)'!
@@ -8453,14 +8463,14 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!HPF methodsFor: 'ui' stamp: 'len 20/Jun/2026, 12:00:49 pm (UTC)'!
+!HPF methodsFor: 'ui' stamp: 'len 24/Jun/2026, 3:46:47 pm (UTC)'!
 rackable
 	| answer |
 	answer := RackableMorph new model: self.
 	answer addRow: self screen.
 	answer addRow
-		addTextualControl: (controls at: #frequency);
-		addTextualControl: (controls at: #Q).
+		addKnob: (controls at: #frequency) label: 'Freq';
+		addKnob: (controls at: #Q) label: 'Q'.
 	^ answer! !
 
 !HPF methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:04:12 pm (UTC)'!
@@ -8506,14 +8516,14 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!LPF methodsFor: 'ui' stamp: 'len 20/Jun/2026, 12:00:30 pm (UTC)'!
+!LPF methodsFor: 'ui' stamp: 'len 24/Jun/2026, 3:47:04 pm (UTC)'!
 rackable
 	| answer |
 	answer := RackableMorph new model: self.
 	answer addRow: self screen.
 	answer addRow
-		addTextualControl: (controls at: #frequency);
-		addTextualControl: (controls at: #Q).
+		addKnob: (controls at: #frequency) label: 'Freq';
+		addKnob: (controls at: #Q) label: 'Q'.
 	^ answer! !
 
 !LPF methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:04:29 pm (UTC)'!
@@ -8751,14 +8761,14 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!Korg35HPF methodsFor: 'ui' stamp: 'len 20/Jun/2026, 12:02:05 pm (UTC)'!
+!Korg35HPF methodsFor: 'ui' stamp: 'len 24/Jun/2026, 3:47:29 pm (UTC)'!
 rackable
 	| answer |
 	answer := RackableMorph new model: self.
 	answer addRow: self screen.
 	answer addRow
-		addTextualControl: (controls at: #frequency);
-		addTextualControl: (controls at: #resonance).
+		addKnob: (controls at: #frequency) label: 'Freq';
+		addKnob: (controls at: #resonance) label: 'Res'.
 	^ answer! !
 
 !Korg35HPF methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:04:44 pm (UTC)'!
@@ -8832,14 +8842,14 @@ patchable
 		addAudioOutput: #setOutput:.
 	^ answer! !
 
-!Korg35LPF methodsFor: 'ui' stamp: 'len 20/Jun/2026, 12:02:08 pm (UTC)'!
+!Korg35LPF methodsFor: 'ui' stamp: 'len 24/Jun/2026, 3:47:41 pm (UTC)'!
 rackable
 	| answer |
 	answer := RackableMorph new model: self.
 	answer addRow: self screen.
 	answer addRow
-		addTextualControl: (controls at: #frequency);
-		addTextualControl: (controls at: #resonance).
+		addKnob: (controls at: #frequency) label: 'Freq';
+		addKnob: (controls at: #resonance) label: 'Res'.
 	^ answer! !
 
 !Korg35LPF methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:04:58 pm (UTC)'!
@@ -8906,7 +8916,7 @@ patchable
 		addControlInput: #rate;
 		yourself! !
 
-!Decimator methodsFor: 'ui' stamp: 'len 20/Jun/2026, 2:03:29 pm (UTC)'!
+!Decimator methodsFor: 'ui' stamp: 'len 24/Jun/2026, 3:42:28 pm (UTC)'!
 rackable
 	| answer |
 	answer := RackableMorph new model: self.
@@ -10686,14 +10696,14 @@ patchable
 		addAudioOutput: #setOutputLP1: label: 'LP1'.
 	^ answer! !
 
-!MoogLadder methodsFor: 'ui' stamp: 'len 20/Jun/2026, 12:02:23 pm (UTC)'!
+!MoogLadder methodsFor: 'ui' stamp: 'len 24/Jun/2026, 3:39:58 pm (UTC)'!
 rackable
 	| answer |
 	answer := RackableMorph new model: self.
 	answer addRow: self screen.
 	answer addRow
-		addTextualControl: (controls at: #frequency);
-		addTextualControl: (controls at: #resonance).
+		addKnob: (controls at: #frequency) label: 'Freq';
+		addKnob: (controls at: #resonance) label: 'Res'.
 	^ answer! !
 
 !MoogLadder methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:06:29 pm (UTC)'!
@@ -10781,14 +10791,14 @@ patchable
 		addAudioOutput: #setOutputBS: label: 'BS'.
 	^ answer! !
 
-!OberheimSVF methodsFor: 'ui' stamp: 'len 20/Jun/2026, 12:02:33 pm (UTC)'!
+!OberheimSVF methodsFor: 'ui' stamp: 'len 24/Jun/2026, 3:48:01 pm (UTC)'!
 rackable
 	| answer |
 	answer := RackableMorph new model: self.
 	answer addRow: self screen.
 	answer addRow
-		addTextualControl: (controls at: #frequency);
-		addTextualControl: (controls at: #resonance).
+		addKnob: (controls at: #frequency) label: 'Freq';
+		addKnob: (controls at: #resonance) label: 'Res'.
 	^ answer! !
 
 !OberheimSVF methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:06:42 pm (UTC)'!
@@ -11322,6 +11332,21 @@ drawOn: aCanvas
 			quadraticBezierTo: h + 2.0 - a @ (h + 2.0) control: h + 2.0 - (a/3.0) @ (h + 2.0);
 			lineTo: 2.0 @ (h + 2.0)]! !
 
+!CircularControlMorph methodsFor: 'initialization' stamp: 'len 25/Apr/2026, 8:37:01 am (UTC)'!
+defaultExtent
+	^ `24 @ 24`! !
+
+!CircularControlMorph methodsFor: 'drawing' stamp: 'len 23/Jun/2026, 10:51:47 am (UTC)'!
+drawOn: aCanvas
+	| v center radius |
+	v := control basePosition + control modulation min: 1.0 max: 0.0.
+	center := self morphExtent / 2.0.
+	radius := center - 2.0.
+	aCanvas strokeWidth: 1.0 color: self inactiveColor do:
+		[aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: 0.0 sweep: Float twoPi].
+	aCanvas strokeWidth: 2.0 color: color do:
+		[aCanvas arcCenter: center radius: radius - 0.5 rotationAngle: Float halfPi start: 0.0 sweep: Float twoPi * v]! !
+
 !DecayControlMorph methodsFor: 'initialization' stamp: 'len 28/Apr/2026, 12:03:25 pm (UTC)'!
 defaultExtent
 	^ `24 @ 24`! !
@@ -11430,21 +11455,6 @@ mouseScroll: anEvent localPosition: localEventPosition
 			[anEvent shiftPressed ifTrue: [control adjustFineDown] ifFalse: [control adjustDown]].
 	self wantsBalloon ifTrue: [self showBalloon]! !
 
-!PhaseOffsetControlMorph methodsFor: 'initialization' stamp: 'len 25/Apr/2026, 8:37:01 am (UTC)'!
-defaultExtent
-	^ `24 @ 24`! !
-
-!PhaseOffsetControlMorph methodsFor: 'drawing' stamp: 'len 25/Apr/2026, 8:39:48 am (UTC)'!
-drawOn: aCanvas
-	| v center radius |
-	v := control basePosition + control modulation min: 1.0 max: 0.0.
-	center := self morphExtent / 2.0.
-	radius := center - 1.
-	aCanvas strokeWidth: 1.0 color: color do:
-		[aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: 0.0 sweep: Float twoPi].
-	aCanvas strokeWidth: 3.0 color: color do:
-		[aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: 0.0 sweep: Float twoPi * v]! !
-
 !PulseWidthControlMorph methodsFor: 'drawing' stamp: 'len 1/May/2026, 2:50:58 pm (UTC)'!
 drawOn: aCanvas
 	| p |
@@ -11460,6 +11470,10 @@ defaultExtent
 initialize
 	super initialize.
 	color := PatchMorph waveformColor! !
+
+!PulseWidthControlMorph methodsFor: 'initialization' stamp: 'len 24/Jun/2026, 5:17:26 pm (UTC)'!
+minimumExtent
+	^ self defaultExtent! !
 
 !QuantizerControlMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026, 2:08:33 pm (UTC)'!
 blackKeyHeight
@@ -11555,53 +11569,45 @@ toggleKey: key
 whiteKeyWidth
 	^ self morphWidth / 7.0! !
 
-!SliderControlMorph methodsFor: 'drawing' stamp: 'len 13/Feb/2026, 12:59:57 pm (UTC)'!
+!SliderControlMorph methodsFor: 'drawing' stamp: 'len 23/Jun/2026, 4:30:00 pm (UTC)'!
 drawHorizontalOn: aCanvas
-	| v vMod w h basePos modulatedPos |
+	| v vMod w h basePos modulatedPos mid |
 	v := control basePosition.
 	vMod := v + control modulation min: 1.0 max: 0.0.
 	w := self morphWidth.
 	h := self morphHeight.
-	basePos := w - 1 * v.
-	modulatedPos := w - 1 * vMod.
+	mid := h / 2.0.
+	basePos := w - 6 * v.
+	modulatedPos := w - 6 * vMod.
+	aCanvas line: 3 @ mid to: w - 3 @ mid width: 4 color: self inactiveColor.
 	control isBipolar
-		ifTrue:
-			[aCanvas
-				fillRectangle: (0 @ 8 corner: w @ (h - 8)) color: self inactiveColor;
-				fillRectangle: (w / 2.0 @ 8 corner: modulatedPos @ (h - 8)) color: color]
-		ifFalse:
-			[aCanvas
-				fillRectangle: (0 @ 8 corner: modulatedPos @ (h - 8)) color: color;
-				fillRectangle: (modulatedPos @ 8 corner: w @ (h - 8)) color: self inactiveColor].
-	aCanvas line: basePos @ 8 to: basePos @ (h - 8) width: 3 color: color! !
+		ifTrue: [aCanvas fillRectangle: (w / 2.0 @ (mid - 2) corner: modulatedPos + 3 @ (mid + 2)) color: color]
+		ifFalse: [aCanvas line: 3 @ mid to: modulatedPos + 3 @ mid width: 4 color: color].
+	aCanvas line: basePos + 3 @ 10 to: basePos + 3 @ (h - 10) width: 4 color: color! !
 
 !SliderControlMorph methodsFor: 'drawing' stamp: 'len 14/Oct/2025, 8:55:00 am (UTC)'!
 drawOn: aCanvas
 	self isHorizontal ifTrue: [self drawHorizontalOn: aCanvas] ifFalse: [self drawVerticalOn: aCanvas]! !
 
-!SliderControlMorph methodsFor: 'drawing' stamp: 'len 13/Feb/2026, 1:04:55 pm (UTC)'!
+!SliderControlMorph methodsFor: 'drawing' stamp: 'len 23/Jun/2026, 4:36:56 pm (UTC)'!
 drawVerticalOn: aCanvas
-	| v vMod w h basePos modulatedPos |
+	| v vMod w h basePos modulatedPos mid |
 	v := control basePosition.
 	vMod := v + control modulation min: 1.0 max: 0.0.
 	w := self morphWidth.
 	h := self morphHeight.
-	basePos := h - 1 * (1.0 - v).
-	modulatedPos := h - 1 * (1.0 - vMod).
+	mid := w / 2.0.
+	basePos := h - 6 * (1.0 - v).
+	modulatedPos := h - 6 * (1.0 - vMod).
+	aCanvas line: mid @ 3 to: mid @ (h - 3) width: 4 color: self inactiveColor.
 	control isBipolar
-		ifTrue:
-			[aCanvas
-				fillRectangle: (8 @ 0 corner: w - 8 @ h) color: self inactiveColor;
-				fillRectangle: (8 @ modulatedPos corner: w - 8 @ (h / 2.0)) color: color]
-		ifFalse:
-			[aCanvas
-				fillRectangle: (8 @ 0 corner: w - 8 @ modulatedPos) color: self inactiveColor;
-				fillRectangle: (8 @ modulatedPos corner: w - 8 @ h) color: color].
-		aCanvas line: 8 @ basePos to: w - 8 @ basePos width: 3 color: color! !
+		ifTrue: [aCanvas fillRectangle: (mid - 2 @ (h / 2.0) corner: mid + 2 @ (modulatedPos + 3)) color: color]
+		ifFalse: [aCanvas line: mid @ (h - 3) to: mid @ (modulatedPos + 3) width: 4 color: color].
+	aCanvas line: 10 @ (basePos + 3) to: (w - 10) @ (basePos + 3) width: 4 color: color! !
 
-!SliderControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026, 8:21:32 am (UTC)'!
+!SliderControlMorph methodsFor: 'initialization' stamp: 'len 23/Jun/2026, 4:17:26 pm (UTC)'!
 defaultExtent
-	^ `24 @ 48`! !
+	^ `24 @ 36`! !
 
 !SliderControlMorph methodsFor: 'initialization' stamp: 'len 20/Jan/2026, 7:47:24 am (UTC)'!
 transpose
@@ -11682,6 +11688,10 @@ initialize
 	phases := {0.0. 0.1. 0.2. 0.3. 0.4. 0.5. 0.6}.
 	self control: (Control min: 0.0 max: 1.0 value: 0.0)! !
 
+!SupersawControlMorph methodsFor: 'initialization' stamp: 'len 24/Jun/2026, 5:18:11 pm (UTC)'!
+minimumExtent
+	^ self defaultExtent! !
+
 !SupersawControlMorph methodsFor: 'initialization' stamp: 'len 7/Jan/2026, 8:06:02 am (UTC)'!
 phases: anArray
 	phases := anArray! !
@@ -11719,31 +11729,37 @@ control: aControl
 	super control: aControl.
 	self updateContents! !
 
+!TextualControlMorph methodsFor: 'accessing' stamp: 'len 24/Jun/2026, 1:00:42 pm (UTC)'!
+font: aFont
+	font := aFont.
+	self morphExtent: self minimumExtent! !
+
 !TextualControlMorph methodsFor: 'dependency mechanism' stamp: 'len 7/Jun/2026, 1:21:47 pm (UTC)'!
 update: anObject
 	super update: anObject.
 	self updateContents! !
 
-!TextualControlMorph methodsFor: 'drawing' stamp: 'len 19/Jan/2026, 1:08:35 pm (UTC)'!
+!TextualControlMorph methodsFor: 'drawing' stamp: 'len 24/Jun/2026, 2:14:56 pm (UTC)'!
 drawOn: aCanvas
+"	super drawOn: aCanvas."
 "	aCanvas roundRect: (0@0 extent: self minimumExtent) color: color radius: 6."
 "	self hasKeyboardFocus ifTrue: [aCanvas fillRectangle: self localBounds color: (Color redCathode alpha: 0.3)]."
-	aCanvas drawString: contents at: 3 @ 0 font: font color: color.
+	aCanvas drawString: contents at: 3 @ 3 font: font color: color.
 	self hasKeyboardFocus ifTrue:
 		[| y |
-		y := font ascent + 2.
-		aCanvas line: 3 @ y to: (font widthOfString: contents) + 3 @ y width: 2 color: color]
+		y := font ascent + 6.
+		aCanvas line: 3 @ y to: (font widthOfString: contents) + 6 @ y width: 2 color: color]
 "	self hasKeyboardFocus ifTrue: [self drawFocusIndicatorOn: aCanvas]"! !
 
-!TextualControlMorph methodsFor: 'geometry' stamp: 'len 1/Dec/2025, 11:44:00 am (UTC)'!
+!TextualControlMorph methodsFor: 'geometry' stamp: 'len 24/Jun/2026, 1:55:17 pm (UTC)'!
 minimumExtent
-	^ (font widthOfString: contents) + 6 @ font lineSpacing! !
+	^ (font widthOfString: contents) @ font lineSpacing + 6! !
 
 !TextualControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026, 8:21:12 am (UTC)'!
 defaultExtent
 	^ `24 @ 24`! !
 
-!TextualControlMorph methodsFor: 'initialization' stamp: 'len 1/Dec/2025, 5:10:00 am (UTC)'!
+!TextualControlMorph methodsFor: 'initialization' stamp: 'len 24/Jun/2026, 1:58:26 pm (UTC)'!
 initialize
 	super initialize.
 	font := FontFamily defaultFamilyPointSize: self defaultFontSize.
@@ -11847,6 +11863,10 @@ initialize
 	currentPosition := 0.0.
 	color := PatchMorph waveformColor.
 	drawMode := #isometric! !
+
+!WavetableControlMorph methodsFor: 'initialization' stamp: 'len 24/Jun/2026, 5:25:03 pm (UTC)'!
+minimumExtent
+	^ self defaultExtent! !
 
 !WavetableControlMorph methodsFor: 'initialization' stamp: 'len 29/Mar/2026, 9:36:03 am (UTC)'!
 table: aBuffer frameSize: anInteger
@@ -12355,9 +12375,10 @@ drawOn: aCanvas frequency: freq Y: yParameter color: aColor fillColor: fillColor
 notchWidth
 	^ 80.0! !
 
-!FilterControlMorph methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 12:16:45 pm (UTC)'!
+!FilterControlMorph methodsFor: 'initialization' stamp: 'len 24/Jun/2026, 3:43:24 pm (UTC)'!
 defaultExtent
-	^ `144 @ 92` "96 makes more sense, it's 48*2"! !
+	^ `128 @ 64`
+"	^ `144 @ 92`" "96 makes more sense, it's 48*2"! !
 
 !FilterControlMorph methodsFor: 'initialization' stamp: 'len 6/Dec/2025, 7:26:58 am (UTC)'!
 frequency: aControl
@@ -12367,6 +12388,10 @@ frequency: aControl
 initialize
 	super initialize.
 	color := Color white! !
+
+!FilterControlMorph methodsFor: 'initialization' stamp: 'len 24/Jun/2026, 5:19:00 pm (UTC)'!
+minimumExtent
+	^ self defaultExtent! !
 
 !FilterControlMorph methodsFor: 'initialization' stamp: 'len 10/Mar/2026, 7:36:39 am (UTC)'!
 mode: aSymbol
@@ -13048,9 +13073,9 @@ addRow
 	self addRow: row.
 	^ row! !
 
-!RackableMorph methodsFor: 'accessing' stamp: 'len 19/Jun/2026, 5:22:00 pm (UTC)'!
+!RackableMorph methodsFor: 'accessing' stamp: 'len 24/Jun/2026, 4:51:17 pm (UTC)'!
 addRow: aMorph
-	self body addMorph: aMorph "layoutSpec: LayoutSizeSpec keepMorphExtent"! !
+	self body addMorph: aMorph layoutSpec: LayoutSizeSpec new useMorphHeight! !
 
 !RackableMorph methodsFor: 'accessing' stamp: 'len 18/Jun/2026, 11:53:53 am (UTC)'!
 body
@@ -13125,13 +13150,13 @@ minimumExtent
 	m2 := title minimumExtent.
 	^ (m1 x max: m2 x) @ (m1 y + m2 y)! !
 
-!RackableMorph methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 7:09:22 pm (UTC)'!
+!RackableMorph methodsFor: 'initialization' stamp: 'len 24/Jun/2026, 2:20:25 pm (UTC)'!
 initialize
 	super initialize.
 "	self gap: 1; color: Color transparent; borderWidth: 0."
 	title := (LabelMorph contents: '' fontSize: 12 emphasis: 1) color: Color veryLightGray.
 	self addMorph: title position: 0 @ 0.
-	body := RoundedLinearLayoutMorph newColumn gap: 4; padding: 4 @ 4; borderWidth: 1; borderColor: Color lightGray; color: PatchMorph panelColor; axisEdgeWeight: 0.5.
+	body := RoundedLinearLayoutMorph newColumn gap: 10; padding: 4 @ 0; borderWidth: 1; borderColor: Color lightGray; color: PatchMorph panelColor; axisEdgeWeight: 0.5.
 	self addMorph: body position: 0 @ title minimumExtent y.
 	flap := RoundedLinearLayoutMorph newColumn gap: 10; padding: 4 @ 8; "borderWidth: 0; borderColor: Color lightGray; color: PatchMorph panelColor" color: (Color darkGray alpha: 0.7).
 	self addMorph: flap.
@@ -13141,6 +13166,10 @@ initialize
 color: aColor
 	color := aColor.
 	self redrawNeeded! !
+
+!PulldownListMorph methodsFor: 'accessing' stamp: 'len 24/Jun/2026, 1:01:16 pm (UTC)'!
+font: aFont
+	font := aFont! !
 
 !PulldownListMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 6:34:53 pm (UTC)'!
 inactiveColor
@@ -13171,7 +13200,7 @@ moveDown
 moveUp
 	self state: (options atPin: (options indexOf: state ifAbsent: [^ self]) - 1)! !
 
-!PulldownListMorph methodsFor: 'drawing' stamp: 'len 22/Jun/2026, 12:04:24 pm (UTC)'!
+!PulldownListMorph methodsFor: 'drawing' stamp: 'len 24/Jun/2026, 2:15:34 pm (UTC)'!
 drawOn: aCanvas
 	| label |
 "	aCanvas
@@ -13182,17 +13211,11 @@ drawOn: aCanvas
 		ifTrue: [state asString]
 		ifFalse: [labels at: (options indexOf: state)].
 	aCanvas
-"		frameRectangle: (0@0 extent: self minimumExtent) borderWidth: 1 color: color cornerRadius: 6;"
-		drawString: label at: 3@0 font: font color: color.
-"	aCanvas frameRectangle: (0@0 extent: self minimumExtent) borderWidth: 1 color: color.
-	aCanvas drawString: string asString at: 3 @ 0 font: font color: color.
-	aCanvas
-		roundRect: (0 @ 0 extent: self minimumExtent) color: color radius: 6;
-		drawString: string asString at: 3 @ 0 font: font color: Color black."
+		drawString: label at: 3 @ 3 font: font color: color.
 	self hasKeyboardFocus ifTrue:
 		[| y |
-		y := font ascent + 2.
-		aCanvas line: 3 @ y to: (font widthOfString: label) + 3 @ y width: 2 color: color]! !
+		y := font ascent + 6.
+		aCanvas line: 3 @ y to: (font widthOfString: label) + 6 @ y width: 2 color: color]! !
 
 !PulldownListMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 6:34:34 pm (UTC)'!
 handlesMouseDown: anEvent
@@ -13239,9 +13262,9 @@ mouseScroll: aMouseEvent localPosition: localEventPosition
 keyboardFocusChange: aBoolean
 	self redrawNeeded! !
 
-!PulldownListMorph methodsFor: 'geometry' stamp: 'len 22/Jun/2026, 12:05:30 pm (UTC)'!
+!PulldownListMorph methodsFor: 'geometry' stamp: 'len 24/Jun/2026, 2:03:42 pm (UTC)'!
 minimumExtent
-	^ ((labels ifNil: [options collect: [:each| each asString]]) max: [:each| font widthOfString: each asString]) + 6 @ font lineSpacing! !
+	^ ((labels ifNil: [options collect: [:each| each asString]]) max: [:each| font widthOfString: each asString]) @ font lineSpacing + 6! !
 
 !PulldownListMorph methodsFor: 'geometry' stamp: 'len 21/Jun/2026, 6:34:34 pm (UTC)'!
 requiresVectorCanvas
@@ -13266,9 +13289,15 @@ color: aColor
 	color := aColor.
 	self redrawNeeded! !
 
-!PushButtonMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 7:28:15 pm (UTC)'!
+!PushButtonMorph methodsFor: 'accessing' stamp: 'len 23/Jun/2026, 6:55:31 pm (UTC)'!
+font: aFont
+	font := aFont.
+	self morphExtent: self minimumExtent! !
+
+!PushButtonMorph methodsFor: 'accessing' stamp: 'len 23/Jun/2026, 6:55:44 pm (UTC)'!
 label: aString
 	label := aString.
+	self morphExtent: self minimumExtent.
 	self redrawNeeded! !
 
 !PushButtonMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:39:39 pm (UTC)'!
@@ -13281,7 +13310,7 @@ buttonUpAlarm
 	isPressed := false.
 	self redrawNeeded! !
 
-!PushButtonMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 10:03:30 pm (UTC)'!
+!PushButtonMorph methodsFor: 'drawing' stamp: 'len 24/Jun/2026, 2:15:59 pm (UTC)'!
 drawOn: aCanvas
 	| fillColor availableW center l labelMargin w x y |
 	fillColor := isPressed ifTrue: [color adjustSaturation: 0.1 brightness: -0.15] ifFalse: [isHovered ifTrue: [Color h: color hue s: color saturation * 1.2 v: color brightness * 0.92] ifFalse: [color]].
@@ -13298,11 +13327,7 @@ drawOn: aCanvas
 			[x := labelMargin. l := label squeezedTo: (label size * availableW / w) rounded].
 	y := center y - (font lineSpacing // 2).
 	isPressed ifTrue: [x := x + 1. y := y + 1].
-	aCanvas drawString: l at: x @ y font: font color: labelColor.
-"	self hasKeyboardFocus ifTrue:
-		[| y |
-		y := font ascent + 2.
-		aCanvas line: 3 @ y to: (font widthOfString: label) + 3 @ y width: 2 color: labelColor]"! !
+	aCanvas drawString: l at: x @ y font: font color: labelColor! !
 
 !PushButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 7:28:15 pm (UTC)'!
 handlesMouseDown: anEvent
@@ -13555,9 +13580,21 @@ color: aColor
 	color := aColor.
 	self redrawNeeded! !
 
-!ToggleButtonMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 6:31:53 pm (UTC)'!
+!ToggleButtonMorph methodsFor: 'accessing' stamp: 'len 23/Jun/2026, 6:56:45 pm (UTC)'!
+font: aFont
+	font := aFont.
+	self morphExtent: self minimumExtent! !
+
+!ToggleButtonMorph methodsFor: 'accessing' stamp: 'len 24/Jun/2026, 11:31:56 am (UTC)'!
+icon: anIcon
+	icon := anIcon.
+	self morphExtent: self minimumExtent.
+	self redrawNeeded! !
+
+!ToggleButtonMorph methodsFor: 'accessing' stamp: 'len 23/Jun/2026, 6:56:59 pm (UTC)'!
 label: aString
 	label := aString.
+	self morphExtent: self minimumExtent.
 	self redrawNeeded! !
 
 !ToggleButtonMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 6:33:48 pm (UTC)'!
@@ -13575,20 +13612,44 @@ moveDown
 moveUp
 	self state: true! !
 
-!ToggleButtonMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 6:27:49 pm (UTC)'!
+!ToggleButtonMorph methodsFor: 'drawing' stamp: 'len 24/Jun/2026, 12:49:26 pm (UTC)'!
 backgroundColor
-	^ Color gray! !
+	^ self hasKeyboardFocus ifTrue: [Color gray lighter] ifFalse: [Color gray]! !
 
-!ToggleButtonMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 6:27:28 pm (UTC)'!
+!ToggleButtonMorph methodsFor: 'drawing' stamp: 'len 24/Jun/2026, 5:08:03 pm (UTC)'!
 drawOn: aCanvas
-	| labelColor |
+	| backgroundColor foregroundColor x |
+	state = true
+		ifTrue:
+			[foregroundColor := Color black.
+			backgroundColor := color]
+		ifFalse:
+			[foregroundColor := color.
+			backgroundColor := self backgroundColor].
+	aCanvas fillRectangle: (1@1 corner: extent - 1) color: backgroundColor cornerRadius: 4.0.
+	x := 3.
+	icon ifNotNil:
+		[icon drawOn: aCanvas at: x @ 3 height: extent y - 6 "font lineSpacing" color: foregroundColor.
+		x := x + extent y].
+	label ifNotNil: 
+		[aCanvas drawString: label at: x - 1 @ 0 font: font color: foregroundColor].
+	state = false ifTrue: [aCanvas frameRectangle: (0@0 corner: extent) borderWidth: 1 color: Color lightGray cornerRadius: 4.0]! !
+
+!ToggleButtonMorph methodsFor: 'drawing' stamp: 'len 24/Jun/2026, 4:52:23 pm (UTC)'!
+drawOn2: aCanvas
+	| labelColor x |
 	aCanvas fillRectangle: (0@0 extent: self minimumExtent) color: self backgroundColor cornerRadius: 4.0.
 	labelColor := state = true ifTrue: [color] ifFalse: [self inactiveColor].
-	aCanvas drawString: label at: 2 @ 1 font: font color: labelColor.
-	self hasKeyboardFocus ifTrue:
-		[| y |
-		y := font ascent + 2.
-		aCanvas line: 3 @ y to: (font widthOfString: label) + 3 @ y width: 2 color: labelColor]! !
+	x := 3.
+	icon ifNotNil:
+		[icon drawOn: aCanvas at: x @ 3 height: extent y - 6 "font lineSpacing" color: labelColor.
+		x := x + extent y].
+	label ifNotNil: 
+		[aCanvas drawString: label at: x - 1 @ 1 font: font color: labelColor.
+"		self hasKeyboardFocus ifTrue:
+			[| y |
+			y := font ascent + 2.
+			aCanvas line: x+1 @ y to: extent x - 3 @ y width: 2 color: labelColor]"]! !
 
 !ToggleButtonMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 6:25:55 pm (UTC)'!
 inactiveColor
@@ -13638,9 +13699,13 @@ mouseScroll: aMouseEvent localPosition: localEventPosition
 keyboardFocusChange: aBoolean
 	self redrawNeeded! !
 
-!ToggleButtonMorph methodsFor: 'geometry' stamp: 'len 21/Jun/2026, 6:25:06 pm (UTC)'!
+!ToggleButtonMorph methodsFor: 'geometry' stamp: 'len 24/Jun/2026, 1:07:38 pm (UTC)'!
 minimumExtent
-	^ (font widthOfString: label) + 6 @ font lineSpacing! !
+	| w h |
+	w := label ifNil: [0] ifNotNil: [(font widthOfString: label) + 6].
+	h := font lineSpacing.
+	icon ifNotNil: [w := w + font lineSpacing + 2. h := h + 2].
+	^ w @ h! !
 
 !ToggleButtonMorph methodsFor: 'geometry' stamp: 'len 21/Jun/2026, 6:25:06 pm (UTC)'!
 requiresVectorCanvas
@@ -13650,7 +13715,7 @@ requiresVectorCanvas
 defaultExtent
 	^ 24 @ 24! !
 
-!ToggleButtonMorph methodsFor: 'initialization' stamp: 'len 21/Jun/2026, 6:25:06 pm (UTC)'!
+!ToggleButtonMorph methodsFor: 'initialization' stamp: 'len 24/Jun/2026, 12:55:28 pm (UTC)'!
 defaultFontSize
 	^ (FontFamily defaultPointSize * 0.8) truncated! !
 
@@ -13667,13 +13732,15 @@ color: aColor
 	color := aColor.
 	self redrawNeeded! !
 
-!TruncatingLabelMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 4:11:00 pm (UTC)'!
+!TruncatingLabelMorph methodsFor: 'accessing' stamp: 'len 23/Jun/2026, 6:57:37 pm (UTC)'!
 font: aFont
-	font := aFont! !
+	font := aFont.
+	self morphExtent: self minimumExtent! !
 
-!TruncatingLabelMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 4:14:40 pm (UTC)'!
+!TruncatingLabelMorph methodsFor: 'accessing' stamp: 'len 23/Jun/2026, 6:58:20 pm (UTC)'!
 label: aString
 	label := aString.
+	self morphExtent: self minimumExtent.
 	self redrawNeeded! !
 
 !TruncatingLabelMorph methodsFor: 'drawing' stamp: 'len 20/Jun/2026, 4:22:41 pm (UTC)'!
@@ -13864,10 +13931,12 @@ clip: aClip
 defaultExtent
 	^ `128 @ 128`! !
 
-!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:05:55 pm (UTC)'!
+!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Jun/2026, 12:09:14 pm (UTC)'!
 drawOn: aCanvas
 	clip ifNil: [^ self].
-	aCanvas image: clip currentFrame at: 0@0! !
+	aCanvas image: clip currentFrame at: 0 @ 0
+"	aCanvas geometryTransformation: (aCanvas currentTransformation scaledBy: -1 @ 1).
+	aCanvas image: clip currentFrame at: extent x negated @ 0"! !
 
 !ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:03:56 pm (UTC)'!
 extentChanged: oldExtent
@@ -14462,6 +14531,10 @@ initialize
 	frequencyScale := #linear.
 	displayMode := #bars! !
 
+!SpectrumMorph methodsFor: 'initialization' stamp: 'len 24/Jun/2026, 5:22:50 pm (UTC)'!
+minimumExtent
+	^ self defaultExtent! !
+
 !StripChartMorph methodsFor: 'accessing' stamp: 'len 12/May/2026, 7:58:18 am (UTC)'!
 addSample: aNumber
 	| x |
@@ -14497,6 +14570,10 @@ initialize
 	readPosition := 0.
 	bipolar := true.
 	downsampleFactor := 5! !
+
+!StripChartMorph methodsFor: 'initialization' stamp: 'len 24/Jun/2026, 5:23:14 pm (UTC)'!
+minimumExtent
+	^ self defaultExtent! !
 
 !StripChartMorph methodsFor: 'drawing' stamp: 'len 12/May/2026, 7:56:16 am (UTC)'!
 drawOn: aCanvas
@@ -14542,6 +14619,10 @@ image: aForm
 	image := aForm.
 	position := 0.
 	self morphExtent: image extent! !
+
+!WaterfallMorph methodsFor: 'as yet unclassified' stamp: 'len 24/Jun/2026, 5:21:07 pm (UTC)'!
+minimumExtent
+	^ image extent! !
 
 !WaterfallMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Apr/2026, 9:44:36 am (UTC)'!
 position: anInteger
@@ -16935,6 +17016,63 @@ mixInto: anAudioBuffer startingAt: startIndex
 			s < -32767 ifTrue: [s := -32767].  "clipping!!"
 			anAudioBuffer at: j put: s].	
 		j := j + 1]! !
+
+!Icon methodsFor: 'as yet unclassified' stamp: 'len 24/Jun/2026, 11:30:06 am (UTC)'!
+display
+	self drawOn: (VectorCanvas onForm: Display) at: 0 @ 0 height: 200 color: Color white.
+	Display forceToScreen! !
+
+!Icon methodsFor: 'as yet unclassified' stamp: 'len 24/Jun/2026, 12:39:42 pm (UTC)'!
+drawOn: aCanvas at: aPoint height: aFloat color: aColor
+	| originalTransformation newTransformation |
+	originalTransformation := aCanvas currentTransformation.
+	newTransformation :=  originalTransformation copy composedWith: (AffineTransformation withScale: aFloat / 960.0 position: aPoint x @ (aPoint y + aFloat)).
+	aCanvas
+		geometryTransformation: newTransformation;
+		fillColor: aColor do: [:canvas| path do: [:each| each runOn: canvas]].
+	aCanvas geometryTransformation: originalTransformation! !
+
+!Icon methodsFor: 'as yet unclassified' stamp: 'len 24/Jun/2026, 9:34:06 am (UTC)'!
+readFrom: aStream
+	| commandToArgumentCount reader lastCommand |
+	commandToArgumentCount := {$M -> 2. $L -> 2. $Q -> 4. $T -> 2. $V -> 1. $H -> 1. $Z -> 0} asDictionary.
+	reader := [:n| (1 to: n) collect: [:i| ((aStream next: 1), (aStream untilAnySatisfying: [:x| x isDigit not and: [x ~= $.]])) withoutLeadingBlanks asNumber]].
+	path := OrderedCollection new.
+	lastCommand := $M.
+	[aStream atEnd] whileFalse:
+		[| arguments command |
+		command := aStream next.
+		(commandToArgumentCount includesKey: command asUppercase) ifFalse:
+			[aStream skipBack.
+			command := lastCommand asUppercase = $M ifTrue: [$L] ifFalse: [lastCommand]].
+		lastCommand := command.
+		arguments := reader value: (commandToArgumentCount at: command asUppercase).
+"		command asString, ' ', (arguments collect: [:each| each asString] andFold: [:a :b| a, ' ', b] ifEmpty: ['']) :: print."
+		path add: (PathCommand from: command stream: (arguments collect: [:each| each asString] andFold: [:a :b| a, ' ', b] ifEmpty: ['']) readStream)]! !
+
+!Icon class methodsFor: 'as yet unclassified' stamp: 'len 24/Jun/2026, 9:25:18 am (UTC)'!
+follow
+	^ self pathData: 'M233.33-161.33 80-315.33l46.67-46L200-290v-470.67h66.67V-290l72.66-71.33 46.67 46-152.67 154Zm252.67-38V-266h394v66.67H486Zm0-247.34v-66.66h394v66.66H486ZM486-694v-66.67h394V-694H486Z'! !
+
+!Icon class methodsFor: 'as yet unclassified' stamp: 'len 24/Jun/2026, 9:15:55 am (UTC)'!
+graph
+	^ self pathData: 'M602.67-120v-123.33h-156V-650H358v126.67H80V-840h278v123.33h244.67V-840H880v316.67H602.67V-650h-89.34v340h89.34v-126.67H880V-120H602.67Zm-456-653.33V-590v-183.33ZM669.33-370v183.33V-370Zm0-403.33V-590v-183.33Zm0 183.33h144v-183.33h-144V-590Zm0 403.33h144V-370h-144v183.33ZM146.67-590h144.66v-183.33H146.67V-590Z'! !
+
+!Icon class methodsFor: 'as yet unclassified' stamp: 'len 24/Jun/2026, 3:10:57 pm (UTC)'!
+mixer
+	^ self pathData: 'M200-160v-280h-80v-80h240v80h-80v280h-80Zm0-440v-200h80v200h-80Zm160 0v-80h80v-120h80v120h80v80H360Zm80 440v-360h80v360h-80Zm240 0v-120h-80v-80h240v80h-80v120h-80Zm0-280v-360h80v360h-80Z'! !
+
+!Icon class methodsFor: 'as yet unclassified' stamp: 'len 24/Jun/2026, 9:00:27 am (UTC)'!
+pathData: aString
+	^ self new readFrom: aString readStream! !
+
+!Icon class methodsFor: 'as yet unclassified' stamp: 'len 24/Jun/2026, 9:15:40 am (UTC)'!
+piano
+	^ self pathData: 'M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h130v-180h-10q-17 0-28.5-11.5T280-420v-340h-80v560Zm430 0h130v-560h-80v340q0 17-11.5 28.5T640-380h-10v180Zm-240 0h180v-180h-10q-17 0-28.5-11.5T520-420v-340h-80v340q0 17-11.5 28.5T400-380h-10v180Z'! !
+
+!Icon class methodsFor: 'as yet unclassified' stamp: 'len 24/Jun/2026, 3:14:30 pm (UTC)'!
+repeat
+	^ self pathData: 'M280-80 120-240l160-160 56 58-62 62h406v-160h80v240H274l62 62-56 58Zm-80-440v-240h486l-62-62 56-58 160 160-160 160-56-58 62-62H280v160h-80Z'! !
 
 !Object methodsFor: '*signals' stamp: 'len 21/Jun/2026, 9:13:41 pm (UTC)'!
 receive: aMessageSelector from: anObject when: anEventNameSymbol

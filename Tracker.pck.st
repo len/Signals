@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 23 June 2026 at 3:00:26 pm'!
+'From Cuis7.9 [latest update: #8014] on 25 June 2026 at 12:40:33 am'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 69!
+!provides: 'Tracker' 1 71!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -1221,17 +1221,21 @@ saveProject
 		(self class package packageDirectory / 'data' / 'projects' // (newName, '.song')) writeStreamDo: [:s| model writeOn: s].
 		self setLabel: newName]! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 22/Jun/2026, 8:47:34 am (UTC)'!
-toggleInstrumentRackOrEditor
-	| editorMode |
-	editorMode := instrumentEditor visible not.
+!TrackerWindow methodsFor: 'actions' stamp: 'len 23/Jun/2026, 3:46:18 pm (UTC)'!
+setInstrumentEditorMode: editorMode
+	instrumentEditor visible = editorMode ifTrue: [^ self].
 	instrumentEditor visible: editorMode.
 	adjuster visible: editorMode.
 	instrumentRack visible: editorMode not.
 	editorMode ifFalse: [instrumentRack forceUpdate]. "in case the order of the modules changed"
 	"why need to do this? otherwise the lower pane doesn't expand properly when going to the smaller instrument rack:"
 	lowerPane delete.
-	layoutMorph addMorph: lowerPane proportionalHeight: (editorMode ifTrue: [0.5] ifFalse: [1.0])! !
+	layoutMorph addMorph: lowerPane proportionalHeight: (editorMode ifTrue: [0.5] ifFalse: [1.0]).
+	self triggerEvent: #instrumentEditorModeChanged: with: editorMode! !
+
+!TrackerWindow methodsFor: 'actions' stamp: 'len 23/Jun/2026, 3:46:55 pm (UTC)'!
+toggleInstrumentRackOrEditor
+	self setInstrumentEditorMode: instrumentEditor visible not! !
 
 !TrackerWindow methodsFor: 'events' stamp: 'len 22/Jun/2026, 12:21:16 pm (UTC)'!
 handleCommandHotkey: anEvent
@@ -1268,15 +1272,16 @@ keyStroke: anEvent
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 22/Jun/2026, 8:18:09 pm (UTC)'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 24/Jun/2026, 1:19:44 pm (UTC)'!
 buildMorphicWindow
-	| lowerLeftPane sequencerScroller patternEditorScroller bar transport bpmControl swingControl |
+	| lowerLeftPane sequencerScroller patternEditorScroller bar transport bpmControl swingControl barFont |
 	instrumentEditor := InstrumentEditorMorph new setTracker: model.
 	instrumentRack := InstrumentRackMorph new setTracker: model.
 	meter := MultitrackMeterMorph new setTracker: model.
 	arranger := ArrangerMorph new setTracker: model.
 	patternEditor := PatternEditorMorph new setTracker: model.
 	model when: #cursorChanged send: #ensureCursorVisible to: self.
+	barFont := FontFamily defaultFamilyPointSize: 16.
 	bar := ControlPanel newRow gap: 24; axisEdgeWeight: 0.0; color: Color darkGray.
 	transport := TransportStatusMorph new setTracker: model.
 	bar addMorph: transport.
@@ -1295,7 +1300,7 @@ buildMorphicWindow
 		receive: #baseValue: from: model when: #swingChanged:;
 		when: #changed: send: #swing: to: model.
 	bar addMorph: (TextualControlMorph new control: swingControl).
-	bar addMorph: (ToggleButtonMorph new state: model followPlayhead; when: #changed: send: #followPlayhead: to: model; receive: #state: from: model when: #followPlayheadChanged:; label: '⇩'; setBalloonText: 'Follow playhead').
+	bar addMorph: (ToggleButtonMorph new font: barFont; state: model followPlayhead; when: #changed: send: #followPlayhead: to: model; receive: #state: from: model when: #followPlayheadChanged:; "label: '⇩';" icon: Icon follow; setBalloonText: 'Follow playhead').
 	bar addMorph: (PulldownListMorph new
 		options: (0 to: 9);
 		state: model inputOctave;
@@ -1310,6 +1315,7 @@ buildMorphicWindow
 		receive: #state: from: model when: #selectedTrackTuningChanged:;
 "		receive: #options: from: Tuning when: #tuningsLibraryChanged:;"
 		setBalloonText: 'Tuning system').
+	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setInstrumentEditorMode: to: self; receive: #state: from: self when: #instrumentEditorModeChanged:; icon: Icon graph; setBalloonText: 'Instrument editor mode').
 	lowerPane := LinearLayoutMorph newRow color: Color transparent.
 	lowerLeftPane := LinearLayoutMorph newColumn color: Color transparent.
 	sequencerScroller := ScrollerMorph new vertical: true; scrollable: arranger.
@@ -1321,8 +1327,8 @@ buildMorphicWindow
 		addMorph: lowerLeftPane layoutSpec: (LayoutSizeSpec new useMorphWidth);
 		addMorph: patternEditorScroller layoutSpec: LayoutSizeSpec new.
 	layoutMorph
-		addMorph: bar fixedHeight: 24;
-		addMorph: instrumentRack fixedHeight: 176.
+		addMorph: bar fixedHeight: 32;
+		addMorph: instrumentRack fixedHeight: 180.
 	layoutMorph addMorph: instrumentEditor proportionalHeight: 0.5.
 	adjuster := layoutMorph addAdjusterMorph submorphs first.
 	layoutMorph addMorph: lowerPane "proportionalHeight: 1.0".
@@ -1689,12 +1695,12 @@ drawOn: aCanvas
 requiresVectorCanvas
 	^ true! !
 
-!ArrangerMorph methodsFor: 'events' stamp: 'len 15/Jun/2026, 1:41:18 pm (UTC)'!
+!ArrangerMorph methodsFor: 'events' stamp: 'len 24/Jun/2026, 6:55:38 am (UTC)'!
 handleCommandHotkey: anEvent
-	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
+"	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
 	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
-	anEvent keyCharacter = $V ifTrue: [self clipboardPasteNew. ^ true].
+	anEvent keyCharacter = $V ifTrue: [self clipboardPasteNew. ^ true]."
 	anEvent keyCharacter = $i ifTrue: [tracker selectedPattern ifNotNil: [:aPattern| aPattern inspect]. ^ true].
 	^ false! !
 
@@ -1716,6 +1722,10 @@ handleSelectionKey: anEvent
 	selectionStart isNil ifTrue: [selectionStart := tracker cursorPattern].
 	anEvent isArrowUp ifTrue: [tracker moveCursorPatternUp].
 	anEvent isArrowDown ifTrue: [tracker moveCursorPatternDown]! !
+
+!ArrangerMorph methodsFor: 'events' stamp: 'len 23/Jun/2026, 9:32:14 pm (UTC)'!
+handlesMouseDown: anEvent
+	^ anEvent mouseButton2Pressed or: [anEvent mouseButton1Pressed]! !
 
 !ArrangerMorph methodsFor: 'events' stamp: 'len 14/Jun/2026, 8:21:44 pm (UTC)'!
 keyStroke: anEvent
@@ -1761,6 +1771,15 @@ setTracker: aTracker
 	aTracker when: #cursorChanged send: #redrawNeeded to: self.
 	aTracker when: #playheadChanged send: #redrawNeeded to: self.
 	self update! !
+
+!ArrangerMorph methodsFor: 'menu' stamp: 'len 24/Jun/2026, 6:56:23 am (UTC)'!
+menuNshortcutsSpecsDo: aBlock
+	#(
+		#(120	'Copy (c)'	 	$c 	nil 	clipboardCopy 		nil 	'Copy selection')
+		#(130	'Cut (x)' 			$x 	nil 	clipboardCut		nil 	'Cut selection')
+		#(140	'Paste (v)' 		$v 	nil 	clipboardPaste		nil 	'Paste references')
+		#(150	'Paste copy (V)' 	$V 	nil 	clipboardPasteNew	nil 	'Paste new copies')
+	) do: aBlock! !
 
 !ArrangerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026, 8:38:55 am (UTC)'!
 onBlinkCursor
@@ -2266,7 +2285,7 @@ trackWidthInCharacters
 aboutToBeGrabbedBy: aHand
 	^ MovingHelperMorph new target: self; offset: (self owner internalizeFromWorld: aHand morphPosition) - self morphPosition! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026, 1:40:47 pm (UTC)'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 23/Jun/2026, 10:22:44 am (UTC)'!
 handleCommandHotkey: anEvent
 	"Font size:"
 	anEvent keyCharacter = $- ifTrue: [self adjustFontSizeBy: -1. ^ true].
@@ -2274,16 +2293,16 @@ handleCommandHotkey: anEvent
 	"Show/hide FX columns:"
 	anEvent keyCharacter = $' ifTrue: [self toggleShowFXColumns. ^ true].
 	"Pattern properties:"
-	anEvent keyCharacter = $l ifTrue: [self setPatternLength. ^ true].
-	anEvent keyCharacter = $b ifTrue: [self setPatternLPB. ^ true].
+"	anEvent keyCharacter = $l ifTrue: [self setPatternLength. ^ true].
+	anEvent keyCharacter = $b ifTrue: [self setPatternLPB. ^ true]."
 	"Tuning:"
-	anEvent keyCharacter = $u ifTrue: [self setTrackTuning. ^ true].
+"	anEvent keyCharacter = $u ifTrue: [self setTrackTuning. ^ true]."
 	"Inspecting:"
 	anEvent keyCharacter = $i ifTrue: [tracker selectedTrigger ifNotNil: [:aTrigger| aTrigger inspect]. ^ true].
 	"Clipboard:"
-	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
+"	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
 	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
-	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
+	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true]."
 	^ false! !
 
 !PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026, 11:30:19 am (UTC)'!
@@ -2450,6 +2469,16 @@ setTracker: aTracker
 	aTracker when: #selectedTrackTuningChanged: send: #redrawNeeded to: self.
 	self updateTracks! !
 
+!PatternEditorMorph methodsFor: 'menu' stamp: 'len 24/Jun/2026, 6:59:06 am (UTC)'!
+menuNshortcutsSpecsDo: aBlock
+	#(
+		#(100	'Set Length (l)' 	$l 	nil 	setPatternLength 	nil 	'Set pattern length')
+		#(110	'Set LPB (b)' 		$b 	nil 	setPatternLPB 		nil 	'Set pattern lines per beat')
+		#(120	'Copy (c)'	 	$c 	nil 	clipboardCopy 		nil 	'Copy selection to clipboard')
+		#(130	'Cut (x)' 			$x 	nil 	clipboardCut		nil 	'Cut selection to clipboard')
+		#(140	'Paste (v)' 		$v 	nil 	clipboardPaste		nil 	'Paste from clipboard')
+	) do: aBlock! !
+
 !PatternEditorMorph methodsFor: 'private' stamp: 'len 15/Jun/2026, 8:11:38 pm (UTC)'!
 balloonTextForFX: anInteger
 	| command v |
@@ -2600,10 +2629,12 @@ unsetColor
 velocityColor
 	^ `Color okl: 0.95 c: 0.2 h: 120`! !
 
-!TransportStatusMorph methodsFor: 'drawing' stamp: 'len 22/Jun/2026, 8:17:20 pm (UTC)'!
+!TransportStatusMorph methodsFor: 'drawing' stamp: 'len 23/Jun/2026, 3:54:25 pm (UTC)'!
 drawOn: aCanvas
-	tracker isPlaying ifTrue:
-		[aCanvas drawString: '▶'"'◼'" at: 4 @ 0 font: font color: PatchMorph waveformColor]! !
+	aCanvas drawString: '▶' at: 4 @ 0 font: font color: (tracker isPlaying ifTrue: [PatchMorph waveformColor] ifFalse: [Color black])
+		
+"	tracker isPlaying ifTrue:
+		[aCanvas drawString: '▶' '◼' at: 4 @ 0 font: font color: PatchMorph waveformColor]"! !
 
 !TransportStatusMorph methodsFor: 'events' stamp: 'len 24/Feb/2026, 10:31:36 am (UTC)'!
 handlesKeyboardFocus

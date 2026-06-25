@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 25 June 2026 at 12:40:33 am'!
+'From Cuis7.9 [latest update: #8014] on 25 June 2026 at 7:24:21 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 71!
+!provides: 'Tracker' 1 72!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -2581,7 +2581,7 @@ updateTracks
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 15/Jun/2026, 8:16:32 pm (UTC)'!
+!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 25/Jun/2026, 12:08:23 pm (UTC)'!
 initialize
 	"
 	self initialize
@@ -2590,7 +2590,7 @@ initialize
 	"Load the monospaced font we need for the pattern editor:"
 	(FontFamily availableFamilies includesKey: 'JetBrains Mono NL') ifFalse:
 		[TrueTypeFontFamily readAllTrueTypeFontsIn: DirectoryEntry trueTypeFontsDirectory / 'JetBrainsMono'].
-	TrackColors := (1 to: 13) collect: [:i| Color okl: 0.7 c: 0.4 h: (137.5 / 5) * i \\ 360.0].
+	TrackColors := (1 to: 8) collect: [:i| Color okl: 0.7 c: 0.4 h: "(137.5 / 5) * i" i - 1 * (360.0 / 8) + (137.5/5)].
 	FXColors := Array new: 256 withAll: self unsetColor.
 	"Controls:"
 	'0123456789' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 80)].
@@ -2753,7 +2753,7 @@ handlePostNoteFX: anInteger
 	command = 85 "U (slide pitch up)" ifTrue: [self slideNoteBy: v / 16.0].
 	command = 68 "D (slide pitch down)" ifTrue: [self slideNoteBy: v / -16.0]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026, 3:55:55 pm (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 25/Jun/2026, 11:43:17 am (UTC)'!
 handleRetrigger: anInteger
 	| time velocity x |
 	(time := anInteger bitAnd: 16rF) = 0 ifTrue: [^ self].
@@ -2775,7 +2775,7 @@ noteOff
 noteOn: midiKey
 	self noteOn: midiKey glide: 0! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 12/Jun/2026, 3:47:22 pm (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 25/Jun/2026, 11:43:08 am (UTC)'!
 noteOn: midiKey glide: glide
 	| targetNote |
 	targetNote := track tuningOrNil ifNil: [midiKey] ifNotNil: [:aTuning| aTuning map: midiKey].

@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 25 June 2026 at 12:40:29 am'!
+'From Cuis7.9 [latest update: #8014] on 25 June 2026 at 7:24:17 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 617!
+!provides: 'Signals' 1 618!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1392,6 +1392,16 @@ BoxMorph subclass: #RackableMorph
 	category: 'Signals-Morphic-Patches'!
 !classDefinition: 'RackableMorph class' category: #'Signals-Morphic-Patches'!
 RackableMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #IconMorph category: #'Signals-Morphic-Support'!
+BoxMorph subclass: #IconMorph
+	instanceVariableNames: 'viewBox path color'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Support'!
+!classDefinition: 'IconMorph class' category: #'Signals-Morphic-Support'!
+IconMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #PulldownListMorph category: #'Signals-Morphic-Support'!
@@ -5499,7 +5509,7 @@ warp: aBoolean
 gateOff
 	released := true! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 11/Jun/2026, 8:27:50 pm (UTC)'!
+!Sample methodsFor: 'controlling' stamp: 'len 25/Jun/2026, 11:45:42 am (UTC)'!
 gateOn
 	increment := nil. "this forces to jump instantly to new note in >>#update"
 	(legato and: [self isUnreleased]) ifTrue: [^ self].
@@ -5517,9 +5527,12 @@ reset
 	position := tailPosition := nil.
 	released := false! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 24/Feb/2026, 1:46:57 pm (UTC)'!
+!Sample methodsFor: 'controlling' stamp: 'len 25/Jun/2026, 11:38:48 am (UTC)'!
 setOffset: aNumber
-	offset := aNumber! !
+	offset = aNumber ifTrue: [^ self].
+	offset := aNumber.
+	tailPosition := position.
+	position := (buffer size - 1) * aNumber + 1.0! !
 
 !Sample methodsFor: 'controlling' stamp: 'len 23/Jan/2026, 7:28:16 am (UTC)'!
 setSpeed: aNumber
@@ -13162,6 +13175,58 @@ initialize
 	self addMorph: flap.
 	flap visible: false! !
 
+!IconMorph methodsFor: 'accessing' stamp: 'len 25/Jun/2026, 8:12:16 am (UTC)'!
+color: aColor
+	color := aColor.
+	self redrawNeeded! !
+
+!IconMorph methodsFor: 'drawing' stamp: 'len 25/Jun/2026, 7:49:35 am (UTC)'!
+drawOn: aCanvas
+	| originalTransformation newTransformation |
+	originalTransformation := aCanvas currentTransformation.
+	newTransformation :=  originalTransformation copy composedWith: (AffineTransformation withScale: extent y asFloat / viewBox width position: 0.0 @ extent y).
+	aCanvas
+		geometryTransformation: newTransformation;
+		fillColor: color do: [:canvas| path do: [:each| each runOn: canvas]].
+	aCanvas geometryTransformation: originalTransformation! !
+
+!IconMorph methodsFor: 'drawing' stamp: 'len 25/Jun/2026, 7:54:50 am (UTC)'!
+requiresVectorCanvas
+	^ true! !
+
+!IconMorph methodsFor: 'initialization' stamp: 'len 25/Jun/2026, 7:49:46 am (UTC)'!
+defaultExtent
+	^ 24 @ 24! !
+
+!IconMorph methodsFor: 'initialization' stamp: 'len 25/Jun/2026, 7:54:08 am (UTC)'!
+initialize
+	super initialize.
+	viewBox := 0 @ -960 corner: 960 @ 960. "this default matches google's material icons"
+	path := #().
+	color := Color white! !
+
+!IconMorph methodsFor: 'initialization' stamp: 'len 25/Jun/2026, 7:53:49 am (UTC)'!
+path: anArray
+	path := anArray! !
+
+!IconMorph methodsFor: 'initialization' stamp: 'len 25/Jun/2026, 8:23:42 am (UTC)'!
+pathData: aString
+	| stream commandToArgumentCount lastCommand |
+	stream := aString readStream.
+	commandToArgumentCount := {$M -> 2. $L -> 2. $Q -> 4. $T -> 2. $V -> 1. $H -> 1. $Z -> 0} asDictionary.
+	path := OrderedCollection new.
+	lastCommand := $M.
+	[stream atEnd] whileFalse:
+		[| arguments command |
+		command := stream next.
+		(commandToArgumentCount includesKey: command asUppercase) ifFalse:
+			[stream skipBack.
+			command := lastCommand asUppercase = $M ifTrue: [$L] ifFalse: [lastCommand]].
+		lastCommand := command.
+		arguments := (1 to: (commandToArgumentCount at: command asUppercase)) collect: [:i| ((stream next: 1), (stream untilAnySatisfying: [:x| x isDigit not and: [x ~= $.]])) withoutLeadingBlanks asNumber].
+		path add: (PathCommand from: command stream: (arguments collect: [:each| each asString] andFold: [:a :b| a, ' ', b] ifEmpty: ['']) readStream)].
+	path := path asArray! !
+
 !PulldownListMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 6:45:48 pm (UTC)'!
 color: aColor
 	color := aColor.
@@ -17017,11 +17082,6 @@ mixInto: anAudioBuffer startingAt: startIndex
 			anAudioBuffer at: j put: s].	
 		j := j + 1]! !
 
-!Icon methodsFor: 'as yet unclassified' stamp: 'len 24/Jun/2026, 11:30:06 am (UTC)'!
-display
-	self drawOn: (VectorCanvas onForm: Display) at: 0 @ 0 height: 200 color: Color white.
-	Display forceToScreen! !
-
 !Icon methodsFor: 'as yet unclassified' stamp: 'len 24/Jun/2026, 12:39:42 pm (UTC)'!
 drawOn: aCanvas at: aPoint height: aFloat color: aColor
 	| originalTransformation newTransformation |
@@ -17032,7 +17092,15 @@ drawOn: aCanvas at: aPoint height: aFloat color: aColor
 		fillColor: aColor do: [:canvas| path do: [:each| each runOn: canvas]].
 	aCanvas geometryTransformation: originalTransformation! !
 
-!Icon methodsFor: 'as yet unclassified' stamp: 'len 24/Jun/2026, 9:34:06 am (UTC)'!
+!Icon methodsFor: 'as yet unclassified' stamp: 'len 24/Jun/2026, 6:18:07 pm (UTC)'!
+printOn: aStream
+	| form |
+	aStream isText ifFalse: [^ super printOn: aStream].
+	form := Form extent: 100 @ 100 "should be 24x24" depth: Display depth.
+	self drawOn: (VectorCanvas onForm: form) at: 0 @ 0 height: form height color: Color white.
+	aStream withAttribute: (TextAnchor new anchoredFormOrMorph: form) do: [aStream nextPut: $*]! !
+
+!Icon methodsFor: 'as yet unclassified' stamp: 'len 25/Jun/2026, 7:43:11 am (UTC)'!
 readFrom: aStream
 	| commandToArgumentCount reader lastCommand |
 	commandToArgumentCount := {$M -> 2. $L -> 2. $Q -> 4. $T -> 2. $V -> 1. $H -> 1. $Z -> 0} asDictionary.
@@ -17047,8 +17115,8 @@ readFrom: aStream
 			command := lastCommand asUppercase = $M ifTrue: [$L] ifFalse: [lastCommand]].
 		lastCommand := command.
 		arguments := reader value: (commandToArgumentCount at: command asUppercase).
-"		command asString, ' ', (arguments collect: [:each| each asString] andFold: [:a :b| a, ' ', b] ifEmpty: ['']) :: print."
-		path add: (PathCommand from: command stream: (arguments collect: [:each| each asString] andFold: [:a :b| a, ' ', b] ifEmpty: ['']) readStream)]! !
+		path add: (PathCommand from: command stream: (arguments collect: [:each| each asString] andFold: [:a :b| a, ' ', b] ifEmpty: ['']) readStream)].
+	path := path asArray! !
 
 !Icon class methodsFor: 'as yet unclassified' stamp: 'len 24/Jun/2026, 9:25:18 am (UTC)'!
 follow

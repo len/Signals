@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 25 June 2026 at 7:24:17 pm'!
+'From Cuis7.9 [latest update: #8026] on 26 June 2026 at 5:31:24 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 618!
+!provides: 'Signals' 1 620!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1392,16 +1392,6 @@ BoxMorph subclass: #RackableMorph
 	category: 'Signals-Morphic-Patches'!
 !classDefinition: 'RackableMorph class' category: #'Signals-Morphic-Patches'!
 RackableMorph class
-	instanceVariableNames: ''!
-
-!classDefinition: #IconMorph category: #'Signals-Morphic-Support'!
-BoxMorph subclass: #IconMorph
-	instanceVariableNames: 'viewBox path color'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Support'!
-!classDefinition: 'IconMorph class' category: #'Signals-Morphic-Support'!
-IconMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #PulldownListMorph category: #'Signals-Morphic-Support'!
@@ -5509,11 +5499,11 @@ warp: aBoolean
 gateOff
 	released := true! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 25/Jun/2026, 11:45:42 am (UTC)'!
+!Sample methodsFor: 'controlling' stamp: 'len 25/Jun/2026, 12:48:46 pm (UTC)'!
 gateOn
 	increment := nil. "this forces to jump instantly to new note in >>#update"
 	(legato and: [self isUnreleased]) ifTrue: [^ self].
-	tailPosition := position.
+	tailPosition ifNil: [tailPosition := position].
 	position := (buffer size - 1) * offset + 1.0.
 	released := false
 ! !
@@ -5527,11 +5517,11 @@ reset
 	position := tailPosition := nil.
 	released := false! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 25/Jun/2026, 11:38:48 am (UTC)'!
+!Sample methodsFor: 'controlling' stamp: 'len 25/Jun/2026, 12:48:28 pm (UTC)'!
 setOffset: aNumber
 	offset = aNumber ifTrue: [^ self].
 	offset := aNumber.
-	tailPosition := position.
+	tailPosition ifNil: [tailPosition := position].
 	position := (buffer size - 1) * aNumber + 1.0! !
 
 !Sample methodsFor: 'controlling' stamp: 'len 23/Jan/2026, 7:28:16 am (UTC)'!
@@ -7355,6 +7345,17 @@ patchable
 		addControlInput: #in;
 		addControlInput: #color;
 		addControlOutput.
+	^ answer! !
+
+!Quantizer methodsFor: 'ui' stamp: 'len 26/Jun/2026, 10:20:26 am (UTC)'!
+rackable
+	| answer keys |
+	answer := RackableMorph new model: self.
+	keys := QuantizerControlMorph new control: (controls at: #color).
+	keys pitchClasses: pitchClasses.
+	keys when: #pitchClassesChanged: send: #pitchClasses: to: self.
+	self when: #output: send: #quantizedPitch: to: keys.
+	(answer addRow: keys; addRow) addKnob: (controls at: #color) label: 'Color'. 
 	^ answer! !
 
 !Quantizer class methodsFor: 'class initialization' stamp: 'len 7/Jun/2026, 12:32:49 pm (UTC)'!
@@ -10838,10 +10839,6 @@ setOutputHP: aBuffer
 setOutputLP: aBuffer
 	outputLP := aBuffer! !
 
-!ControlPanel methodsFor: 'accessing' stamp: 'len 22/Jun/2026, 8:18:42 am (UTC)'!
-adoptWidgetsColor: aColor
-	^ self! !
-
 !ControlPanel methodsFor: 'building' stamp: 'len 12/Mar/2026, 10:50:50 am (UTC)'!
 addColumn
 	| column |
@@ -10983,10 +10980,6 @@ drawOn: aCanvas
 !RoundedLinearLayoutMorph methodsFor: 'drawing' stamp: 'len 18/Jun/2026, 7:53:16 am (UTC)'!
 requiresVectorCanvas
 	^ true! !
-
-!RoundedLinearLayoutMorph methodsFor: 'as yet unclassified' stamp: 'len 9/Apr/2026, 12:29:01 pm (UTC)'!
-adoptWidgetsColor: paneColor
-	^ self! !
 
 !PluggableChoiceMorph methodsFor: 'accessing' stamp: 'len 19/Jan/2026, 11:49:32 am (UTC)'!
 getter: aSymbol
@@ -11496,9 +11489,9 @@ blackKeyHeight
 blackKeyWidth
 	^ self whiteKeyWidth / 1.62! !
 
-!QuantizerControlMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jun/2026, 7:34:56 pm (UTC)'!
+!QuantizerControlMorph methodsFor: 'as yet unclassified' stamp: 'len 26/Jun/2026, 10:23:11 am (UTC)'!
 defaultExtent
-	^`128@48`! !
+	^`128@64`! !
 
 !QuantizerControlMorph methodsFor: 'as yet unclassified' stamp: 'len 7/Jun/2026, 5:31:34 pm (UTC)'!
 drawOn: aCanvas
@@ -11543,6 +11536,10 @@ handlesMouseDown: anEvent
 initialize
 	super initialize.
 	selectedKeys := Array new: 12 withAll: false! !
+
+!QuantizerControlMorph methodsFor: 'as yet unclassified' stamp: 'len 26/Jun/2026, 10:24:31 am (UTC)'!
+minimumExtent
+	^ self defaultExtent! !
 
 !QuantizerControlMorph methodsFor: 'as yet unclassified' stamp: 'len 7/Jun/2026, 5:19:28 pm (UTC)'!
 mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
@@ -12487,6 +12484,10 @@ initialize
 	bipolar := true.
 	downsampleFactor := 5! !
 
+!StripChartXYControlMorph methodsFor: 'initialization' stamp: 'len 26/Jun/2026, 10:23:59 am (UTC)'!
+minimumExtent
+	^ self defaultExtent! !
+
 !StripChartXYControlMorph methodsFor: 'drawing' stamp: 'len 19/Jun/2026, 6:03:01 pm (UTC)'!
 drawOn: aCanvas
 	| step x y h offset slack y0 |
@@ -13175,58 +13176,6 @@ initialize
 	self addMorph: flap.
 	flap visible: false! !
 
-!IconMorph methodsFor: 'accessing' stamp: 'len 25/Jun/2026, 8:12:16 am (UTC)'!
-color: aColor
-	color := aColor.
-	self redrawNeeded! !
-
-!IconMorph methodsFor: 'drawing' stamp: 'len 25/Jun/2026, 7:49:35 am (UTC)'!
-drawOn: aCanvas
-	| originalTransformation newTransformation |
-	originalTransformation := aCanvas currentTransformation.
-	newTransformation :=  originalTransformation copy composedWith: (AffineTransformation withScale: extent y asFloat / viewBox width position: 0.0 @ extent y).
-	aCanvas
-		geometryTransformation: newTransformation;
-		fillColor: color do: [:canvas| path do: [:each| each runOn: canvas]].
-	aCanvas geometryTransformation: originalTransformation! !
-
-!IconMorph methodsFor: 'drawing' stamp: 'len 25/Jun/2026, 7:54:50 am (UTC)'!
-requiresVectorCanvas
-	^ true! !
-
-!IconMorph methodsFor: 'initialization' stamp: 'len 25/Jun/2026, 7:49:46 am (UTC)'!
-defaultExtent
-	^ 24 @ 24! !
-
-!IconMorph methodsFor: 'initialization' stamp: 'len 25/Jun/2026, 7:54:08 am (UTC)'!
-initialize
-	super initialize.
-	viewBox := 0 @ -960 corner: 960 @ 960. "this default matches google's material icons"
-	path := #().
-	color := Color white! !
-
-!IconMorph methodsFor: 'initialization' stamp: 'len 25/Jun/2026, 7:53:49 am (UTC)'!
-path: anArray
-	path := anArray! !
-
-!IconMorph methodsFor: 'initialization' stamp: 'len 25/Jun/2026, 8:23:42 am (UTC)'!
-pathData: aString
-	| stream commandToArgumentCount lastCommand |
-	stream := aString readStream.
-	commandToArgumentCount := {$M -> 2. $L -> 2. $Q -> 4. $T -> 2. $V -> 1. $H -> 1. $Z -> 0} asDictionary.
-	path := OrderedCollection new.
-	lastCommand := $M.
-	[stream atEnd] whileFalse:
-		[| arguments command |
-		command := stream next.
-		(commandToArgumentCount includesKey: command asUppercase) ifFalse:
-			[stream skipBack.
-			command := lastCommand asUppercase = $M ifTrue: [$L] ifFalse: [lastCommand]].
-		lastCommand := command.
-		arguments := (1 to: (commandToArgumentCount at: command asUppercase)) collect: [:i| ((stream next: 1), (stream untilAnySatisfying: [:x| x isDigit not and: [x ~= $.]])) withoutLeadingBlanks asNumber].
-		path add: (PathCommand from: command stream: (arguments collect: [:each| each asString] andFold: [:a :b| a, ' ', b] ifEmpty: ['']) readStream)].
-	path := path asArray! !
-
 !PulldownListMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 6:45:48 pm (UTC)'!
 color: aColor
 	color := aColor.
@@ -13854,15 +13803,15 @@ label: aString
 	label := aString.
 	self morphExtent: `0@0`! !
 
-!VerticalLabelMorph methodsFor: 'drawing' stamp: 'len 19/Jun/2026, 7:01:30 pm (UTC)'!
+!VerticalLabelMorph methodsFor: 'drawing' stamp: 'len 25/Jun/2026, 7:50:16 pm (UTC)'!
 drawOn: aCanvas
 "	aCanvas
 		frameRectangle: self localBounds
 		borderWidth: 1
 		color: Color white."
 	aCanvas
-		geometryTransformation: ((aCanvas currentTransformation rotatedBy: Float pi / -2.0) translatedBy: 0 @ extent y);
-		drawString: label at: 0 @ 0 font: font color: color! !
+		intoLocation: (AffineTransformation withRadians: Float pi / -2.0 scale: 1.0 position: 0 @ extent y)
+		do: [aCanvas drawString: label at: 0 @ 0 font: font color: color]! !
 
 !VerticalLabelMorph methodsFor: 'drawing' stamp: 'len 19/Jun/2026, 6:35:21 pm (UTC)'!
 requiresVectorCanvas

@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8014] on 25 June 2026 at 7:24:21 pm'!
+'From Cuis7.9 [latest update: #8026] on 26 June 2026 at 5:39:00 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 72!
+!provides: 'Tracker' 1 75!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -99,7 +99,7 @@ TransportStatusMorph class
 
 !classDefinition: #Instrument category: #'Tracker-Kernel'!
 Object subclass: #Instrument
-	instanceVariableNames: 'label patch modules noteReceivers velocityReceivers gateReceivers samples audioOutput controlValues note noteIncrement glideTicks track trigger'
+	instanceVariableNames: 'label patch modules noteReceivers velocityReceivers gateReceivers samples audioOutput controlValues note noteIncrement speed speedIncrement glideTicks track trigger'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Tracker-Kernel'!
@@ -169,8 +169,8 @@ Effect commands:
 ∙ Gxx glide to note in xx/16 lines (01 = 1/16 of a line, 10 = 1 line, FF = almost 16 lines)
 ∙ Uxx / Dxx slide note up/down by xx/16 semitones (10 = 1 semitone)
 ∙ +xx / -xx finetune note up/down by xx/256 of a note depending on the selected tuning system
-∙ Sxx set sample start offset (00 = start, FF = end)
-∙ <xx / >xx set speed to xx/128 and play backwards / forward (40 = half speed, 80 = normal, FF = double)
+∙ Sxx set sample offset (00 = start, FF = end)
+∙ <xy / >xy slide speed to x/16 in y lines and play backwards / forward (4 = half speed, 8 = normal, F = almost double)
 ∙ Lxx set instrument volume level to xx (00 = minimum, FF = maximum)
 ∙ Pxx set instrument pan (00 = left, 80 = center, FF = right)
 ∙ Ixx / Oxx adjust intrument volume level up/down
@@ -320,12 +320,11 @@ successColor
 text
 	^ Color white! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 26/Jun/2026, 10:07:56 am (UTC)'!
 textAutoHighlight
-	self flag: #fixme. "this needs to change SHTextStylerST80>>#privateConvert to call it."
-	^ (Color colorFrom: '#FF005C') alpha: 0.5
+"	^ (Color colorFrom: '#FF005C') alpha: 0.5"
 "	^ (Color colorFrom: '#ff2f8e') alpha: 0.5"
-"	^ (Color colorFrom: '#F0FF42') alpha: 0.3"! !
+	^ (Color colorFrom: '#FF4466') alpha: 0.6! !
 
 !DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 textCursor
@@ -1237,7 +1236,7 @@ setInstrumentEditorMode: editorMode
 toggleInstrumentRackOrEditor
 	self setInstrumentEditorMode: instrumentEditor visible not! !
 
-!TrackerWindow methodsFor: 'events' stamp: 'len 22/Jun/2026, 12:21:16 pm (UTC)'!
+!TrackerWindow methodsFor: 'events' stamp: 'len 25/Jun/2026, 4:52:47 pm (UTC)'!
 handleCommandHotkey: anEvent
 	anEvent keyCharacter = $o ifTrue: [self openProject. ^ true].
 	anEvent keyCharacter = $s ifTrue: [self saveProject. ^ true].
@@ -1262,6 +1261,9 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $t ifTrue: [model addTrack. ^ true].
 	anEvent keyCharacter = $T ifTrue: [model deleteTrack. ^ true].
 	anEvent keyCharacter = $m ifTrue: [model toggleTrackMask. ^ true].
+	anEvent keyCharacter isDigit ifTrue:
+		[model setCursorTrack: ('1234567890' indexOf: anEvent keyCharacter).
+		^ true].
 	^ false! !
 
 !TrackerWindow methodsFor: 'events' stamp: 'len 21/Jun/2026, 2:42:50 pm (UTC)'!
@@ -1272,7 +1274,7 @@ keyStroke: anEvent
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 24/Jun/2026, 1:19:44 pm (UTC)'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 25/Jun/2026, 1:34:41 pm (UTC)'!
 buildMorphicWindow
 	| lowerLeftPane sequencerScroller patternEditorScroller bar transport bpmControl swingControl barFont |
 	instrumentEditor := InstrumentEditorMorph new setTracker: model.
@@ -1327,7 +1329,7 @@ buildMorphicWindow
 		addMorph: lowerLeftPane layoutSpec: (LayoutSizeSpec new useMorphWidth);
 		addMorph: patternEditorScroller layoutSpec: LayoutSizeSpec new.
 	layoutMorph
-		addMorph: bar fixedHeight: 32;
+		addMorph: bar fixedHeight: 36;
 		addMorph: instrumentRack fixedHeight: 180.
 	layoutMorph addMorph: instrumentEditor proportionalHeight: 0.5.
 	adjuster := layoutMorph addAdjusterMorph submorphs first.
@@ -1339,15 +1341,15 @@ buildMorphicWindow
 defaultColor
 	^ Color black! !
 
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 26/Jun/2026, 10:38:44 am (UTC)'!
+outOfWorld: aWorld
+	model stop.
+	super outOfWorld: aWorld! !
+
 !TrackerWindow methodsFor: 'private' stamp: 'len 15/Jun/2026, 4:22:24 pm (UTC)'!
 ensureCursorVisible
 	patternEditor owner scrollToMakeVisible: (patternEditor externalizeBoundingRectOf: patternEditor activeBounds).
 	arranger owner scrollToMakeVisible: (arranger externalizeBoundingRectOf: arranger activeBounds)! !
-
-!TrackerWindow methodsFor: 'open/close' stamp: 'len 11/Apr/2026, 5:51:09 am (UTC)'!
-delete
-	model stop.
-	super delete! !
 
 !TrackerWindow methodsFor: 'GUI building' stamp: 'len 18/Jun/2026, 2:37:08 pm (UTC)'!
 windowColor
@@ -1933,9 +1935,9 @@ clipboardCopy
 		collect: [:i|
 			((selectionTrackStart min: tracker cursorTrack) to: (selectionTrackStart max: tracker cursorTrack)) 				collect: [:k| pattern track: k at: i]]! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 22/Feb/2026, 3:24:00 pm (UTC)'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 25/Jun/2026, 8:00:00 pm (UTC)'!
 clipboardCut
-	self clipboardCopy; selectionDelete! !
+	self clipboardCopy; deleteSelection! !
 
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026, 8:28:49 am (UTC)'!
 clipboardPaste
@@ -1948,6 +1950,19 @@ clipboardPaste
 		line withIndexDo: [:trigger :k|
 			(k0 + k <= tracker tracks size and: [i0 + i <= pattern length])
 				ifTrue: [pattern track: k0 + k at: i0 + i put: trigger copy]]].
+	self redrawNeeded! !
+
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 25/Jun/2026, 8:00:00 pm (UTC)'!
+deleteSelection
+	| pattern |
+	pattern := tracker selectedPattern.
+	selectionLineStart ifNil:
+		[pattern track: tracker cursorTrack at: tracker cursorLine put: nil.
+		self redrawNeeded.
+		^ self].
+	(selectionLineStart min: tracker cursorLine) to: (selectionLineStart max: tracker cursorLine) do: [:i|
+		(selectionTrackStart min: tracker cursorTrack) to: (selectionTrackStart max: tracker cursorTrack) do: [:k|
+			pattern track: k at: i put: nil]].
 	self redrawNeeded! !
 
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026, 11:29:58 am (UTC)'!
@@ -2067,6 +2082,10 @@ playSelection
 	selectionLineStart ifNil: [tracker playFrom: cursorPattern line: cursorLine to: cursorPattern line: cursorLine tracks: {cursorTrack}. ^ self].
 	tracker playFrom: cursorPattern line: (selectionLineStart min: cursorLine) to: cursorPattern line: (selectionLineStart max: cursorLine) tracks: ((selectionTrackStart min: cursorTrack) to: (selectionTrackStart max: cursorTrack))! !
 
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 25/Jun/2026, 8:04:16 pm (UTC)'!
+selectAll
+	self notYetImplemented! !
+
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026, 6:30:51 pm (UTC)'!
 selectedTriggersDo: aBlock
 	| pattern |
@@ -2075,19 +2094,6 @@ selectedTriggersDo: aBlock
 	(selectionLineStart min: tracker cursorLine) to: (selectionLineStart max: tracker cursorLine) do: [:i|
 		(selectionTrackStart min: tracker cursorTrack) to: (selectionTrackStart max: tracker cursorTrack) do: [:k|
 			(pattern track: k at: i) ifNotNil: aBlock]]! !
-
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026, 9:14:01 am (UTC)'!
-selectionDelete
-	| pattern |
-	pattern := tracker selectedPattern.
-	selectionLineStart ifNil:
-		[pattern track: tracker cursorTrack at: tracker cursorLine put: nil.
-		self redrawNeeded.
-		^ self].
-	(selectionLineStart min: tracker cursorLine) to: (selectionLineStart max: tracker cursorLine) do: [:i|
-		(selectionTrackStart min: tracker cursorTrack) to: (selectionTrackStart max: tracker cursorTrack) do: [:k|
-			pattern track: k at: i put: nil]].
-	self redrawNeeded! !
 
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 14/Mar/2026, 11:30:14 am (UTC)'!
 setPatternLPB
@@ -2285,7 +2291,7 @@ trackWidthInCharacters
 aboutToBeGrabbedBy: aHand
 	^ MovingHelperMorph new target: self; offset: (self owner internalizeFromWorld: aHand morphPosition) - self morphPosition! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 23/Jun/2026, 10:22:44 am (UTC)'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 25/Jun/2026, 8:06:04 pm (UTC)'!
 handleCommandHotkey: anEvent
 	"Font size:"
 	anEvent keyCharacter = $- ifTrue: [self adjustFontSizeBy: -1. ^ true].
@@ -2303,15 +2309,16 @@ handleCommandHotkey: anEvent
 "	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
 	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true]."
+	anEvent keyCharacter = $a ifTrue: [self selectAll. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026, 11:30:19 am (UTC)'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 25/Jun/2026, 8:00:00 pm (UTC)'!
 handleInputKey: anEvent
 	| c i |
 	anEvent isBackspace ifTrue:
 		[selectionLineStart isNil
 			ifTrue: [tracker selectedTriggerAt: cursorPosition put: nil. self redrawNeeded]
-			ifFalse: [self selectionDelete].
+			ifFalse: [self deleteSelection].
 		^ true].
 	anEvent keyCharacter = $] ifTrue: [self selectedTriggersDo: [:each| each transposeBy: (tracker selectedTrack tuning size)]. self redrawNeeded. ^ true].
 	anEvent keyCharacter = $[ ifTrue: [self selectedTriggersDo: [:each| each transposeBy: (tracker selectedTrack tuning size negated)]. self redrawNeeded. ^ true].
@@ -2479,7 +2486,7 @@ menuNshortcutsSpecsDo: aBlock
 		#(140	'Paste (v)' 		$v 	nil 	clipboardPaste		nil 	'Paste from clipboard')
 	) do: aBlock! !
 
-!PatternEditorMorph methodsFor: 'private' stamp: 'len 15/Jun/2026, 8:11:38 pm (UTC)'!
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 26/Jun/2026, 8:30:17 am (UTC)'!
 balloonTextForFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
@@ -2503,9 +2510,17 @@ balloonTextForFX: anInteger
 	command = 74 "J (pan left)" ifTrue: [^ 'Pan left by ', (v / 255.0 * 100.0) rounded printString, '%'].
 	command = 75 "K (pan right)" ifTrue: [^ 'Pan right by ', (v / 255.0 * 100.0) rounded printString, '%'].
 	"Sample commands:"
-	command = 83 "S (sample start offset)" ifTrue: [^ 'Set sample start offset to ', v printString, '/255'].
-	command = 60 "< (speed backwards)" ifTrue: [^ 'Play backwards at speed ', (v / 128.0 printStringFractionDigits: 2), '×'].
-	command = 62 "> (speed forward)" ifTrue: [^ 'Play forward at speed ', (v / 128.0 printStringFractionDigits: 2), '×'].
+	command = 83 "S (sample offset)" ifTrue: [^ 'Set sample offset to ', v printString, '/255'].
+	command = 60 "< (speed backwards)" ifTrue:
+		[| speed lines |
+		speed := ((anInteger bitShift: -4) bitAnd: 16rF) / 8.0.
+		lines := anInteger bitAnd: 16rF.
+		^ lines = 0 ifTrue: ['Play backwards at speed ', (speed printStringFractionDigits: 2), '×'] ifFalse: ['Slide to play backwards at speed ', (speed printStringFractionDigits: 2), '× in ', lines printString, ' lines']].
+	command = 62 "< (speed forward)" ifTrue:
+		[| speed lines |
+		speed := ((anInteger bitShift: -4) bitAnd: 16rF) / 8.0.
+		lines := anInteger bitAnd: 16rF.
+		^ lines = 0 ifTrue: ['Play forward at speed ', (speed printStringFractionDigits: 2), '×'] ifFalse: ['Slide to play forward at speed ', (speed printStringFractionDigits: 2), '× in ', lines printString, ' lines']].
 	"Control change commands:"
 	(command between: 48 and: 57) "0 to 9" ifTrue: [^ 'Set control ', (command - 47) printString, ' to ', v printString].
 	"Global commands:"
@@ -2581,7 +2596,7 @@ updateTracks
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 25/Jun/2026, 12:08:23 pm (UTC)'!
+!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 25/Jun/2026, 1:48:13 pm (UTC)'!
 initialize
 	"
 	self initialize
@@ -2590,7 +2605,7 @@ initialize
 	"Load the monospaced font we need for the pattern editor:"
 	(FontFamily availableFamilies includesKey: 'JetBrains Mono NL') ifFalse:
 		[TrueTypeFontFamily readAllTrueTypeFontsIn: DirectoryEntry trueTypeFontsDirectory / 'JetBrainsMono'].
-	TrackColors := (1 to: 8) collect: [:i| Color okl: 0.7 c: 0.4 h: "(137.5 / 5) * i" i - 1 * (360.0 / 8) + (137.5/5)].
+	TrackColors := (0 to: 6) collect: [:i| Color okl: 0.7 c: 0.4 h: i * (360.0 / 7) + 10.0]. "roygbiv shifted 10°"
 	FXColors := Array new: 256 withAll: self unsetColor.
 	"Controls:"
 	'0123456789' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 80)].
@@ -2721,7 +2736,7 @@ handleCut: anInteger
 	(time := anInteger bitAnd: 16rF) = 0 ifTrue: [^ self setVelocity: velocity].
 	track scheduleTrigger: (Trigger new velocity: (velocity * 128.0) truncated) after: time / 12.0 * track tracker tpl! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026, 7:30:36 pm (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 26/Jun/2026, 8:46:04 am (UTC)'!
 handleFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
@@ -2736,22 +2751,22 @@ handleFX: anInteger
 	command = 74 "J (pan left)" ifTrue: [self adjustPanBy: v / -255.0].
 	command = 75 "K (pan right)" ifTrue: [self adjustPanBy: v / 255.0].
 	"Sample commands:"
-	command = 83 "S (sample start offset)" ifTrue: [self setOffset: v / 255.0. ^ self].
-	command = 60 "< (speed backwards)" ifTrue: [self setSpeed: v / -128.0. ^ self].
-	command = 62 "> (speed forward)" ifTrue: [self setSpeed: v / 128.0. ^ self].
+	command = 83 "S (sample offset)" ifTrue: [self setOffset: v / 255.0. ^ self].
 	"Control change commands:"
 	(command between: 48 and: 57) "0 to 9" ifTrue: [controlValues at: command - 47 put: v / 255.0. ^ self].
 	"Global commands:"
 	command = 70 "F (set bpm)" ifTrue: [track tracker bpm: (v max: 1). ^ self]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 14/Jun/2026, 12:41:44 pm (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 26/Jun/2026, 10:17:51 am (UTC)'!
 handlePostNoteFX: anInteger
 	"Note: pitch slide effects must be handled *after* the note on, otherwise the slide gets overridden."
 	| command v |
 	command := anInteger bitShift: -8.
 	v := anInteger bitAnd: 16rFF.
-	command = 85 "U (slide pitch up)" ifTrue: [self slideNoteBy: v / 16.0].
-	command = 68 "D (slide pitch down)" ifTrue: [self slideNoteBy: v / -16.0]! !
+	command = 85 "U (slide pitch up)" ifTrue: [self slideNoteBy: v / 16.0. ^ self].
+	command = 68 "D (slide pitch down)" ifTrue: [self slideNoteBy: v / -16.0. ^ self].
+	command = 60 "< (speed backwards)" ifTrue: [self setSpeed: ((v bitShift: -4) / -8.0 nthRoot: 3) glide: (v bitAnd: 16rF). ^ self].
+	command = 62 "> (speed forward)" ifTrue: [self setSpeed: ((v bitShift: -4) / 8.0 nthRoot: 3) glide: (v bitAnd: 16rF). ^ self]! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 25/Jun/2026, 11:43:17 am (UTC)'!
 handleRetrigger: anInteger
@@ -2775,32 +2790,40 @@ noteOff
 noteOn: midiKey
 	self noteOn: midiKey glide: 0! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 25/Jun/2026, 11:43:08 am (UTC)'!
-noteOn: midiKey glide: glide
+!Instrument methodsFor: 'playing' stamp: 'len 26/Jun/2026, 10:10:33 am (UTC)'!
+noteOn: midiKey glide: numberOfLines
 	| targetNote |
 	targetNote := track tuningOrNil ifNil: [midiKey] ifNotNil: [:aTuning| aTuning map: midiKey].
-	(glide > 0 and: [note notNil])
+	(numberOfLines > 0 and: [note notNil])
 		ifTrue:
-			[glideTicks := (glide / 16.0 * track tracker tpl) truncated.
+			[glideTicks := (numberOfLines * track tracker tpl) truncated.
 			noteIncrement := targetNote - note / glideTicks asFloat.
 			note := note + noteIncrement]
 		ifFalse:
 			[glideTicks := 0.
+			noteIncrement := 0.0.
 			note := targetNote].
-	self setNote: note; gateOn! !
+	self setNote: note; setSpeed: speed cubed; gateOn! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026, 7:30:22 pm (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 26/Jun/2026, 10:09:12 am (UTC)'!
 playTrigger
 	trigger isNoteOn
 		ifTrue:
 			[self setVelocity: (trigger velocity ifNil: [128.0]) / 128.0.
-			trigger isReverse ifTrue: [self setOffset: 1.0] ifFalse: [self setSpeed: 1.0; setOffset: 0.0].
+			speedIncrement := 0.0.
+			glideTicks := 0.
+			trigger isReverse
+				ifTrue: "new notes start at the begining with normal speed, or at the end if playing backwards"
+					[self setOffset: 1.0.
+					speed := -1.0]
+				ifFalse:
+					[self setOffset: 0.0.
+					speed := 1.0].
 			trigger fx1 ifNotNil: [:fx| self handleFX: fx].
 			trigger fx2 ifNotNil: [:fx| self handleFX: fx].
 			self noteOn: trigger note + trigger noteShift glide: trigger glide.
 			trigger fx1 ifNotNil: [:fx| self handlePostNoteFX: fx].
-			trigger fx2 ifNotNil: [:fx| self handlePostNoteFX: fx].
-			]
+			trigger fx2 ifNotNil: [:fx| self handlePostNoteFX: fx]]
 		ifFalse:
 			[trigger velocity ifNotNil: [:vel| self setVelocity: vel / 128.0].
 			trigger fx1 ifNotNil: [:fx| self handleFX: fx; handlePostNoteFX: fx].
@@ -2841,6 +2864,19 @@ setPan: aNumber
 setSpeed: aNumber
 	samples do: [:each| each setSpeed: aNumber]! !
 
+!Instrument methodsFor: 'playing' stamp: 'len 26/Jun/2026, 10:10:15 am (UTC)'!
+setSpeed: targetSpeed glide: numberOfLines
+	(numberOfLines > 0 and: [speed notNil])
+		ifTrue:
+			[glideTicks := (numberOfLines * track tracker tpl) truncated.
+			speedIncrement := targetSpeed - speed / glideTicks asFloat.
+			speed := speed + speedIncrement]
+		ifFalse:
+			[glideTicks := 0.
+			speedIncrement := 0.0.
+			speed := targetSpeed].
+	self setSpeed: speed cubed! !
+
 !Instrument methodsFor: 'playing' stamp: 'len 12/Jun/2026, 1:01:03 pm (UTC)'!
 setVelocity: aNumber
 	velocityReceivers do: [:each| each setVelocity: aNumber]! !
@@ -2851,7 +2887,7 @@ slideNoteBy: aNumber
 	glideTicks := track tracker tpl.
 	noteIncrement := aNumber / glideTicks asFloat! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 15/Jun/2026, 9:06:14 pm (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 26/Jun/2026, 10:11:53 am (UTC)'!
 tick
 	| currentModules enabled |
 	currentModules := self modules.
@@ -2859,7 +2895,10 @@ tick
 	currentModules do: [:each|
 		(each isMemberOf: AudioOut) ifTrue: [each enabled: enabled].
 		each clear].
-	glideTicks > 0 ifTrue: [note := note + noteIncrement. glideTicks := glideTicks - 1. self setNote: note].
+	glideTicks > 0 ifTrue:
+		[noteIncrement = 0.0 ifFalse: [note := note + noteIncrement. self setNote: note].
+		speedIncrement = 0.0 ifFalse: [speed := speed + speedIncrement. self setSpeed: speed cubed].
+		glideTicks := glideTicks - 1].
 	trigger ifNotNil: [self playTrigger].
 	currentModules do: [:each| each update; tick]! !
 
@@ -3249,11 +3288,12 @@ fx2
 fx2: anInteger
 	fx2 := anInteger! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 23/Mar/2026, 6:13:55 pm (UTC)'!
+!Trigger methodsFor: 'accessing' stamp: 'len 26/Jun/2026, 10:06:58 am (UTC)'!
 glide
-	"Answer the glide or portamento effect for this trigger, i.e. the parameter of the effect command G."
-	fx1 ifNotNil: [(fx1 bitShift: -8) = 71 "G" ifTrue: [^ fx1 bitAnd: 16rFF]].
-	fx2 ifNotNil: [(fx2 bitShift: -8) = 71 "G" ifTrue: [^ fx2 bitAnd: 16rFF]].
+	"Answer the glide or portamento effect for this trigger in number of lines.
+	This is the value of the parameter of the effect command G."
+	fx1 ifNotNil: [(fx1 bitShift: -8) = 71 "G" ifTrue: [^ (fx1 bitAnd: 16rFF) / 16.0]].
+	fx2 ifNotNil: [(fx2 bitShift: -8) = 71 "G" ifTrue: [^ (fx2 bitAnd: 16rFF) / 16.0]].
 	^ 0! !
 
 !Trigger methodsFor: 'accessing' stamp: 'len 24/Dec/2025, 8:57:45 am (UTC)'!

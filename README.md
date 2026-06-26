@@ -55,7 +55,7 @@ At the bottom left there is the "sequencer" or "arranger", that contains the lis
 * Uxx / Dxx slide note up/down by xx/16 semitones
 * +xx / -xx finetune note up/down by xx/256 of a note depending on the selected tuning (0 = no change, 80 = half note, FF = almost 1 note)
 * Sxx set sample start offset
-* <xx / >xx set speed to xx/128 and play backwards / forward (40 = half speed, 80 = normal speed, FF = double speed)
+* <xy / >xy slide to play backwards/forward at speed x/8 (4 = half speed, 8 = normal, F = almost double) in y lines
 * Lxx set instrument volume level to xx (00 = minimum, FF = maximum)
 * Pxx set instrument pan (00 = left, 80 = center, FF = right)
 * Ixx / Oxx adjust instrument volume level up/down

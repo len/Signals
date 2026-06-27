@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8026] on 26 June 2026 at 5:31:24 pm'!
+'From Cuis7.9 [latest update: #8026] on 27 June 2026 at 3:07:25 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 620!
+!provides: 'Signals' 1 621!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -11493,13 +11493,14 @@ blackKeyWidth
 defaultExtent
 	^`128@64`! !
 
-!QuantizerControlMorph methodsFor: 'as yet unclassified' stamp: 'len 7/Jun/2026, 5:31:34 pm (UTC)'!
+!QuantizerControlMorph methodsFor: 'as yet unclassified' stamp: 'len 27/Jun/2026, 8:05:43 am (UTC)'!
 drawOn: aCanvas
-	| w h whiteKeyWidth blackKeyWidth blackKeyHeight keyColor selectedColor selectedRadius x playingColor playingKey playingOctave allowedColor harmonicOrder threshold |
+	| w h whiteKeyWidth blackKeyWidth blackKeyHeight ivory keyColor selectedColor selectedRadius x playingColor playingKey playingOctave allowedColor harmonicOrder threshold |
 	w := self morphWidth.
 	h := self morphHeight.
 	whiteKeyWidth := self whiteKeyWidth.
-	keyColor := Color white.
+	ivory := `Color fromHexString: '#F0F0E0'`.
+	keyColor := ivory.
 	harmonicOrder := #(0 7 5 4 9 3 8 2 10 11 1 6). "from least to most disonant"
 	threshold := control value * 12.0.
 	allowedColor := Color redCathode.
@@ -11517,7 +11518,7 @@ drawOn: aCanvas
 	blackKeyWidth := self blackKeyWidth.
 	blackKeyHeight := self blackKeyHeight.
 	keyColor := Color black.
-	selectedColor := Color white.
+	selectedColor := ivory.
 	selectedRadius := blackKeyWidth / 4.0.
 	#(2 4) withIndexDo: [:key :i|
 		x := i * whiteKeyWidth - (blackKeyWidth / 2.0).

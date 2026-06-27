@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8026] on 26 June 2026 at 5:39:00 pm'!
+'From Cuis7.9 [latest update: #8026] on 27 June 2026 at 3:07:28 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 75!
+!provides: 'Tracker' 1 76!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -1434,10 +1434,12 @@ initialize
 	self horizontal: true.
 	self scrollable: RackMorph new! !
 
-!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 8:31:27 pm (UTC)'!
+!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 26/Jun/2026, 6:30:24 pm (UTC)'!
 setTracker: aTracker
 	tracker := aTracker.
-	aTracker when: #cursorChanged send: #update to: self.
+	aTracker
+		when: #cursorChanged send: #update to: self;
+		when: #tracksChanged send: #update to: self.
 	self update! !
 
 !InstrumentRackMorph methodsFor: 'private' stamp: 'len 20/Jun/2026, 9:32:49 pm (UTC)'!
@@ -1566,10 +1568,12 @@ keyStroke: anEvent
 			[anEvent wasHandled: true. tracker selectedInstrument ifNotNil: [:anInstument| anInstument noteOn: tracker selectedTrack inputCenterKey + i - 1]. ^ self]].
 	^ super keyStroke: anEvent! !
 
-!InstrumentEditorMorph methodsFor: 'initialization' stamp: 'len 18/Feb/2026, 10:30:12 am (UTC)'!
+!InstrumentEditorMorph methodsFor: 'initialization' stamp: 'len 26/Jun/2026, 6:30:33 pm (UTC)'!
 setTracker: aTracker
 	tracker := aTracker.
-	aTracker when: #cursorChanged send: #update to: self.
+	aTracker
+		when: #cursorChanged send: #update to: self;
+		when: #tracksChanged send: #update to: self.
 	self update! !
 
 !InstrumentEditorMorph methodsFor: 'private' stamp: 'len 18/Feb/2026, 9:16:00 am (UTC)'!
@@ -1926,14 +1930,12 @@ adjustFontSizeBy: anInteger
 	font := font family atPointSize: (pointSizes atPin: (pointSizes indexOf: font pointSize) + anInteger).
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026, 8:28:57 am (UTC)'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 26/Jun/2026, 9:38:40 pm (UTC)'!
 clipboardCopy
 	| pattern |
 	selectionLineStart ifNil: [ClipboardBuffer := {{(tracker selectedTrigger ifNil: [^ self]) copy}}. ^ self].
 	pattern := tracker selectedPattern.
-	ClipboardBuffer := ((selectionLineStart min: tracker cursorLine) to: (selectionLineStart max: tracker cursorLine))
-		collect: [:i|
-			((selectionTrackStart min: tracker cursorTrack) to: (selectionTrackStart max: tracker cursorTrack)) 				collect: [:k| pattern track: k at: i]]! !
+	ClipboardBuffer := self selectedLines collect: [:i| self selectedTracks collect: [:k| pattern track: k at: i]]! !
 
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 25/Jun/2026, 8:00:00 pm (UTC)'!
 clipboardCut
@@ -1952,7 +1954,7 @@ clipboardPaste
 				ifTrue: [pattern track: k0 + k at: i0 + i put: trigger copy]]].
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 25/Jun/2026, 8:00:00 pm (UTC)'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 26/Jun/2026, 9:39:25 pm (UTC)'!
 deleteSelection
 	| pattern |
 	pattern := tracker selectedPattern.
@@ -1960,8 +1962,8 @@ deleteSelection
 		[pattern track: tracker cursorTrack at: tracker cursorLine put: nil.
 		self redrawNeeded.
 		^ self].
-	(selectionLineStart min: tracker cursorLine) to: (selectionLineStart max: tracker cursorLine) do: [:i|
-		(selectionTrackStart min: tracker cursorTrack) to: (selectionTrackStart max: tracker cursorTrack) do: [:k|
+	self selectedLines do: [:i|
+		self selectedTracks do: [:k|
 			pattern track: k at: i put: nil]].
 	self redrawNeeded! !
 
@@ -2082,17 +2084,24 @@ playSelection
 	selectionLineStart ifNil: [tracker playFrom: cursorPattern line: cursorLine to: cursorPattern line: cursorLine tracks: {cursorTrack}. ^ self].
 	tracker playFrom: cursorPattern line: (selectionLineStart min: cursorLine) to: cursorPattern line: (selectionLineStart max: cursorLine) tracks: ((selectionTrackStart min: cursorTrack) to: (selectionTrackStart max: cursorTrack))! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 25/Jun/2026, 8:04:16 pm (UTC)'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 27/Jun/2026, 8:00:24 am (UTC)'!
 selectAll
-	self notYetImplemented! !
+	self selectedTracks size = tracker tracks size ifFalse: "extend selection to all tracks"
+		[selectionLineStart ifNil: [selectionLineStart := tracker cursorLine].
+		selectionTrackStart := 1.
+		tracker setCursorTrack: tracker tracks size.
+		^ self redrawNeeded].
+	self selectedLines size = tracker selectedPattern length ifFalse: "extend selection to all the pattern"
+		[selectionLineStart := 1.
+		tracker moveCursorLineBottom.
+		^ self redrawNeeded]! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026, 6:30:51 pm (UTC)'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 26/Jun/2026, 9:42:28 pm (UTC)'!
 selectedTriggersDo: aBlock
 	| pattern |
-	selectionLineStart ifNil: [tracker selectedTrigger ifNotNil: aBlock. ^ self].
 	pattern := tracker selectedPattern.
-	(selectionLineStart min: tracker cursorLine) to: (selectionLineStart max: tracker cursorLine) do: [:i|
-		(selectionTrackStart min: tracker cursorTrack) to: (selectionTrackStart max: tracker cursorTrack) do: [:k|
+	self selectedLines do: [:i|
+		self selectedTracks do: [:k|
 			(pattern track: k at: i) ifNotNil: aBlock]]! !
 
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 14/Mar/2026, 11:30:14 am (UTC)'!
@@ -2291,7 +2300,7 @@ trackWidthInCharacters
 aboutToBeGrabbedBy: aHand
 	^ MovingHelperMorph new target: self; offset: (self owner internalizeFromWorld: aHand morphPosition) - self morphPosition! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 25/Jun/2026, 8:06:04 pm (UTC)'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 27/Jun/2026, 7:56:45 am (UTC)'!
 handleCommandHotkey: anEvent
 	"Font size:"
 	anEvent keyCharacter = $- ifTrue: [self adjustFontSizeBy: -1. ^ true].
@@ -2312,14 +2321,11 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $a ifTrue: [self selectAll. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 25/Jun/2026, 8:00:00 pm (UTC)'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 26/Jun/2026, 9:47:23 pm (UTC)'!
 handleInputKey: anEvent
 	| c i |
-	anEvent isBackspace ifTrue:
-		[selectionLineStart isNil
-			ifTrue: [tracker selectedTriggerAt: cursorPosition put: nil. self redrawNeeded]
-			ifFalse: [self deleteSelection].
-		^ true].
+	(tracker followPlayhead and: [tracker isPlaying]) ifTrue: [^ false]. "avoid input if following playhead"
+	anEvent isBackspace ifTrue: [self deleteSelection. ^ true].
 	anEvent keyCharacter = $] ifTrue: [self selectedTriggersDo: [:each| each transposeBy: (tracker selectedTrack tuning size)]. self redrawNeeded. ^ true].
 	anEvent keyCharacter = $[ ifTrue: [self selectedTriggersDo: [:each| each transposeBy: (tracker selectedTrack tuning size negated)]. self redrawNeeded. ^ true].
 	anEvent keyCharacter = $} ifTrue: [self selectedTriggersDo: [:each| each transposeBy: 1]. self redrawNeeded. ^ true].
@@ -2558,6 +2564,20 @@ pauseBlinking
 		[showCursor := true.
 		self redrawNeeded
 		"cursorRect ifNotNil: [:r| self invalidateLocalRect: r]"]! !
+
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 26/Jun/2026, 9:36:08 pm (UTC)'!
+selectedLines
+	| cursorLine |
+	cursorLine := tracker cursorLine.
+	selectionLineStart ifNil: [^ {cursorLine}].
+	^ (selectionLineStart min: cursorLine) to: (selectionLineStart max: cursorLine)! !
+
+!PatternEditorMorph methodsFor: 'private' stamp: 'len 26/Jun/2026, 9:37:04 pm (UTC)'!
+selectedTracks
+	| cursorTrack |
+	cursorTrack := tracker cursorTrack.
+	selectionTrackStart ifNil: [^ {cursorTrack}].
+	^ (selectionTrackStart min: cursorTrack) to: (selectionTrackStart max: cursorTrack)! !
 
 !PatternEditorMorph methodsFor: 'private' stamp: 'len 15/Jun/2026, 11:27:38 am (UTC)'!
 showFXBalloon

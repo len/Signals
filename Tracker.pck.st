@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8026] on 27 June 2026 at 3:07:28 pm'!
+'From Cuis7.9 [latest update: #8030] on 28 June 2026 at 11:00:59 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 76!
+!provides: 'Tracker' 1 78!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -99,7 +99,7 @@ TransportStatusMorph class
 
 !classDefinition: #Instrument category: #'Tracker-Kernel'!
 Object subclass: #Instrument
-	instanceVariableNames: 'label patch modules noteReceivers velocityReceivers gateReceivers samples audioOutput controlValues note noteIncrement speed speedIncrement glideTicks track trigger'
+	instanceVariableNames: 'label patchMorph patch track trigger'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Tracker-Kernel'!
@@ -320,11 +320,11 @@ successColor
 text
 	^ Color white! !
 
-!DarkerTheme methodsFor: 'colors' stamp: 'len 26/Jun/2026, 10:07:56 am (UTC)'!
+!DarkerTheme methodsFor: 'colors' stamp: 'len 27/Jun/2026, 9:53:18 pm (UTC)'!
 textAutoHighlight
 "	^ (Color colorFrom: '#FF005C') alpha: 0.5"
 "	^ (Color colorFrom: '#ff2f8e') alpha: 0.5"
-	^ (Color colorFrom: '#FF4466') alpha: 0.6! !
+	^ (Color colorFrom: '#FF4466') alpha: 0.5! !
 
 !DarkerTheme methodsFor: 'colors' stamp: 'len 11/Apr/2026, 5:42:14 am (UTC)'!
 textCursor
@@ -771,7 +771,7 @@ setCursorTrack: anInteger
 	self triggerEvent: #cursorChanged.
 	self triggerEvent: #selectedTrackTuningChanged: with: self selectedTrack tuning! !
 
-!Tracker methodsFor: 'initialization' stamp: 'len 10/Jun/2026, 5:07:12 pm (UTC)'!
+!Tracker methodsFor: 'initialization' stamp: 'len 28/Jun/2026, 8:21:01 am (UTC)'!
 initialize
 	instruments := Dictionary new.
 	tracks := #().
@@ -790,7 +790,7 @@ initialize
 	playStartPattern := 1.
 	playStartLine := 1.
 	anyTrackSoloed := false.
-	buses := Dictionary new at: 0 put: Bus new; yourself. "the master bus at 0"
+	buses := (Array new: 10) at: 1 put: Bus new; yourself. "the master bus at 0"
 	peakLeft := 0.0.
 	peakRight := 0.0.
 	random := Random new.
@@ -905,7 +905,7 @@ isPlayingFollowingPlayhead
 loop: aBoolean
 	loop := aBoolean! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 3/Jun/2026, 11:58:40 am (UTC)'!
+!Tracker methodsFor: 'playing' stamp: 'len 28/Jun/2026, 8:23:14 am (UTC)'!
 play
 	self isPlaying ifTrue: [^ self].
 	playStartPattern := 1.
@@ -916,7 +916,7 @@ play
 	playheadPattern := cursorPattern.
 	playheadLine := cursorLine - 1.
 	ticksToLine := 0.
-	buses keys do: [:each| each = 0 ifFalse: [buses removeKey: each]]. "remove all buses except the master"
+	buses from: 2 to: buses size put: nil. "remove all buses except the master bus"
 	"if playing from the begining, reset all modules (for reproducibility):"
 	(playheadPattern = 1 and: [playheadLine = 0]) ifTrue: [instruments do: [:each| each reset]].
 	Smalltalk garbageCollect. "just in case, to make a GC less likely during playback"
@@ -924,7 +924,7 @@ play
 	self triggerEvent: #playheadChanged.
 	self triggerEvent: #playingStatusChanged! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 8/Mar/2026, 12:22:44 pm (UTC)'!
+!Tracker methodsFor: 'playing' stamp: 'len 28/Jun/2026, 8:22:48 am (UTC)'!
 playFrom: startPattern line: startLine to: endPattern line: endLine tracks: tracksToPlay
 	self isPlaying ifTrue: [^ self].
 	playStartPattern := startPattern.
@@ -935,7 +935,7 @@ playFrom: startPattern line: startLine to: endPattern line: endLine tracks: trac
 	playheadPattern := playStartPattern.
 	playheadLine := playStartLine - 1.
 	ticksToLine := 0.
-	buses keys do: [:each| each = 0 ifFalse: [buses removeKey: each]]. "remove all buses except the master"
+	buses from: 2 to: buses size put: nil. "remove all buses except the master bus"
 	AudioPlayer startPlaying: self.
 	self triggerEvent: #playheadChanged.
 	self triggerEvent: #playingStatusChanged! !
@@ -971,7 +971,7 @@ playLine
 	(playheadLine \\ pattern lpb) even ifTrue: [ticksSwing := ticksSwing negated].
 	ticksToLine := ticksToLine + ticksSwing! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 5/Jun/2026, 4:10:00 pm (UTC)'!
+!Tracker methodsFor: 'playing' stamp: 'len 28/Jun/2026, 8:22:09 am (UTC)'!
 playSampleCount: n into: anAudioBuffer startingAt: startIndex
 	| blockSize i masterGain mask masterBus |
 	blockSize := Module blockSize.
@@ -979,10 +979,10 @@ playSampleCount: n into: anAudioBuffer startingAt: startIndex
 	self assert: n \\ blockSize = 0.
 	masterGain := level * 0.25. "leave -12 dB of headroom"
 	mask := self playingMask.
-	masterBus := buses at: 0.
+	masterBus := buses at: 1.
 	n // blockSize timesRepeat:
 		[ticksToLine > 0 ifTrue: [ticksToLine := ticksToLine - 1] ifFalse: [self playLine. mask := self playingMask].
-		buses do: [:each| each clear].
+		buses do: [:each| each ifNotNil: [each clear]].
 		mask withIndexDo: [:enabled :trackIndex| enabled ifTrue: [(tracks at: trackIndex) tick]].
 		masterBus leftBuffer *= masterGain.
 		masterBus rightBuffer *= masterGain.
@@ -1196,12 +1196,12 @@ serviceLoadSong
 		description:'open in tracker'
 		buttonLabel: 'open in tracker') argumentGetter: [:fileList| fileList selectedFileEntry]! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 18/Jun/2026, 3:25:10 pm (UTC)'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 27/Jun/2026, 9:31:01 pm (UTC)'!
 fitAllPatchesToInstrumentEditorBounds
 	| bounds |
 	layoutMorph layoutSubmorphs.
 	bounds := instrumentEditor localBounds insetBy: 8.
-	model instruments do: [:each| each patch fitTo: bounds]! !
+	model instruments do: [:each| each patchMorph fitTo: bounds]! !
 
 !TrackerWindow methodsFor: 'actions' stamp: 'len 3/Jun/2026, 12:00:30 pm (UTC)'!
 openProject
@@ -1274,7 +1274,7 @@ keyStroke: anEvent
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 25/Jun/2026, 1:34:41 pm (UTC)'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 27/Jun/2026, 11:42:56 am (UTC)'!
 buildMorphicWindow
 	| lowerLeftPane sequencerScroller patternEditorScroller bar transport bpmControl swingControl barFont |
 	instrumentEditor := InstrumentEditorMorph new setTracker: model.
@@ -1302,7 +1302,7 @@ buildMorphicWindow
 		receive: #baseValue: from: model when: #swingChanged:;
 		when: #changed: send: #swing: to: model.
 	bar addMorph: (TextualControlMorph new control: swingControl).
-	bar addMorph: (ToggleButtonMorph new font: barFont; state: model followPlayhead; when: #changed: send: #followPlayhead: to: model; receive: #state: from: model when: #followPlayheadChanged:; "label: '⇩';" icon: Icon follow; setBalloonText: 'Follow playhead').
+	bar addMorph: (ToggleButtonMorph new font: barFont; state: model followPlayhead; when: #changed: send: #followPlayhead: to: model; receive: #state: from: model when: #followPlayheadChanged:; "label: '⇩';" icon: (IconMorph new pathData: 'M233.33-161.33 80-315.33l46.67-46L200-290v-470.67h66.67V-290l72.66-71.33 46.67 46-152.67 154Zm252.67-38V-266h394v66.67H486Zm0-247.34v-66.66h394v66.66H486ZM486-694v-66.67h394V-694H486Z'); setBalloonText: 'Follow playhead').
 	bar addMorph: (PulldownListMorph new
 		options: (0 to: 9);
 		state: model inputOctave;
@@ -1317,7 +1317,7 @@ buildMorphicWindow
 		receive: #state: from: model when: #selectedTrackTuningChanged:;
 "		receive: #options: from: Tuning when: #tuningsLibraryChanged:;"
 		setBalloonText: 'Tuning system').
-	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setInstrumentEditorMode: to: self; receive: #state: from: self when: #instrumentEditorModeChanged:; icon: Icon graph; setBalloonText: 'Instrument editor mode').
+	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setInstrumentEditorMode: to: self; receive: #state: from: self when: #instrumentEditorModeChanged:; icon: (IconMorph new pathData: 'M602.67-120v-123.33h-156V-650H358v126.67H80V-840h278v123.33h244.67V-840H880v316.67H602.67V-650h-89.34v340h89.34v-126.67H880V-120H602.67Zm-456-653.33V-590v-183.33ZM669.33-370v183.33V-370Zm0-403.33V-590v-183.33Zm0 183.33h144v-183.33h-144V-590Zm0 403.33h144V-370h-144v183.33ZM146.67-590h144.66v-183.33H146.67V-590Z'); setBalloonText: 'Instrument editor mode').
 	lowerPane := LinearLayoutMorph newRow color: Color transparent.
 	lowerLeftPane := LinearLayoutMorph newColumn color: Color transparent.
 	sequencerScroller := ScrollerMorph new vertical: true; scrollable: arranger.
@@ -1442,7 +1442,7 @@ setTracker: aTracker
 		when: #tracksChanged send: #update to: self.
 	self update! !
 
-!InstrumentRackMorph methodsFor: 'private' stamp: 'len 20/Jun/2026, 9:32:49 pm (UTC)'!
+!InstrumentRackMorph methodsFor: 'private' stamp: 'len 28/Jun/2026, 9:10:18 am (UTC)'!
 forceUpdate
 	scrollable patch: tracker selectedInstrument patch; update! !
 
@@ -1450,7 +1450,7 @@ forceUpdate
 rack
 	^ scrollable! !
 
-!InstrumentRackMorph methodsFor: 'private' stamp: 'len 22/Jun/2026, 8:47:08 am (UTC)'!
+!InstrumentRackMorph methodsFor: 'private' stamp: 'len 28/Jun/2026, 9:10:41 am (UTC)'!
 update
 	scrollable patch: (tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument patch])! !
 
@@ -1464,12 +1464,11 @@ clipboardCut
 	(self activeHand keyboardFocus ifNil: [^ self])
 		withAllOwnersDo: [:each| (each isKindOf: PatchableMorph) ifTrue: [ClipboardBuffer := each model copy. each delete. ^ self]]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026, 8:28:05 am (UTC)'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 28/Jun/2026, 10:50:15 am (UTC)'!
 clipboardPaste
-	| patch |
 	ClipboardBuffer ifNil: [^ self].
-	patch := self patch ifNil: [^ self].
-	patch addMorph: ClipboardBuffer copy patchable position: ((patch internalizeFromWorld: self activeHand morphPosition))! !
+	self patchMorph ifNotNil: [:aPatchMorph|
+		aPatchMorph addMorph: ClipboardBuffer copy patchable position: ((aPatchMorph internalizeFromWorld: self activeHand morphPosition))]! !
 
 !InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 19/Apr/2026, 3:52:50 pm (UTC)'!
 duplicateInstrument
@@ -1486,14 +1485,14 @@ exportInstrument
 		(self class package packageDirectory / 'data' / 'projects' // (newName, '.patch')) writeStreamDo: [:s| instrument writeOn: s].
 		tracker triggerEvent: #instrumentLabelChanged]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 21/Jun/2026, 9:05:41 am (UTC)'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 28/Jun/2026, 10:50:22 am (UTC)'!
 fitPatchToBounds
-	self patch ifNotNil: [:aPatchMorph| aPatchMorph fitTo: (self localBounds insetBy: 8)]! !
+	self patchMorph ifNotNil: [:aPatchMorph| aPatchMorph fitTo: (self localBounds insetBy: 8)]! !
 
-!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 22/Jun/2026, 12:33:46 pm (UTC)'!
+!InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 28/Jun/2026, 10:50:33 am (UTC)'!
 focusOnModule: aModule
 	| patchMorph patchable boundsInPatch boundsInZoomer zoomerCenter |
-	patchMorph := self patch ifNil: [^ self].
+	patchMorph := self patchMorph ifNil: [^ self].
 	patchable := patchMorph submorphs detect: [:one| (one isKindOf: PatchableMorph) and: [one model == aModule]] ifNone: [^ self].
 	patchable comeToFront.
 	boundsInPatch := patchable fullBoundsInOwner.
@@ -1576,15 +1575,15 @@ setTracker: aTracker
 		when: #tracksChanged send: #update to: self.
 	self update! !
 
-!InstrumentEditorMorph methodsFor: 'private' stamp: 'len 18/Feb/2026, 9:16:00 am (UTC)'!
-patch
+!InstrumentEditorMorph methodsFor: 'private' stamp: 'len 28/Jun/2026, 10:49:21 am (UTC)'!
+patchMorph
 	^ submorphs detect: [:one| one isKindOf: PatchMorph] ifNone: []! !
 
-!InstrumentEditorMorph methodsFor: 'private' stamp: 'len 20/Feb/2026, 1:35:37 pm (UTC)'!
+!InstrumentEditorMorph methodsFor: 'private' stamp: 'len 28/Jun/2026, 10:50:44 am (UTC)'!
 update
 	| selectedPatch |
-	selectedPatch := tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument patch].
-	selectedPatch = self patch ifFalse:
+	selectedPatch := tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument patchMorph].
+	selectedPatch = self patchMorph ifFalse:
 		[self removeAllMorphs.
 		selectedPatch ifNotNil: [self addMorph: selectedPatch]].
 	self redrawNeeded! !
@@ -2699,21 +2698,25 @@ label
 label: aString
 	label := aString! !
 
-!Instrument methodsFor: 'accessing' stamp: 'len 18/Jan/2026, 8:14:01 am (UTC)'!
+!Instrument methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 9:35:46 pm (UTC)'!
 meterLeftValue
-	^ (audioOutput ifNil: [^ 0.0]) meterLeftValue! !
+	^ patch meterLeftValue! !
 
-!Instrument methodsFor: 'accessing' stamp: 'len 18/Jan/2026, 8:14:10 am (UTC)'!
+!Instrument methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 9:35:56 pm (UTC)'!
 meterRightValue
-	^ (audioOutput ifNil: [^ 0.0]) meterRightValue! !
+	^ patch meterRightValue! !
 
-!Instrument methodsFor: 'accessing' stamp: 'len 17/Jan/2026, 7:25:34 pm (UTC)'!
+!Instrument methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 9:36:05 pm (UTC)'!
 meterValue
-	^ (audioOutput ifNil: [^ 0.0]) meterValue! !
+	^ patch meterValue! !
 
-!Instrument methodsFor: 'accessing' stamp: 'len 17/Feb/2026, 12:39:10 pm (UTC)'!
+!Instrument methodsFor: 'accessing' stamp: 'len 28/Jun/2026, 9:12:07 am (UTC)'!
 patch
 	^ patch! !
+
+!Instrument methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 9:35:23 pm (UTC)'!
+patchMorph
+	^ patchMorph! !
 
 !Instrument methodsFor: 'accessing' stamp: 'len 17/Feb/2026, 12:28:32 pm (UTC)'!
 setOwnerTrack: aTrack
@@ -2730,33 +2733,20 @@ copy
 	buffers := OrderedCollection new.
 	^ self class new readFromJson: (self asJsonWithBuffers: buffers) buffers: buffers! !
 
-!Instrument methodsFor: 'initialization' stamp: 'len 19/Jun/2026, 4:11:11 pm (UTC)'!
+!Instrument methodsFor: 'initialization' stamp: 'len 27/Jun/2026, 10:03:46 pm (UTC)'!
 initialize
-	controlValues := Float32Array new: 10.
-	patch := PatchMorph new.
-	patch when: #recomputeNeeded send: #recomputeNeeded to: self.
-	glideTicks := 0! !
+	patchMorph := PatchMorph new.
+	patchMorph when: #recomputeNeeded send: #recomputeModules to: self.
+	patch := Patch new! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 3/Mar/2026, 12:20:04 pm (UTC)'!
-adjustLevelBy: aNumber
-	audioOutput ifNotNil: [audioOutput adjustLevelBy: aNumber]! !
-
-!Instrument methodsFor: 'playing' stamp: 'len 3/Mar/2026, 12:20:31 pm (UTC)'!
-adjustPanBy: aNumber
-	audioOutput ifNotNil: [audioOutput adjustPanBy: aNumber]! !
-
-!Instrument methodsFor: 'playing' stamp: 'len 23/Mar/2026, 12:34:40 pm (UTC)'!
-gateOn
-	gateReceivers do: [:each| each gateOn]! !
-
-!Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026, 3:56:01 pm (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 27/Jun/2026, 9:37:04 pm (UTC)'!
 handleCut: anInteger
 	| velocity time |
 	velocity := ((anInteger bitShift: -4) bitAnd: 16rF) / 15.0.
-	(time := anInteger bitAnd: 16rF) = 0 ifTrue: [^ self setVelocity: velocity].
+	(time := anInteger bitAnd: 16rF) = 0 ifTrue: [^ patch setVelocity: velocity].
 	track scheduleTrigger: (Trigger new velocity: (velocity * 128.0) truncated) after: time / 12.0 * track tracker tpl! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 26/Jun/2026, 8:46:04 am (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 27/Jun/2026, 9:38:19 pm (UTC)'!
 handleFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
@@ -2764,29 +2754,29 @@ handleFX: anInteger
 	command = 82 "R (retrigger)" ifTrue: [^ self handleRetrigger: anInteger].
 	v := anInteger bitAnd: 16rFF.
 	"Pre-mixer commands (modify the instrument output to the master bus only):"
-	command = 76 "L (volume level)" ifTrue: [self setLevel:​ v / 255.0. ^ self].
-	command = 80 "P (pan)" ifTrue: [self setPan: v / 256.0 * 2.0 - 1.0. ^ self].
-	command = 73 "I (volume level up)" ifTrue: [self adjustLevelBy: v / 255.0].
-	command = 79 "O (volume level down)" ifTrue: [self adjustLevelBy: v / -255.0].
-	command = 74 "J (pan left)" ifTrue: [self adjustPanBy: v / -255.0].
-	command = 75 "K (pan right)" ifTrue: [self adjustPanBy: v / 255.0].
+	command = 76 "L (volume level)" ifTrue: [patch setLevel:​ v / 255.0. ^ self].
+	command = 80 "P (pan)" ifTrue: [patch setPan: v / 256.0 * 2.0 - 1.0. ^ self].
+	command = 73 "I (volume level up)" ifTrue: [patch adjustLevelBy: v / 255.0].
+	command = 79 "O (volume level down)" ifTrue: [patch adjustLevelBy: v / -255.0].
+	command = 74 "J (pan left)" ifTrue: [patch adjustPanBy: v / -255.0].
+	command = 75 "K (pan right)" ifTrue: [patch adjustPanBy: v / 255.0].
 	"Sample commands:"
-	command = 83 "S (sample offset)" ifTrue: [self setOffset: v / 255.0. ^ self].
+	command = 83 "S (sample offset)" ifTrue: [patch setOffset: v / 255.0. ^ self].
 	"Control change commands:"
-	(command between: 48 and: 57) "0 to 9" ifTrue: [controlValues at: command - 47 put: v / 255.0. ^ self].
+	(command between: 48 and: 57) "0 to 9" ifTrue: [patch controlBus at: command - 47 put: v / 255.0. ^ self].
 	"Global commands:"
 	command = 70 "F (set bpm)" ifTrue: [track tracker bpm: (v max: 1). ^ self]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 26/Jun/2026, 10:17:51 am (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 27/Jun/2026, 9:53:41 pm (UTC)'!
 handlePostNoteFX: anInteger
 	"Note: pitch slide effects must be handled *after* the note on, otherwise the slide gets overridden."
 	| command v |
 	command := anInteger bitShift: -8.
 	v := anInteger bitAnd: 16rFF.
-	command = 85 "U (slide pitch up)" ifTrue: [self slideNoteBy: v / 16.0. ^ self].
-	command = 68 "D (slide pitch down)" ifTrue: [self slideNoteBy: v / -16.0. ^ self].
-	command = 60 "< (speed backwards)" ifTrue: [self setSpeed: ((v bitShift: -4) / -8.0 nthRoot: 3) glide: (v bitAnd: 16rF). ^ self].
-	command = 62 "> (speed forward)" ifTrue: [self setSpeed: ((v bitShift: -4) / 8.0 nthRoot: 3) glide: (v bitAnd: 16rF). ^ self]! !
+	command = 85 "U (slide pitch up)" ifTrue: [patch adjustNoteBy: v / 16.0 glide:  track tracker tpl. ^ self].
+	command = 68 "D (slide pitch down)" ifTrue: [patch adjustNoteBy: v / -16.0 glide:  track tracker tpl. ^ self].
+	command = 60 "< (speed backwards)" ifTrue: [patch setSpeed: ((v bitShift: -4) / -8.0 nthRoot: 3) glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
+	command = 62 "> (speed forward)" ifTrue: [patch setSpeed: ((v bitShift: -4) / 8.0 nthRoot: 3) glide: (v bitAnd: 16rF) * track tracker tpl. ^ self]! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 25/Jun/2026, 11:43:17 am (UTC)'!
 handleRetrigger: anInteger
@@ -2800,133 +2790,58 @@ handleRetrigger: anInteger
 	(x between: 14 and: 15) ifTrue: [velocity := velocity / (#(0.666 0.5) at: x - 13)].
 	track scheduleTrigger: (trigger copy velocity: (velocity * 128.0) truncated) after: time / 12.0 * track tracker tpl! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 23/Mar/2026, 6:47:37 pm (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 27/Jun/2026, 9:42:13 pm (UTC)'!
 noteOff
-	gateReceivers do: [:each| each gateOff].
-	glideTicks := 0.
-	note := nil! !
+	patch noteOff! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 23/Mar/2026, 6:46:50 pm (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 27/Jun/2026, 9:46:33 pm (UTC)'!
 noteOn: midiKey
-	self noteOn: midiKey glide: 0! !
+	self noteOn: midiKey glide: 0.0! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 26/Jun/2026, 10:10:33 am (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 27/Jun/2026, 9:46:22 pm (UTC)'!
 noteOn: midiKey glide: numberOfLines
-	| targetNote |
-	targetNote := track tuningOrNil ifNil: [midiKey] ifNotNil: [:aTuning| aTuning map: midiKey].
-	(numberOfLines > 0 and: [note notNil])
-		ifTrue:
-			[glideTicks := (numberOfLines * track tracker tpl) truncated.
-			noteIncrement := targetNote - note / glideTicks asFloat.
-			note := note + noteIncrement]
-		ifFalse:
-			[glideTicks := 0.
-			noteIncrement := 0.0.
-			note := targetNote].
-	self setNote: note; setSpeed: speed cubed; gateOn! !
+	patch noteOn: (track tuningOrNil ifNil: [midiKey] ifNotNil: [:aTuning| aTuning map: midiKey]) glide: (numberOfLines * track tracker tpl) truncated! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 26/Jun/2026, 10:09:12 am (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 27/Jun/2026, 9:50:15 pm (UTC)'!
 playTrigger
 	trigger isNoteOn
 		ifTrue:
-			[self setVelocity: (trigger velocity ifNil: [128.0]) / 128.0.
-			speedIncrement := 0.0.
-			glideTicks := 0.
-			trigger isReverse
-				ifTrue: "new notes start at the begining with normal speed, or at the end if playing backwards"
-					[self setOffset: 1.0.
-					speed := -1.0]
-				ifFalse:
-					[self setOffset: 0.0.
-					speed := 1.0].
+			[patch setVelocity: (trigger velocity ifNil: [128.0]) / 128.0.
+			trigger isReverse "new notes start at the begining with normal speed, or at the end if playing backwards"
+				ifTrue: [patch setOffset: 1.0; speed:​ -1.0]
+				ifFalse: [patch setOffset: 0.0; speed:​ 1.0].
 			trigger fx1 ifNotNil: [:fx| self handleFX: fx].
 			trigger fx2 ifNotNil: [:fx| self handleFX: fx].
 			self noteOn: trigger note + trigger noteShift glide: trigger glide.
 			trigger fx1 ifNotNil: [:fx| self handlePostNoteFX: fx].
 			trigger fx2 ifNotNil: [:fx| self handlePostNoteFX: fx]]
 		ifFalse:
-			[trigger velocity ifNotNil: [:vel| self setVelocity: vel / 128.0].
+			[trigger velocity ifNotNil: [:vel| patch setVelocity: vel / 128.0].
 			trigger fx1 ifNotNil: [:fx| self handleFX: fx; handlePostNoteFX: fx].
 			trigger fx2 ifNotNil: [:fx| self handleFX: fx; handlePostNoteFX: fx].
-			trigger isNoteOff ifTrue: [self noteOff]].
+			trigger isNoteOff ifTrue: [patch noteOff]].
 	trigger := nil! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 22/Jun/2026, 8:48:50 am (UTC)'!
-recomputeNeeded
-	"!!!!!! this doesn't work, the morph forgets the action map when deleted"
-	modules := nil! !
-
-!Instrument methodsFor: 'playing' stamp: 'len 3/Jun/2026, 11:45:14 am (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 27/Jun/2026, 9:50:35 pm (UTC)'!
 reset
-	(modules ifNil: [^ self]) do: [:each| each reset]! !
+	patch reset! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 5/Jan/2026, 12:45:17 pm (UTC)'!
 scheduleTrigger: aTrigger
 	trigger := aTrigger! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 17/Jan/2026, 7:31:21 pm (UTC)'!
-setLevel: aNumber
-	audioOutput ifNotNil: [audioOutput setLevel: aNumber]! !
-
-!Instrument methodsFor: 'playing' stamp: 'len 23/Mar/2026, 12:24:27 pm (UTC)'!
-setNote: midiKey
-	noteReceivers do: [:each| each setNote: midiKey]! !
-
-!Instrument methodsFor: 'playing' stamp: 'len 20/Jan/2026, 7:27:42 am (UTC)'!
-setOffset: aNumber
-	samples do: [:each| each setOffset: aNumber]! !
-
-!Instrument methodsFor: 'playing' stamp: 'len 17/Jan/2026, 7:31:31 pm (UTC)'!
-setPan: aNumber
-	audioOutput ifNotNil: [audioOutput setPan: aNumber]! !
-
-!Instrument methodsFor: 'playing' stamp: 'len 23/Jan/2026, 7:30:33 am (UTC)'!
-setSpeed: aNumber
-	samples do: [:each| each setSpeed: aNumber]! !
-
-!Instrument methodsFor: 'playing' stamp: 'len 26/Jun/2026, 10:10:15 am (UTC)'!
-setSpeed: targetSpeed glide: numberOfLines
-	(numberOfLines > 0 and: [speed notNil])
-		ifTrue:
-			[glideTicks := (numberOfLines * track tracker tpl) truncated.
-			speedIncrement := targetSpeed - speed / glideTicks asFloat.
-			speed := speed + speedIncrement]
-		ifFalse:
-			[glideTicks := 0.
-			speedIncrement := 0.0.
-			speed := targetSpeed].
-	self setSpeed: speed cubed! !
-
-!Instrument methodsFor: 'playing' stamp: 'len 12/Jun/2026, 1:01:03 pm (UTC)'!
-setVelocity: aNumber
-	velocityReceivers do: [:each| each setVelocity: aNumber]! !
-
-!Instrument methodsFor: 'playing' stamp: 'len 13/Jun/2026, 8:48:42 pm (UTC)'!
-slideNoteBy: aNumber
-	"Slide the given number of semitones."
-	glideTicks := track tracker tpl.
-	noteIncrement := aNumber / glideTicks asFloat! !
-
-!Instrument methodsFor: 'playing' stamp: 'len 26/Jun/2026, 10:11:53 am (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 28/Jun/2026, 3:28:22 pm (UTC)'!
 tick
-	| currentModules enabled |
-	currentModules := self modules.
-	enabled := track enabled.
-	currentModules do: [:each|
-		(each isMemberOf: AudioOut) ifTrue: [each enabled: enabled].
-		each clear].
-	glideTicks > 0 ifTrue:
-		[noteIncrement = 0.0 ifFalse: [note := note + noteIncrement. self setNote: note].
-		speedIncrement = 0.0 ifFalse: [speed := speed + speedIncrement. self setSpeed: speed cubed].
-		glideTicks := glideTicks - 1].
+	self flag: #fixme. "dont need to set buses or enabled on each tick!!"
+	patch buses: track tracker buses; enabled: track enabled; clear.
 	trigger ifNotNil: [self playTrigger].
-	currentModules do: [:each| each update; tick]! !
+	patch tick! !
 
-!Instrument methodsFor: 'serialization' stamp: 'len 26/Apr/2026, 7:53:31 pm (UTC)'!
+!Instrument methodsFor: 'serialization' stamp: 'len 27/Jun/2026, 9:30:32 pm (UTC)'!
 asJsonWithBuffers: aList
 	| patchables wires patchablesJson wiresJson |
-	patchables := (patch submorphs select: [:m| m isKindOf: PatchableMorph]) sort: [:a :b| a morphPosition x <= b morphPosition x].
-	wires := patch submorphs select: [:m| m isKindOf: WireMorph].
+	patchables := (patchMorph submorphs select: [:m| m isKindOf: PatchableMorph]) sort: [:a :b| a morphPosition x <= b morphPosition x].
+	wires := patchMorph submorphs select: [:m| m isKindOf: WireMorph].
 	patchablesJson := patchables collect: [:each|
 		OrderedDictionary new
 			at: #class put: each model class name;
@@ -2960,7 +2875,7 @@ readFrom: aStream
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 
-!Instrument methodsFor: 'serialization' stamp: 'len 26/Apr/2026, 7:59:09 pm (UTC)'!
+!Instrument methodsFor: 'serialization' stamp: 'len 28/Jun/2026, 3:07:40 pm (UTC)'!
 readFromJson: json buffers: bufferList
 	| patchables |
 	patchables := (json at: #modules) collect: [:each|
@@ -2968,15 +2883,18 @@ readFromJson: json buffers: bufferList
 		module := (Smalltalk at: (each at: #class) asSymbol) new.
 		module readFromJson: (each at: #module) buffers: bufferList.
 		module patchable morphPosition: (each at: #x) @ (each at: #y)].
-	patchables do: [:each| patch addMorph: each].
+	patchables do: [:each| patchMorph addMorph: each].
 	(json at: #wires) do: [:each|
 		| output input |
+		(each at: #output) = #setSend: ifTrue: [each at: #output put: #setOutputSend:].
+		(each at: #input) = #setReturn: ifTrue: [each at: #input put: #setInputReturn:].
 		output := (patchables at: (each at: #source)) outputs detect: [:one| one selector = (each at: #output)].
 		input := (patchables at: (each at: #target)) inputs detect: [:one| one selector = (each at: #input)].
 		output addConnectionTo: input.
 		each at: #depth ifPresent: [:depth| output model modulations at: input control put: depth]].
-	patch redrawNeeded.
-	label := json at: #label! !
+	patchMorph redrawNeeded.
+	label := json at: #label.
+	self recomputeModules! !
 
 !Instrument methodsFor: 'serialization' stamp: 'len 5/Feb/2026, 10:57:19 am (UTC)'!
 writeOn: aStream
@@ -2987,29 +2905,9 @@ writeOn: aStream
 	bufferList do: [:each| each writeOn: aStream].
 	json jsonWriteOn: aStream! !
 
-!Instrument methodsFor: 'private' stamp: 'len 22/Jun/2026, 3:13:13 pm (UTC)'!
-modules
-	| currentModules buses |
-	modules ifNotNil: [:anArray| ^ anArray].
-	currentModules := patch modules.
-	modules := currentModules.
-	noteReceivers := currentModules select: [:each| each respondsTo: #setNote:].
-	velocityReceivers := currentModules select: [:any| any respondsTo: #setVelocity:].
-	gateReceivers := currentModules select: [:any| any respondsTo: #gateOn].
-	samples := currentModules select: [:each| (each isMemberOf: Sample) or: [(each isMemberOf: Multisample) or: [each isMemberOf: Clip]]].
-	audioOutput := nil.
-	buses := track tracker buses.
-	currentModules do: [:each|
-		(each isMemberOf: ControlIn)
-			ifTrue: [each setValues: controlValues]
-			ifFalse:
-				[(each isMemberOf: AudioIn)
-					ifTrue: [each setBuses: buses]
-					ifFalse:
-						[(each isMemberOf: AudioOut) ifTrue:
-							[each setBuses: buses.
-							each port = 0 ifTrue: [audioOutput := each]]]]].
-	^ currentModules! !
+!Instrument methodsFor: 'private' stamp: 'len 27/Jun/2026, 10:04:22 pm (UTC)'!
+recomputeModules
+	patch modules: (((patchMorph submorphs select: [:m| m isKindOf: PatchableMorph]) sort: [:a :b| a morphPosition x <= b morphPosition x]) collect: [:each| each model])! !
 
 !Pattern methodsFor: 'accessing' stamp: 'len 18/Dec/2025, 9:32:38 am (UTC)'!
 length

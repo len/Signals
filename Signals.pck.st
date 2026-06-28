@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8026] on 27 June 2026 at 3:07:25 pm'!
+'From Cuis7.9 [latest update: #8030] on 28 June 2026 at 11:00:55 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 621!
+!provides: 'Signals' 1 623!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -234,6 +234,16 @@ Oscillator subclass: #Sine
 Sine class
 	instanceVariableNames: ''!
 
+!classDefinition: #TriSawPulse category: #'Signals-Oscillators'!
+Oscillator subclass: #TriSawPulse
+	instanceVariableNames: 'shape'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Oscillators'!
+!classDefinition: 'TriSawPulse class' category: #'Signals-Oscillators'!
+TriSawPulse class
+	instanceVariableNames: ''!
+
 !classDefinition: #Triangle category: #'Signals-Oscillators'!
 Oscillator subclass: #Triangle
 	instanceVariableNames: 'shape'
@@ -242,26 +252,6 @@ Oscillator subclass: #Triangle
 	category: 'Signals-Oscillators'!
 !classDefinition: 'Triangle class' category: #'Signals-Oscillators'!
 Triangle class
-	instanceVariableNames: ''!
-
-!classDefinition: #OPN category: #'Signals-Trash'!
-Oscillator subclass: #OPN
-	instanceVariableNames: 'wave'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Trash'!
-!classDefinition: 'OPN class' category: #'Signals-Trash'!
-OPN class
-	instanceVariableNames: ''!
-
-!classDefinition: #TriSawPulse category: #'Signals-Trash'!
-Oscillator subclass: #TriSawPulse
-	instanceVariableNames: 'shape'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Trash'!
-!classDefinition: 'TriSawPulse class' category: #'Signals-Trash'!
-TriSawPulse class
 	instanceVariableNames: ''!
 
 !classDefinition: #Supersaw category: #'Signals-Oscillators'!
@@ -396,7 +386,7 @@ Modulator class
 
 !classDefinition: #ControlIn category: #'Signals-IO'!
 Modulator subclass: #ControlIn
-	instanceVariableNames: 'values port lastValue bipolar'
+	instanceVariableNames: 'bus port lastValue bipolar'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-IO'!
@@ -1002,6 +992,16 @@ Module subclass: #OberheimSVF
 	category: 'Signals-VA Filters'!
 !classDefinition: 'OberheimSVF class' category: #'Signals-VA Filters'!
 OberheimSVF class
+	instanceVariableNames: ''!
+
+!classDefinition: #Patch category: #'Signals-Kernel'!
+ActiveModel subclass: #Patch
+	instanceVariableNames: 'modules wires buffers dirty noteReceivers velocityReceivers gateReceivers samples audioOutput controlBus note noteIncrement speed speedIncrement glideTicks buses'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Kernel'!
+!classDefinition: 'Patch class' category: #'Signals-Kernel'!
+Patch class
 	instanceVariableNames: ''!
 
 !classDefinition: #ControlPanel category: #'Signals-Morphic-Patches'!
@@ -1934,13 +1934,13 @@ Object subclass: #Bus
 Bus class
 	instanceVariableNames: ''!
 
-!classDefinition: #Icon category: #'Signals-Morphic-Support'!
+!classDefinition: #Icon category: #'Signals-Trash'!
 Object subclass: #Icon
 	instanceVariableNames: 'path'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-Morphic-Support'!
-!classDefinition: 'Icon class' category: #'Signals-Morphic-Support'!
+	category: 'Signals-Trash'!
+!classDefinition: 'Icon class' category: #'Signals-Trash'!
 Icon class
 	instanceVariableNames: ''!
 
@@ -2036,16 +2036,13 @@ A sawtooth wave contains both even and odd harmonics of the fundamental frequenc
 !Sine commentStamp: '<historical>' prior: 0!
 This is a sine wave oscillator with variable warping produced by self-phase modulation. At zero warp, it's a sine. As the warp parameter moves from 0 to 1, integer harmonics (both odd and even) are added up to about the 6th harmonic.!
 
+!TriSawPulse commentStamp: '<historical>' prior: 0!
+This is a virtual analog oscillator that can morph between triangle, saw and pulse waves. It uses PolyBLEP and PolyBLAMP to prevent aliasing.!
+
 !Triangle commentStamp: '<historical>' prior: 0!
 This is a virtual analog triangle oscillator that uses PolyBLAMP for antialiasing. It morphs from a pure triangle to a sine wave.
 
 A triangle wave consists of only odd harmonics of the fundamental frequency, similar to a square wave, but its harmonic amplitudes decrease much faster, proportional to the inverse square of the harmonic number 1/n². This results in a brighter tone than a sine wave but mellower than a square wave, with 12 dB per octave roll-off (while the harmonics of saw and pulse waves decay at 6 dB per octave).!
-
-!OPN commentStamp: '<historical>' prior: 0!
-This oscillator emulates the oscillators of the Yamaha sound chips YM2414 (used in the TX81Z and DX11 synthesizers) and YM2612 (used in the Sega Mega Drive game console). It has a choice of 8 waveforms.!
-
-!TriSawPulse commentStamp: '<historical>' prior: 0!
-This is a virtual analog oscillator that can morph between triangle, saw and pulse waves. It uses PolyBLEP and PolyBLAMP to prevent aliasing.!
 
 !Supersaw commentStamp: '<historical>' prior: 0!
 Emulation of the Roland JP-8000 and JP-8080 supersaw oscillator based on Adam Szabo's thesis [1]. It consists of 7 detuned saws. It is not a perfect emulation, e.g. it uses antialiased PolyBLEP saws, instead of oversampling a digital saw and applying a high pass filter as the original.
@@ -2343,6 +2340,11 @@ See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 Virtual analog model of the Oberheim state variable filter. It has low-pass, high-pass, band-pass and band-stop outputs. See Will C. Pinkle, 'Designing Software Synthesizer Plug-Ins in C++', section Figure 7.5.
 
 See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
+
+!Patch commentStamp: '<historical>' prior: 0!
+A patch is a list of interconnected modules. It keeps track of the connections or wires, and provides a protocol to handle notes and changes in velocity, pitch, volume, panning, samples playhead position and playback speed and direction, etc.
+
+A patch also has 10 stereo buses for audio (0 = master) that are accessed within the patch by the AudioIn and AudioOut modules, and can be shared among different patches (see >>#buses:). There are also 10 control values (like MIDI CC), local to each patch, that are accessed by the ControlIn module (see >>#controlBus).!
 
 !AllpassComb commentStamp: '<historical>' prior: 0!
 Schroeder allpass filter.!
@@ -2787,6 +2789,18 @@ settings
 settings: aDictionary
 	aDictionary associationsDo: [:each| self set: each]! !
 
+!Module methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:13:19 pm (UTC)'!
+controlInputs
+	^ controls keys! !
+
+!Module methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:15:13 pm (UTC)'!
+inputs
+	^ (self class allSelectors select: [:each| each isKeyword and: [each numArgs = 1 and: [each beginsWith: 'setInput']]]) sorted! !
+
+!Module methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:15:42 pm (UTC)'!
+outputs
+	^ (self class allSelectors select: [:each| each isKeyword and: [each numArgs = 1 and: [each beginsWith: 'setOutput']]]) sorted! !
+
 !Module methodsFor: 'ui' stamp: 'len 10/Mar/2026, 9:23:47 am (UTC)'!
 panel
 	"Answer a panel to use in the patchable views."
@@ -2870,16 +2884,11 @@ tick
 panel
 	^ ControlPanel new addKnob: (controls at: #level)! !
 
-!Amp methodsFor: 'ui' stamp: 'len 17/Jun/2026, 5:06:57 pm (UTC)'!
+!Amp methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:20:10 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
-	answer
-		addAudioInput: #setInput:;
-		addControlInput: #level;
-		addAudioInput: #setInputRM: label: 'AM/RM';
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !Amp methodsFor: 'wiring' stamp: 'len 25/Nov/2025, 3:29:00 pm (UTC)'!
@@ -2982,6 +2991,10 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #mode ifPresent: [:aSymbol| mode := aSymbol]! !
 
+!Compressor methodsFor: 'ui' stamp: 'len 28/Jun/2026, 3:48:17 pm (UTC)'!
+controlInputs
+	^ #()! !
+
 !Compressor methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:26:44 pm (UTC)'!
 panel
 	| answer |
@@ -3004,18 +3017,12 @@ panel2
 		addSmallKnob: (controls at: #knee) label: 'Knee';
 		addSmallKnob: (controls at: #makeup) label: 'Makeup'! !
 
-!Compressor methodsFor: 'ui' stamp: 'len 5/May/2026, 10:06:22 am (UTC)'!
+!Compressor methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:35:59 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen; addMorph: self panel.
 	answer flap addMorph: self panel2.
-	answer
-		addAudioInput: #setInputL: label: 'L/M';
-		addAudioInput: #setInputR: label: 'R';
-		addAudioInput: #setInputSC: label: 'SC';
-		addAudioOutput: #setOutputL: label: 'L/M';
-		addAudioOutput: #setOutputR: label: 'R'.
 	^ answer! !
 
 !Compressor methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:27:23 pm (UTC)'!
@@ -3167,6 +3174,10 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #mode ifPresent: [:aSymbol| mode := aSymbol]! !
 
+!Gate methodsFor: 'ui' stamp: 'len 28/Jun/2026, 3:48:04 pm (UTC)'!
+controlInputs
+	^ #()! !
+
 !Gate methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:27:34 pm (UTC)'!
 panel
 	^​ ControlPanel new
@@ -3182,18 +3193,12 @@ panel2
 		addSmallKnob: (controls at: #knee) label: 'Knee';
 		addSmallKnob: (controls at: #range) label: 'Range'! !
 
-!Gate methodsFor: 'ui' stamp: 'len 12/Apr/2026, 11:11:52 am (UTC)'!
+!Gate methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:36:17 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen; addMorph: self panel.
 	answer flap addMorph: self panel2.
-	answer
-		addAudioInput: #setInputL: label: 'L/M';
-		addAudioInput: #setInputR: label: 'R';
-		addAudioInput: #setInputSC: label: 'SC';
-		addAudioOutput: #setOutputL: label: 'L/M';
-		addAudioOutput: #setOutputR: label: 'R'.
 	^ answer! !
 
 !Gate methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:27:43 pm (UTC)'!
@@ -3326,15 +3331,9 @@ tick
 				outputL at: i put: in + ((lpfL value: mid + side) * wet).
 				outputR at: i put: in + ((lpfR value: mid - side) * wet)]]! !
 
-!Chorus methodsFor: 'ui' stamp: 'len 2/Jun/2026, 8:43:05 am (UTC)'!
-patchable
-	^ super patchable
-		addAudioInput: #setInput:;
-		addAudioOutput: #setOutputL: label: 'L/M';
-		addAudioOutput: #setOutputR: label: 'R';
-		addControlInput: #speed;
-		addControlInput: #depth;
-		yourself! !
+!Chorus methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:17:18 pm (UTC)'!
+controlInputs
+	^ #(speed depth)! !
 
 !Chorus methodsFor: 'wiring' stamp: 'len 26/Jan/2026, 3:14:23 pm (UTC)'!
 setInput: aBuffer
@@ -3448,15 +3447,9 @@ tick
 				outputL at: i put: in + ((lpfL value: outL * width + (outR * width2)) * wet).
 				outputR at: i put: in + ((lpfR value: outR * width + (outL * width2)) * wet)]]! !
 
-!Ensemble methodsFor: 'ui' stamp: 'len 2/Jun/2026, 8:43:45 am (UTC)'!
-patchable
-	^ super patchable
-		addAudioInput: #setInput:;
-		addAudioOutput: #setOutputL: label: 'L/M';
-		addAudioOutput: #setOutputR: label: 'R';
-		addControlInput: #speed;
-		addControlInput: #depth;
-		yourself! !
+!Ensemble methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:17:57 pm (UTC)'!
+controlInputs
+	^ #(speed depth)! !
 
 !Ensemble methodsFor: 'wiring' stamp: 'len 26/Mar/2026, 8:45:20 am (UTC)'!
 setInput: aBuffer
@@ -3564,6 +3557,10 @@ tick
 		outputL at: i put: inL * dry + (outL * wet).
 		outputR ifNotNil: [outputR at: i put: inR * dry + (outR * wet)]]! !
 
+!StereoEcho methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:36:33 pm (UTC)'!
+controlInputs
+	^ #(time feedback)! !
+
 !StereoEcho methodsFor: 'ui' stamp: 'len 12/Mar/2026, 11:03:54 am (UTC)'!
 panel
 	| answer |
@@ -3579,19 +3576,12 @@ panel
 		addSmallKnob: (controls at: #mix) label: 'Mix'.
 	^ answer! !
 
-!StereoEcho methodsFor: 'ui' stamp: 'len 12/Apr/2026, 11:13:02 am (UTC)'!
+!StereoEcho methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:36:44 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
-	^ answer
-		addAudioInput: #setInputL: label: 'L/M';
-		addAudioInput: #setInputR: label: 'R';
-		addAudioOutput: #setOutputL: label: 'L';
-		addAudioOutput: #setOutputR: label: 'R';
-		addControlInput: #time;
-		addControlInput: #feedback;
-		yourself! !
+	^ answer! !
 
 !StereoEcho methodsFor: 'ui' stamp: 'len 20/Jun/2026, 11:50:37 am (UTC)'!
 rackable
@@ -3693,6 +3683,10 @@ tick
 				outputL at: i put: inL * dry + (outR * width) + (outL * width2).
 				outputR at: i put: inR * dry + (outR * width2) + (outL * width)]]! !
 
+!StereoReverb methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:37:06 pm (UTC)'!
+controlInputs
+	^ #(feedback damp)! !
+
 !StereoReverb methodsFor: 'ui' stamp: 'len 9/Mar/2026, 8:59:43 am (UTC)'!
 panel
 	^ ControlPanel new
@@ -3701,17 +3695,6 @@ panel
 		addKnob: (controls at: #damp) label: 'Damp';
 		addKnob: (controls at: #width) label: 'Width';
 		addKnob: (controls at: #mix) label: 'Mix'! !
-
-!StereoReverb methodsFor: 'ui' stamp: 'len 3/Jun/2026, 11:12:03 am (UTC)'!
-patchable
-	^ super patchable
-		addAudioInput: #setInputL: label: 'L/M';
-		addAudioInput: #setInputR: label: 'R';
-		addAudioOutput: #setOutputL: label: 'L/M';
-		addAudioOutput: #setOutputR: label: 'R';
-		addControlInput: #feedback;
-		addControlInput: #damp;
-		yourself! !
 
 !StereoReverb methodsFor: 'ui' stamp: 'len 20/Jun/2026, 11:44:59 am (UTC)'!
 rackable
@@ -3821,18 +3804,13 @@ panel
 		addSmallKnob: (controls at: #flutterDepth);
 		addSmallKnob: (controls at: #jitter)! !
 
-!TapeWobble methodsFor: 'ui' stamp: 'len 5/May/2026, 9:31:30 am (UTC)'!
+!TapeWobble methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:37:23 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	^ answer
-		addAudioInput: #setInputL: label: 'L/M';
-		addAudioInput: #setInputR: label: 'R';
-		addAudioOutput: #setOutputL: label: 'L/M';
-		addAudioOutput: #setOutputR: label: 'R';
-		yourself! !
+	^ answer! !
 
 !TapeWobble methodsFor: 'ui' stamp: 'len 20/Jun/2026, 9:59:37 am (UTC)'!
 screen
@@ -3916,14 +3894,6 @@ tick
 panel
 	^ ControlPanel new
 		addKnob: (controls at: #frequency)! !
-
-!Crossover methodsFor: 'ui' stamp: 'len 12/Apr/2026, 11:13:21 am (UTC)'!
-patchable
-	^ super patchable
-		addAudioInput: #setInput:;
-		addAudioOutput: #setOutputLow: label: 'Low';
-		addAudioOutput: #setOutputHigh: label: 'High';
-		yourself! !
 
 !Crossover methodsFor: 'wiring' stamp: 'len 28/Mar/2026, 8:29:00 pm (UTC)'!
 setInput: aBuffer
@@ -4039,20 +4009,15 @@ tickStatic
 		outputBPN ifNotNil: [outputBPN at: i put: bp * r]].
 	self snapToZero! !
 
-!SVF methodsFor: 'ui' stamp: 'len 16/May/2026, 11:03:02 am (UTC)'!
+!SVF methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:17:46 pm (UTC)'!
+outputs
+	^ #(setOutputLP: setOutputHP: setOutputBP: setOutputBPN:)! !
+
+!SVF methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:20:43 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
-	answer
-		addAudioInput: #setInput:;
-		addControlInput: #frequency;
-		addControlInput: #Q;
-		addAudioInput: #setInputFM: label: 'FM';
-		addAudioOutput: #setOutputLP: label: 'LP';
-		addAudioOutput: #setOutputHP: label: 'HP';
-		addAudioOutput: #setOutputBP: label: 'BP';
-		addAudioOutput: #setOutputBPN: label: 'BPN'.
 	^ answer! !
 
 !SVF methodsFor: 'ui' stamp: 'len 24/Jun/2026, 3:45:17 pm (UTC)'!
@@ -4122,10 +4087,10 @@ initialize
 	meterLeftValue := meterRightValue := 0.0.
 	port := 1! !
 
-!AudioIn methodsFor: 'processing' stamp: 'len 2/Jun/2026, 7:08:20 pm (UTC)'!
+!AudioIn methodsFor: 'processing' stamp: 'len 28/Jun/2026, 3:26:58 pm (UTC)'!
 tick
 	| bus |
-	bus := buses at: port ifAbsent:
+	(bus := buses at: port + 1) ifNil:
 		[meterLeftValue := meterRightValue := 0.0.
 		outputL ifNotNil: [outputL atAllPut: 0.0].
 		outputR ifNotNil: [outputR atAllPut: 0.0].
@@ -4146,7 +4111,7 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #port ifPresent: [:anInteger| port := anInteger]! !
 
-!AudioIn methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:28:40 pm (UTC)'!
+!AudioIn methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:00:49 pm (UTC)'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -4154,9 +4119,6 @@ patchable
 		addMorph: (PulldownListMorph new color: PatchMorph waveformColor; options: (0 to: 9); state: port; when: #changed: send: #port: to: self; receive: #state: from: self when: #portChanged:; setBalloonText: 'Input Bus');
 		addMorph: self scope.
 	answer body addMorph: display.
-	answer
-		addAudioOutput: #setOutputL: label: 'L/M';
-		addAudioOutput: #setOutputR: label: 'R'.
 	^ answer! !
 
 !AudioIn methodsFor: 'ui' stamp: 'len 19/Apr/2026, 7:47:24 am (UTC)'!
@@ -4171,9 +4133,9 @@ scope
 title
 	^ 'In'! !
 
-!AudioIn methodsFor: 'wiring' stamp: 'len 5/Mar/2026, 8:19:40 am (UTC)'!
-setBuses: aDictionary
-	buses := aDictionary! !
+!AudioIn methodsFor: 'wiring' stamp: 'len 28/Jun/2026, 8:19:15 am (UTC)'!
+setBuses: anArray
+	buses := anArray! !
 
 !AudioIn methodsFor: 'wiring' stamp: 'len 18/Apr/2026, 9:49:18 pm (UTC)'!
 setOutputL: aBuffer
@@ -4252,12 +4214,12 @@ initializeControls
 	self addGainControl: #level min: 0.001 "-60 dB" max: 4.0 "+12 dB" value: 1.0 "0 dB".
 	(self addControl: #pan min: -1.0 max: 1.0 value: 0.0) printer: [:x| x abs < 0.01 ifTrue: ['Center'] ifFalse: [(x abs * 100.0) rounded printString, '% ', (x < 0.0 ifTrue: ['L'] ifFalse: ['R'])]]! !
 
-!AudioOut methodsFor: 'processing' stamp: 'len 6/Jun/2026, 4:37:13 pm (UTC)'!
+!AudioOut methodsFor: 'processing' stamp: 'len 28/Jun/2026, 3:26:51 pm (UTC)'!
 tick
 	| bus aux envelope |
 	inputL ifNil: [^ self].
 	(levelLeft = 0.0 and: [targetLevelLeft = 0.0 and: [levelRight = 0.0 and: [targetLevelRight = 0.0]]]) ifTrue: [^ self].
-	bus := buses at: port ifAbsentPut: [Bus new].
+	bus := (buses at: port + 1) ifNil: [buses at: port + 1 put: Bus new].
 	aux := Aux1.
 	envelope := Aux2.
 	meterLeftValue := meterLeftValue * 0.9 "dampen" max: (inputL rms max: inputL last abs).
@@ -4311,7 +4273,7 @@ panel
 		addHorizontalSlider: (controls at: #pan).
 	^ answer! !
 
-!AudioOut methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:29:42 pm (UTC)'!
+!AudioOut methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:37:43 pm (UTC)'!
 patchable
 	| answer display |
 	answer := PatchableMorph new model: self.
@@ -4319,11 +4281,6 @@ patchable
 		addMorph: (PulldownListMorph new color: PatchMorph waveformColor; options: (0 to: 9); state: port; when: #changed: send: #port: to: self; receive: #state: from: self when: #portChanged:; setBalloonText: 'Output Bus (0 = master)');
 		addMorph: self scope.
 	answer body addMorph: display; addMorph: self panel.
-	answer
-		addAudioInput: #setInputL: label: 'L/M';
-		addAudioInput: #setInputR: label: 'R';
-		addControlInput: #level;
-		addControlInput: #pan.
 	^ answer! !
 
 !AudioOut methodsFor: 'ui' stamp: 'len 19/Apr/2026, 7:47:29 am (UTC)'!
@@ -4338,9 +4295,9 @@ scope
 title
 	^ 'Out'! !
 
-!AudioOut methodsFor: 'wiring' stamp: 'len 5/Mar/2026, 8:29:06 am (UTC)'!
-setBuses: aDictionary
-	buses := aDictionary! !
+!AudioOut methodsFor: 'wiring' stamp: 'len 28/Jun/2026, 8:19:01 am (UTC)'!
+setBuses: anArray
+	buses := anArray! !
 
 !AudioOut methodsFor: 'wiring' stamp: 'len 18/Apr/2026, 8:21:11 pm (UTC)'!
 setInputL: aBuffer
@@ -4374,10 +4331,6 @@ bench
 	t := [self read: buffer] timeToRun.
 	^ (n / t) truncated printString, ' kHz'! !
 
-!Generator methodsFor: 'ui' stamp: 'len 2/Feb/2026, 8:45:22 am (UTC)'!
-patchable
-	^ super patchable addAudioOutput: #setOutput:; yourself! !
-
 !Generator methodsFor: 'ui' stamp: 'len 26/Jan/2026, 4:08:02 am (UTC)'!
 timeProfile
 	| n buffer |
@@ -4407,10 +4360,6 @@ setNote: aNumber
 !TunedGenerator methodsFor: 'ui' stamp: 'len 9/May/2026, 6:42:50 am (UTC)'!
 panel
 	^​ ControlPanel new addTextualControl: (controls at: #pitch)! !
-
-!TunedGenerator methodsFor: 'ui' stamp: 'len 13/May/2026, 10:40:56 am (UTC)'!
-patchable
-	^ super patchable addControlInput: #pitch; yourself! !
 
 !Operator methodsFor: 'accessing' stamp: 'len 2/Jun/2026, 7:54:59 pm (UTC)'!
 retrigger
@@ -4505,19 +4454,12 @@ panelRight
 		addMorph: (ToggleButtonMorph new state: retrigger; when: #changed: send: #retrigger: to: self; receive: #state: from: self when: #retriggerChanged:; label: 'R'; setBalloonText: 'Retrigger');
 		addTextualControl: (controls at: #level)! !
 
-!Operator methodsFor: 'ui' stamp: 'len 17/May/2026, 7:46:14 am (UTC)'!
+!Operator methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:53:34 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	answer
-		addAudioInput: #setInputPM: label: 'PM';
-		addControlInput: #pitch;
-		addControlInput: #ratio;
-		addControlInput: #level;
-		addControlInput: #feedback;
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !Operator methodsFor: 'ui' stamp: 'len 20/Jun/2026, 1:53:48 pm (UTC)'!
@@ -4600,17 +4542,12 @@ tick
 	inputPWM ifNotNil: [^ self read: output PWM: inputPWM].
 	self read: output! !
 
-!Pulse methodsFor: 'ui' stamp: 'len 9/May/2026, 6:43:22 am (UTC)'!
+!Pulse methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:54:21 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	answer
-		addControlInput: #pitch;
-		addControlInput: #width;
-		addAudioInput: #setInputPWM: label: 'PWM';
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !Pulse methodsFor: 'ui' stamp: 'len 1/May/2026, 2:51:52 pm (UTC)'!
@@ -4641,16 +4578,12 @@ peek
 	shape = 1.0 ifTrue: [^ phase saw: increment].
 	^ phase triangle: increment skew: shape! !
 
-!Saw methodsFor: 'ui' stamp: 'len 9/May/2026, 6:43:27 am (UTC)'!
+!Saw methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:56:51 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	answer
-		addControlInput: #pitch;
-		addControlInput: #shape;
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !Saw methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:00:03 pm (UTC)'!
@@ -4694,16 +4627,12 @@ read: aBuffer
 	phase := phase - phase truncated.
 	increment := f / twoPi! !
 
-!Sine methodsFor: 'ui' stamp: 'len 9/May/2026, 6:43:30 am (UTC)'!
+!Sine methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:57:08 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	answer
-		addControlInput: #pitch;
-		addControlInput: #warp;
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !Sine methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:00:16 pm (UTC)'!
@@ -4711,96 +4640,6 @@ screen
 	^​ VariableWaveControlMorph new
 		control: (controls at: #warp);
 		waveBlock: [:x :s| (((x * Float twoPi) sin * s + x) * Float twoPi) sin]! !
-
-!Triangle methodsFor: 'controlling' stamp: 'len 16/Jan/2026, 8:39:47 pm (UTC)'!
-update
-	super update.
-	shape := self get: #shape! !
-
-!Triangle methodsFor: 'initialization' stamp: 'len 16/Jan/2026, 8:39:47 pm (UTC)'!
-initialize
-	super initialize.
-	shape := 0.0! !
-
-!Triangle methodsFor: 'initialization' stamp: 'len 16/Jan/2026, 8:39:20 pm (UTC)'!
-initializeControls
-	super initializeControls.
-	self addControl: #shape min: 0.0 max: 1.0 value: 0.0! !
-
-!Triangle methodsFor: 'processing' stamp: 'len 13/May/2026, 10:50:46 am (UTC)'!
-peek
-	shape = 0.0 ifTrue: [^ phase triangle: increment].
-	^ (phase triangle: increment) * (1.0 - shape) + ((phase * Float twoPi) sin * shape)! !
-
-!Triangle methodsFor: 'ui' stamp: 'len 9/May/2026, 6:43:35 am (UTC)'!
-patchable
-	| answer |
-	answer := PatchableMorph new model: self.
-	answer body addMorph: self screen.
-	answer flap addMorph: self panel.
-	answer
-		addControlInput: #pitch;
-		addControlInput: #shape;
-		addAudioOutput: #setOutput:.
-	^ answer! !
-
-!Triangle methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:00:40 pm (UTC)'!
-screen
-	^​ VariableWaveControlMorph new
-		control: (controls at: #shape);
-		waveBlock: [:x :s| x triangle * (1.0 - s) + ((x * Float twoPi) sin * s)]! !
-
-!OPN methodsFor: 'accessing' stamp: 'len 20/Nov/2025, 9:57:00 am (UTC)'!
-wave: anInteger
-	wave := anInteger! !
-
-!OPN methodsFor: 'controlling' stamp: 'len 20/Apr/2026, 11:25:15 am (UTC)'!
-update
-	super update.
-	wave := self get: #wave! !
-
-!OPN methodsFor: 'initialization' stamp: 'len 20/Apr/2026, 11:24:16 am (UTC)'!
-initializeControls
-	super initializeControls.
-	self addChoiceControl: #wave options: #(1 2 3 4 5 6 7 8) value: 1! !
-
-!OPN methodsFor: 'processing' stamp: 'len 13/May/2026, 10:47:14 am (UTC)'!
-peek
-	^ self wave: wave at: phase! !
-
-!OPN methodsFor: 'ui' stamp: 'len 9/May/2026, 6:43:39 am (UTC)'!
-patchable
-	| answer |
-	answer := PatchableMorph new model: self.
-	answer body addMorph: self screen.
-	answer flap addMorph: self panel.
-	answer
-		addControlInput: #pitch;
-		addControlInput: #wave;
-		addAudioOutput: #setOutput:.
-	^ answer! !
-
-!OPN methodsFor: 'ui' stamp: 'len 20/Apr/2026, 11:27:02 am (UTC)'!
-screen
-	^​ VariableWaveControlMorph new
-		control: (controls at: #wave);
-		waveBlock: [:x :s| self wave: s at: x]! !
-
-!OPN methodsFor: 'private' stamp: 'len 29/Sep/2025, 12:37:00 pm (UTC)'!
-wave: s at: t
-	s <= 1 ifTrue: [^ (t * Float twoPi) sin].
-	s <= 2 ifTrue:
-		[t < 0.25 ifTrue: [^ (t - 0.25 * Float twoPi) sin + 1.0].
-		t < 0.5 ifTrue: [^ (t + 0.25 * Float twoPi) sin + 1.0].
-		t < 0.75 ifTrue: [^ (t - 0.25 * Float twoPi) sin - 1.0].
-		^ (t + 0.25 * Float twoPi) sin - 1.0].
-	s <= 3 ifTrue: [^ t < 0.5 ifTrue: [(t * Float twoPi) sin] ifFalse: [0.0]].
-	s <= 4 ifTrue:
-		[t < 0.25 ifTrue: [^ (t - 0.25 * Float twoPi) sin + 1.0].
-		t < 0.5 ifTrue: [^ (t + 0.25 * Float twoPi) sin + 1.0].
-		^ 0.0].
-	t > 0.5 ifTrue: [^ 0.0].
-	^ self wave: s - 4 at: t * 2.0! !
 
 !TriSawPulse methodsFor: 'controlling' stamp: 'len 16/Jan/2026, 7:18:49 am (UTC)'!
 update
@@ -4827,16 +4666,12 @@ peek
 	shape < 0.5 ifTrue: [^ (phase saw: increment) * (0.5 - shape) + ((phase pulse: increment width: shape - 0.25 * 2) * 0.577 * (shape - 0.25)) / 0.25].
 	^ (phase pulse: increment width: shape) * 0.577! !
 
-!TriSawPulse methodsFor: 'ui' stamp: 'len 9/May/2026, 6:43:42 am (UTC)'!
+!TriSawPulse methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:14:21 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	answer
-		addControlInput: #pitch;
-		addControlInput: #shape;
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !TriSawPulse methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:00:29 pm (UTC)'!
@@ -4850,6 +4685,40 @@ screen
 					[s < 0.5
 						ifTrue: [x saw * (0.5 - s) + ((x pulseWidth: s - 0.25 * 2) * (s - 0.25)) / 0.25]
 						ifFalse: [x pulseWidth: s]]]! !
+
+!Triangle methodsFor: 'controlling' stamp: 'len 16/Jan/2026, 8:39:47 pm (UTC)'!
+update
+	super update.
+	shape := self get: #shape! !
+
+!Triangle methodsFor: 'initialization' stamp: 'len 16/Jan/2026, 8:39:47 pm (UTC)'!
+initialize
+	super initialize.
+	shape := 0.0! !
+
+!Triangle methodsFor: 'initialization' stamp: 'len 16/Jan/2026, 8:39:20 pm (UTC)'!
+initializeControls
+	super initializeControls.
+	self addControl: #shape min: 0.0 max: 1.0 value: 0.0! !
+
+!Triangle methodsFor: 'processing' stamp: 'len 13/May/2026, 10:50:46 am (UTC)'!
+peek
+	shape = 0.0 ifTrue: [^ phase triangle: increment].
+	^ (phase triangle: increment) * (1.0 - shape) + ((phase * Float twoPi) sin * shape)! !
+
+!Triangle methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:57:26 pm (UTC)'!
+patchable
+	| answer |
+	answer := PatchableMorph new model: self.
+	answer body addMorph: self screen.
+	answer flap addMorph: self panel.
+	^ answer! !
+
+!Triangle methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:00:40 pm (UTC)'!
+screen
+	^​ VariableWaveControlMorph new
+		control: (controls at: #shape);
+		waveBlock: [:x :s| x triangle * (1.0 - s) + ((x * Float twoPi) sin * s)]! !
 
 !Supersaw methodsFor: 'controlling' stamp: 'len 1/Dec/2025, 8:32:00 am (UTC)'!
 reset
@@ -4973,16 +4842,12 @@ next
 	1 to: 7 do: [:i| | t | (t := phases at: i) >= 1.0 ifTrue: [phases at: i put: t - t truncated]].
 	^ answer! !
 
-!Supersaw methodsFor: 'ui' stamp: 'len 9/May/2026, 6:43:47 am (UTC)'!
+!Supersaw methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:58:05 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	answer
-		addControlInput: #pitch;
-		addControlInput: #detune;
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !Supersaw methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:01:09 pm (UTC)'!
@@ -5071,7 +4936,7 @@ peek
 	click > 0.01 ifTrue: [answer := (random next * 2.0 - 1.0) * click + answer. click := click * 0.8]. 
 	^ answer! !
 
-!TonewheelOrgan methodsFor: 'ui' stamp: 'len 9/May/2026, 6:44:17 am (UTC)'!
+!TonewheelOrgan methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:59:16 pm (UTC)'!
 patchable
 	| answer drawbars |
 	answer := PatchableMorph new model: self.
@@ -5080,9 +4945,6 @@ patchable
 	answer body
 		addMorph: drawbars;
 		addMorph: self panel.
-	answer
-		addControlInput: #pitch;
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !TonewheelOrgan methodsFor: 'private' stamp: 'len 14/Feb/2026, 9:31:33 am (UTC)'!
@@ -5158,7 +5020,7 @@ peek
 	1 to: 5 do: [:i| answer := ((phases at: i) pulse: (frequencies at: i) width: 0.35) * (amplitudes at: i) + answer].
 	^ answer! !
 
-!TransistorOrgan methodsFor: 'ui' stamp: 'len 9/May/2026, 6:44:27 am (UTC)'!
+!TransistorOrgan methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:59:34 pm (UTC)'!
 patchable
 	| answer drawbars |
 	answer := PatchableMorph new model: self.
@@ -5167,9 +5029,6 @@ patchable
 	answer body
 		addMorph: drawbars;
 		addMorph: self panel.
-	answer
-		addControlInput: #pitch;
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !VOSIM methodsFor: 'controlling' stamp: 'len 11/May/2026, 8:45:59 am (UTC)'!
@@ -5350,16 +5209,12 @@ panel
 		addTextualControl: (controls at: #speed);
 		addMorph: (ToggleButtonMorph new  state: legato; when: #changed: send: #legato: to: self; receive: #state: from: self when: #legatoChanged:; label: 'L'; setBalloonText: 'Legato')! !
 
-!Multisample methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:35:46 am (UTC)'!
+!Multisample methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:59:55 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	answer
-		addControlInput: #pitch;
-		addControlInput: #speed;
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !Multisample methodsFor: 'ui' stamp: 'len 20/Jun/2026, 6:52:13 pm (UTC)'!
@@ -5648,16 +5503,12 @@ panel
 		addTextualControl: (controls at: #speed);
 		addMorph: (ToggleButtonMorph new  state: legato; when: #changed: send: #legato: to: self; receive: #state: from: self when: #legatoChanged:; label: 'L'; setBalloonText: 'Legato')! !
 
-!Sample methodsFor: 'ui' stamp: 'len 18/Jun/2026, 7:31:24 pm (UTC)'!
+!Sample methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:00:14 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	answer
-		addControlInput: #pitch;
-		addControlInput: #speed;
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !Sample methodsFor: 'ui' stamp: 'len 2/Oct/2025, 1:06:00 pm (UTC)'!
@@ -5968,16 +5819,12 @@ readFromJson: json buffers: aList
 	label := json at: #label ifAbsent: [''].
 	label isEmpty ifTrue: [label := nil]! !
 
-!Wavetable methodsFor: 'ui' stamp: 'len 18/Jun/2026, 7:31:42 pm (UTC)'!
+!Wavetable methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:00:34 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	answer
-		addControlInput: #pitch;
-		addControlInput: #position;
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !Wavetable methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:00:57 pm (UTC)'!
@@ -6201,12 +6048,6 @@ nextWhite
 	state := (state * 16807.0 \\ 2147483647.0) truncated asFloat.
 	^​ state / 1073741823.5  - 1.0! !
 
-!ColoredNoise methodsFor: 'ui' stamp: 'len 26/Apr/2026, 4:44:58 pm (UTC)'!
-patchable
-	^ super patchable
-		addControlInput: #color;
-		yourself! !
-
 !SparseNoise methodsFor: 'controlling' stamp: 'len 1/Feb/2026, 8:50:59 am (UTC)'!
 reset
 	state := 0.0! !
@@ -6319,10 +6160,6 @@ send: aNumber
 	self triggerEvent: #output: with: aNumber.
 	modulations keysAndValuesDo: [:target :depth| target modulateBy: aNumber * depth]! !
 
-!Modulator methodsFor: 'ui' stamp: 'len 27/Apr/2026, 3:54:52 pm (UTC)'!
-patchable
-	^ super patchable addControlOutput; yourself! !
-
 !Modulator methodsFor: 'ui' stamp: 'len 17/Jun/2026, 1:10:02 pm (UTC)'!
 screen
 	| answer |
@@ -6355,9 +6192,9 @@ initialize
 	bipolar := false.
 	lastValue := 0.0! !
 
-!ControlIn methodsFor: 'processing' stamp: 'len 9/Jun/2026, 2:38:46 pm (UTC)'!
+!ControlIn methodsFor: 'processing' stamp: 'len 27/Jun/2026, 9:38:38 pm (UTC)'!
 tick
-	lastValue := values at: port + 1.
+	lastValue := bus at: port + 1.
 	bipolar ifTrue: [lastValue := lastValue * 255.0 / 128.0 - 1.0].
 	lastValue = 0.0 ifFalse: [self send: lastValue]! !
 
@@ -6370,7 +6207,7 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #port ifPresent: [:anInteger| port := anInteger]! !
 
-!ControlIn methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:18:14 pm (UTC)'!
+!ControlIn methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:18:23 pm (UTC)'!
 patchable
 	| answer screen |
 	answer := PatchableMorph new model: self.
@@ -6379,12 +6216,11 @@ patchable
 		addMorph: (ToggleButtonMorph new state: bipolar; when: #changed: send: #bipolar: to: self; receive: #state: from: self when: #bipolarChanged:; label: '±'; setBalloonText: 'Bipolar');
 		addMorph: (RollingMeterMorph new color: PatchMorph waveformColor3; meterBlock: [lastValue]).
 	answer body addMorph: screen.
-	answer addControlOutput.
 	^ answer! !
 
-!ControlIn methodsFor: 'wiring' stamp: 'len 18/Mar/2026, 7:33:26 pm (UTC)'!
-setValues: anArray
-	values := anArray! !
+!ControlIn methodsFor: 'wiring' stamp: 'len 27/Jun/2026, 9:39:11 pm (UTC)'!
+setBus: anArray
+	bus := anArray! !
 
 !Attenuator methodsFor: 'initialization' stamp: 'len 2/Jun/2026, 9:59:17 am (UTC)'!
 initializeControls
@@ -6402,15 +6238,11 @@ tick
 panel
 	^​ ControlPanel new addSmallKnob: (controls at: #amount)! !
 
-!Attenuator methodsFor: 'ui' stamp: 'len 2/Jun/2026, 9:58:34 am (UTC)'!
+!Attenuator methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:18:48 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
-	answer
-		addControlInput: #in;
-		addControlInput: #amount;
-		addControlOutput.
 	^ answer! !
 
 !Attenuverter methodsFor: 'initialization' stamp: 'len 2/Jun/2026, 9:59:35 am (UTC)'!
@@ -6429,15 +6261,11 @@ tick
 panel
 	^​ ControlPanel new addSmallKnob: (controls at: #amount)! !
 
-!Attenuverter methodsFor: 'ui' stamp: 'len 2/Jun/2026, 9:58:40 am (UTC)'!
+!Attenuverter methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:18:55 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
-	answer
-		addControlInput: #in;
-		addControlInput: #amount;
-		addControlOutput.
 	^ answer! !
 
 !Drift methodsFor: 'controlling' stamp: 'len 24/May/2026, 9:07:18 am (UTC)'!
@@ -6481,13 +6309,12 @@ panel
 		addSmallKnob: (controls at: #time) label: 'Time';
 		addSmallKnob: (controls at: #slew) label: 'Slew'! !
 
-!Drift methodsFor: 'ui' stamp: 'len 4/Jun/2026, 10:35:34 am (UTC)'!
+!Drift methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:18:59 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	answer addControlOutput.
 	^ answer! !
 
 !Drift methodsFor: 'ui' stamp: 'len 20/Jun/2026, 7:42:56 pm (UTC)'!
@@ -6599,17 +6426,16 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #reset ifPresent: [:aBoolean| retrigger := aBoolean]! !
 
-!Envelope methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:08:56 pm (UTC)'!
+!Envelope methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:22:41 pm (UTC)'!
+controlInputs
+	^ #(attack hold decay release) select: [:each| controls includesKey: each]! !
+
+!Envelope methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:24:12 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	answer
-		addAudioInput: #setInput:;
-		addAudioOutput: #setOutput:;
-		addControlInput: #attack;
-		addControlOutput.
 	^ answer! !
 
 !Envelope methodsFor: 'ui' stamp: 'len 24/Jun/2026, 5:37:20 pm (UTC)'!
@@ -6668,12 +6494,6 @@ panelBottom
 panelRight
 	^ ControlPanel newColumn
 		addMorph: (ToggleButtonMorph new state: retrigger; when: #changed: send: #retrigger: to: self; receive: #state: from: self when: #retriggerChanged:; label: 'R'; setBalloonText: 'Retrigger')! !
-
-!AD methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:02:03 pm (UTC)'!
-patchable
-	^ super patchable
-		addControlInput: #decay;
-		yourself! !
 
 !ADSR methodsFor: 'accessing' stamp: 'len 3/Jun/2026, 8:16:55 am (UTC)'!
 legato
@@ -6770,13 +6590,6 @@ panelRight
 		addMorph: (ToggleButtonMorph new  state: legato; when: #changed: send: #legato: to: self; receive: #state: from: self when: #legatoChanged:; label: 'L'; setBalloonText: 'Legato');
 		addMorph: (ToggleButtonMorph new state: retrigger; when: #changed: send: #retrigger: to: self; receive: #state: from: self when: #retriggerChanged:; label: 'R'; setBalloonText: 'Retrigger')! !
 
-!ADSR methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:02:14 pm (UTC)'!
-patchable
-	^ super patchable
-		addControlInput: #decay;
-		addControlInput: #release;
-		yourself! !
-
 !AHD methodsFor: 'controlling' stamp: 'len 12/Apr/2026, 11:49:36 am (UTC)'!
 update
 	| rate |
@@ -6826,13 +6639,6 @@ panelBottom
 panelRight
 	^ ControlPanel newColumn
 		addMorph: (ToggleButtonMorph new state: retrigger; when: #changed: send: #retrigger: to: self; receive: #state: from: self when: #retriggerChanged:; label: 'R'; setBalloonText: 'Retrigger')! !
-
-!AHD methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:02:18 pm (UTC)'!
-patchable
-	^ super patchable
-		addControlInput: #hold;
-		addControlInput: #decay;
-		yourself! !
 
 !AR methodsFor: 'accessing' stamp: 'len 3/Jun/2026, 8:21:35 am (UTC)'!
 legato
@@ -6914,12 +6720,6 @@ panelRight
 	^ ControlPanel newColumn
 		addMorph: (ToggleButtonMorph new  state: legato; when: #changed: send: #legato: to: self; receive: #state: from: self when: #legatoChanged:; label: 'L'; setBalloonText: 'Legato');
 		addMorph: (ToggleButtonMorph new state: retrigger; when: #changed: send: #retrigger: to: self; receive: #state: from: self when: #retriggerChanged:; label: 'R'; setBalloonText: 'Retrigger')! !
-
-!AR methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:02:22 pm (UTC)'!
-patchable
-	^ super patchable
-		addControlInput: #release;
-		yourself! !
 
 !ASR methodsFor: 'accessing' stamp: 'len 3/Jun/2026, 8:23:29 am (UTC)'!
 legato
@@ -7006,12 +6806,6 @@ panelRight
 		addMorph: (ToggleButtonMorph new  state: legato; when: #changed: send: #legato: to: self; receive: #state: from: self when: #legatoChanged:; label: 'L'; setBalloonText: 'Legato');
 		addMorph: (ToggleButtonMorph new state: retrigger; when: #changed: send: #retrigger: to: self; receive: #state: from: self when: #retriggerChanged:; label: 'R'; setBalloonText: 'Retrigger')! !
 
-!ASR methodsFor: 'ui' stamp: 'len 17/Jun/2026, 4:02:25 pm (UTC)'!
-patchable
-	^ super patchable
-		addControlInput: #release;
-		yourself! !
-
 !EnvelopeFollower methodsFor: 'accessing' stamp: 'len 2/Jun/2026, 7:17:35 pm (UTC)'!
 mode
 	^ mode! !
@@ -7069,17 +6863,12 @@ panel
 		addMorph: (PulldownListMorph new state: mode; when: #changed: send: #mode: to: self; receive: #state: from: self when: #modeChanged:; options: #(Peak RMS); setBalloonText: 'Mode').
 ! !
 
-!EnvelopeFollower methodsFor: 'ui' stamp: 'len 30/Apr/2026, 9:14:03 am (UTC)'!
+!EnvelopeFollower methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:25:33 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	answer
-		addAudioInput: #setInput:;
-		addControlInput: #attack;
-		addControlInput: #release;
-		addControlOutput.
 	^ answer! !
 
 !EnvelopeFollower methodsFor: 'wiring' stamp: 'len 9/Feb/2026, 5:26:43 pm (UTC)'!
@@ -7108,15 +6897,12 @@ tick
 panel
 	^ ControlPanel new addKnob: (controls at: #amount)! !
 
-!KeyTracker methodsFor: 'ui' stamp: 'len 17/Jun/2026, 1:17:06 pm (UTC)'!
+!KeyTracker methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:19:15 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	answer
-		addControlInput: #amount;
-		addControlOutput.
 	^ answer! !
 
 !LFO methodsFor: 'accessing' stamp: 'len 23/Apr/2026, 10:48:41 am (UTC)'!
@@ -7239,6 +7025,10 @@ settings: aDictionary
 	aDictionary at: #bipolar ifPresent: [:aBoolean| bipolar := aBoolean].
 	aDictionary at: #mode ifPresent: [:aSymbol| mode := aSymbol]! !
 
+!LFO methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:19:32 pm (UTC)'!
+controlInputs
+	^ #(speed)! !
+
 !LFO methodsFor: 'ui' stamp: 'len 22/Jun/2026, 9:12:55 pm (UTC)'!
 panel
 	^ ControlPanel new
@@ -7248,15 +7038,12 @@ panel
 		addMorph: (ToggleButtonMorph new state: bipolar; when: #changed: send: #bipolar: to: self; receive: #state: from: self when: #bipolarChanged:; label: '±'; setBalloonText: 'Bipolar');
 		addMorph: (PulldownListMorph new state: mode; when: #changed: send: #mode: to: self; receive: #state: from: self when: #modeChanged:; options: #(Free Reset Hold); setBalloonText: 'Mode')! !
 
-!LFO methodsFor: 'ui' stamp: 'len 26/Apr/2026, 8:02:47 pm (UTC)'!
+!LFO methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:19:35 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	answer
-		addControlInput: #speed;
-		addControlOutput.
 	^ answer! !
 
 !LFO methodsFor: 'ui' stamp: 'len 23/Jun/2026, 10:53:45 am (UTC)'!
@@ -7332,7 +7119,7 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #pitchClasses ifPresent: [:anArray| pitchClasses := anArray]! !
 
-!Quantizer methodsFor: 'ui' stamp: 'len 7/Jun/2026, 2:43:00 pm (UTC)'!
+!Quantizer methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:19:51 pm (UTC)'!
 patchable
 	| answer keys |
 	answer := PatchableMorph new model: self.
@@ -7341,10 +7128,6 @@ patchable
 	keys when: #pitchClassesChanged: send: #pitchClasses: to: self.
 	self when: #output: send: #quantizedPitch: to: keys.
 	answer body addMorph: keys.
-	answer
-		addControlInput: #in;
-		addControlInput: #color;
-		addControlOutput.
 	^ answer! !
 
 !Quantizer methodsFor: 'ui' stamp: 'len 26/Jun/2026, 10:20:26 am (UTC)'!
@@ -7445,15 +7228,12 @@ tick
 panel
 	^ ControlPanel new addSmallKnob: (controls at: #amount)! !
 
-!VelocityTracker methodsFor: 'ui' stamp: 'len 17/Jun/2026, 1:25:34 pm (UTC)'!
+!VelocityTracker methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:19:56 pm (UTC)'!
 patchable
 	| answer screen |
 	answer := PatchableMorph new model: self.
 	screen := RollingMeterMorph new color: PatchMorph waveformColor3; meterBlock: [velocity].
 	answer body beRow addMorph: screen; addMorph: self panel.
-	answer
-		addControlInput: #amount;
-		addControlOutput.
 	^ answer! !
 
 !Wobble methodsFor: 'controlling' stamp: 'len 23/May/2026, 7:07:22 am (UTC)'!
@@ -7507,13 +7287,12 @@ panel
 		addSmallKnob: (controls at: #flutter) label: 'Flutter';
 		addSmallKnob: (controls at: #jitter) label: 'Jitter'! !
 
-!Wobble methodsFor: 'ui' stamp: 'len 23/May/2026, 7:08:57 am (UTC)'!
+!Wobble methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:20:03 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	answer addControlOutput.
 	^ answer! !
 
 !Wobble methodsFor: 'ui' stamp: 'len 20/Jun/2026, 9:57:45 am (UTC)'!
@@ -7536,13 +7315,6 @@ tick
 !Transform methodsFor: 'processing' stamp: 'len 19/Nov/2025, 5:38:00 pm (UTC)'!
 value: in
 	^ in! !
-
-!Transform methodsFor: 'ui' stamp: 'len 2/Feb/2026, 8:42:15 am (UTC)'!
-patchable
-	^ super patchable
-		addAudioInput: #setInput:;
-		addAudioOutput: #setOutput:;
-		yourself! !
 
 !Transform methodsFor: 'wiring' stamp: 'len 18/Nov/2025, 10:25:00 am (UTC)'!
 setInput: aBuffer
@@ -7770,6 +7542,10 @@ value: in
 	level3 > 0.01 ifTrue: [out := tap3 read * level3 + out].
 	^ in * dry + (out * wet)! !
 
+!Echo methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:54:43 pm (UTC)'!
+controlInputs
+	^ #(time feedback)! !
+
 !Echo methodsFor: 'ui' stamp: 'len 1/Jun/2026, 1:34:28 pm (UTC)'!
 panel
 	^​ ControlPanel new
@@ -7785,17 +7561,12 @@ panel2
 		addSmallKnob: (controls at: #drive) label: 'Drive';
 		addSmallKnob: (controls at: #mix) label: 'Mix'! !
 
-!Echo methodsFor: 'ui' stamp: 'len 1/Jun/2026, 1:34:50 pm (UTC)'!
+!Echo methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:54:35 pm (UTC)'!
 patchable
 	| answer |
 	answer := super patchable.
 	answer flap addMorph: self panel2.
-	^ answer
-		addAudioInput: #setReturn: label: 'Return';
-		addAudioOutput: #setSend: label: 'Send';
-		addControlInput: #time;
-		addControlInput: #feedback;
-		yourself! !
+	^ answer! !
 
 !Echo methodsFor: 'ui' stamp: 'len 20/Jun/2026, 11:31:45 am (UTC)'!
 rackable
@@ -7812,12 +7583,12 @@ rackable
 		addKnob: (controls at: #mix) label: 'Mix'.
 	^ answer! !
 
-!Echo methodsFor: 'wiring' stamp: 'len 30/May/2026, 2:05:34 pm (UTC)'!
-setReturn: aBuffer
+!Echo methodsFor: 'wiring' stamp: 'len 28/Jun/2026, 2:24:18 pm (UTC)'!
+setInputReturn: aBuffer
 	return := aBuffer! !
 
-!Echo methodsFor: 'wiring' stamp: 'len 30/May/2026, 2:05:29 pm (UTC)'!
-setSend: aBuffer
+!Echo methodsFor: 'wiring' stamp: 'len 28/Jun/2026, 2:24:24 pm (UTC)'!
+setOutputSend: aBuffer
 	send := aBuffer! !
 
 !Flanger methodsFor: 'controlling' stamp: 'len 27/Mar/2026, 7:49:08 am (UTC)'!
@@ -7874,6 +7645,10 @@ tick
 		delayLine write: (lpf value: out) * feedback + in.
 		output at: i put: in * dry + (out * wet)]! !
 
+!Flanger methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:26:01 pm (UTC)'!
+controlInputs
+	^ #(depth feedback)! !
+
 !Flanger methodsFor: 'ui' stamp: 'len 30/Apr/2026, 9:28:32 am (UTC)'!
 panel
 	^ ControlPanel new
@@ -7884,17 +7659,12 @@ panel
 		addSmallKnob: (controls at: #tone) label: 'Tone';
 		addSmallKnob: (controls at: #mix) label: 'Mix'! !
 
-!Flanger methodsFor: 'ui' stamp: 'len 2/Jun/2026, 8:40:47 am (UTC)'!
+!Flanger methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:26:13 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	answer
-		addAudioInput: #setInput:;
-		addAudioOutput: #setOutput:;
-		addControlInput: #depth;
-		addControlInput: #feedback.
 	^ answer! !
 
 !Flanger methodsFor: 'ui' stamp: 'len 20/Jun/2026, 9:59:52 am (UTC)'!
@@ -7953,6 +7723,10 @@ tick
 	phase := phase \\ twoPi.
 	self triggerEvent: #lfo: with: phase sin! !
 
+!Phaser methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:26:33 pm (UTC)'!
+controlInputs
+	^ #(depth feedback)! !
+
 !Phaser methodsFor: 'ui' stamp: 'len 23/Jun/2026, 4:46:04 pm (UTC)'!
 panel
 	^ ControlPanel new
@@ -7961,17 +7735,12 @@ panel
 		addSmallKnob: (controls at: #feedback) label: 'FB';
 		addSmallKnob: (controls at: #mix) label: 'Mix'! !
 
-!Phaser methodsFor: 'ui' stamp: 'len 2/Jun/2026, 8:39:56 am (UTC)'!
+!Phaser methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:26:24 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	answer
-		addAudioInput: #setInput:;
-		addAudioOutput: #setOutput:;
-		addControlInput: #depth;
-		addControlInput: #feedback.
 	^ answer! !
 
 !Phaser methodsFor: 'ui' stamp: 'len 20/Jun/2026, 10:00:00 am (UTC)'!
@@ -8058,6 +7827,10 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #reverse ifPresent: [:aBoolean| reverse := aBoolean]! !
 
+!PitchShifter methodsFor: 'ui' stamp: 'len 28/Jun/2026, 3:09:29 pm (UTC)'!
+controlInputs
+	^ #(pitch feedback)! !
+
 !PitchShifter methodsFor: 'ui' stamp: 'len 28/May/2026, 2:47:24 pm (UTC)'!
 panel
 	^ ControlPanel new
@@ -8073,15 +7846,12 @@ panel2
 		addSmallKnob: (controls at: #damp) label: 'Damp';
 		addMorph: (ToggleButtonMorph new state: reverse; when: #changed: send: #reverse: to: self; receive: #state: from: self when: #reverseChanged:; label: '◀'; setBalloonText: 'Reverse Mode')! !
 
-!PitchShifter methodsFor: 'ui' stamp: 'len 28/May/2026, 2:45:49 pm (UTC)'!
+!PitchShifter methodsFor: 'ui' stamp: 'len 28/Jun/2026, 3:09:38 pm (UTC)'!
 patchable
 	| answer |
 	answer := super patchable.
 	answer flap addMorph: self panel2.
-	^ answer
-		addControlInput: #pitch;
-		addControlInput: #feedback;
-		yourself! !
+	^ answer! !
 
 !Reverb methodsFor: 'controlling' stamp: 'len 27/Mar/2026, 9:36:59 am (UTC)'!
 reset
@@ -8127,6 +7897,10 @@ value: in
 	allpasses do: [:each| out := each value: out].
 	^ out * wet + (in * dry)! !
 
+!Reverb methodsFor: 'ui' stamp: 'len 28/Jun/2026, 3:10:04 pm (UTC)'!
+controlInputs
+	^ #(feedback damp mix)! !
+
 !Reverb methodsFor: 'ui' stamp: 'len 9/Mar/2026, 9:47:32 am (UTC)'!
 panel
 	^ ControlPanel new
@@ -8134,14 +7908,6 @@ panel
 		addKnob: (controls at: #feedback) label: 'FB';
 		addKnob: (controls at: #damp) label: 'Damp';
 		addKnob: (controls at: #mix) label: 'Mix'! !
-
-!Reverb methodsFor: 'ui' stamp: 'len 3/Jun/2026, 11:10:51 am (UTC)'!
-patchable
-	^ super patchable
-		addControlInput: #feedback;
-		addControlInput: #damp;
-		addControlInput: #mix;
-		yourself! !
 
 !Reverb methodsFor: 'ui' stamp: 'len 20/Jun/2026, 11:54:21 am (UTC)'!
 rackable
@@ -8196,6 +7962,10 @@ tick
 		delayLine write: (input at: i).
 		output at: i put: tap read]! !
 
+!Vibrato methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:26:58 pm (UTC)'!
+controlInputs
+	^ #(speed depth)! !
+
 !Vibrato methodsFor: 'ui' stamp: 'len 30/Apr/2026, 11:04:18 am (UTC)'!
 panel
 	^ ControlPanel new
@@ -8203,17 +7973,12 @@ panel
 		addTextualControl: (controls at: #speed);
 		addTextualControl: (controls at: #depth)! !
 
-!Vibrato methodsFor: 'ui' stamp: 'len 2/Jun/2026, 8:41:56 am (UTC)'!
+!Vibrato methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:26:48 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	answer
-		addAudioInput: #setInput:;
-		addAudioOutput: #setOutput:;
-		addControlInput: #speed;
-		addControlInput: #depth.
 	^ answer! !
 
 !Vibrato methodsFor: 'ui' stamp: 'len 20/Jun/2026, 10:00:07 am (UTC)'!
@@ -8250,16 +8015,11 @@ tick
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	biquad process: input into: output! !
 
-!BPF methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:03:52 pm (UTC)'!
+!BPF methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:27:27 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
-	answer
-		addAudioInput: #setInput:;
-		addControlInput: #frequency;
-		addControlInput: #bandwidth;
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !BPF methodsFor: 'ui' stamp: 'len 24/Jun/2026, 3:45:53 pm (UTC)'!
@@ -8303,16 +8063,11 @@ tick
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	biquad process: input into: output! !
 
-!BSF methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:04:05 pm (UTC)'!
+!BSF methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:27:36 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
-	answer
-		addAudioInput: #setInput:;
-		addControlInput: #frequency;
-		addControlInput: #bandwidth;
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !BSF methodsFor: 'ui' stamp: 'len 24/Jun/2026, 3:46:26 pm (UTC)'!
@@ -8465,16 +8220,11 @@ tick
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	biquad process: input into: output! !
 
-!HPF methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:04:18 pm (UTC)'!
+!HPF methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:27:55 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
-	answer
-		addAudioInput: #setInput:;
-		addControlInput: #frequency;
-		addControlInput: #Q;
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !HPF methodsFor: 'ui' stamp: 'len 24/Jun/2026, 3:46:47 pm (UTC)'!
@@ -8518,16 +8268,11 @@ tick
 	input ifNil: [output atAllPut: 0.0. ^ self].
 	biquad process: input into: output! !
 
-!LPF methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:04:34 pm (UTC)'!
+!LPF methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:28:25 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
-	answer
-		addAudioInput: #setInput:;
-		addControlInput: #frequency;
-		addControlInput: #Q;
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !LPF methodsFor: 'ui' stamp: 'len 24/Jun/2026, 3:47:04 pm (UTC)'!
@@ -8603,13 +8348,17 @@ value: in
 	y := postlpf value: y * postgain.
 	^​ y - (dcblock value: y)! !
 
+!TubeSaturator methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:28:54 pm (UTC)'!
+controlInputs
+	^ #(drive)! !
+
 !TubeSaturator methodsFor: 'ui' stamp: 'len 25/Apr/2026, 6:45:34 pm (UTC)'!
 panel
 	^​ ControlPanel new
 		addSmallKnob: (controls at: #tone) label: 'Tone';
 		addSmallKnob: (controls at: #postgain) label: 'Output'! !
 
-!TubeSaturator methodsFor: 'ui' stamp: 'len 13/Feb/2026, 12:40:37 pm (UTC)'!
+!TubeSaturator methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:30:14 pm (UTC)'!
 patchable
 	| answer display inputPin |
 	answer := PatchableMorph new model: self.
@@ -8618,12 +8367,9 @@ patchable
 		waveBlock: [:x :g| ((x * 2.0 - 1.0) * g sqrt) softclip].
 	answer body addMorph: display.
 	answer flap addMorph: self panel.
-	inputPin := answer addAudioInput: #setInput:.
+	inputPin := answer inputs detect: [:one| one selector = #setInput:].
 	inputPin when: #level: send: #drawLevel: to: display.
-	^ answer
-		addControlInput: #drive;
-		addAudioOutput: #setOutput:;
-		yourself! !
+	^ answer! !
 
 !Waveshaper methodsFor: 'controlling' stamp: 'len 13/Feb/2026, 12:00:21 pm (UTC)'!
 update
@@ -8652,6 +8398,10 @@ apply: x
 value: in
 	^ in * dry + (((self apply: in * pregain + bias) - dc) * postgain)! !
 
+!Waveshaper methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:31:14 pm (UTC)'!
+controlInputs
+	^ #(pregain)! !
+
 !Waveshaper methodsFor: 'ui' stamp: 'len 25/Apr/2026, 6:46:07 pm (UTC)'!
 panel
 	^​ ControlPanel new
@@ -8659,7 +8409,7 @@ panel
 		addSmallKnob: (controls at: #postgain) label: 'Output';
 		addSmallKnob: (controls at: #mix) label: 'Mix'! !
 
-!Waveshaper methodsFor: 'ui' stamp: 'len 25/Apr/2026, 5:22:43 pm (UTC)'!
+!Waveshaper methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:31:04 pm (UTC)'!
 patchable
 	| answer screen inputPin |
 	answer := PatchableMorph new model: self.
@@ -8669,12 +8419,9 @@ patchable
 		waveBlock: [:t :g| (self apply: (t * 2.0 - 1.0) * g)].
 	answer body addMorph: screen.
 	answer flap addMorph: self panel.
-	inputPin := answer addAudioInput: #setInput:.
+	inputPin := answer inputs detect: [:one| one selector = #setInput:].
 	inputPin when: #level: send: #drawLevel: to: screen.
-	^ answer
-		addControlInput: #pregain;
-		addAudioOutput: #setOutput:;
-		yourself! !
+	^ answer! !
 
 !DiodeClipper methodsFor: 'processing' stamp: 'len 13/Feb/2026, 5:28:33 pm (UTC)'!
 apply: x
@@ -8763,16 +8510,11 @@ value: in
 	s3 := v3 * 2.0 + s3.
 	^ y! !
 
-!Korg35HPF methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:04:51 pm (UTC)'!
+!Korg35HPF methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:31:57 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
-	answer
-		addAudioInput: #setInput:;
-		addControlInput: #frequency;
-		addControlInput: #resonance;
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !Korg35HPF methodsFor: 'ui' stamp: 'len 24/Jun/2026, 3:47:29 pm (UTC)'!
@@ -8844,16 +8586,11 @@ value: in
 	s3 := u3 + v3.
 	^ y "tanh"! !
 
-!Korg35LPF methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:05:03 pm (UTC)'!
+!Korg35LPF methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:32:21 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
-	answer
-		addAudioInput: #setInput:;
-		addControlInput: #frequency;
-		addControlInput: #resonance;
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !Korg35LPF methodsFor: 'ui' stamp: 'len 24/Jun/2026, 3:47:41 pm (UTC)'!
@@ -8923,12 +8660,9 @@ value: in
 	mix = 1.0 ifTrue: [^ heldValue].
 	^ in * (1.0 - mix) + (heldValue * mix)! !
 
-!Decimator methodsFor: 'ui' stamp: 'len 5/Apr/2026, 10:06:49 am (UTC)'!
-patchable
-	^ super patchable
-		addControlInput: #bits;
-		addControlInput: #rate;
-		yourself! !
+!Decimator methodsFor: 'ui' stamp: 'len 28/Jun/2026, 3:10:59 pm (UTC)'!
+controlInputs
+	^ #(bits rate)! !
 
 !Decimator methodsFor: 'ui' stamp: 'len 24/Jun/2026, 3:42:28 pm (UTC)'!
 rackable
@@ -8968,7 +8702,7 @@ tick
 value: in
 	^ (in * pregain) softclip * postgain! !
 
-!Overdrive methodsFor: 'ui' stamp: 'len 13/Feb/2026, 12:45:30 pm (UTC)'!
+!Overdrive methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:32:54 pm (UTC)'!
 patchable
 	| answer display inputPin |
 	answer := PatchableMorph new model: self.
@@ -8976,12 +8710,9 @@ patchable
 		control: (controls at: #drive);
 		waveBlock: [:x :g| ((x * 2.0 - 1.0) * g squared) softclip].
 	answer body addMorph: display.
-	inputPin := answer addAudioInput: #setInput:.
+	inputPin := answer inputs detect: [:one| one selector = #setInput:].
 	inputPin when: #level: send: #drawLevel: to: display.
-	^ answer
-		addControlInput: #drive;
-		addAudioOutput: #setOutput:;
-		yourself! !
+	^ answer! !
 
 !TapeSaturator methodsFor: 'controlling' stamp: 'len 11/May/2026, 10:01:48 am (UTC)'!
 update
@@ -9022,6 +8753,10 @@ value: in
 	"post lowpass:"
 	^​ (postlpf value: y) * postgain! !
 
+!TapeSaturator methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:33:17 pm (UTC)'!
+controlInputs
+	^ #(drive)! !
+
 !TapeSaturator methodsFor: 'ui' stamp: 'len 25/Apr/2026, 6:46:13 pm (UTC)'!
 panel
 	^​ ControlPanel new
@@ -9029,7 +8764,7 @@ panel
 		addSmallKnob: (controls at: #tone) label: 'Tone';
 		addSmallKnob: (controls at: #postgain) label: 'Output'! !
 
-!TapeSaturator methodsFor: 'ui' stamp: 'len 25/Apr/2026, 5:23:02 pm (UTC)'!
+!TapeSaturator methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:33:41 pm (UTC)'!
 patchable
 	| answer screen inputPin |
 	answer := PatchableMorph new model: self.
@@ -9042,12 +8777,9 @@ patchable
 			(((x * 2.0 - 1.0) * g) * nlg) tanh].
 	answer body addMorph: screen.
 	answer flap addMorph: self panel.
-	inputPin := answer addAudioInput: #setInput:.
+	inputPin := answer inputs detect: [:one| one selector = #setInput:].
 	inputPin when: #level: send: #drawLevel: to: screen.
-	^ answer
-		addControlInput: #drive;
-		addAudioOutput: #setOutput:;
-		yourself! !
+	^ answer! !
 
 !DiodeLadder2 methodsFor: 'controlling' stamp: 'len 29/Jan/2026, 8:28:49 am (UTC)'!
 reset
@@ -9088,12 +8820,6 @@ value: in
 	s3 = dt * ((vc3 - vc2) / (2.0 * γ)) tanh + vc3.
 	s4 = dt * ((vc4 - vc3) / (2.0 * γ)) tanh + vc4.
 	^ vout! !
-
-!DiodeLadder2 methodsFor: 'ui' stamp: 'len 29/Jan/2026, 8:19:55 am (UTC)'!
-patchable
-	^ super patchable
-		addAudioOutput: #setOutput: label: 'Out';
-		yourself! !
 
 !DiodeLadder2 methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:01:41 pm (UTC)'!
 screen
@@ -9181,17 +8907,11 @@ tick
 panel
 	^ ControlPanel new addKnob: (controls at: #balance)! !
 
-!Balance methodsFor: 'ui' stamp: 'len 12/Apr/2026, 11:14:50 am (UTC)'!
+!Balance methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:55:03 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
-	answer
-		addAudioInput: #setInputA: label: 'A';
-		addAudioInput: #setInputB: label: 'B';
-		addControlInput: #balance;
-		addAudioOutput: #setOutputL: label: 'L';
-		addAudioOutput: #setOutputR: label: 'R'.
 	^ answer! !
 
 !Balance methodsFor: 'wiring' stamp: 'len 1/Feb/2026, 8:10:35 pm (UTC)'!
@@ -9240,16 +8960,11 @@ tick
 panel
 	^ ControlPanel new addKnob: (controls at: #mix)! !
 
-!Crossfader methodsFor: 'ui' stamp: 'len 12/Apr/2026, 11:14:58 am (UTC)'!
+!Crossfader methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:55:15 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
-	answer
-		addAudioInput: #setInputA: label: 'A';
-		addAudioInput: #setInputB: label: 'B';
-		addControlInput: #mix;
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !Crossfader methodsFor: 'ui' stamp: 'len 20/Jun/2026, 1:59:10 pm (UTC)'!
@@ -9297,17 +9012,13 @@ panel
 		addKnob: (controls at: #gainA);
 		addKnob: (controls at: #gainB)! !
 
-!Mixer methodsFor: 'ui' stamp: 'len 12/Apr/2026, 11:15:08 am (UTC)'!
+!Mixer methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:55:29 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body
 		addMorph: (KnobControlMorph control: (controls at: #gainA));
 		addMorph: (KnobControlMorph control: (controls at: #gainB)).
-	answer
-		addAudioInput: #setInputA: label: 'A';
-		addAudioInput: #setInputB: label: 'B';
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !Mixer methodsFor: 'ui' stamp: 'len 20/Jun/2026, 1:59:38 pm (UTC)'!
@@ -9353,7 +9064,7 @@ panel
 		addKnob: (controls at: #gainC);
 		addKnob: (controls at: #gainD)! !
 
-!Mixer4 methodsFor: 'ui' stamp: 'len 12/Apr/2026, 11:15:20 am (UTC)'!
+!Mixer4 methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:55:36 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
@@ -9362,12 +9073,6 @@ patchable
 		addMorph: (KnobControlMorph control: (controls at: #gainB));
 		addMorph: (KnobControlMorph control: (controls at: #gainC));
 		addMorph: (KnobControlMorph control: (controls at: #gainD)).
-	answer
-		addAudioInput: #setInputA: label: 'A';
-		addAudioInput: #setInputB: label: 'B';
-		addAudioInput: #setInputC: label: 'C';
-		addAudioInput: #setInputD: label: 'D';
-		addAudioOutput: #setOutput:.
 	^ answer! !
 
 !Mixer4 methodsFor: 'ui' stamp: 'len 20/Jun/2026, 12:20:44 pm (UTC)'!
@@ -9424,16 +9129,11 @@ tick
 panel
 	^ ControlPanel new addKnob: (controls at: #pan)! !
 
-!Pan methodsFor: 'ui' stamp: 'len 12/Apr/2026, 11:15:27 am (UTC)'!
+!Pan methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:34:05 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
-	answer
-		addAudioInput: #setInput:;
-		addControlInput: #pan;
-		addAudioOutput: #setOutputL: label: 'L';
-		addAudioOutput: #setOutputR: label: 'R'.
 	^ answer! !
 
 !Pan methodsFor: 'wiring' stamp: 'len 1/Feb/2026, 8:11:04 pm (UTC)'!
@@ -9472,18 +9172,11 @@ tick
 	outputL += aux.
 	outputR -= aux! !
 
-!StereoMatrix methodsFor: 'ui' stamp: 'len 19/Jun/2026, 7:33:39 pm (UTC)'!
+!StereoMatrix methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:55:50 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self panel.
-	answer
-		addAudioInput: #setInputA: label: 'A';
-		addAudioInput: #setInputB: label: 'B';
-"		addControlInput: #modulateWidth: label: 'WIdth';
-		addControlInput: #modulateBalance: label: 'Balance';"
-		addAudioOutput: #setOutputL: label: 'L';
-		addAudioOutput: #setOutputR: label: 'R'.
 	^ answer! !
 
 !StereoMatrix methodsFor: 'ui' stamp: 'len 20/Jun/2026, 1:27:51 pm (UTC)'!
@@ -9621,15 +9314,6 @@ tick2
 		outputLP2 ifNotNil: [outputLP2 at: i put: y2].
 		outputLP1 ifNotNil: [outputLP1 at: i put: y1]]! !
 
-!DiodeLadder methodsFor: 'ui' stamp: 'len 28/Jan/2026, 8:00:39 pm (UTC)'!
-patchable
-	^ super patchable
-		addAudioOutput: #setOutputLP4: label: 'LP4';
-		addAudioOutput: #setOutputLP3: label: 'LP3';
-		addAudioOutput: #setOutputLP2: label: 'LP2';
-		addAudioOutput: #setOutputLP1: label: 'LP1';
-		yourself! !
-
 !DiodeLadder methodsFor: 'ui' stamp: 'len 11/Apr/2026, 8:59:13 pm (UTC)'!
 screen
 	^ super screen mode: #LP! !
@@ -9718,19 +9402,11 @@ tickNoInput
 	outputLP2 ifNotNil: [outputLP2 atAllPut: 0.0].
 	outputLP1 ifNotNil: [outputLP1 atAllPut: 0.0]! !
 
-!MoogLPF methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:06:23 pm (UTC)'!
+!MoogLPF methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:04:03 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
-	answer
-		addAudioInput: #setInput:;
-		addControlInput: #frequency;
-		addControlInput: #resonance;
-		addAudioOutput: #setOutputLP4: label: 'LP4';
-		addAudioOutput: #setOutputLP3: label: 'LP3';
-		addAudioOutput: #setOutputLP2: label: 'LP2';
-		addAudioOutput: #setOutputLP1: label: 'LP1'.
 	^ answer! !
 
 !MoogLPF methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:06:17 pm (UTC)'!
@@ -9792,12 +9468,11 @@ tick
 			readPosition := i - 1.
 			^ self scan]]! !
 
-!Oscilloscope methodsFor: 'ui' stamp: 'len 11/May/2026, 6:48:50 pm (UTC)'!
+!Oscilloscope methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:34:19 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
-	answer addAudioInput: #setInput:.
 	^ answer! !
 
 !Oscilloscope methodsFor: 'ui' stamp: 'len 20/Jun/2026, 6:14:18 pm (UTC)'!
@@ -9901,13 +9576,12 @@ panel
 		addMorph: (PulldownListMorph new state: windowSize; options: #(256 512 1024 2048 4096); when: #changed: send: #windowSize: to: self; receive: #state: from: self when: #windowSizeChanged:; setBalloonText: 'WIndow Size');
 		addMorph: (PulldownListMorph new state: frequencyScale; options: #(linear log); when: #changed: send: #frequencyScale: to: self; receive: #state: from: self when: #frequencyScaleChanged; setBalloonText: 'Frequency Scale')! !
 
-!Spectrogram methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:05:57 pm (UTC)'!
+!Spectrogram methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:34:27 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
-	answer addAudioInput: #setInput:.
 	^ answer! !
 
 !Spectrogram methodsFor: 'ui' stamp: 'len 20/Jun/2026, 6:10:19 pm (UTC)'!
@@ -10490,9 +10164,9 @@ windowSize: anInteger
 	windowSize := anInteger.
 	self triggerEvent: #windowSizeChanged: with: windowSize! !
 
-!SpectrumAnalyzer methodsFor: 'controlling' stamp: 'len 11/May/2026, 1:14:23 pm (UTC)'!
+!SpectrumAnalyzer methodsFor: 'controlling' stamp: 'len 28/Jun/2026, 3:38:21 pm (UTC)'!
 reset
-	buffer atAllPut: 0.0! !
+	buffer ifNotNil: [buffer atAllPut: 0.0]! !
 
 !SpectrumAnalyzer methodsFor: 'controlling' stamp: 'len 3/Jun/2026, 8:45:22 am (UTC)'!
 update
@@ -10533,7 +10207,7 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #windowSize ifPresent: [:anInteger| windowSize := anInteger]! !
 
-!SpectrumAnalyzer methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:32:45 pm (UTC)'!
+!SpectrumAnalyzer methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:34:36 pm (UTC)'!
 patchable
 	| answer screen panel |
 	answer := PatchableMorph new model: self.
@@ -10546,7 +10220,6 @@ patchable
 		addMorph: (PulldownListMorph new state: screen frequencyScale; options: #(linear log); when: #changed: send: #frequencyScale: to: screen; setBalloonText: 'Frequency Scale');
 		addMorph: (PulldownListMorph new state: screen displayMode; when: #changed: send: #displayMode: to: screen; options: #(bars outline); setBalloonText: 'Display Mode').
 	answer flap addMorph: panel.
-	answer addAudioInput: #setInput:.
 	^ answer! !
 
 !SpectrumAnalyzer methodsFor: 'ui' stamp: 'len 21/Jun/2026, 9:33:01 pm (UTC)'!
@@ -10593,14 +10266,11 @@ tick
 		y := (((y0 min: 0.999 max: -0.999) + 1.0) * h) truncated.
 		image pixelValueAt: x @ y put: c]! !
 
-!Vectorscope methodsFor: 'ui' stamp: 'len 12/Apr/2026, 11:16:45 am (UTC)'!
+!Vectorscope methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:55:56 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
-	answer
-		addAudioInput: #setInputX: label: 'X';
-		addAudioInput: #setInputY: label: 'Y'.
 	^ answer! !
 
 !Vectorscope methodsFor: 'ui' stamp: 'len 20/Jun/2026, 1:01:11 pm (UTC)'!
@@ -10695,19 +10365,15 @@ tickNoInput
 	outputLP2 ifNotNil: [outputLP2 atAllPut: 0.0].
 	outputLP1 ifNotNil: [outputLP1 atAllPut: 0.0]! !
 
-!MoogLadder methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:06:35 pm (UTC)'!
+!MoogLadder methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:16:20 pm (UTC)'!
+outputs
+	^ #(setOutputLP4: setOutputLP3: setOutputLP2: setOutputLP1:)! !
+
+!MoogLadder methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:35:04 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
-	answer
-		addAudioInput: #setInput:;
-		addControlInput: #frequency;
-		addControlInput: #resonance;
-		addAudioOutput: #setOutputLP4: label: 'LP4';
-		addAudioOutput: #setOutputLP3: label: 'LP3';
-		addAudioOutput: #setOutputLP2: label: 'LP2';
-		addAudioOutput: #setOutputLP1: label: 'LP1'.
 	^ answer! !
 
 !MoogLadder methodsFor: 'ui' stamp: 'len 24/Jun/2026, 3:39:58 pm (UTC)'!
@@ -10790,19 +10456,15 @@ tick
 	s1 abs < 1.0e-15 ifTrue: [s1 := 0.0].
 	s2 abs < 1.0e-15 ifTrue: [s2 := 0.0]! !
 
-!OberheimSVF methodsFor: 'ui' stamp: 'len 11/Apr/2026, 9:06:48 pm (UTC)'!
+!OberheimSVF methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:17:15 pm (UTC)'!
+outputs
+	^ #(setOutputLP: setOutputHP: setOutputBP: setOutputBS:)! !
+
+!OberheimSVF methodsFor: 'ui' stamp: 'len 28/Jun/2026, 1:35:25 pm (UTC)'!
 patchable
 	| answer |
 	answer := PatchableMorph new model: self.
 	answer body addMorph: self screen.
-	answer
-		addAudioInput: #setInput:;
-		addControlInput: #frequency;
-		addControlInput: #resonance;
-		addAudioOutput: #setOutputLP: label: 'LP';
-		addAudioOutput: #setOutputHP: label: 'HP';
-		addAudioOutput: #setOutputBP: label: 'BP';
-		addAudioOutput: #setOutputBS: label: 'BS'.
 	^ answer! !
 
 !OberheimSVF methodsFor: 'ui' stamp: 'len 24/Jun/2026, 3:48:01 pm (UTC)'!
@@ -10838,6 +10500,217 @@ setOutputHP: aBuffer
 !OberheimSVF methodsFor: 'wiring' stamp: 'len 11/Jan/2026, 1:39:30 pm (UTC)'!
 setOutputLP: aBuffer
 	outputLP := aBuffer! !
+
+!Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 7:14:25 pm (UTC)'!
+allModulations
+	| answer |
+	answer := OrderedCollection new.
+	1 to: modules size do: [:source|
+		(source isKindOf: Modulator) ifTrue:
+			[source modulations associationsDo: [:each|
+				| target controlName depth |
+				target := modules detect: [:one| one controls includes: each key].
+				controlName := target controls keyAtIdentityValue: each key.
+				depth := each value.
+				answer add: {source. target. controlName. depth}]]].
+	^ answer! !
+
+!Patch methodsFor: 'accessing' stamp: 'len 28/Jun/2026, 8:23:44 am (UTC)'!
+buses: anArray
+	buses := anArray.
+	self setBuses! !
+
+!Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 7:14:36 pm (UTC)'!
+connect: sourceModule output: outputSelector to: targetModule input: inputSelector
+	| wire buffer |
+	wire := {sourceModule. outputSelector. targetModule. inputSelector}.
+	(wires includes: wire) ifTrue: [^ self].
+	buffer := buffers at: {sourceModule. outputSelector} ifAbsentPut: [Float32Array new: Module blockSize].
+	sourceModule perform: outputSelector with: buffer.
+	targetModule perform: inputSelector with: buffer.
+	wires := wires, {wire}.
+	dirty := true! !
+
+!Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 7:14:45 pm (UTC)'!
+disconnect: aModule
+	wires := wires reject: [:each| each first = aModule or: [each third = aModule]].
+	dirty := true! !
+
+!Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 7:14:50 pm (UTC)'!
+disconnect: sourceModule output: outputSelector to: targetModule input: inputSelector
+	| wire |
+	wire := {sourceModule. outputSelector. targetModule. inputSelector}.
+	wires := wires reject: [:each| each = wire].
+	dirty := true! !
+
+!Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 9:57:52 pm (UTC)'!
+enabled: aBoolean
+	modules do: [:each| (each isMemberOf: AudioOut) ifTrue: [each enabled: aBoolean]]! !
+
+!Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 9:35:06 pm (UTC)'!
+meterLeftValue
+	^ (audioOutput ifNil: [^ 0.0]) meterLeftValue! !
+
+!Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 9:35:12 pm (UTC)'!
+meterRightValue
+	^ (audioOutput ifNil: [^ 0.0]) meterRightValue! !
+
+!Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 9:35:18 pm (UTC)'!
+meterValue
+	^ (audioOutput ifNil: [^ 0.0]) meterValue! !
+
+!Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 7:20:49 pm (UTC)'!
+modules
+	^ modules! !
+
+!Patch methodsFor: 'accessing' stamp: 'len 28/Jun/2026, 8:09:34 am (UTC)'!
+modules: anArray
+	modules = anArray ifTrue: [^ self].
+	modules := anArray.
+	wires := wires select: [:each| (modules includes: each first) and: [modules includes: each third]].
+	dirty := true.
+	noteReceivers := modules select: [:each| each respondsTo: #setNote:].
+	velocityReceivers := modules select: [:any| any respondsTo: #setVelocity:].
+	gateReceivers := modules select: [:any| any respondsTo: #gateOn].
+	samples := modules select: [:each| (each isMemberOf: Sample) or: [(each isMemberOf: Multisample) or: [each isMemberOf: Clip]]].
+	self setBuses.
+	self triggerEvent: #modulesChanged! !
+
+!Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 9:51:47 pm (UTC)'!
+speed: aNumber
+	speed := aNumber.
+	speedIncrement := 0.0.
+	glideTicks := 0! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:32 pm (UTC)'!
+adjustLevelBy: aNumber
+	audioOutput ifNotNil: [audioOutput adjustLevelBy: aNumber]! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 7:28:17 pm (UTC)'!
+adjustNoteBy: aNumber glide: numberOfTicks
+	"Slide the given number of semitones."
+	glideTicks := numberOfTicks.
+	noteIncrement := aNumber / glideTicks asFloat! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:32 pm (UTC)'!
+adjustPanBy: aNumber
+	audioOutput ifNotNil: [audioOutput adjustPanBy: aNumber]! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 7:18:43 pm (UTC)'!
+clear
+	modules do: [:each| each clear]! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 9:40:06 pm (UTC)'!
+controlBus
+	^ controlBus! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:32 pm (UTC)'!
+gateOn
+	gateReceivers do: [:each| each gateOn]! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:32 pm (UTC)'!
+noteOff
+	gateReceivers do: [:each| each gateOff].
+	glideTicks := 0.
+	note := nil! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:32 pm (UTC)'!
+noteOn: midiKey
+	self noteOn: midiKey glide: 0! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 7:05:13 pm (UTC)'!
+noteOn: targetNote glide: numberOfTicks
+	(numberOfTicks > 0 and: [note notNil])
+		ifTrue:
+			[glideTicks := numberOfTicks truncated.
+			noteIncrement := targetNote - note / glideTicks asFloat.
+			note := note + noteIncrement]
+		ifFalse:
+			[glideTicks := 0.
+			noteIncrement := 0.0.
+			note := targetNote].
+	self setNote: note; setSpeed: speed cubed; gateOn! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:58:43 pm (UTC)'!
+reset
+	modules do: [:each| each reset]! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:33 pm (UTC)'!
+setLevel: aNumber
+	audioOutput ifNotNil: [audioOutput setLevel: aNumber]! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:33 pm (UTC)'!
+setNote: midiKey
+	noteReceivers do: [:each| each setNote: midiKey]! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:33 pm (UTC)'!
+setOffset: aNumber
+	samples do: [:each| each setOffset: aNumber]! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:33 pm (UTC)'!
+setPan: aNumber
+	audioOutput ifNotNil: [audioOutput setPan: aNumber]! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:33 pm (UTC)'!
+setSpeed: aNumber
+	samples do: [:each| each setSpeed: aNumber]! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 7:05:45 pm (UTC)'!
+setSpeed: targetSpeed glide: numberOfTicks
+	(numberOfTicks > 0 and: [speed notNil])
+		ifTrue:
+			[glideTicks := numberOfTicks truncated.
+			speedIncrement := targetSpeed - speed / glideTicks asFloat.
+			speed := speed + speedIncrement]
+		ifFalse:
+			[glideTicks := 0.
+			speedIncrement := 0.0.
+			speed := targetSpeed].
+	self setSpeed: speed cubed! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:33 pm (UTC)'!
+setVelocity: aNumber
+	velocityReceivers do: [:each| each setVelocity: aNumber]! !
+
+!Patch methodsFor: 'initialization' stamp: 'len 28/Jun/2026, 9:29:47 am (UTC)'!
+initialize
+	modules := #().
+	wires := #().
+	buffers := OrderedDictionary new.
+	controlBus := Float32Array new: 10. "control ports go from 0 to 9"
+	buses := Array new: 10. "buses go from 0 (master) to 9"
+	glideTicks := 0! !
+
+!Patch methodsFor: 'processing' stamp: 'len 27/Jun/2026, 7:23:40 pm (UTC)'!
+tick
+	self uninstallDisconnectedSignals.
+	glideTicks > 0 ifTrue:
+		[noteIncrement = 0.0 ifFalse: [note := note + noteIncrement. self setNote: note].
+		speedIncrement = 0.0 ifFalse: [speed := speed + speedIncrement. self setSpeed: speed cubed].
+		glideTicks := glideTicks - 1].
+	modules do: [:each| each update; tick]! !
+
+!Patch methodsFor: 'private' stamp: 'len 27/Jun/2026, 10:11:29 pm (UTC)'!
+setBuses
+	audioOutput := nil.
+	modules do: [:each|
+		(each isMemberOf: ControlIn)
+			ifTrue: [each setBus: controlBus]
+			ifFalse:
+				[(each isMemberOf: AudioIn)
+					ifTrue: [each setBuses: buses]
+					ifFalse:
+						[(each isMemberOf: AudioOut) ifTrue:
+							[each setBuses: buses.
+							each port = 0 ifTrue: [audioOutput := each]]]]]! !
+
+!Patch methodsFor: 'private' stamp: 'len 27/Jun/2026, 10:08:38 pm (UTC)'!
+uninstallDisconnectedSignals
+	dirty ifFalse: [^ self].
+	dirty := false.
+"	modules do: [:each|
+		each outputs do: [:outputSelector| (wires anySatisfy: [:any| any first = each and: [any second = outputSelector]]) ifFalse: [each perform: outputSelector with: nil]].
+		each inputs do: [:inputSelector| (wires anySatisfy: [:any| any third = each and: [any fourth = inputSelector]]) ifFalse: [each perform: inputSelector with: nil]]]"! !
 
 !ControlPanel methodsFor: 'building' stamp: 'len 12/Mar/2026, 10:50:50 am (UTC)'!
 addColumn
@@ -10893,11 +10766,6 @@ addVerticalSlider: aControl
 addVerticalSlider: aControl label: aString
 	self addMorph: ((SliderControlMorph control: aControl) withLabel: aString)! !
 
-!ControlPanel methodsFor: 'drawing' stamp: 'len 24/Nov/2025, 5:29:00 pm (UTC)'!
-drawOn: aCanvas
-	super drawOn: aCanvas.
-"	isExpanded = false ifTrue: ["! !
-
 !ControlPanel methodsFor: 'geometry' stamp: 'len 24/Nov/2025, 5:26:00 pm (UTC)'!
 minimumExtent
 	^ super minimumExtent max: 24@24! !
@@ -10947,21 +10815,22 @@ initialize
 addNewModule
 ! !
 
-!RackMorph methodsFor: 'private' stamp: 'len 20/Jun/2026, 9:35:12 pm (UTC)'!
-patch: aPatchMorph
-	patch = aPatchMorph ifTrue: [^ self].
-	patch := aPatchMorph.
-"	aPatchMorph when: #recomputeNeeded send: #update to: self."
+!RackMorph methodsFor: 'private' stamp: 'len 28/Jun/2026, 9:09:56 am (UTC)'!
+patch: aPatch
+	patch = aPatch ifTrue: [^ self].
+	patch := aPatch.
+	aPatch when: #modulesChanged send: #update to: self.
 	self update! !
 
-!RackMorph methodsFor: 'private' stamp: 'len 21/Jun/2026, 9:59:29 pm (UTC)'!
+!RackMorph methodsFor: 'private' stamp: 'len 28/Jun/2026, 9:36:03 am (UTC)'!
 update
+	| existingRackables |
+"	self visible ifFalse: [^ self]."
+	existingRackables := submorphs select: [:each| each isKindOf: RackableMorph].
 	self removeAllMorphs.
 	self morphExtent: 10@10. "and let it grow from that"
-	patch ifNil: [^ self].
-	((patch submorphs select: [:each| each isKindOf: PatchableMorph])
-		sorted: [:a :b| a morphPosition x < b morphPosition x])
-			do: [:each| self addMorph: each rackable layoutSpec: LayoutSizeSpec new useMorphWidth "useMorphHeight"].
+	(patch ifNil: [^ self]) modules
+		do: [:each| self addMorph: (existingRackables detect: [:one| one model = each] ifNone: [each rackable]) layoutSpec: LayoutSizeSpec new useMorphWidth "useMorphHeight"].
 	self addMorph: (PushButtonMorph new when: #buttonUp send: #addNewModule to: self; label: '+'; setBalloonText: 'Add new module'; morphExtent: 10 @ 10) layoutSpec: LayoutSizeSpec new useMorphWidth.
 	self redrawNeeded! !
 
@@ -13590,9 +13459,10 @@ scrollbarCornerRadius
 scrollbarThickness
 	^ 8.0! !
 
-!ToggleButtonMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 6:46:09 pm (UTC)'!
+!ToggleButtonMorph methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 10:15:55 am (UTC)'!
 color: aColor
 	color := aColor.
+	self updateIconColor.
 	self redrawNeeded! !
 
 !ToggleButtonMorph methodsFor: 'accessing' stamp: 'len 23/Jun/2026, 6:56:45 pm (UTC)'!
@@ -13600,10 +13470,15 @@ font: aFont
 	font := aFont.
 	self morphExtent: self minimumExtent! !
 
-!ToggleButtonMorph methodsFor: 'accessing' stamp: 'len 24/Jun/2026, 11:31:56 am (UTC)'!
-icon: anIcon
-	icon := anIcon.
+!ToggleButtonMorph methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 7:48:34 pm (UTC)'!
+icon: anIconMorph
+	icon ifNotNil: [icon delete].
+	icon := anIconMorph.
+	icon lock: true.
+	self addMorph: icon position: 3 @ 3.
 	self morphExtent: self minimumExtent.
+	icon morphExtent: (extent y @ extent y) - 6.
+	self updateIconColor.
 	self redrawNeeded! !
 
 !ToggleButtonMorph methodsFor: 'accessing' stamp: 'len 23/Jun/2026, 6:56:59 pm (UTC)'!
@@ -13612,10 +13487,11 @@ label: aString
 	self morphExtent: self minimumExtent.
 	self redrawNeeded! !
 
-!ToggleButtonMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 6:33:48 pm (UTC)'!
+!ToggleButtonMorph methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 10:20:09 am (UTC)'!
 state: aBoolean
 	state = aBoolean ifTrue: [^ self].
 	state := aBoolean.
+	self updateIconColor.
 	self redrawNeeded.
 	self triggerEvent: #changed: with: state! !
 
@@ -13631,7 +13507,7 @@ moveUp
 backgroundColor
 	^ self hasKeyboardFocus ifTrue: [Color gray lighter] ifFalse: [Color gray]! !
 
-!ToggleButtonMorph methodsFor: 'drawing' stamp: 'len 24/Jun/2026, 5:08:03 pm (UTC)'!
+!ToggleButtonMorph methodsFor: 'drawing' stamp: 'len 27/Jun/2026, 11:27:03 am (UTC)'!
 drawOn: aCanvas
 	| backgroundColor foregroundColor x |
 	state = true
@@ -13643,32 +13519,9 @@ drawOn: aCanvas
 			backgroundColor := self backgroundColor].
 	aCanvas fillRectangle: (1@1 corner: extent - 1) color: backgroundColor cornerRadius: 4.0.
 	x := 3.
-	icon ifNotNil:
-		[icon drawOn: aCanvas at: x @ 3 height: extent y - 6 "font lineSpacing" color: foregroundColor.
-		x := x + extent y].
-	label ifNotNil: 
-		[aCanvas drawString: label at: x - 1 @ 0 font: font color: foregroundColor].
+	icon ifNotNil: [x := x + extent y].
+	label ifNotNil: [aCanvas drawString: label at: x - 1 @ 0 font: font color: foregroundColor].
 	state = false ifTrue: [aCanvas frameRectangle: (0@0 corner: extent) borderWidth: 1 color: Color lightGray cornerRadius: 4.0]! !
-
-!ToggleButtonMorph methodsFor: 'drawing' stamp: 'len 24/Jun/2026, 4:52:23 pm (UTC)'!
-drawOn2: aCanvas
-	| labelColor x |
-	aCanvas fillRectangle: (0@0 extent: self minimumExtent) color: self backgroundColor cornerRadius: 4.0.
-	labelColor := state = true ifTrue: [color] ifFalse: [self inactiveColor].
-	x := 3.
-	icon ifNotNil:
-		[icon drawOn: aCanvas at: x @ 3 height: extent y - 6 "font lineSpacing" color: labelColor.
-		x := x + extent y].
-	label ifNotNil: 
-		[aCanvas drawString: label at: x - 1 @ 1 font: font color: labelColor.
-"		self hasKeyboardFocus ifTrue:
-			[| y |
-			y := font ascent + 2.
-			aCanvas line: x+1 @ y to: extent x - 3 @ y width: 2 color: labelColor]"]! !
-
-!ToggleButtonMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 6:25:55 pm (UTC)'!
-inactiveColor
-	^ Color veryLightGray! !
 
 !ToggleButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 6:25:06 pm (UTC)'!
 handlesMouseDown: anEvent
@@ -13690,11 +13543,9 @@ keyStroke: anEvent
 	(anEvent isArrowDown or: [anEvent isArrowRight]) ifTrue:
 		[anEvent wasHandled: true. self moveDown]! !
 
-!ToggleButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 6:30:00 pm (UTC)'!
+!ToggleButtonMorph methodsFor: 'events' stamp: 'len 27/Jun/2026, 10:20:39 am (UTC)'!
 mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
-	state := state not.
-	self redrawNeeded.
-	self triggerEvent: #changed: with: state! !
+	self state: state not! !
 
 !ToggleButtonMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 6:25:06 pm (UTC)'!
 mouseEnter: anEvent
@@ -13741,6 +13592,10 @@ initialize
 	color := Color white.
 	extent := self minimumExtent.
 	state := false! !
+
+!ToggleButtonMorph methodsFor: 'as yet unclassified' stamp: 'len 27/Jun/2026, 10:15:33 am (UTC)'!
+updateIconColor
+	icon ifNotNil: [icon color: (state = true ifTrue: [Color black] ifFalse: [color])]! !
 
 !TruncatingLabelMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 4:11:00 pm (UTC)'!
 color: aColor
@@ -15405,10 +15260,14 @@ inputs
 model
 	^ model! !
 
-!PatchableMorph methodsFor: 'accessing' stamp: 'len 3/Apr/2026, 12:13:41 pm (UTC)'!
+!PatchableMorph methodsFor: 'accessing' stamp: 'len 28/Jun/2026, 1:24:07 pm (UTC)'!
 model: anObject
 	model := anObject.
-	self setTitle: model title! !
+	self setTitle: model title.
+	model inputs do: [:each| self addAudioInput: each].
+	model controlInputs do: [:each| self addControlInput: each].
+	model outputs do: [:each| self addAudioOutput: each].
+	(model isKindOf: Modulator) ifTrue: [self addControlOutput]! !
 
 !PatchableMorph methodsFor: 'accessing' stamp: 'len 5/Feb/2026, 6:55:32 pm (UTC)'!
 outputs
@@ -15426,42 +15285,6 @@ setTitle: aString
 hideFlapAndTitle
 	title visible: false.
 	flap visible: false! !
-
-!PatchableMorph methodsFor: 'building' stamp: 'len 2/Feb/2026, 8:40:17 am (UTC)'!
-addAudioInput: aSymbol
-	^ self addAudioInput: aSymbol label: 'In'! !
-
-!PatchableMorph methodsFor: 'building' stamp: 'len 26/Apr/2026, 9:18:29 pm (UTC)'!
-addAudioInput: aSymbol label: labelString
-	| pin |
-	pin := AudioInputPinMorph new setter: aSymbol; name: labelString.
-	inputsArea addMorph: pin.
-	^ pin! !
-
-!PatchableMorph methodsFor: 'building' stamp: 'len 2/Feb/2026, 8:39:58 am (UTC)'!
-addAudioOutput: aSymbol
-	^ self addAudioOutput: aSymbol label: 'Out'! !
-
-!PatchableMorph methodsFor: 'building' stamp: 'len 26/Apr/2026, 9:01:52 pm (UTC)'!
-addAudioOutput: aSymbol label: labelString
-	| pin |
-	pin := AudioOutputPinMorph new setter: aSymbol; name: labelString.
-	outputsArea addMorph: pin.
-	^ pin! !
-
-!PatchableMorph methodsFor: 'building' stamp: 'len 14/May/2026, 8:58:04 am (UTC)'!
-addControlInput: aSymbol
-	| pin |
-	pin := ControlInputPinMorph new control: (model controls at: aSymbol); name: aSymbol asPlainString capitalized camelSeparatedWords.
-	inputsArea addMorph: pin.
-	^ pin! !
-
-!PatchableMorph methodsFor: 'building' stamp: 'len 26/Apr/2026, 9:19:27 pm (UTC)'!
-addControlOutput
-	| pin |
-	pin := ControlOutputPinMorph new name: 'Out'.
-	outputsArea addMorph: pin.
-	^ pin! !
 
 !PatchableMorph methodsFor: 'drawing' stamp: 'len 21/Jan/2026, 7:36:22 pm (UTC)'!
 drawOn: aCanvas
@@ -15540,14 +15363,38 @@ initialize
 	self addMorph: flap.
 	flap visible: false! !
 
-!PatchableMorph methodsFor: 'private' stamp: 'len 18/Jun/2026, 11:56:23 am (UTC)'!
-rackable
-	^ self valueOfProperty: #rackable ifAbsentPut: [self model rackable]! !
-
 !PatchableMorph methodsFor: 'private' stamp: 'len 27/Nov/2025, 11:20:00 am (UTC)'!
 uninstallDisconnectedSignals
 	inputsArea submorphsDo: [:m| m uninstallDisconnectedSignals].
 	outputsArea submorphsDo: [:m| m uninstallDisconnectedSignals]	! !
+
+!PatchableMorph methodsFor: 'private-building' stamp: 'len 28/Jun/2026, 3:15:16 pm (UTC)'!
+addAudioInput: aSymbol
+	| pin |
+	pin := AudioInputPinMorph new setter: aSymbol; name: (aSymbol = #setInput: ifTrue: ['In'] ifFalse: [aSymbol copyFrom: 9 to: aSymbol size - 1]).
+	inputsArea addMorph: pin.
+	^ pin! !
+
+!PatchableMorph methodsFor: 'private-building' stamp: 'len 28/Jun/2026, 3:15:07 pm (UTC)'!
+addAudioOutput: aSymbol
+	| pin |
+	pin := AudioOutputPinMorph new setter: aSymbol; name: (aSymbol = #setOutput: ifTrue: ['Out'] ifFalse: [aSymbol copyFrom: 10 to: aSymbol size - 1]).
+	outputsArea addMorph: pin.
+	^ pin! !
+
+!PatchableMorph methodsFor: 'private-building' stamp: 'len 14/May/2026, 8:58:04 am (UTC)'!
+addControlInput: aSymbol
+	| pin |
+	pin := ControlInputPinMorph new control: (model controls at: aSymbol); name: aSymbol asPlainString capitalized camelSeparatedWords.
+	inputsArea addMorph: pin.
+	^ pin! !
+
+!PatchableMorph methodsFor: 'private-building' stamp: 'len 26/Apr/2026, 9:19:27 pm (UTC)'!
+addControlOutput
+	| pin |
+	pin := ControlOutputPinMorph new name: 'Out'.
+	outputsArea addMorph: pin.
+	^ pin! !
 
 !MovingHelperMorph methodsFor: 'accessing' stamp: 'len 16/Nov/2025, 8:52:00 am (UTC)'!
 offset: aPoint

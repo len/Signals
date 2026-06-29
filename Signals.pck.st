@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 29 June 2026 at 3:35:43 pm'!
+'From Cuis7.9 [latest update: #8030] on 29 June 2026 at 7:17:05 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 627!
+!provides: 'Signals' 1 628!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1924,13 +1924,13 @@ Object subclass: #WAVFileReader
 WAVFileReader class
 	instanceVariableNames: ''!
 
-!classDefinition: #Bus category: #'Signals-IO'!
+!classDefinition: #Bus category: #'Signals-Kernel'!
 Object subclass: #Bus
 	instanceVariableNames: 'leftBuffer rightBuffer'
 	classVariableNames: ''
 	poolDictionaries: ''
-	category: 'Signals-IO'!
-!classDefinition: 'Bus class' category: #'Signals-IO'!
+	category: 'Signals-Kernel'!
+!classDefinition: 'Bus class' category: #'Signals-Kernel'!
 Bus class
 	instanceVariableNames: ''!
 
@@ -2342,9 +2342,11 @@ Virtual analog model of the Oberheim state variable filter. It has low-pass, hig
 See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 
 !Patch commentStamp: '<historical>' prior: 0!
-A patch is a list of modules interconnected modules. The order of the modules is important, they are executed (update+tick) in order. The patch provides a protocol to handle notes and changes in velocity, pitch, volume, panning, samples playhead position and playback speed and direction, etc.
+A patch is a list of interconnected modules. They are executed (update+tick) in sequential order.
 
-A patch also has 10 global buses for stereo audio (0 = master) that are accessed within the patch by the AudioIn and AudioOut modules (see >>buses:). There are also 10 control values (like MIDI CC), local to each patch, that are accessed by the ControlIn module (see >>#controlBus).!
+The patch provides a protocol for general instruments and effects. It can handle notes and changes in velocity, pitch, volume, panning, samples playhead position and playback speed and direction, etc.
+
+A patch also has 10 global buses for audio (0 = master) that are accessed within the patch by the AudioIn and AudioOut modules (see >>#buses:). There is also a control bus with 10 control values (like MIDI CC), local to each patch, that are accessed by the ControlIn module (see >>#controlBus).!
 
 !AllpassComb commentStamp: '<historical>' prior: 0!
 Schroeder allpass filter.!
@@ -2456,7 +2458,7 @@ Latency: This process introduces a fixed group delay of 6 samples at the base sa
 This is the Short-Time Fourtier Transform (STFT).!
 
 !Bus commentStamp: '<historical>' prior: 0!
-A bus is just the sum of a number of audio signals (mono or stereo). It is used to mix a number of audio signals in order to process them together or send them to the audio output driver.!
+A bus is just the sum of a number of audio signals (mono or stereo). It is used to mix a number of audio signals in order to process them together or send them to the audio output.!
 
 !Control methodsFor: 'accessing' stamp: 'len 8/Mar/2026, 8:21:59 am (UTC)'!
 basePosition
@@ -4111,14 +4113,14 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #port ifPresent: [:anInteger| port := anInteger]! !
 
-!AudioIn methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:00:49 pm (UTC)'!
+!AudioIn methodsFor: 'ui' stamp: 'len 29/Jun/2026, 11:48:05 am (UTC)'!
 patchable
-	| answer display |
+	| answer screen |
 	answer := PatchableMorph new model: self.
-	display := ControlPanel new gap: 0;
+	screen := ControlPanel new gap: 0;
 		addMorph: (PulldownListMorph new color: PatchMorph waveformColor; options: (0 to: 9); state: port; when: #changed: send: #port: to: self; receive: #state: from: self when: #portChanged:; setBalloonText: 'Input Bus');
 		addMorph: self scope.
-	answer body addMorph: display.
+	answer body addMorph: screen.
 	^ answer! !
 
 !AudioIn methodsFor: 'ui' stamp: 'len 19/Apr/2026, 7:47:24 am (UTC)'!
@@ -6207,16 +6209,20 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #port ifPresent: [:anInteger| port := anInteger]! !
 
-!ControlIn methodsFor: 'ui' stamp: 'len 29/Jun/2026, 7:55:49 am (UTC)'!
+!ControlIn methodsFor: 'ui' stamp: 'len 29/Jun/2026, 12:02:11 pm (UTC)'!
 patchable
 	| answer screen |
 	answer := PatchableMorph new model: self.
 	screen := ControlPanel new gap: 0;
 		addMorph: (PulldownListMorph new color: PatchMorph waveformColor3; options: (0 to: 9); state: port; when: #changed: send: #port: to: self; receive: #state: from: self when: #portChanged:; setBalloonText: 'Port');
-		addMorph: (ToggleButtonMorph new state: bipolar; when: #changed: send: #bipolar: to: self; receive: #state: from: self when: #bipolarChanged:; label: '±'; setBalloonText: 'Bipolar');
-		addMorph: (RollingMeterMorph new color: PatchMorph waveformColor3; meterBlock: [lastValue]).
+		addMorph: (RollingMeterMorph new color: PatchMorph waveformColor3; meterBlock: [lastValue]);
+		addMorph: (ToggleButtonMorph new color: PatchMorph waveformColor3; state: bipolar; when: #changed: send: #bipolar: to: self; receive: #state: from: self when: #bipolarChanged:; label: '±'; setBalloonText: 'Bipolar').
 	answer body addMorph: screen.
 	^ answer! !
+
+!ControlIn methodsFor: 'ui' stamp: 'len 29/Jun/2026, 12:05:29 pm (UTC)'!
+title
+	^ 'CC In'! !
 
 !ControlIn methodsFor: 'wiring' stamp: 'len 27/Jun/2026, 9:39:11 pm (UTC)'!
 setBus: anArray
@@ -7546,6 +7552,14 @@ value: in
 controlInputs
 	^ #(time feedback)! !
 
+!Echo methodsFor: 'ui' stamp: 'len 29/Jun/2026, 12:00:04 pm (UTC)'!
+inputs
+	^ #(setInput: setReturn:)! !
+
+!Echo methodsFor: 'ui' stamp: 'len 29/Jun/2026, 12:00:15 pm (UTC)'!
+outputs
+	^ #(setOutput: setSend:)! !
+
 !Echo methodsFor: 'ui' stamp: 'len 1/Jun/2026, 1:34:28 pm (UTC)'!
 panel
 	^​ ControlPanel new
@@ -7583,12 +7597,12 @@ rackable
 		addKnob: (controls at: #mix) label: 'Mix'.
 	^ answer! !
 
-!Echo methodsFor: 'wiring' stamp: 'len 28/Jun/2026, 2:24:18 pm (UTC)'!
-setInputReturn: aBuffer
+!Echo methodsFor: 'wiring' stamp: 'len 29/Jun/2026, 11:59:34 am (UTC)'!
+setReturn: aBuffer
 	return := aBuffer! !
 
-!Echo methodsFor: 'wiring' stamp: 'len 28/Jun/2026, 2:24:24 pm (UTC)'!
-setOutputSend: aBuffer
+!Echo methodsFor: 'wiring' stamp: 'len 29/Jun/2026, 11:59:16 am (UTC)'!
+setSend: aBuffer
 	send := aBuffer! !
 
 !Flanger methodsFor: 'controlling' stamp: 'len 27/Mar/2026, 7:49:08 am (UTC)'!
@@ -15332,17 +15346,37 @@ uninstallDisconnectedSignals
 	inputsArea submorphsDo: [:m| m uninstallDisconnectedSignals].
 	outputsArea submorphsDo: [:m| m uninstallDisconnectedSignals]	! !
 
-!PatchableMorph methodsFor: 'private-building' stamp: 'len 28/Jun/2026, 3:15:16 pm (UTC)'!
+!PatchableMorph methodsFor: 'private-building' stamp: 'len 29/Jun/2026, 11:55:39 am (UTC)'!
 addAudioInput: aSymbol
-	| pin |
-	pin := AudioInputPinMorph new setter: aSymbol; name: (aSymbol = #setInput: ifTrue: ['In'] ifFalse: [aSymbol copyFrom: 9 to: aSymbol size - 1]).
+	| pin name |
+	pin := AudioInputPinMorph new setter: aSymbol.
+	aSymbol = #setInput:
+		ifTrue: [name := 'In']
+		ifFalse:
+			[(aSymbol beginsWith: 'setInput')
+				ifTrue:
+					[name := aSymbol copyFrom: 9 to: aSymbol size - 1.
+					name = 'LM' ifTrue: [name := 'L/M']]
+				ifFalse:
+					[name := aSymbol copyFrom: 4 to: aSymbol size - 1]].
+	pin name: name.
 	inputsArea addMorph: pin.
 	^ pin! !
 
-!PatchableMorph methodsFor: 'private-building' stamp: 'len 28/Jun/2026, 3:15:07 pm (UTC)'!
+!PatchableMorph methodsFor: 'private-building' stamp: 'len 29/Jun/2026, 11:57:09 am (UTC)'!
 addAudioOutput: aSymbol
-	| pin |
-	pin := AudioOutputPinMorph new setter: aSymbol; name: (aSymbol = #setOutput: ifTrue: ['Out'] ifFalse: [aSymbol copyFrom: 10 to: aSymbol size - 1]).
+	| pin name |
+	pin := AudioOutputPinMorph new setter: aSymbol.
+	aSymbol = #setOutput:
+		ifTrue: [name := 'Out']
+		ifFalse:
+			[(aSymbol beginsWith: 'setOutput')
+				ifTrue:
+					[name := aSymbol copyFrom: 10 to: aSymbol size - 1.
+					name = 'LM' ifTrue: [name := 'L/M']]
+				ifFalse:
+					[name := aSymbol copyFrom: 4 to: aSymbol size - 1]].
+	pin name: name.
 	outputsArea addMorph: pin.
 	^ pin! !
 

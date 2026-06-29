@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 29 June 2026 at 3:35:48 pm'!
+'From Cuis7.9 [latest update: #8030] on 29 June 2026 at 7:17:10 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 80!
+!provides: 'Tracker' 1 81!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -2878,7 +2878,7 @@ readFrom: aStream
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 
-!Instrument methodsFor: 'serialization' stamp: 'len 28/Jun/2026, 7:04:33 pm (UTC)'!
+!Instrument methodsFor: 'serialization' stamp: 'len 29/Jun/2026, 11:59:05 am (UTC)'!
 readFromJson: json buffers: bufferList
 	| patchables |
 	patchables := (json at: #modules) collect: [:each|
@@ -2889,8 +2889,6 @@ readFromJson: json buffers: bufferList
 	patchables do: [:each| patchMorph addMorph: each].
 	(json at: #wires) do: [:each|
 		| output input |
-		(each at: #output) = #setSend: ifTrue: [each at: #output put: #setOutputSend:].
-		(each at: #input) = #setReturn: ifTrue: [each at: #input put: #setInputReturn:].
 		output := (patchables at: (each at: #source)) outputs detect: [:one| one selector = (each at: #output)].
 		input := (patchables at: (each at: #target)) inputs detect: [:one| one selector = (each at: #input)].
 		output addConnectionTo: input.

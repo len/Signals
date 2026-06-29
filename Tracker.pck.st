@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 29 June 2026 at 7:17:10 pm'!
+'From Cuis7.9 [latest update: #8030] on 30 June 2026 at 1:26:28 am'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 81!
+!provides: 'Tracker' 1 82!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -1274,7 +1274,7 @@ keyStroke: anEvent
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 27/Jun/2026, 11:42:56 am (UTC)'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 29/Jun/2026, 5:38:58 pm (UTC)'!
 buildMorphicWindow
 	| lowerLeftPane sequencerScroller patternEditorScroller bar transport bpmControl swingControl barFont |
 	instrumentEditor := InstrumentEditorMorph new setTracker: model.
@@ -1302,7 +1302,7 @@ buildMorphicWindow
 		receive: #baseValue: from: model when: #swingChanged:;
 		when: #changed: send: #swing: to: model.
 	bar addMorph: (TextualControlMorph new control: swingControl).
-	bar addMorph: (ToggleButtonMorph new font: barFont; state: model followPlayhead; when: #changed: send: #followPlayhead: to: model; receive: #state: from: model when: #followPlayheadChanged:; "label: '⇩';" icon: (IconMorph new pathData: 'M233.33-161.33 80-315.33l46.67-46L200-290v-470.67h66.67V-290l72.66-71.33 46.67 46-152.67 154Zm252.67-38V-266h394v66.67H486Zm0-247.34v-66.66h394v66.66H486ZM486-694v-66.67h394V-694H486Z'); setBalloonText: 'Follow playhead').
+	bar addMorph: (ToggleButtonMorph new font: barFont; state: model followPlayhead; when: #changed: send: #followPlayhead: to: model; receive: #state: from: model when: #followPlayheadChanged:; "label: '⇩';" icon: (IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M233.33-161.33 80-315.33l46.67-46L200-290v-470.67h66.67V-290l72.66-71.33 46.67 46-152.67 154Zm252.67-38V-266h394v66.67H486Zm0-247.34v-66.66h394v66.66H486ZM486-694v-66.67h394V-694H486Z'); setBalloonText: 'Follow playhead').
 	bar addMorph: (PulldownListMorph new
 		options: (0 to: 9);
 		state: model inputOctave;
@@ -1317,7 +1317,9 @@ buildMorphicWindow
 		receive: #state: from: model when: #selectedTrackTuningChanged:;
 "		receive: #options: from: Tuning when: #tuningsLibraryChanged:;"
 		setBalloonText: 'Tuning system').
-	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setInstrumentEditorMode: to: self; receive: #state: from: self when: #instrumentEditorModeChanged:; icon: (IconMorph new pathData: 'M602.67-120v-123.33h-156V-650H358v126.67H80V-840h278v123.33h244.67V-840H880v316.67H602.67V-650h-89.34v340h89.34v-126.67H880V-120H602.67Zm-456-653.33V-590v-183.33ZM669.33-370v183.33V-370Zm0-403.33V-590v-183.33Zm0 183.33h144v-183.33h-144V-590Zm0 403.33h144V-370h-144v183.33ZM146.67-590h144.66v-183.33H146.67V-590Z'); setBalloonText: 'Instrument editor mode').
+	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setInstrumentEditorMode: to: self; receive: #state: from: self when: #instrumentEditorModeChanged:; icon: (IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M602.67-120v-123.33h-156V-650H358v126.67H80V-840h278v123.33h244.67V-840H880v316.67H602.67V-650h-89.34v340h89.34v-126.67H880V-120H602.67Zm-456-653.33V-590v-183.33ZM669.33-370v183.33V-370Zm0-403.33V-590v-183.33Zm0 183.33h144v-183.33h-144V-590Zm0 403.33h144V-370h-144v183.33ZM146.67-590h144.66v-183.33H146.67V-590Z'); setBalloonText: 'Instrument editor mode').
+	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setGeneratorsMode: to: self; receive: #state: from: self when: #generatorsModeChanged:; icon: (IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M280-240v-480h80v480h-80ZM440-80v-800h80v800h-80ZM120-400v-160h80v160h-80Zm480 160v-480h80v480h-80Zm160-160v-160h80v160h-80Z'); setBalloonText: 'Generators mode').
+	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setMixerMode: to: self; receive: #state: from: self when: #mixerModeChanged:; icon: (IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M200-160v-280h-80v-80h240v80h-80v280h-80Zm0-440v-200h80v200h-80Zm160 0v-80h80v-120h80v120h80v80H360Zm80 440v-360h80v360h-80Zm240 0v-120h-80v-80h240v80h-80v120h-80Zm0-280v-360h80v360h-80Z'); setBalloonText: 'Mixer mode').
 	lowerPane := LinearLayoutMorph newRow color: Color transparent.
 	lowerLeftPane := LinearLayoutMorph newColumn color: Color transparent.
 	sequencerScroller := ScrollerMorph new vertical: true; scrollable: arranger.
@@ -1334,8 +1336,8 @@ buildMorphicWindow
 	layoutMorph addMorph: instrumentEditor proportionalHeight: 0.5.
 	adjuster := layoutMorph addAdjusterMorph submorphs first.
 	layoutMorph addMorph: lowerPane "proportionalHeight: 1.0".
-	instrumentEditor visible: false.
-	adjuster visible: false! !
+	instrumentEditor hide.
+	adjuster hide! !
 
 !TrackerWindow methodsFor: 'initialization' stamp: 'len 9/Apr/2026, 4:59:23 pm (UTC)'!
 defaultColor

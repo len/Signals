@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 29 June 2026 at 7:17:05 pm'!
+'From Cuis7.9 [latest update: #8030] on 30 June 2026 at 1:26:24 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 628!
+!provides: 'Signals' 1 629!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -5643,6 +5643,20 @@ serviceLoadSample
 		description:'load the sample to the samples library'
 		buttonLabel: 'load sample') argumentGetter: [:fileList| fileList selectedFileEntry]! !
 
+!Clip methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 4:43:44 pm (UTC)'!
+asJsonWithBuffers: aList
+	| frameBits frameBitsAsFloats |
+	frameBits := self framesAsSingleForm bits.
+	frameBitsAsFloats := Float32Array new: frameBits size.
+	frameBitsAsFloats replaceFrom: 1 to: frameBitsAsFloats size with: frameBits.
+	^ (super asJsonWithBuffers: aList)
+		at: #width put: frames first width;
+		at: #height put: frames first height;
+		at: #depth put: frames first depth;
+		at: #frameCount put: frames size;
+		at: #frameBits put: (aList indexOf: frameBitsAsFloats ifAbsent: [aList add: frameBitsAsFloats. aList size]);
+		yourself! !
+
 !Clip methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:09:40 pm (UTC)'!
 copy
 	^ super copy frames: frames! !
@@ -5659,6 +5673,18 @@ frames
 frames: anArray
 	frames := anArray! !
 
+!Clip methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 4:24:43 pm (UTC)'!
+framesAsSingleForm
+	| answer w h y |
+	w := frames first width.
+	h := frames first height.
+	answer := Form extent: frames first width @ (frames first height * frames size) depth: frames first depth.
+	y := 0.
+	frames do: [:each|
+		answer copy: (0@y corner: w@(y+h)) from: 0 @ 0 in: each rule: Form over.
+		y := y + h].
+	^ answer! !
+
 !Clip methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:15:07 pm (UTC)'!
 rackable
 	| answer |
@@ -5666,6 +5692,20 @@ rackable
 	answer body addMorph: self screen.
 	answer flap addMorph: self panel.
 	^ answer! !
+
+!Clip methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 4:44:11 pm (UTC)'!
+readFromJson: json buffers: aList
+	| w h depth frameCount framesAsSingleForm frameBits frameBitsAsFloats |
+	super readFromJson: json buffers: aList.
+	w := json at: #width.
+	h := json at: #height.
+	depth  := json at: #depth.
+	frameCount := json at: #frameCount.
+	frameBitsAsFloats := aList at: (json at: #frameBits).
+	frameBits := Bitmap new: frameBitsAsFloats size.
+	frameBits replaceFrom: 1 to: frameBits size with: frameBitsAsFloats startingAt: 1.
+	framesAsSingleForm := Form extent: w @ (h * frameCount) depth: depth bits: frameBits.
+	frames := (0 to: h*frameCount - 1 by: h) collect: [:y| framesAsSingleForm copy: (0 @ y extent: w @ h)]! !
 
 !Clip methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:08:03 pm (UTC)'!
 screen
@@ -12963,9 +13003,9 @@ model: anObject
 setTitle: aString
 	title contents: aString! !
 
-!RackableMorph methodsFor: 'alarms' stamp: 'len 20/Jun/2026, 5:35:56 pm (UTC)'!
+!RackableMorph methodsFor: 'alarms' stamp: 'len 29/Jun/2026, 12:19:33 pm (UTC)'!
 hideFlap
-	flap visible: false! !
+	flap hide! !
 
 !RackableMorph methodsFor: 'drawing' stamp: 'len 20/Jun/2026, 5:55:55 pm (UTC)'!
 drawOn: aCanvas
@@ -12988,14 +13028,14 @@ keyStroke: aKeyboardEvent
 			ifTrue: [self model inspect. aKeyboardEvent wasHandled: true. ^ self]].
 	^ super keyStroke: aKeyboardEvent! !
 
-!RackableMorph methodsFor: 'events' stamp: 'len 21/Jun/2026, 7:40:21 am (UTC)'!
+!RackableMorph methodsFor: 'events' stamp: 'len 29/Jun/2026, 12:19:48 pm (UTC)'!
 mouseEnter: anEvent
 	self removeAlarm: #hideFlap.
 	body borderColor: Color veryVeryLightGray.
 	title color: Color white.
 	flap hasSubmorphs ifTrue:
 		[flap position: 8 @ (self morphHeight - flap morphHeight - 2.0) extent: flap minimumExtent.
-		flap visible: true]! !
+		flap show]! !
 
 !RackableMorph methodsFor: 'events' stamp: 'len 20/Jun/2026, 7:31:51 pm (UTC)'!
 mouseLeave: anEvent
@@ -13015,7 +13055,7 @@ minimumExtent
 	m2 := title minimumExtent.
 	^ (m1 x max: m2 x) @ (m1 y + m2 y)! !
 
-!RackableMorph methodsFor: 'initialization' stamp: 'len 24/Jun/2026, 2:20:25 pm (UTC)'!
+!RackableMorph methodsFor: 'initialization' stamp: 'len 29/Jun/2026, 12:19:40 pm (UTC)'!
 initialize
 	super initialize.
 "	self gap: 1; color: Color transparent; borderWidth: 0."
@@ -13025,7 +13065,7 @@ initialize
 	self addMorph: body position: 0 @ title minimumExtent y.
 	flap := RoundedLinearLayoutMorph newColumn gap: 10; padding: 4 @ 8; "borderWidth: 0; borderColor: Color lightGray; color: PatchMorph panelColor" color: (Color darkGray alpha: 0.7).
 	self addMorph: flap.
-	flap visible: false! !
+	flap hide! !
 
 !PulldownListMorph methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 6:45:48 pm (UTC)'!
 color: aColor
@@ -13451,11 +13491,11 @@ font: aFont
 	font := aFont.
 	self morphExtent: self minimumExtent! !
 
-!ToggleButtonMorph methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 7:48:34 pm (UTC)'!
+!ToggleButtonMorph methodsFor: 'accessing' stamp: 'len 29/Jun/2026, 12:50:01 pm (UTC)'!
 icon: anIconMorph
 	icon ifNotNil: [icon delete].
 	icon := anIconMorph.
-	icon lock: true.
+	icon lock.
 	self addMorph: icon position: 3 @ 3.
 	self morphExtent: self minimumExtent.
 	icon morphExtent: (extent y @ extent y) - 6.
@@ -15259,10 +15299,10 @@ outputs
 setTitle: aString
 	title contents: aString! !
 
-!PatchableMorph methodsFor: 'alarms' stamp: 'len 23/Apr/2026, 1:13:35 pm (UTC)'!
+!PatchableMorph methodsFor: 'alarms' stamp: 'len 29/Jun/2026, 12:20:05 pm (UTC)'!
 hideFlapAndTitle
-	title visible: false.
-	flap visible: false! !
+	title hide.
+	flap hide! !
 
 !PatchableMorph methodsFor: 'drawing' stamp: 'len 21/Jan/2026, 7:36:22 pm (UTC)'!
 drawOn: aCanvas
@@ -15308,24 +15348,24 @@ keyStroke: aKeyboardEvent
 			ifTrue: [self model inspect. aKeyboardEvent wasHandled: true. ^ self]].
 	^ super keyStroke: aKeyboardEvent! !
 
-!PatchableMorph methodsFor: 'events' stamp: 'len 24/Apr/2026, 5:02:31 pm (UTC)'!
+!PatchableMorph methodsFor: 'events' stamp: 'len 29/Jun/2026, 12:20:32 pm (UTC)'!
 mouseEnter: anEvent
 	self comeToFront.
 	self removeAlarm: #hideFlapAndTitle.
 	body borderColor: Color veryVeryLightGray.
 	title morphPosition: body morphPosition x @ title morphHeight negated.
-	title visible: true.
+	title show.
 	flap hasSubmorphs ifTrue:
 		[flap morphPosition: body morphPosition x @ body morphHeight.
 		flap morphExtent: body morphWidth @ flap morphHeight.
-		flap visible: true]! !
+		flap show]! !
 
 !PatchableMorph methodsFor: 'events' stamp: 'len 23/Apr/2026, 1:16:35 pm (UTC)'!
 mouseLeave: anEvent
 	body borderColor: body defaultBorderColor.
 	self addAlarm: #hideFlapAndTitle after: 300 "wait 300 ms before actually hiding them"! !
 
-!PatchableMorph methodsFor: 'initialization' stamp: 'len 25/Apr/2026, 8:43:59 am (UTC)'!
+!PatchableMorph methodsFor: 'initialization' stamp: 'len 29/Jun/2026, 12:20:17 pm (UTC)'!
 initialize
 	| container |
 	super initialize.
@@ -15336,10 +15376,10 @@ initialize
 	container addMorph: inputsArea; addMorph: body; addMorph: outputsArea.
 	self addMorph: container.
 	self addMorph: (title := LabelMorph contents: '' fontSize: 12 emphasis: 1) position: 0 @ -24.
-	title color: Color white; visible: false.
+	title color: Color white; hide.
 	flap := RoundedLinearLayoutMorph newColumn gap: 10; padding: 4 @ 8; "borderWidth: 0; borderColor: Color lightGray; color: PatchMorph panelColor" color: (Color darkGray alpha: 0.8).
 	self addMorph: flap.
-	flap visible: false! !
+	flap hide! !
 
 !PatchableMorph methodsFor: 'private' stamp: 'len 27/Nov/2025, 11:20:00 am (UTC)'!
 uninstallDisconnectedSignals

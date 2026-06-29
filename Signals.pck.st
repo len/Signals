@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 28 June 2026 at 11:00:55 pm'!
+'From Cuis7.9 [latest update: #8030] on 29 June 2026 at 3:35:43 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 623!
+!provides: 'Signals' 1 627!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -996,7 +996,7 @@ OberheimSVF class
 
 !classDefinition: #Patch category: #'Signals-Kernel'!
 ActiveModel subclass: #Patch
-	instanceVariableNames: 'modules wires buffers dirty noteReceivers velocityReceivers gateReceivers samples audioOutput controlBus note noteIncrement speed speedIncrement glideTicks buses'
+	instanceVariableNames: 'modules receivers audioOutput buses controlBus note noteIncrement speed speedIncrement glideTicks'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Kernel'!
@@ -1696,7 +1696,7 @@ ConnectorMorph class
 
 !classDefinition: #PatchMorph category: #'Signals-Morphic-Patches'!
 PlacedMorph subclass: #PatchMorph
-	instanceVariableNames: 'modules'
+	instanceVariableNames: 'patch dirty'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Patches'!
@@ -2342,9 +2342,9 @@ Virtual analog model of the Oberheim state variable filter. It has low-pass, hig
 See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 
 !Patch commentStamp: '<historical>' prior: 0!
-A patch is a list of interconnected modules. It keeps track of the connections or wires, and provides a protocol to handle notes and changes in velocity, pitch, volume, panning, samples playhead position and playback speed and direction, etc.
+A patch is a list of modules interconnected modules. The order of the modules is important, they are executed (update+tick) in order. The patch provides a protocol to handle notes and changes in velocity, pitch, volume, panning, samples playhead position and playback speed and direction, etc.
 
-A patch also has 10 stereo buses for audio (0 = master) that are accessed within the patch by the AudioIn and AudioOut modules, and can be shared among different patches (see >>#buses:). There are also 10 control values (like MIDI CC), local to each patch, that are accessed by the ControlIn module (see >>#controlBus).!
+A patch also has 10 global buses for stereo audio (0 = master) that are accessed within the patch by the AudioIn and AudioOut modules (see >>buses:). There are also 10 control values (like MIDI CC), local to each patch, that are accessed by the ControlIn module (see >>#controlBus).!
 
 !AllpassComb commentStamp: '<historical>' prior: 0!
 Schroeder allpass filter.!
@@ -6207,12 +6207,12 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #port ifPresent: [:anInteger| port := anInteger]! !
 
-!ControlIn methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:18:23 pm (UTC)'!
+!ControlIn methodsFor: 'ui' stamp: 'len 29/Jun/2026, 7:55:49 am (UTC)'!
 patchable
 	| answer screen |
 	answer := PatchableMorph new model: self.
 	screen := ControlPanel new gap: 0;
-		addMorph: (PulldownListMorph new color: PatchMorph waveformColor; options: (0 to: 9); state: port; when: #changed: send: #port: to: self; receive: #state: from: self when: #portChanged:; setBalloonText: 'Port');
+		addMorph: (PulldownListMorph new color: PatchMorph waveformColor3; options: (0 to: 9); state: port; when: #changed: send: #port: to: self; receive: #state: from: self when: #portChanged:; setBalloonText: 'Port');
 		addMorph: (ToggleButtonMorph new state: bipolar; when: #changed: send: #bipolar: to: self; receive: #state: from: self when: #bipolarChanged:; label: '±'; setBalloonText: 'Bipolar');
 		addMorph: (RollingMeterMorph new color: PatchMorph waveformColor3; meterBlock: [lastValue]).
 	answer body addMorph: screen.
@@ -10501,47 +10501,12 @@ setOutputHP: aBuffer
 setOutputLP: aBuffer
 	outputLP := aBuffer! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 7:14:25 pm (UTC)'!
-allModulations
-	| answer |
-	answer := OrderedCollection new.
-	1 to: modules size do: [:source|
-		(source isKindOf: Modulator) ifTrue:
-			[source modulations associationsDo: [:each|
-				| target controlName depth |
-				target := modules detect: [:one| one controls includes: each key].
-				controlName := target controls keyAtIdentityValue: each key.
-				depth := each value.
-				answer add: {source. target. controlName. depth}]]].
-	^ answer! !
-
-!Patch methodsFor: 'accessing' stamp: 'len 28/Jun/2026, 8:23:44 am (UTC)'!
+!Patch methodsFor: 'accessing' stamp: 'len 28/Jun/2026, 6:07:24 pm (UTC)'!
 buses: anArray
+	self flag: #fixme.
+	buses == anArray ifTrue: [^ self]. "<- should remove this, should be unnecesary"
 	buses := anArray.
 	self setBuses! !
-
-!Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 7:14:36 pm (UTC)'!
-connect: sourceModule output: outputSelector to: targetModule input: inputSelector
-	| wire buffer |
-	wire := {sourceModule. outputSelector. targetModule. inputSelector}.
-	(wires includes: wire) ifTrue: [^ self].
-	buffer := buffers at: {sourceModule. outputSelector} ifAbsentPut: [Float32Array new: Module blockSize].
-	sourceModule perform: outputSelector with: buffer.
-	targetModule perform: inputSelector with: buffer.
-	wires := wires, {wire}.
-	dirty := true! !
-
-!Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 7:14:45 pm (UTC)'!
-disconnect: aModule
-	wires := wires reject: [:each| each first = aModule or: [each third = aModule]].
-	dirty := true! !
-
-!Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 7:14:50 pm (UTC)'!
-disconnect: sourceModule output: outputSelector to: targetModule input: inputSelector
-	| wire |
-	wire := {sourceModule. outputSelector. targetModule. inputSelector}.
-	wires := wires reject: [:each| each = wire].
-	dirty := true! !
 
 !Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 9:57:52 pm (UTC)'!
 enabled: aBoolean
@@ -10563,18 +10528,23 @@ meterValue
 modules
 	^ modules! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 28/Jun/2026, 8:09:34 am (UTC)'!
+!Patch methodsFor: 'accessing' stamp: 'len 28/Jun/2026, 7:35:14 pm (UTC)'!
 modules: anArray
 	modules = anArray ifTrue: [^ self].
 	modules := anArray.
-	wires := wires select: [:each| (modules includes: each first) and: [modules includes: each third]].
-	dirty := true.
-	noteReceivers := modules select: [:each| each respondsTo: #setNote:].
-	velocityReceivers := modules select: [:any| any respondsTo: #setVelocity:].
-	gateReceivers := modules select: [:any| any respondsTo: #gateOn].
-	samples := modules select: [:each| (each isMemberOf: Sample) or: [(each isMemberOf: Multisample) or: [each isMemberOf: Clip]]].
+	receivers := Dictionary new.
 	self setBuses.
 	self triggerEvent: #modulesChanged! !
+
+!Patch methodsFor: 'accessing' stamp: 'len 28/Jun/2026, 6:31:11 pm (UTC)'!
+send: aSelector
+	(receivers at: aSelector ifAbsentPut: [modules select: [:each| each respondsTo: aSelector]])
+		do: [:each| each perform: aSelector]! !
+
+!Patch methodsFor: 'accessing' stamp: 'len 28/Jun/2026, 6:30:58 pm (UTC)'!
+send: aSelector with: anObject
+	(receivers at: aSelector ifAbsentPut: [modules select: [:each| each respondsTo: aSelector]])
+		do: [:each| each perform: aSelector with: anObject]! !
 
 !Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 9:51:47 pm (UTC)'!
 speed: aNumber
@@ -10604,13 +10574,13 @@ clear
 controlBus
 	^ controlBus! !
 
-!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:32 pm (UTC)'!
+!Patch methodsFor: 'controlling' stamp: 'len 28/Jun/2026, 6:17:18 pm (UTC)'!
 gateOn
-	gateReceivers do: [:each| each gateOn]! !
+	self send: #gateOn! !
 
-!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:32 pm (UTC)'!
+!Patch methodsFor: 'controlling' stamp: 'len 28/Jun/2026, 6:17:32 pm (UTC)'!
 noteOff
-	gateReceivers do: [:each| each gateOff].
+	self send: #gateOff.
 	glideTicks := 0.
 	note := nil! !
 
@@ -10639,21 +10609,21 @@ reset
 setLevel: aNumber
 	audioOutput ifNotNil: [audioOutput setLevel: aNumber]! !
 
-!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:33 pm (UTC)'!
+!Patch methodsFor: 'controlling' stamp: 'len 28/Jun/2026, 6:18:52 pm (UTC)'!
 setNote: midiKey
-	noteReceivers do: [:each| each setNote: midiKey]! !
+	self send: #setNote: with: midiKey! !
 
-!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:33 pm (UTC)'!
+!Patch methodsFor: 'controlling' stamp: 'len 28/Jun/2026, 6:19:16 pm (UTC)'!
 setOffset: aNumber
-	samples do: [:each| each setOffset: aNumber]! !
+	self send: #setOffset: with: aNumber! !
 
 !Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:33 pm (UTC)'!
 setPan: aNumber
 	audioOutput ifNotNil: [audioOutput setPan: aNumber]! !
 
-!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:33 pm (UTC)'!
+!Patch methodsFor: 'controlling' stamp: 'len 28/Jun/2026, 6:19:46 pm (UTC)'!
 setSpeed: aNumber
-	samples do: [:each| each setSpeed: aNumber]! !
+	self send: #setSpeed: with: aNumber! !
 
 !Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 7:05:45 pm (UTC)'!
 setSpeed: targetSpeed glide: numberOfTicks
@@ -10668,22 +10638,20 @@ setSpeed: targetSpeed glide: numberOfTicks
 			speed := targetSpeed].
 	self setSpeed: speed cubed! !
 
-!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:33 pm (UTC)'!
+!Patch methodsFor: 'controlling' stamp: 'len 28/Jun/2026, 6:20:06 pm (UTC)'!
 setVelocity: aNumber
-	velocityReceivers do: [:each| each setVelocity: aNumber]! !
+	self send: #setVelocity: with: aNumber! !
 
-!Patch methodsFor: 'initialization' stamp: 'len 28/Jun/2026, 9:29:47 am (UTC)'!
+!Patch methodsFor: 'initialization' stamp: 'len 29/Jun/2026, 7:46:08 am (UTC)'!
 initialize
 	modules := #().
-	wires := #().
-	buffers := OrderedDictionary new.
-	controlBus := Float32Array new: 10. "control ports go from 0 to 9"
+	receivers := Dictionary new.
 	buses := Array new: 10. "buses go from 0 (master) to 9"
+	controlBus := Float32Array new: 10. "control ports go from 0 to 9"
 	glideTicks := 0! !
 
-!Patch methodsFor: 'processing' stamp: 'len 27/Jun/2026, 7:23:40 pm (UTC)'!
+!Patch methodsFor: 'processing' stamp: 'len 29/Jun/2026, 7:19:50 am (UTC)'!
 tick
-	self uninstallDisconnectedSignals.
 	glideTicks > 0 ifTrue:
 		[noteIncrement = 0.0 ifFalse: [note := note + noteIncrement. self setNote: note].
 		speedIncrement = 0.0 ifFalse: [speed := speed + speedIncrement. self setSpeed: speed cubed].
@@ -10703,14 +10671,6 @@ setBuses
 						[(each isMemberOf: AudioOut) ifTrue:
 							[each setBuses: buses.
 							each port = 0 ifTrue: [audioOutput := each]]]]]! !
-
-!Patch methodsFor: 'private' stamp: 'len 27/Jun/2026, 10:08:38 pm (UTC)'!
-uninstallDisconnectedSignals
-	dirty ifFalse: [^ self].
-	dirty := false.
-"	modules do: [:each|
-		each outputs do: [:outputSelector| (wires anySatisfy: [:any| any first = each and: [any second = outputSelector]]) ifFalse: [each perform: outputSelector with: nil]].
-		each inputs do: [:inputSelector| (wires anySatisfy: [:any| any third = each and: [any fourth = inputSelector]]) ifFalse: [each perform: inputSelector with: nil]]]"! !
 
 !ControlPanel methodsFor: 'building' stamp: 'len 12/Mar/2026, 10:50:50 am (UTC)'!
 addColumn
@@ -12604,6 +12564,10 @@ model
 patch
 	^ self firstOwnerSuchThat: [:m| m isKindOf: PatchMorph]! !
 
+!PinMorph methodsFor: 'accessing' stamp: 'len 28/Jun/2026, 6:33:35 pm (UTC)'!
+patchMorph
+	^ self firstOwnerSuchThat: [:m| m isKindOf: PatchMorph]! !
+
 !PinMorph methodsFor: 'accessing' stamp: 'len 5/Feb/2026, 9:05:46 am (UTC)'!
 patchableOwner
 	^ self firstOwnerSuchThat: [:m| m isKindOf: PatchableMorph]! !
@@ -12752,10 +12716,12 @@ dragLeave: event
 		aHandMorph submorphs do:
 			[:each| (each isKindOf: ConnectorMorph) ifTrue: [each beDashed]]]! !
 
-!AudioInputPinMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026, 2:09:08 pm (UTC)'!
+!AudioInputPinMorph methodsFor: 'accessing' stamp: 'len 28/Jun/2026, 7:09:05 pm (UTC)'!
 balloonText
-	level > 0.0001 ifFalse: [^ self name].
-	^ self name, ' (', level linearToDecibelsFSPrintString, ')'! !
+	^ self name
+
+"	level > 0.0001 ifFalse: [^ self name].
+	^ self name , ' (', level linearToDecibelsFSPrintString, ')'"! !
 
 !AudioInputPinMorph methodsFor: 'accessing' stamp: 'len 26/Apr/2026, 9:17:26 pm (UTC)'!
 selector
@@ -12816,7 +12782,7 @@ level: aNumber
 	connections do: [:each| each level: aNumber].
 "	wires do: [:each| each redrawNeeded]"! !
 
-!OutputPinMorph methodsFor: 'connections' stamp: 'len 18/Feb/2026, 10:30:30 am (UTC)'!
+!OutputPinMorph methodsFor: 'connections' stamp: 'len 28/Jun/2026, 6:33:53 pm (UTC)'!
 addConnectionTo: anInput
 	| wire |
 	(connections includes: anInput) ifTrue: [^ self].
@@ -12826,7 +12792,7 @@ addConnectionTo: anInput
 	self installConnectionTo: anInput.
 	wire := WireMorph new source: self; target: anInput; color: color.
 	wires := wires copyWith: wire.
-	self patch addMorph: wire! !
+	self patchMorph addMorph: wire! !
 
 !OutputPinMorph methodsFor: 'connections' stamp: 'len 17/Nov/2025, 4:57:00 pm (UTC)'!
 connectionPoint
@@ -12870,10 +12836,11 @@ initialize
 	connections := #().
 	wires := #()! !
 
-!AudioOutputPinMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026, 2:09:08 pm (UTC)'!
+!AudioOutputPinMorph methodsFor: 'accessing' stamp: 'len 28/Jun/2026, 7:09:21 pm (UTC)'!
 balloonText
-	level > 0.0001 ifFalse: [^ self name].
-	^ self name, ' (', level linearToDecibelsFSPrintString, ')'! !
+	^ self name
+"	level > 0.0001 ifFalse: [^ self name].
+	^ self name, ' (', level linearToDecibelsFSPrintString, ')'"! !
 
 !AudioOutputPinMorph methodsFor: 'accessing' stamp: 'len 12/Feb/2026, 4:39:03 pm (UTC)'!
 buffer
@@ -12893,9 +12860,9 @@ installConnectionTo: anInput
 	self model perform: setter with: buffer. "perhaps it's already set, unless this is the first connection"
 	anInput model perform: anInput setter with: buffer! !
 
-!AudioOutputPinMorph methodsFor: 'connections' stamp: 'len 19/Jun/2026, 4:10:40 pm (UTC)'!
+!AudioOutputPinMorph methodsFor: 'connections' stamp: 'len 29/Jun/2026, 7:25:14 am (UTC)'!
 uninstallConnectionTo: anInput
-	self patch ifNotNil: [:p| p recomputeNeeded]
+	self patchMorph ifNotNil: [:p| p uninstallDisconnectedSignalsNeeded]
 
 "	anInput model perform: anInput setter with: nil.
 	connections isEmpty ifTrue: [self model perform: setter with: nil]"! !
@@ -15077,6 +15044,10 @@ stepTime
 wantsSteps
 	^ true! !
 
+!PatchMorph methodsFor: 'accessing' stamp: 'len 28/Jun/2026, 7:06:53 pm (UTC)'!
+patch
+	^ patch! !
+
 !PatchMorph methodsFor: 'drawing' stamp: 'len 18/Nov/2025, 3:41:00 pm (UTC)'!
 drawOn: aCanvas
 	^ self! !
@@ -15105,18 +15076,19 @@ fullIncludesPixel: aPoint
 includesPixel: aPoint
 	^ submorphs noneSatisfy: [:m| m fullIncludesPixel: aPoint]! !
 
-!PatchMorph methodsFor: 'layout' stamp: 'len 19/Jun/2026, 4:11:03 pm (UTC)'!
-someSubmorphPositionOrExtentChanged
-	super someSubmorphPositionOrExtentChanged.
-	self submorphsDo: [:each| (each isMemberOf: WireMorph) ifTrue: [each update]].
-	self recomputeNeeded! !
+!PatchMorph methodsFor: 'initialization' stamp: 'len 29/Jun/2026, 7:27:31 am (UTC)'!
+initialize
+	super initialize.
+	patch := Patch new.
+	dirty := false! !
 
-!PatchMorph methodsFor: 'menu' stamp: 'len 18/Mar/2026, 1:29:53 pm (UTC)'!
-addControlInput
-	| port ports |
-	ports := (self modules select: [:each| each isMemberOf: ControlIn]) collect: [:each| each port].
-	port := (0 to: 9) detect: [:i| (ports includes: i) not] ifNone: [^ self].
-	self addMorph: (ControlIn new port: port) patchable position: (self valueOfProperty: #lastMenuOpeningPosition)! !
+!PatchMorph methodsFor: 'layout' stamp: 'len 29/Jun/2026, 7:33:25 am (UTC)'!
+someSubmorphPositionOrExtentChanged
+	| patchables |
+	super someSubmorphPositionOrExtentChanged.
+	submorphs do: [:each| (each isMemberOf: WireMorph) ifTrue: [each update]].
+	patchables := submorphs select: [:m| m isKindOf: PatchableMorph].
+	patch modules:​ ((patchables sort: [:a :b| a morphPosition x <= b morphPosition x]) collect: [:m| m model])! !
 
 !PatchMorph methodsFor: 'menu' stamp: 'len 8/Jan/2026, 8:28:00 am (UTC)'!
 addModuleCopying: aModule
@@ -15126,7 +15098,7 @@ addModuleCopying: aModule
 addModuleInstantiating: aClass
 	self addMorph: aClass new patchable position: (self valueOfProperty: #lastMenuOpeningPosition)! !
 
-!PatchMorph methodsFor: 'menu' stamp: 'len 28/Apr/2026, 11:03:21 am (UTC)'!
+!PatchMorph methodsFor: 'menu' stamp: 'len 28/Jun/2026, 6:43:54 pm (UTC)'!
 getMenu
 	| menu submenu |
 	self setProperty: #lastMenuOpeningPosition toValue: (self internalizeFromWorld: self activeHand morphPosition).
@@ -15139,7 +15111,7 @@ getMenu
 
 	submenu := MenuMorph new defaultTarget: self.
 	submenu
-		add: 'Control In' action: #addControlInput;
+		add: 'Control In' action: #addModuleInstantiating: argument: ControlIn;
 		add: 'Audio In' action: #addModuleInstantiating: argument: AudioIn;
 		add: 'Audio Out' action: #addModuleInstantiating: argument: AudioOut.
 	menu add: 'I/O' subMenu: submenu.
@@ -15185,20 +15157,16 @@ fitTo: aRectangle
 	self translateBy: aRectangle center - bounds center.
 	self scaleBy: ((aRectangle width / bounds width asFloat min: aRectangle height / bounds height asFloat) min: 1.0) around: aRectangle center! !
 
-!PatchMorph methodsFor: 'private' stamp: 'len 4/Jan/2026, 8:40:13 am (UTC)'!
-modules
-	| patchables answer |
-	modules ifNotNil: [:anArray| ^ anArray].
-	patchables := submorphs select: [:m| m isKindOf: PatchableMorph].
-	patchables do: [:m| m uninstallDisconnectedSignals].
-	answer := (patchables sort: [:a :b| a morphPosition x <= b morphPosition x]) collect: [:m| m model].
-	modules := answer.
-	^ answer! !
+!PatchMorph methodsFor: 'private' stamp: 'len 29/Jun/2026, 7:33:02 am (UTC)'!
+uninstallDisconnectedSignals
+	"This should run on the audio process."
+	dirty ifFalse: [^ self].
+	dirty := false.
+	submorphs do: [:m| (m isKindOf: PatchableMorph) ifTrue: [m uninstallDisconnectedSignals]]! !
 
-!PatchMorph methodsFor: 'private' stamp: 'len 19/Jun/2026, 4:37:43 pm (UTC)'!
-recomputeNeeded
-	modules := nil.
-	self triggerEvent: #recomputeNeeded! !
+!PatchMorph methodsFor: 'private' stamp: 'len 29/Jun/2026, 7:25:11 am (UTC)'!
+uninstallDisconnectedSignalsNeeded
+	dirty := true! !
 
 !PatchMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026, 1:15:55 pm (UTC)'!
 highsColor
@@ -15272,10 +15240,6 @@ model: anObject
 !PatchableMorph methodsFor: 'accessing' stamp: 'len 5/Feb/2026, 6:55:32 pm (UTC)'!
 outputs
 	^ outputsArea submorphs! !
-
-!PatchableMorph methodsFor: 'accessing' stamp: 'len 20/Nov/2025, 3:01:00 pm (UTC)'!
-patch
-	^ self firstOwnerSuchThat: [:m| m isKindOf: PatchMorph]! !
 
 !PatchableMorph methodsFor: 'accessing' stamp: 'len 21/Jan/2026, 7:41:28 pm (UTC)'!
 setTitle: aString
@@ -15494,9 +15458,9 @@ drawOn: aCanvas
 		[aCanvas moveTo: s; lineTo: t]"
 "	aCanvas strokeWidth: 1 color: color fillColor: color do: [aCanvas circleCenter: t - (0.5@0.5) radius: 2]"! !
 
-!WireMorph methodsFor: 'drawing' stamp: 'len 18/Feb/2026, 10:27:12 am (UTC)'!
+!WireMorph methodsFor: 'drawing' stamp: 'len 28/Jun/2026, 6:34:45 pm (UTC)'!
 update
-	(source patch notNil and: [target patch notNil]) ifFalse: [source removeConnectionTo: target. ^ self delete].
+	(source patchMorph notNil and: [target patchMorph notNil]) ifFalse: [source removeConnectionTo: target. ^ self delete].
 	self redrawNeeded! !
 
 !WireMorph methodsFor: 'events' stamp: 'len 17/Nov/2025, 9:21:00 am (UTC)'!

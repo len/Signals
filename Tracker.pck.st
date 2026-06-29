@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 28 June 2026 at 11:00:59 pm'!
+'From Cuis7.9 [latest update: #8030] on 29 June 2026 at 3:35:48 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 78!
+!provides: 'Tracker' 1 80!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -2251,7 +2251,7 @@ drawPatternOn: aCanvas
 					x := charWidth * 3.5 + x]].
 		y := y + lineSpacing]! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 18/Jun/2026, 5:21:27 pm (UTC)'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 29/Jun/2026, 7:31:45 am (UTC)'!
 drawTracksOn: aCanvas
 	| color textColor charWidth trackWidth x mask headerLineWidth maxTrackLabelWidth fittingTrackLabel highlightedTrackStart highlightedTrackEnd |
 	charWidth := font widthOf: $X.
@@ -2278,13 +2278,12 @@ drawTracksOn: aCanvas
 				[color := trackColor darker: 0.25.
 				textColor := Color white darker: 0.25].
 		aCanvas fillRectangle: (x @ 0 extent: trackWidth @ headerLineWidth) color: color.
-		trackLabel := i printString.
 		(tracker selectedInstrumentNumberAtTrack: i) ifNotNil: [:k|
-			trackLabel := trackLabel, '/', (k printStringBase: 16 nDigits: 2).
-			tracker instruments at: k ifPresent: [:anInstrument| anInstrument label ifNotNil: [:aString| trackLabel := trackLabel, ' ', aString]]].
-		fittingTrackLabel := trackLabel.
-		[(labelFont widthOfString: fittingTrackLabel) > maxTrackLabelWidth] whileTrue: [trackLabel := trackLabel allButLast. fittingTrackLabel := trackLabel, '…'].
-		aCanvas drawString: fittingTrackLabel at: x @ 8 font: labelFont color: textColor.
+			trackLabel := k printStringBase: 16 nDigits: 2.
+			tracker instruments at: k ifPresent: [:anInstrument| anInstrument label ifNotNil: [:aString| trackLabel := trackLabel, ' ', aString]].
+			fittingTrackLabel := trackLabel.
+			[(labelFont widthOfString: fittingTrackLabel) > maxTrackLabelWidth] whileTrue: [trackLabel := trackLabel allButLast. fittingTrackLabel := trackLabel, '…'].
+			aCanvas drawString: fittingTrackLabel at: x @ 8 font: labelFont color: textColor].
 		x := x + trackWidth.
 		track muted ifTrue: [aCanvas drawString: 'M' at: x - (labelMonoFont widthOf: $M) @ 8 font: labelMonoFont color: textColor].
 		track soloed ifTrue: [aCanvas drawString: 'S' at: x - (labelMonoFont widthOfString: 'SM') - 1 @ 8 font: labelMonoFont color: textColor].
@@ -2320,11 +2319,15 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $a ifTrue: [self selectAll. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 26/Jun/2026, 9:47:23 pm (UTC)'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 29/Jun/2026, 7:43:27 am (UTC)'!
 handleInputKey: anEvent
 	| c i |
 	(tracker followPlayhead and: [tracker isPlaying]) ifTrue: [^ false]. "avoid input if following playhead"
-	anEvent isBackspace ifTrue: [self deleteSelection. ^ true].
+	anEvent isBackspace ifTrue:
+		[selectionLineStart isNil
+			ifTrue: [tracker selectedTriggerAt: cursorPosition put: nil. self redrawNeeded]
+			ifFalse: [self deleteSelection].
+		^ true].
 	anEvent keyCharacter = $] ifTrue: [self selectedTriggersDo: [:each| each transposeBy: (tracker selectedTrack tuning size)]. self redrawNeeded. ^ true].
 	anEvent keyCharacter = $[ ifTrue: [self selectedTriggersDo: [:each| each transposeBy: (tracker selectedTrack tuning size negated)]. self redrawNeeded. ^ true].
 	anEvent keyCharacter = $} ifTrue: [self selectedTriggersDo: [:each| each transposeBy: 1]. self redrawNeeded. ^ true].
@@ -2718,10 +2721,11 @@ patch
 patchMorph
 	^ patchMorph! !
 
-!Instrument methodsFor: 'accessing' stamp: 'len 17/Feb/2026, 12:28:32 pm (UTC)'!
+!Instrument methodsFor: 'accessing' stamp: 'len 29/Jun/2026, 7:53:22 am (UTC)'!
 setOwnerTrack: aTrack
 	track ifNotNil: [track forgetInstrument].
-	track := aTrack! !
+	track := aTrack.
+	track ifNotNil: [patch buses: track tracker buses; enabled: track enabled]! !
 
 !Instrument methodsFor: 'accessing' stamp: 'len 3/Jan/2026, 8:40:08 am (UTC)'!
 track
@@ -2733,11 +2737,10 @@ copy
 	buffers := OrderedCollection new.
 	^ self class new readFromJson: (self asJsonWithBuffers: buffers) buffers: buffers! !
 
-!Instrument methodsFor: 'initialization' stamp: 'len 27/Jun/2026, 10:03:46 pm (UTC)'!
+!Instrument methodsFor: 'initialization' stamp: 'len 28/Jun/2026, 7:05:01 pm (UTC)'!
 initialize
 	patchMorph := PatchMorph new.
-	patchMorph when: #recomputeNeeded send: #recomputeModules to: self.
-	patch := Patch new! !
+	patch := patchMorph patch! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 27/Jun/2026, 9:37:04 pm (UTC)'!
 handleCut: anInteger
@@ -2830,10 +2833,10 @@ reset
 scheduleTrigger: aTrigger
 	trigger := aTrigger! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 28/Jun/2026, 3:28:22 pm (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 29/Jun/2026, 7:51:25 am (UTC)'!
 tick
-	self flag: #fixme. "dont need to set buses or enabled on each tick!!"
-	patch buses: track tracker buses; enabled: track enabled; clear.
+	patchMorph uninstallDisconnectedSignals.
+	patch enabled: track enabled; clear.
 	trigger ifNotNil: [self playTrigger].
 	patch tick! !
 
@@ -2875,7 +2878,7 @@ readFrom: aStream
 	json := Json readFrom: aStream.
 	^ self readFromJson: json buffers: bufferList! !
 
-!Instrument methodsFor: 'serialization' stamp: 'len 28/Jun/2026, 3:07:40 pm (UTC)'!
+!Instrument methodsFor: 'serialization' stamp: 'len 28/Jun/2026, 7:04:33 pm (UTC)'!
 readFromJson: json buffers: bufferList
 	| patchables |
 	patchables := (json at: #modules) collect: [:each|
@@ -2893,8 +2896,7 @@ readFromJson: json buffers: bufferList
 		output addConnectionTo: input.
 		each at: #depth ifPresent: [:depth| output model modulations at: input control put: depth]].
 	patchMorph redrawNeeded.
-	label := json at: #label.
-	self recomputeModules! !
+	label := json at: #label! !
 
 !Instrument methodsFor: 'serialization' stamp: 'len 5/Feb/2026, 10:57:19 am (UTC)'!
 writeOn: aStream
@@ -2904,10 +2906,6 @@ writeOn: aStream
 	aStream nextInt32Put: bufferList size bigEndian: true.
 	bufferList do: [:each| each writeOn: aStream].
 	json jsonWriteOn: aStream! !
-
-!Instrument methodsFor: 'private' stamp: 'len 27/Jun/2026, 10:04:22 pm (UTC)'!
-recomputeModules
-	patch modules: (((patchMorph submorphs select: [:m| m isKindOf: PatchableMorph]) sort: [:a :b| a morphPosition x <= b morphPosition x]) collect: [:each| each model])! !
 
 !Pattern methodsFor: 'accessing' stamp: 'len 18/Dec/2025, 9:32:38 am (UTC)'!
 length

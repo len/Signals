@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 30 June 2026 at 1:26:28 am'!
+'From Cuis7.9 [latest update: #8030] on 30 June 2026 at 2:33:40 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 82!
+!provides: 'Tracker' 1 83!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -575,9 +575,9 @@ initialize
 bpm
 	^ bpm! !
 
-!Tracker methodsFor: 'accessing' stamp: 'len 22/Jun/2026, 11:28:20 am (UTC)'!
-bpm: anInteger
-	bpm := anInteger.
+!Tracker methodsFor: 'accessing' stamp: 'len 29/Jun/2026, 7:08:05 pm (UTC)'!
+bpm: aNumber
+	bpm := aNumber.
 	self triggerEvent: #bpmChanged: with: bpm! !
 
 !Tracker methodsFor: 'accessing' stamp: 'len 5/Mar/2026, 8:36:52 am (UTC)'!
@@ -1274,7 +1274,7 @@ keyStroke: anEvent
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 29/Jun/2026, 5:38:58 pm (UTC)'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 29/Jun/2026, 9:35:00 pm (UTC)'!
 buildMorphicWindow
 	| lowerLeftPane sequencerScroller patternEditorScroller bar transport bpmControl swingControl barFont |
 	instrumentEditor := InstrumentEditorMorph new setTracker: model.
@@ -1287,7 +1287,7 @@ buildMorphicWindow
 	bar := ControlPanel newRow gap: 24; axisEdgeWeight: 0.0; color: Color darkGray.
 	transport := TransportStatusMorph new setTracker: model.
 	bar addMorph: transport.
-	(bpmControl := Control min: 10.0 max: 360.0 value: 120.0)
+	(bpmControl := Control min: 10.0 max: 999.0 curve: #log value: 120.0)
 		label: 'Beats per minute';
 		printer: [:x| (x printStringFractionDigits: 1), ' BPM'];
 		fineStep: 0.1 / 255.0;
@@ -1318,8 +1318,9 @@ buildMorphicWindow
 "		receive: #options: from: Tuning when: #tuningsLibraryChanged:;"
 		setBalloonText: 'Tuning system').
 	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setInstrumentEditorMode: to: self; receive: #state: from: self when: #instrumentEditorModeChanged:; icon: (IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M602.67-120v-123.33h-156V-650H358v126.67H80V-840h278v123.33h244.67V-840H880v316.67H602.67V-650h-89.34v340h89.34v-126.67H880V-120H602.67Zm-456-653.33V-590v-183.33ZM669.33-370v183.33V-370Zm0-403.33V-590v-183.33Zm0 183.33h144v-183.33h-144V-590Zm0 403.33h144V-370h-144v183.33ZM146.67-590h144.66v-183.33H146.67V-590Z'); setBalloonText: 'Instrument editor mode').
-	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setGeneratorsMode: to: self; receive: #state: from: self when: #generatorsModeChanged:; icon: (IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M280-240v-480h80v480h-80ZM440-80v-800h80v800h-80ZM120-400v-160h80v160h-80Zm480 160v-480h80v480h-80Zm160-160v-160h80v160h-80Z'); setBalloonText: 'Generators mode').
-	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setMixerMode: to: self; receive: #state: from: self when: #mixerModeChanged:; icon: (IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M200-160v-280h-80v-80h240v80h-80v280h-80Zm0-440v-200h80v200h-80Zm160 0v-80h80v-120h80v120h80v80H360Zm80 440v-360h80v360h-80Zm240 0v-120h-80v-80h240v80h-80v120h-80Zm0-280v-360h80v360h-80Z'); setBalloonText: 'Mixer mode').
+	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setGeneratorsMode: to: self; receive: #state: from: self when: #generatorsModeChanged:; icon: self class lineStartSquareIcon; setBalloonText: 'All generators').
+	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setMixerMode: to: self; receive: #state: from: self when: #mixerModeChanged:; icon: self class lineEndSquareIcon; setBalloonText: 'All outputs').
+	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setVisualizationsMode: to: self; receive: #state: from: self when: #visualizationsModeChanged:; icon: self class waveIcon2; setBalloonText: 'All visualizations').
 	lowerPane := LinearLayoutMorph newRow color: Color transparent.
 	lowerLeftPane := LinearLayoutMorph newColumn color: Color transparent.
 	sequencerScroller := ScrollerMorph new vertical: true; scrollable: arranger.
@@ -1356,6 +1357,58 @@ ensureCursorVisible
 !TrackerWindow methodsFor: 'GUI building' stamp: 'len 18/Jun/2026, 2:37:08 pm (UTC)'!
 windowColor
 	^ Color gray! !
+
+!TrackerWindow class methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 7:50:27 pm (UTC)'!
+filmIcon
+	^ IconMorph new pathData: 'M2 3.9934C2 3.44476 2.45531 3 2.9918 3H21.0082C21.556 3 22 3.44495 22 3.9934V20.0066C22 20.5552 21.5447 21 21.0082 21H2.9918C2.44405 21 2 20.5551 2 20.0066V3.9934ZM8 5V19H16V5H8ZM4 5V7H6V5H4ZM18 5V7H20V5H18ZM4 9V11H6V9H4ZM18 9V11H20V9H18ZM4 13V15H6V13H4ZM18 13V15H20V13H18ZM4 17V19H6V17H4ZM18 17V19H20V17H18Z'! !
+
+!TrackerWindow class methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 9:28:23 pm (UTC)'!
+instrumentEditorIcon
+	^ IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M602.67-120v-123.33h-156V-650H358v126.67H80V-840h278v123.33h244.67V-840H880v316.67H602.67V-650h-89.34v340h89.34v-126.67H880V-120H602.67Zm-456-653.33V-590v-183.33ZM669.33-370v183.33V-370Zm0-403.33V-590v-183.33Zm0 183.33h144v-183.33h-144V-590Zm0 403.33h144V-370h-144v183.33ZM146.67-590h144.66v-183.33H146.67V-590Z'! !
+
+!TrackerWindow class methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 7:19:52 pm (UTC)'!
+lineEndSquareIcon
+	^ IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M520-340h280v-280H520v280Zm-80 80v-180H80v-80h360v-180h440v440H440Zm220-220Z'! !
+
+!TrackerWindow class methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 7:19:43 pm (UTC)'!
+lineStartSquareIcon
+	^ IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M160-340h280v-280H160v280Zm360 80H80v-440h440v180h360v80H520v180ZM300-480Z'! !
+
+!TrackerWindow class methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 9:31:02 pm (UTC)'!
+mixerIcon
+	^ IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M200-160v-280h-80v-80h240v80h-80v280h-80Zm0-440v-200h80v200h-80Zm160 0v-80h80v-120h80v120h80v80H360Zm80 440v-360h80v360h-80Zm240 0v-120h-80v-80h240v80h-80v120h-80Zm0-280v-360h80v360h-80Z'! !
+
+!TrackerWindow class methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 7:47:51 pm (UTC)'!
+movieIcon
+	^ IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'm160-800 80 160h120l-80-160h80l80 160h120l-80-160h80l80 160h120l-80-160h120q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800Zm0 240v320h640v-320H160Zm0 0v320-320Z'! !
+
+!TrackerWindow class methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 7:36:37 pm (UTC)'!
+repeatIcon
+	^ IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M280-80 120-240l160-160 56 58-62 62h406v-160h80v240H274l62 62-56 58Zm-80-440v-240h486l-62-62 56-58 160 160-160 160-56-58 62-62H280v160h-80Z'! !
+
+!TrackerWindow class methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 9:29:56 pm (UTC)'!
+soundIcon
+	^ IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M280-240v-480h80v480h-80ZM440-80v-800h80v800h-80ZM120-400v-160h80v160h-80Zm480 160v-480h80v480h-80Zm160-160v-160h80v160h-80Z'! !
+
+!TrackerWindow class methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 7:51:32 pm (UTC)'!
+tapeIcon
+	^ IconMorph new pathData: 'M10.8293 13H13.1707C13.0602 12.6872 13 12.3506 13 12C13 10.3431 14.3431 9 16 9C17.6569 9 19 10.3431 19 12C19 13.6569 17.6569 15 16 15H8C6.34315 15 5 13.6569 5 12C5 10.3431 6.34315 9 8 9C9.65685 9 11 10.3431 11 12C11 12.3506 10.9398 12.6872 10.8293 13ZM4 5V19H20V5H4ZM3 3H21C21.5523 3 22 3.44772 22 4V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V4C2 3.44772 2.44772 3 3 3ZM8 13C8.55228 13 9 12.5523 9 12C9 11.4477 8.55228 11 8 11C7.44772 11 7 11.4477 7 12C7 12.5523 7.44772 13 8 13ZM16 13C16.5523 13 17 12.5523 17 12C17 11.4477 16.5523 11 16 11C15.4477 11 15 11.4477 15 12C15 12.5523 15.4477 13 16 13Z'! !
+
+!TrackerWindow class methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 7:44:42 pm (UTC)'!
+tvIcon
+	^ IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M160-120v-80q-33 0-56.5-23.5T80-280v-440q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v440q0 33-23.5 56.5T800-200v80h-40l-26-80H227l-27 80h-40Zm0-160h640v-440H160v440Zm320-220Z'! !
+
+!TrackerWindow class methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 7:45:27 pm (UTC)'!
+tvIcon2
+	^ IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M320-120v-80H160q-33 0-56.5-23.5T80-280v-480q0-33 23.5-56.5T160-840h640q33 0 56.5 23.5T880-760v480q0 33-23.5 56.5T800-200H640v80H320ZM160-280h640v-480H160v480Zm0 0v-480 480Z'! !
+
+!TrackerWindow class methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 7:23:43 pm (UTC)'!
+waveIcon1
+	^ IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M480-80 360-642l-88 402H80v-80h128l113-520h79l122 572 78-332h80l72 280h128v80H690l-48-188-82 348h-80Z'! !
+
+!TrackerWindow class methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 7:26:42 pm (UTC)'!
+waveIcon2
+	^ IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M326-171q-15-11-22-28l-92-241H40v-80h228l92 244 184-485q7-17 22-28t34-11q19 0 34 11t22 28l92 241h172v80H692l-92-244-184 485q-7 17-22 28t-34 11q-19 0-34-11Z'! !
 
 !InstrumentRackMorph methodsFor: 'actions' stamp: 'len 20/Jun/2026, 8:31:27 pm (UTC)'!
 duplicateInstrument
@@ -2085,17 +2138,19 @@ playSelection
 	selectionLineStart ifNil: [tracker playFrom: cursorPattern line: cursorLine to: cursorPattern line: cursorLine tracks: {cursorTrack}. ^ self].
 	tracker playFrom: cursorPattern line: (selectionLineStart min: cursorLine) to: cursorPattern line: (selectionLineStart max: cursorLine) tracks: ((selectionTrackStart min: cursorTrack) to: (selectionTrackStart max: cursorTrack))! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 27/Jun/2026, 8:00:24 am (UTC)'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 29/Jun/2026, 9:00:16 pm (UTC)'!
 selectAll
+	self selectedLines size = tracker selectedPattern length ifFalse: "extend selection to all lines of the pattern"
+		[selectionTrackStart ifNil: [selectionTrackStart := tracker cursorTrack].
+		selectionLineStart := 1.
+		tracker moveCursorLineBottom.
+		^ self redrawNeeded].
 	self selectedTracks size = tracker tracks size ifFalse: "extend selection to all tracks"
 		[selectionLineStart ifNil: [selectionLineStart := tracker cursorLine].
 		selectionTrackStart := 1.
 		tracker setCursorTrack: tracker tracks size.
 		^ self redrawNeeded].
-	self selectedLines size = tracker selectedPattern length ifFalse: "extend selection to all the pattern"
-		[selectionLineStart := 1.
-		tracker moveCursorLineBottom.
-		^ self redrawNeeded]! !
+! !
 
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 26/Jun/2026, 9:42:28 pm (UTC)'!
 selectedTriggersDo: aBlock
@@ -2772,7 +2827,7 @@ handleFX: anInteger
 	"Global commands:"
 	command = 70 "F (set bpm)" ifTrue: [track tracker bpm: (v max: 1). ^ self]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 27/Jun/2026, 9:53:41 pm (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 29/Jun/2026, 9:13:00 pm (UTC)'!
 handlePostNoteFX: anInteger
 	"Note: pitch slide effects must be handled *after* the note on, otherwise the slide gets overridden."
 	| command v |
@@ -2780,8 +2835,8 @@ handlePostNoteFX: anInteger
 	v := anInteger bitAnd: 16rFF.
 	command = 85 "U (slide pitch up)" ifTrue: [patch adjustNoteBy: v / 16.0 glide:  track tracker tpl. ^ self].
 	command = 68 "D (slide pitch down)" ifTrue: [patch adjustNoteBy: v / -16.0 glide:  track tracker tpl. ^ self].
-	command = 60 "< (speed backwards)" ifTrue: [patch setSpeed: ((v bitShift: -4) / -8.0 nthRoot: 3) glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
-	command = 62 "> (speed forward)" ifTrue: [patch setSpeed: ((v bitShift: -4) / 8.0 nthRoot: 3) glide: (v bitAnd: 16rF) * track tracker tpl. ^ self]! !
+	command = 60 "< (speed backwards)" ifTrue: [patch setSpeed: (v bitShift: -4) / -8.0 glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
+	command = 62 "> (speed forward)" ifTrue: [patch setSpeed: (v bitShift: -4) / 8.0 glide: (v bitAnd: 16rF) * track tracker tpl. ^ self]! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 25/Jun/2026, 11:43:17 am (UTC)'!
 handleRetrigger: anInteger

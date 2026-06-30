@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 30 June 2026 at 1:26:24 am'!
+'From Cuis7.9 [latest update: #8030] on 30 June 2026 at 2:33:43 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 629!
+!provides: 'Signals' 1 630!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -2064,6 +2064,9 @@ A multisample is the basis of a rompler (from "ROM" and "sampler"). It generates
 
 !Sample commentStamp: 'len 9/Apr/2026 23:16:22' prior: 0!
 A sample is a recorded signal. It has a buffer of recorded samples, a playback rate, and optional loop points. Samples can be played at different rates to produce different pitches.!
+
+!Clip commentStamp: '<historical>' prior: 0!
+Clips are just samples with video. In addition to the buffer of samples, they contain a list of video frames.!
 
 !Wavetable commentStamp: '<historical>' prior: 0!
 Antialiased wavetable oscillator using spectral resynthesis.
@@ -6249,14 +6252,14 @@ settings: aDictionary
 	super settings: aDictionary.
 	aDictionary at: #port ifPresent: [:anInteger| port := anInteger]! !
 
-!ControlIn methodsFor: 'ui' stamp: 'len 29/Jun/2026, 12:02:11 pm (UTC)'!
+!ControlIn methodsFor: 'ui' stamp: 'len 29/Jun/2026, 6:53:34 pm (UTC)'!
 patchable
 	| answer screen |
 	answer := PatchableMorph new model: self.
 	screen := ControlPanel new gap: 0;
-		addMorph: (PulldownListMorph new color: PatchMorph waveformColor3; options: (0 to: 9); state: port; when: #changed: send: #port: to: self; receive: #state: from: self when: #portChanged:; setBalloonText: 'Port');
-		addMorph: (RollingMeterMorph new color: PatchMorph waveformColor3; meterBlock: [lastValue]);
-		addMorph: (ToggleButtonMorph new color: PatchMorph waveformColor3; state: bipolar; when: #changed: send: #bipolar: to: self; receive: #state: from: self when: #bipolarChanged:; label: '±'; setBalloonText: 'Bipolar').
+		addMorph: (PulldownListMorph new color: PatchMorph controlWaveformColor; options: (0 to: 9); state: port; when: #changed: send: #port: to: self; receive: #state: from: self when: #portChanged:; setBalloonText: 'Port');
+		addMorph: (RollingMeterMorph new color: PatchMorph controlWaveformColor; meterBlock: [lastValue]);
+		addMorph: (ToggleButtonMorph new color: PatchMorph controlWaveformColor; state: bipolar; when: #changed: send: #bipolar: to: self; receive: #state: from: self when: #bipolarChanged:; label: '±'; setBalloonText: 'Bipolar').
 	answer body addMorph: screen.
 	^ answer! !
 
@@ -7274,11 +7277,11 @@ tick
 panel
 	^ ControlPanel new addSmallKnob: (controls at: #amount)! !
 
-!VelocityTracker methodsFor: 'ui' stamp: 'len 28/Jun/2026, 2:19:56 pm (UTC)'!
+!VelocityTracker methodsFor: 'ui' stamp: 'len 29/Jun/2026, 6:53:34 pm (UTC)'!
 patchable
 	| answer screen |
 	answer := PatchableMorph new model: self.
-	screen := RollingMeterMorph new color: PatchMorph waveformColor3; meterBlock: [velocity].
+	screen := RollingMeterMorph new color: PatchMorph controlWaveformColor; meterBlock: [velocity].
 	answer body beRow addMorph: screen; addMorph: self panel.
 	^ answer! !
 
@@ -10642,7 +10645,7 @@ noteOff
 noteOn: midiKey
 	self noteOn: midiKey glide: 0! !
 
-!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 7:05:13 pm (UTC)'!
+!Patch methodsFor: 'controlling' stamp: 'len 29/Jun/2026, 9:13:20 pm (UTC)'!
 noteOn: targetNote glide: numberOfTicks
 	(numberOfTicks > 0 and: [note notNil])
 		ifTrue:
@@ -10653,7 +10656,7 @@ noteOn: targetNote glide: numberOfTicks
 			[glideTicks := 0.
 			noteIncrement := 0.0.
 			note := targetNote].
-	self setNote: note; setSpeed: speed cubed; gateOn! !
+	self setNote: note; setSpeed: speed squared * speed sign; gateOn! !
 
 !Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:58:43 pm (UTC)'!
 reset
@@ -10679,18 +10682,18 @@ setPan: aNumber
 setSpeed: aNumber
 	self send: #setSpeed: with: aNumber! !
 
-!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 7:05:45 pm (UTC)'!
+!Patch methodsFor: 'controlling' stamp: 'len 29/Jun/2026, 9:12:16 pm (UTC)'!
 setSpeed: targetSpeed glide: numberOfTicks
 	(numberOfTicks > 0 and: [speed notNil])
 		ifTrue:
 			[glideTicks := numberOfTicks truncated.
-			speedIncrement := targetSpeed - speed / glideTicks asFloat.
+			speedIncrement := targetSpeed abs sqrt * targetSpeed sign - speed / glideTicks asFloat.
 			speed := speed + speedIncrement]
 		ifFalse:
 			[glideTicks := 0.
 			speedIncrement := 0.0.
-			speed := targetSpeed].
-	self setSpeed: speed cubed! !
+			speed := targetSpeed abs sqrt * targetSpeed sign].
+	self setSpeed: speed squared * speed sign! !
 
 !Patch methodsFor: 'controlling' stamp: 'len 28/Jun/2026, 6:20:06 pm (UTC)'!
 setVelocity: aNumber
@@ -10704,11 +10707,11 @@ initialize
 	controlBus := Float32Array new: 10. "control ports go from 0 to 9"
 	glideTicks := 0! !
 
-!Patch methodsFor: 'processing' stamp: 'len 29/Jun/2026, 7:19:50 am (UTC)'!
+!Patch methodsFor: 'processing' stamp: 'len 29/Jun/2026, 9:13:47 pm (UTC)'!
 tick
 	glideTicks > 0 ifTrue:
 		[noteIncrement = 0.0 ifFalse: [note := note + noteIncrement. self setNote: note].
-		speedIncrement = 0.0 ifFalse: [speed := speed + speedIncrement. self setSpeed: speed cubed].
+		speedIncrement = 0.0 ifFalse: [speed := speed + speedIncrement. self setSpeed: speed squared * speed sign].
 		glideTicks := glideTicks - 1].
 	modules do: [:each| each update; tick]! !
 
@@ -11532,10 +11535,10 @@ bipolar: aBoolean
 defaultExtent
 	^`128 @ 64`! !
 
-!StripChartControlMorph methodsFor: 'initialization' stamp: 'len 12/May/2026, 7:59:43 am (UTC)'!
+!StripChartControlMorph methodsFor: 'initialization' stamp: 'len 29/Jun/2026, 6:53:34 pm (UTC)'!
 initialize
 	super initialize.
-	color := PatchMorph waveformColor3.
+	color := PatchMorph controlWaveformColor.
 	buffer := Float32Array new: 64.
 	writePosition := 1.
 	readPosition := 0.
@@ -11956,7 +11959,7 @@ addGainReduction: aNumber
 defaultExtent
 	^`128 @ 64`! !
 
-!DynamicsActivityMorph methodsFor: 'as yet unclassified' stamp: 'len 25/May/2026, 4:10:19 pm (UTC)'!
+!DynamicsActivityMorph methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 6:54:36 pm (UTC)'!
 drawOn: aCanvas
 	| step x y h offset slack |
 	slack := 5.
@@ -11973,7 +11976,7 @@ drawOn: aCanvas
 		aCanvas lineTo: x @ h; closePath].
 	x := 1.0.
 	y := 1.0 - (gainReductionBuffer at: offset) * h.
-	aCanvas strokeWidth: 1.5 color: PatchMorph waveformColor3 do:
+	aCanvas strokeWidth: 1.5 color: PatchMorph controlWaveformColor do:
 		[aCanvas moveTo: x @ y.
 		1 to: gainReductionBuffer size - slack do: [:i|
 			x := x + step.
@@ -11984,7 +11987,7 @@ drawOn: aCanvas
 		[aCanvas moveTo: 1.0 @ y; lineTo: self morphWidth - 1.0 @ y].
 	control2 ifNil: [^ self].
 	y := 1.0 - control2 modulatedPosition * h.
-	aCanvas strokeWidth: 1.5 color: PatchMorph waveformColor4 dashedStrokeBits: 2r11110000 do:
+	aCanvas strokeWidth: 1.5 color: PatchMorph controlWaveformColor2 dashedStrokeBits: 2r11110000 do:
 		[aCanvas moveTo: 1.0 @ y; lineTo: self morphWidth - 1.0 @ y].
 ! !
 
@@ -12358,10 +12361,10 @@ color: aColor
 defaultExtent
 	^`128 @ 64`! !
 
-!StripChartXYControlMorph methodsFor: 'initialization' stamp: 'len 12/May/2026, 8:03:29 am (UTC)'!
+!StripChartXYControlMorph methodsFor: 'initialization' stamp: 'len 29/Jun/2026, 6:53:34 pm (UTC)'!
 initialize
 	super initialize.
-	color := PatchMorph waveformColor3.
+	color := PatchMorph controlWaveformColor.
 	buffer := Float32Array new: 64.
 	writePosition := 1.
 	readPosition := 0.
@@ -12567,10 +12570,10 @@ waveAt: t
 defaultExtent
 	^ `128 @ 64`! !
 
-!LFOControlMorphOld methodsFor: 'initialization' stamp: 'len 11/Feb/2026, 3:59:37 pm (UTC)'!
+!LFOControlMorphOld methodsFor: 'initialization' stamp: 'len 29/Jun/2026, 6:53:34 pm (UTC)'!
 initialize
 	super initialize.
-	color := PatchMorph waveformColor3.
+	color := PatchMorph controlWaveformColor.
 	currentPhase := 0.0.
 	self lfo: LFO new! !
 
@@ -13879,7 +13882,7 @@ moveUp
 	lfo shape: (options atPin: (options indexOf: lfo shape ifAbsent: [^ self]) - 1).
 	self redrawNeeded! !
 
-!LFOShapeMorph methodsFor: 'drawing' stamp: 'len 22/Jun/2026, 9:15:43 pm (UTC)'!
+!LFOShapeMorph methodsFor: 'drawing' stamp: 'len 29/Jun/2026, 6:53:34 pm (UTC)'!
 drawOn: aCanvas
 	| step stepX t₀ t x y h steps |
 	steps := 64.
@@ -13909,7 +13912,7 @@ drawOn: aCanvas
 	t := lfo phase.
 	y := 1.0 - (self waveAt: t) * h + 3.0.
 	x := 4.0 + (t - t₀ \\ 1.0 * stepX * steps).
-	aCanvas line: x @ y to: x @ y width: 6.0 color: PatchMorph waveformColor3! !
+	aCanvas line: x @ y to: x @ y width: 6.0 color: PatchMorph controlWaveformColor! !
 
 !LFOShapeMorph methodsFor: 'drawing' stamp: 'len 22/Jun/2026, 9:05:25 pm (UTC)'!
 requiresVectorCanvas
@@ -14452,10 +14455,10 @@ color: aColor
 defaultExtent
 	^`128 @ 64`! !
 
-!StripChartMorph methodsFor: 'initialization' stamp: 'len 12/May/2026, 7:50:18 am (UTC)'!
+!StripChartMorph methodsFor: 'initialization' stamp: 'len 29/Jun/2026, 6:53:34 pm (UTC)'!
 initialize
 	super initialize.
-	color := PatchMorph waveformColor3.
+	color := PatchMorph controlWaveformColor.
 	buffer := Float32Array new: 64.
 	writePosition := 1.
 	readPosition := 0.
@@ -14530,10 +14533,10 @@ attack: aControl
 defaultExtent
 	^ 96 @ 64! !
 
-!EGControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026, 7:51:27 am (UTC)'!
+!EGControlMorph methodsFor: 'initialization' stamp: 'len 29/Jun/2026, 6:53:34 pm (UTC)'!
 initialize
 	super initialize.
-	color := PatchMorph waveformColor3! !
+	color := PatchMorph controlWaveformColor! !
 
 !EGControlMorph methodsFor: 'events' stamp: 'len 29/Jan/2026, 12:08:46 pm (UTC)'!
 coarseStep
@@ -15222,6 +15225,14 @@ uninstallDisconnectedSignals
 uninstallDisconnectedSignalsNeeded
 	dirty := true! !
 
+!PatchMorph class methodsFor: 'colors' stamp: 'len 29/Jun/2026, 6:53:34 pm (UTC)'!
+controlWaveformColor
+	^ `Color okl: 0.8 c: 0.2 h: 80.0`! !
+
+!PatchMorph class methodsFor: 'colors' stamp: 'len 29/Jun/2026, 6:54:36 pm (UTC)'!
+controlWaveformColor2
+	^ `Color okl: 0.8 c: 0.2 h: 160.0`! !
+
 !PatchMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026, 1:15:55 pm (UTC)'!
 highsColor
 	^ `Color okl: 0.65 c: 0.35 h: 250.0`! !
@@ -15246,14 +15257,6 @@ waveformColor
 !PatchMorph class methodsFor: 'colors' stamp: 'len 1/Mar/2026, 12:33:04 pm (UTC)'!
 waveformColor2
 	^ `Color okl: 0.8 c: 0.2 h: 0.0`! !
-
-!PatchMorph class methodsFor: 'colors' stamp: 'len 1/Mar/2026, 12:33:07 pm (UTC)'!
-waveformColor3
-	^ `Color okl: 0.8 c: 0.2 h: 80.0`! !
-
-!PatchMorph class methodsFor: 'colors' stamp: 'len 1/Mar/2026, 12:33:11 pm (UTC)'!
-waveformColor4
-	^ `Color okl: 0.8 c: 0.2 h: 160.0`! !
 
 !PatchableMorph methodsFor: 'accessing' stamp: 'len 20/Jun/2026, 11:48:15 am (UTC)'!
 addRow

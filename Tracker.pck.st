@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 30 June 2026 at 2:33:40 pm'!
+'From Cuis7.9 [latest update: #8030] on 1 July 2026 at 3:27:29 am'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 83!
+!provides: 'Tracker' 1 84!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -99,7 +99,7 @@ TransportStatusMorph class
 
 !classDefinition: #Instrument category: #'Tracker-Kernel'!
 Object subclass: #Instrument
-	instanceVariableNames: 'label patchMorph patch track trigger'
+	instanceVariableNames: 'label patchMorph rackMorph patch track trigger'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Tracker-Kernel'!
@@ -1220,13 +1220,13 @@ saveProject
 		(self class package packageDirectory / 'data' / 'projects' // (newName, '.song')) writeStreamDo: [:s| model writeOn: s].
 		self setLabel: newName]! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 23/Jun/2026, 3:46:18 pm (UTC)'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 30/Jun/2026, 8:01:53 pm (UTC)'!
 setInstrumentEditorMode: editorMode
 	instrumentEditor visible = editorMode ifTrue: [^ self].
 	instrumentEditor visible: editorMode.
 	adjuster visible: editorMode.
 	instrumentRack visible: editorMode not.
-	editorMode ifFalse: [instrumentRack forceUpdate]. "in case the order of the modules changed"
+	editorMode ifFalse: [instrumentRack update]. "in case the order of the modules changed"
 	"why need to do this? otherwise the lower pane doesn't expand properly when going to the smaller instrument rack:"
 	lowerPane delete.
 	layoutMorph addMorph: lowerPane proportionalHeight: (editorMode ifTrue: [0.5] ifFalse: [1.0]).
@@ -1274,21 +1274,15 @@ keyStroke: anEvent
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 29/Jun/2026, 9:35:00 pm (UTC)'!
-buildMorphicWindow
-	| lowerLeftPane sequencerScroller patternEditorScroller bar transport bpmControl swingControl barFont |
-	instrumentEditor := InstrumentEditorMorph new setTracker: model.
-	instrumentRack := InstrumentRackMorph new setTracker: model.
-	meter := MultitrackMeterMorph new setTracker: model.
-	arranger := ArrangerMorph new setTracker: model.
-	patternEditor := PatternEditorMorph new setTracker: model.
-	model when: #cursorChanged send: #ensureCursorVisible to: self.
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 30/Jun/2026, 8:06:33 pm (UTC)'!
+buildBar
+	| bar transport bpmControl swingControl barFont |
 	barFont := FontFamily defaultFamilyPointSize: 16.
 	bar := ControlPanel newRow gap: 24; axisEdgeWeight: 0.0; color: Color darkGray.
 	transport := TransportStatusMorph new setTracker: model.
 	bar addMorph: transport.
 	(bpmControl := Control min: 10.0 max: 999.0 curve: #log value: 120.0)
-		label: 'Beats per minute';
+		label: 'Tempo';
 		printer: [:x| (x printStringFractionDigits: 1), ' BPM'];
 		fineStep: 0.1 / 255.0;
 		baseValue: model bpm;
@@ -1318,9 +1312,21 @@ buildMorphicWindow
 "		receive: #options: from: Tuning when: #tuningsLibraryChanged:;"
 		setBalloonText: 'Tuning system').
 	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setInstrumentEditorMode: to: self; receive: #state: from: self when: #instrumentEditorModeChanged:; icon: (IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M602.67-120v-123.33h-156V-650H358v126.67H80V-840h278v123.33h244.67V-840H880v316.67H602.67V-650h-89.34v340h89.34v-126.67H880V-120H602.67Zm-456-653.33V-590v-183.33ZM669.33-370v183.33V-370Zm0-403.33V-590v-183.33Zm0 183.33h144v-183.33h-144V-590Zm0 403.33h144V-370h-144v183.33ZM146.67-590h144.66v-183.33H146.67V-590Z'); setBalloonText: 'Instrument editor mode').
-	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setGeneratorsMode: to: self; receive: #state: from: self when: #generatorsModeChanged:; icon: self class lineStartSquareIcon; setBalloonText: 'All generators').
+"	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setGeneratorsMode: to: self; receive: #state: from: self when: #generatorsModeChanged:; icon: self class lineStartSquareIcon; setBalloonText: 'All generators').
 	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setMixerMode: to: self; receive: #state: from: self when: #mixerModeChanged:; icon: self class lineEndSquareIcon; setBalloonText: 'All outputs').
-	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setVisualizationsMode: to: self; receive: #state: from: self when: #visualizationsModeChanged:; icon: self class waveIcon2; setBalloonText: 'All visualizations').
+	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setVisualizationsMode: to: self; receive: #state: from: self when: #visualizationsModeChanged:; icon: self class waveIcon2; setBalloonText: 'All visualizations')."
+	^ bar! !
+
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 30/Jun/2026, 7:41:01 pm (UTC)'!
+buildMorphicWindow
+	| lowerLeftPane sequencerScroller patternEditorScroller bar |
+	instrumentEditor := InstrumentEditorMorph new setTracker: model.
+	instrumentRack := InstrumentRackMorph new setTracker: model.
+	meter := MultitrackMeterMorph new setTracker: model.
+	arranger := ArrangerMorph new setTracker: model.
+	patternEditor := PatternEditorMorph new setTracker: model.
+	model when: #cursorChanged send: #ensureCursorVisible to: self.
+	bar := self buildBar.
 	lowerPane := LinearLayoutMorph newRow color: Color transparent.
 	lowerLeftPane := LinearLayoutMorph newColumn color: Color transparent.
 	sequencerScroller := ScrollerMorph new vertical: true; scrollable: arranger.
@@ -1483,11 +1489,10 @@ keyStroke: anEvent
 			[anEvent wasHandled: true. tracker selectedInstrument ifNotNil: [:anInstument| anInstument noteOn: tracker selectedTrack inputCenterKey + i - 1]. ^ self]].
 	^ super keyStroke: anEvent! !
 
-!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 20/Jun/2026, 8:48:17 pm (UTC)'!
+!InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 30/Jun/2026, 8:10:19 pm (UTC)'!
 initialize
 	super initialize.
-	self horizontal: true.
-	self scrollable: RackMorph new! !
+	self horizontal: true! !
 
 !InstrumentRackMorph methodsFor: 'initialization' stamp: 'len 26/Jun/2026, 6:30:24 pm (UTC)'!
 setTracker: aTracker
@@ -1497,17 +1502,13 @@ setTracker: aTracker
 		when: #tracksChanged send: #update to: self.
 	self update! !
 
-!InstrumentRackMorph methodsFor: 'private' stamp: 'len 28/Jun/2026, 9:10:18 am (UTC)'!
-forceUpdate
-	scrollable patch: tracker selectedInstrument patch; update! !
-
-!InstrumentRackMorph methodsFor: 'private' stamp: 'len 21/Jun/2026, 11:38:20 am (UTC)'!
-rack
-	^ scrollable! !
-
-!InstrumentRackMorph methodsFor: 'private' stamp: 'len 28/Jun/2026, 9:10:41 am (UTC)'!
+!InstrumentRackMorph methodsFor: 'private' stamp: 'len 30/Jun/2026, 8:24:16 pm (UTC)'!
 update
-	scrollable patch: (tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument patch])! !
+	| selectedRack |
+	selectedRack := tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument rackMorph].
+	selectedRack = scrollable ifFalse:
+		[selectedRack ifNotNil: [self scrollable: selectedRack] ifNil: [self removeMorph: scrollable. scrollable := nil]].
+	self redrawNeeded! !
 
 !InstrumentEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026, 8:28:14 am (UTC)'!
 clipboardCopy
@@ -2376,10 +2377,10 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $a ifTrue: [self selectAll. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 29/Jun/2026, 7:43:27 am (UTC)'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 30/Jun/2026, 3:10:31 pm (UTC)'!
 handleInputKey: anEvent
 	| c i |
-	(tracker followPlayhead and: [tracker isPlaying]) ifTrue: [^ false]. "avoid input if following playhead"
+"	(tracker followPlayhead and: [tracker isPlaying]) ifTrue: [^ false]." "avoid input if following playhead"
 	anEvent isBackspace ifTrue:
 		[selectionLineStart isNil
 			ifTrue: [tracker selectedTriggerAt: cursorPosition put: nil. self redrawNeeded]
@@ -2777,6 +2778,10 @@ patch
 !Instrument methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 9:35:23 pm (UTC)'!
 patchMorph
 	^ patchMorph! !
+
+!Instrument methodsFor: 'accessing' stamp: 'len 30/Jun/2026, 8:09:44 pm (UTC)'!
+rackMorph
+	^ rackMorph ifNil: [rackMorph := RackMorph new patch: patch]! !
 
 !Instrument methodsFor: 'accessing' stamp: 'len 29/Jun/2026, 7:53:22 am (UTC)'!
 setOwnerTrack: aTrack

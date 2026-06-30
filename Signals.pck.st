@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 30 June 2026 at 2:33:43 pm'!
+'From Cuis7.9 [latest update: #8030] on 1 July 2026 at 3:27:25 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 630!
+!provides: 'Signals' 1 631!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -2347,7 +2347,7 @@ See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 !Patch commentStamp: '<historical>' prior: 0!
 A patch is a list of interconnected modules. They are executed (update+tick) in sequential order.
 
-The patch provides a protocol for general instruments and effects. It can handle notes and changes in velocity, pitch, volume, panning, samples playhead position and playback speed and direction, etc.
+The patch provides a protocol for general instruments and effects. It can handle notes and changes in velocity, pitch, volume, panning, sample playhead position and playback speed and direction, etc.
 
 A patch also has 10 global buses for audio (0 = master) that are accessed within the patch by the AudioIn and AudioOut modules (see >>#buses:). There is also a control bus with 10 control values (like MIDI CC), local to each patch, that are accessed by the ControlIn module (see >>#controlBus).!
 
@@ -10558,10 +10558,9 @@ setOutputHP: aBuffer
 setOutputLP: aBuffer
 	outputLP := aBuffer! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 28/Jun/2026, 6:07:24 pm (UTC)'!
+!Patch methodsFor: 'accessing' stamp: 'len 30/Jun/2026, 8:25:29 am (UTC)'!
 buses: anArray
-	self flag: #fixme.
-	buses == anArray ifTrue: [^ self]. "<- should remove this, should be unnecesary"
+	buses == anArray ifTrue: [^ self].
 	buses := anArray.
 	self setBuses! !
 
@@ -10603,9 +10602,9 @@ send: aSelector with: anObject
 	(receivers at: aSelector ifAbsentPut: [modules select: [:each| each respondsTo: aSelector]])
 		do: [:each| each perform: aSelector with: anObject]! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 9:51:47 pm (UTC)'!
+!Patch methodsFor: 'accessing' stamp: 'len 30/Jun/2026, 8:23:04 am (UTC)'!
 speed: aNumber
-	speed := aNumber.
+	speed := self toSpeedSpace: aNumber.
 	speedIncrement := 0.0.
 	glideTicks := 0! !
 
@@ -10645,7 +10644,7 @@ noteOff
 noteOn: midiKey
 	self noteOn: midiKey glide: 0! !
 
-!Patch methodsFor: 'controlling' stamp: 'len 29/Jun/2026, 9:13:20 pm (UTC)'!
+!Patch methodsFor: 'controlling' stamp: 'len 30/Jun/2026, 8:21:29 am (UTC)'!
 noteOn: targetNote glide: numberOfTicks
 	(numberOfTicks > 0 and: [note notNil])
 		ifTrue:
@@ -10656,7 +10655,7 @@ noteOn: targetNote glide: numberOfTicks
 			[glideTicks := 0.
 			noteIncrement := 0.0.
 			note := targetNote].
-	self setNote: note; setSpeed: speed squared * speed sign; gateOn! !
+	self setNote: note; setSpeed: (self fromSpeedSpace: speed); gateOn! !
 
 !Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:58:43 pm (UTC)'!
 reset
@@ -10682,18 +10681,18 @@ setPan: aNumber
 setSpeed: aNumber
 	self send: #setSpeed: with: aNumber! !
 
-!Patch methodsFor: 'controlling' stamp: 'len 29/Jun/2026, 9:12:16 pm (UTC)'!
+!Patch methodsFor: 'controlling' stamp: 'len 30/Jun/2026, 8:22:25 am (UTC)'!
 setSpeed: targetSpeed glide: numberOfTicks
 	(numberOfTicks > 0 and: [speed notNil])
 		ifTrue:
 			[glideTicks := numberOfTicks truncated.
-			speedIncrement := targetSpeed abs sqrt * targetSpeed sign - speed / glideTicks asFloat.
+			speedIncrement := (self toSpeedSpace: targetSpeed) - speed / glideTicks asFloat.
 			speed := speed + speedIncrement]
 		ifFalse:
 			[glideTicks := 0.
 			speedIncrement := 0.0.
-			speed := targetSpeed abs sqrt * targetSpeed sign].
-	self setSpeed: speed squared * speed sign! !
+			speed := self toSpeedSpace: targetSpeed].
+	self setSpeed: (self fromSpeedSpace: speed)! !
 
 !Patch methodsFor: 'controlling' stamp: 'len 28/Jun/2026, 6:20:06 pm (UTC)'!
 setVelocity: aNumber
@@ -10707,13 +10706,17 @@ initialize
 	controlBus := Float32Array new: 10. "control ports go from 0 to 9"
 	glideTicks := 0! !
 
-!Patch methodsFor: 'processing' stamp: 'len 29/Jun/2026, 9:13:47 pm (UTC)'!
+!Patch methodsFor: 'processing' stamp: 'len 30/Jun/2026, 8:22:43 am (UTC)'!
 tick
 	glideTicks > 0 ifTrue:
 		[noteIncrement = 0.0 ifFalse: [note := note + noteIncrement. self setNote: note].
-		speedIncrement = 0.0 ifFalse: [speed := speed + speedIncrement. self setSpeed: speed squared * speed sign].
+		speedIncrement = 0.0 ifFalse: [speed := speed + speedIncrement. self setSpeed: (self fromSpeedSpace: speed)].
 		glideTicks := glideTicks - 1].
 	modules do: [:each| each update; tick]! !
+
+!Patch methodsFor: 'private' stamp: 'len 30/Jun/2026, 10:53:48 am (UTC)'!
+fromSpeedSpace: aNumber
+	^ (aNumber abs raisedTo: self speedChangeExponent) * aNumber sign! !
 
 !Patch methodsFor: 'private' stamp: 'len 27/Jun/2026, 10:11:29 pm (UTC)'!
 setBuses
@@ -10728,6 +10731,14 @@ setBuses
 						[(each isMemberOf: AudioOut) ifTrue:
 							[each setBuses: buses.
 							each port = 0 ifTrue: [audioOutput := each]]]]]! !
+
+!Patch methodsFor: 'private' stamp: 'len 30/Jun/2026, 6:38:01 pm (UTC)'!
+speedChangeExponent
+	^ 2.0! !
+
+!Patch methodsFor: 'private' stamp: 'len 30/Jun/2026, 10:54:05 am (UTC)'!
+toSpeedSpace: aNumber
+	^ (aNumber abs raisedTo: 1.0 / self speedChangeExponent) * aNumber sign! !
 
 !ControlPanel methodsFor: 'building' stamp: 'len 12/Mar/2026, 10:50:50 am (UTC)'!
 addColumn
@@ -10832,17 +10843,16 @@ initialize
 addNewModule
 ! !
 
-!RackMorph methodsFor: 'private' stamp: 'len 28/Jun/2026, 9:09:56 am (UTC)'!
+!RackMorph methodsFor: 'private' stamp: 'len 30/Jun/2026, 7:59:51 pm (UTC)'!
 patch: aPatch
 	patch = aPatch ifTrue: [^ self].
 	patch := aPatch.
 	aPatch when: #modulesChanged send: #update to: self.
 	self update! !
 
-!RackMorph methodsFor: 'private' stamp: 'len 28/Jun/2026, 9:36:03 am (UTC)'!
+!RackMorph methodsFor: 'private' stamp: 'len 30/Jun/2026, 8:14:55 pm (UTC)'!
 update
 	| existingRackables |
-"	self visible ifFalse: [^ self]."
 	existingRackables := submorphs select: [:each| each isKindOf: RackableMorph].
 	self removeAllMorphs.
 	self morphExtent: 10@10. "and let it grow from that"
@@ -13431,7 +13441,7 @@ initialize
 	horizontal := false.
 	vertical := false! !
 
-!ScrollerMorph methodsFor: 'initialization' stamp: 'len 5/Jan/2026, 3:43:01 pm (UTC)'!
+!ScrollerMorph methodsFor: 'initialization' stamp: 'len 30/Jun/2026, 8:16:08 pm (UTC)'!
 scrollable: aMorph
 	scrollable ifNotNil: [self removeMorph: scrollable].
 	scrollable := aMorph.

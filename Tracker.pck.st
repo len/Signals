@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 1 July 2026 at 3:27:29 am'!
+'From Cuis7.9 [latest update: #8030] on 1 July 2026 at 1:48:30 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 84!
+!provides: 'Tracker' 1 85!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -2676,7 +2676,7 @@ updateTracks
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 25/Jun/2026, 1:48:13 pm (UTC)'!
+!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 30/Jun/2026, 8:56:54 pm (UTC)'!
 initialize
 	"
 	self initialize
@@ -2698,7 +2698,7 @@ initialize
 	"Volume and Pan:"
 	'LPIOJK' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 160)].
 	"Other:"
-	'FQRY' do: [:c| FXColors at: c codePoint put: (Color okl: 0.95 c: 0 h: 0)]! !
+	'FQRYT' do: [:c| FXColors at: c codePoint put: (Color okl: 0.95 c: 0 h: 0)]! !
 
 !PatternEditorMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026, 12:58:39 pm (UTC)'!
 cursorColor
@@ -2811,7 +2811,7 @@ handleCut: anInteger
 	(time := anInteger bitAnd: 16rF) = 0 ifTrue: [^ patch setVelocity: velocity].
 	track scheduleTrigger: (Trigger new velocity: (velocity * 128.0) truncated) after: time / 12.0 * track tracker tpl! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 27/Jun/2026, 9:38:19 pm (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 30/Jun/2026, 8:55:20 pm (UTC)'!
 handleFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
@@ -2830,7 +2830,8 @@ handleFX: anInteger
 	"Control change commands:"
 	(command between: 48 and: 57) "0 to 9" ifTrue: [patch controlBus at: command - 47 put: v / 255.0. ^ self].
 	"Global commands:"
-	command = 70 "F (set bpm)" ifTrue: [track tracker bpm: (v max: 1). ^ self]! !
+	command = 70 "F (set bpm)" ifTrue: [track tracker bpm: (v max: 1). ^ self].
+	command = 84 "T (select track)" ifTrue: [track tracker followPlayhead ifTrue: [track tracker setCursorTrack: v]. ^ self]! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 29/Jun/2026, 9:13:00 pm (UTC)'!
 handlePostNoteFX: anInteger

@@ -1,5 +1,5 @@
 # Signals
-Signals is a lively environment for real-time musical synthesis written in Smalltalk by a human. It includes:
+Signals is a lively environment for real-time musical synthesis, 100% human-written in Smalltalk. It includes:
 * a modular framework for digital signal processing of audio signals;
 * a dataflow-oriented visual programming environment for building synthesizers and effects;
 * a tracker for sequencing synthesizers and effects

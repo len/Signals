@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 1 July 2026 at 3:27:25 am'!
+'From Cuis7.9 [latest update: #8030] on 3 July 2026 at 11:44:52 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 631!
+!provides: 'Signals' 1 632!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -5168,11 +5168,11 @@ initialize
 	velocity := 0.5.
 	legato := false! !
 
-!Multisample methodsFor: 'initialization' stamp: 'len 2/Jun/2026, 8:10:22 pm (UTC)'!
+!Multisample methodsFor: 'initialization' stamp: 'len 2/Jul/2026, 10:48:45 am (UTC)'!
 initializeControls
 	super initializeControls.
 	"same as Sample:"
-	(self addControl: #speed min: -4.0 max: 4.0 value: 1.0) printer: [:x| '×', (x printStringFractionDigits: 2)]! !
+	(self addControl: #speed min: -8.0 max: 8.0 value: 1.0) printer: [:x| '×', (x printStringFractionDigits: 2)]! !
 
 !Multisample methodsFor: 'initialization' stamp: 'len 15/Feb/2026, 1:24:57 pm (UTC)'!
 keymap: aDictionary
@@ -5406,10 +5406,10 @@ copy
 		loopLength: loopLength;
 		label: label! !
 
-!Sample methodsFor: 'initialization' stamp: 'len 2/Jun/2026, 8:04:15 pm (UTC)'!
+!Sample methodsFor: 'initialization' stamp: 'len 2/Jul/2026, 10:48:21 am (UTC)'!
 initializeControls
 	super initializeControls.
-	(self addControl: #speed min: -4.0 max: 4.0 value: 1.0) printer: [:x| '×', (x printStringFractionDigits: 2)]! !
+	(self addControl: #speed min: -8.0 max: 8.0 value: 1.0) printer: [:x| '×', (x printStringFractionDigits: 2)]! !
 
 !Sample methodsFor: 'processing' stamp: 'len 28/Mar/2026, 1:38:00 pm (UTC)'!
 mixTailInto: aBuffer
@@ -5436,7 +5436,7 @@ mixTailInto: aBuffer
 					^ self]]].
 	tailPosition := nil! !
 
-!Sample methodsFor: 'processing' stamp: 'len 19/Jun/2026, 10:30:32 am (UTC)'!
+!Sample methodsFor: 'processing' stamp: 'len 3/Jul/2026, 4:10:28 pm (UTC)'!
 read: aBuffer
 	| end |
 	position ifNil: [aBuffer atAllPut: 0.0. ^ self].
@@ -5459,13 +5459,13 @@ read: aBuffer
 			[| loopStart |
 			loopStart := loopLength > 0 ifTrue: [loopEnd - loopLength + 1.0] ifFalse: [1.0].
 			1 to: aBuffer size do: [:i|
-				aBuffer at: i put: (buffer atLinear: position).
 				position := position - (increment := increment + incrementDelta).
 "				(position <= loopStart and: [released not]) ifTrue: [position := position + loopLength - 1.0]."
 				position >= 1.0 ifFalse:
 					[released := true.
 					aBuffer from: i + 1 to: aBuffer size put: 0.0.
-					^ self]]].
+					^ self].
+				aBuffer at: i put: (buffer atLinear: position)]].
 	self mixTailInto: aBuffer! !
 
 !Sample methodsFor: 'processing' stamp: 'len 28/Mar/2026, 1:14:13 pm (UTC)'!
@@ -10602,9 +10602,9 @@ send: aSelector with: anObject
 	(receivers at: aSelector ifAbsentPut: [modules select: [:each| each respondsTo: aSelector]])
 		do: [:each| each perform: aSelector with: anObject]! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 30/Jun/2026, 8:23:04 am (UTC)'!
+!Patch methodsFor: 'accessing' stamp: 'len 2/Jul/2026, 11:11:07 am (UTC)'!
 speed: aNumber
-	speed := self toSpeedSpace: aNumber.
+	speed := aNumber.
 	speedIncrement := 0.0.
 	glideTicks := 0! !
 
@@ -10644,7 +10644,7 @@ noteOff
 noteOn: midiKey
 	self noteOn: midiKey glide: 0! !
 
-!Patch methodsFor: 'controlling' stamp: 'len 30/Jun/2026, 8:21:29 am (UTC)'!
+!Patch methodsFor: 'controlling' stamp: 'len 2/Jul/2026, 11:10:20 am (UTC)'!
 noteOn: targetNote glide: numberOfTicks
 	(numberOfTicks > 0 and: [note notNil])
 		ifTrue:
@@ -10655,7 +10655,7 @@ noteOn: targetNote glide: numberOfTicks
 			[glideTicks := 0.
 			noteIncrement := 0.0.
 			note := targetNote].
-	self setNote: note; setSpeed: (self fromSpeedSpace: speed); gateOn! !
+	self setNote: note; setSpeed: speed; gateOn! !
 
 !Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:58:43 pm (UTC)'!
 reset
@@ -10681,18 +10681,18 @@ setPan: aNumber
 setSpeed: aNumber
 	self send: #setSpeed: with: aNumber! !
 
-!Patch methodsFor: 'controlling' stamp: 'len 30/Jun/2026, 8:22:25 am (UTC)'!
+!Patch methodsFor: 'controlling' stamp: 'len 3/Jul/2026, 4:21:17 pm (UTC)'!
 setSpeed: targetSpeed glide: numberOfTicks
 	(numberOfTicks > 0 and: [speed notNil])
 		ifTrue:
-			[glideTicks := numberOfTicks truncated.
-			speedIncrement := (self toSpeedSpace: targetSpeed) - speed / glideTicks asFloat.
+			[glideTicks := numberOfTicks truncated max: 1.
+			speedIncrement := targetSpeed - speed / glideTicks asFloat.
 			speed := speed + speedIncrement]
 		ifFalse:
 			[glideTicks := 0.
 			speedIncrement := 0.0.
-			speed := self toSpeedSpace: targetSpeed].
-	self setSpeed: (self fromSpeedSpace: speed)! !
+			speed := targetSpeed].
+	self setSpeed: speed! !
 
 !Patch methodsFor: 'controlling' stamp: 'len 28/Jun/2026, 6:20:06 pm (UTC)'!
 setVelocity: aNumber
@@ -10706,17 +10706,13 @@ initialize
 	controlBus := Float32Array new: 10. "control ports go from 0 to 9"
 	glideTicks := 0! !
 
-!Patch methodsFor: 'processing' stamp: 'len 30/Jun/2026, 8:22:43 am (UTC)'!
+!Patch methodsFor: 'processing' stamp: 'len 2/Jul/2026, 11:10:36 am (UTC)'!
 tick
 	glideTicks > 0 ifTrue:
 		[noteIncrement = 0.0 ifFalse: [note := note + noteIncrement. self setNote: note].
-		speedIncrement = 0.0 ifFalse: [speed := speed + speedIncrement. self setSpeed: (self fromSpeedSpace: speed)].
+		speedIncrement = 0.0 ifFalse: [speed := speed + speedIncrement. self setSpeed: speed].
 		glideTicks := glideTicks - 1].
 	modules do: [:each| each update; tick]! !
-
-!Patch methodsFor: 'private' stamp: 'len 30/Jun/2026, 10:53:48 am (UTC)'!
-fromSpeedSpace: aNumber
-	^ (aNumber abs raisedTo: self speedChangeExponent) * aNumber sign! !
 
 !Patch methodsFor: 'private' stamp: 'len 27/Jun/2026, 10:11:29 pm (UTC)'!
 setBuses
@@ -10731,14 +10727,6 @@ setBuses
 						[(each isMemberOf: AudioOut) ifTrue:
 							[each setBuses: buses.
 							each port = 0 ifTrue: [audioOutput := each]]]]]! !
-
-!Patch methodsFor: 'private' stamp: 'len 30/Jun/2026, 6:38:01 pm (UTC)'!
-speedChangeExponent
-	^ 2.0! !
-
-!Patch methodsFor: 'private' stamp: 'len 30/Jun/2026, 10:54:05 am (UTC)'!
-toSpeedSpace: aNumber
-	^ (aNumber abs raisedTo: 1.0 / self speedChangeExponent) * aNumber sign! !
 
 !ControlPanel methodsFor: 'building' stamp: 'len 12/Mar/2026, 10:50:50 am (UTC)'!
 addColumn
@@ -14282,14 +14270,14 @@ computeImage
 defaultExtent
 	^ `384 @ 92`! !
 
-!SampleMorph methodsFor: 'as yet unclassified' stamp: 'len 19/Jun/2026, 10:35:42 am (UTC)'!
+!SampleMorph methodsFor: 'as yet unclassified' stamp: 'len 3/Jul/2026, 8:46:51 am (UTC)'!
 drawOn: aCanvas
 	| x n h |
 	sample ifNil: [^ self].
 	needsRecomputingImage ifTrue: [self computeImage].
-	aCanvas image: image at: 0@0.
+	aCanvas image: image at: 0 @ 0.
 	h := extent y // 2.
-	aCanvas line: 0@h to: extent x@h width: 1 color: (Color white alpha: 0.3).
+	aCanvas line: 0 @ h to: extent x @ h width: 1 color: (Color white alpha: 0.3).
 	n := sample buffer size.
 	sample loopLength > 0 ifTrue:
 		[x := sample loopStart / n * self morphWidth.

@@ -55,7 +55,8 @@ At the bottom left there is the "sequencer" or "arranger", that contains the lis
 * Uxx / Dxx slide note up/down by xx/16 semitones
 * +xx / -xx finetune note up/down by xx/256 of a note depending on the selected tuning (0 = no change, 80 = half note, FF = almost 1 note)
 * Sxx set sample start offset
-* <xy / >xy slide to play backwards/forward at speed x/8 (4 = half speed, 8 = normal, F = almost double) in y lines
+* >xy / <xy slide to play forward/backwards at speed x/8 (4 = half speed, 8 = normal, C = doubel speed, F = 8x) in y lines
+* /xy / \xy forward/backward stroke, move sample playhead by x lines in y lines
 * Lxx set instrument volume level to xx (00 = minimum, FF = maximum)
 * Pxx set instrument pan (00 = left, 80 = center, FF = right)
 * Ixx / Oxx adjust instrument volume level up/down
@@ -88,7 +89,8 @@ Pattern editor:
 
 * Space play sequence from cursor line and loop it (don't loop with Opt), or stop if currently playing
 * Enter play trigger or selection and loop it (don't loop with Opt)
-* \ toggle track mute (Cmd-\ toggle track solo)
+* Opt-m toggle track mute
+* Opt-s toggle track solo
 * Cmd-m toggle track mask in current sequence position
 * Cmd-t insert new track after current track (Cmd-T delete current track)
 * Cmd-n insert new pattern after current pattern (Cmd-N delete current pattern)

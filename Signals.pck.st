@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 3 July 2026 at 11:44:52 pm'!
+'From Cuis7.9 [latest update: #8030] on 5 July 2026 at 12:55:00 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 632!
+!provides: 'Signals' 1 633!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -2547,9 +2547,13 @@ modulatedValue
 modulation
 	^ modulation! !
 
-!Control methodsFor: 'control and modulation' stamp: 'len 8/Mar/2026, 8:25:19 am (UTC)'!
-resetToDefault
+!Control methodsFor: 'control and modulation' stamp: 'len 4/Jul/2026, 1:13:34 pm (UTC)'!
+setBaseToDefault
 	self baseValue: default! !
+
+!Control methodsFor: 'control and modulation' stamp: 'len 4/Jul/2026, 1:14:10 pm (UTC)'!
+setDefaultToBase
+	default := self baseValue! !
 
 !Control methodsFor: 'control and modulation' stamp: 'len 8/Mar/2026, 8:25:25 am (UTC)'!
 value
@@ -2778,9 +2782,10 @@ asJsonWithBuffers: aList
 		at: #settings put: self settings;
 		yourself! !
 
-!Module methodsFor: 'serialization' stamp: 'len 4/Apr/2026, 12:12:08 pm (UTC)'!
+!Module methodsFor: 'serialization' stamp: 'len 4/Jul/2026, 1:14:48 pm (UTC)'!
 readFromJson: json buffers: aList
-	self settings: (json at: #settings ifAbsent: [^ self])! !
+	self settings: (json at: #settings ifAbsent: [^ self]).
+	controls do: [:each| each setDefaultToBase] "set the default to the current value, so that we can change something and go back to the original saved value"! !
 
 !Module methodsFor: 'serialization' stamp: 'len 18/Nov/2025, 8:17:00 am (UTC)'!
 settings
@@ -11128,11 +11133,11 @@ handlesMouseOver: anEvent
 handlesMouseScroll: anEvent
 	^ anEvent anyModifierKeyPressed not! !
 
-!ControlMorph methodsFor: 'events' stamp: 'len 28/Apr/2026, 9:47:37 am (UTC)'!
+!ControlMorph methodsFor: 'events' stamp: 'len 4/Jul/2026, 1:13:34 pm (UTC)'!
 keyStroke: anEvent
 	anEvent isEsc ifTrue:
 		[anEvent wasHandled: true.
-		control resetToDefault.
+		control setBaseToDefault.
 		self wantsBalloon ifTrue: [self showBalloon].
 		^ self].
 	(anEvent isArrowUp or: [anEvent isArrowRight]) ifTrue:
@@ -11886,14 +11891,14 @@ handlesMouseOver: anEvent
 handlesMouseScroll: anEvent
 	^ anEvent anyModifierKeyPressed not or: [anEvent secondaryModifierPressed]! !
 
-!DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 28/Apr/2026, 10:28:12 am (UTC)'!
+!DualControlMorph methodsFor: 'as yet unclassified' stamp: 'len 4/Jul/2026, 1:13:34 pm (UTC)'!
 keyStroke: anEvent
 	| control |
 	control := anEvent secondaryModifierPressed ifTrue: [control2] ifFalse: [control1].
 	control ifNil: [^ self].
 	anEvent isEsc ifTrue:
 		[anEvent wasHandled: true.
-		control resetToDefault.
+		control setBaseToDefault.
 		self wantsBalloon ifTrue: [self showBalloon: control printedBaseValueWithLabel].
 		^ self].
 	(anEvent isArrowUp or: [anEvent isArrowRight]) ifTrue:
@@ -12022,12 +12027,12 @@ handlesMouseOver: anEvent
 handlesMouseScroll: anEvent
 	^ anEvent anyModifierKeyPressed not! !
 
-!XYControlMorph methodsFor: 'events' stamp: 'len 28/Apr/2026, 10:40:41 am (UTC)'!
+!XYControlMorph methodsFor: 'events' stamp: 'len 4/Jul/2026, 1:13:34 pm (UTC)'!
 keyStroke: anEvent
 	anEvent isEsc ifTrue:
 		[anEvent wasHandled: true.
-		controlX resetToDefault.
-		controlY resetToDefault.
+		controlX setBaseToDefault.
+		controlY setBaseToDefault.
 		self wantsBalloon ifTrue: [self showBalloon].
 		^ self].
 	(self invertsY ifTrue: [anEvent isArrowDown] ifFalse: [anEvent isArrowUp]) ifTrue:

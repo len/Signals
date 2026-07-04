@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 3 July 2026 at 11:50:57 pm'!
+'From Cuis7.9 [latest update: #8030] on 5 July 2026 at 12:55:22 am'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 87!
+!provides: 'Tracker' 1 88!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -19,7 +19,7 @@ DarkerTheme class
 
 !classDefinition: #Tracker category: #'Tracker-Kernel'!
 ActiveModel subclass: #Tracker
-	instanceVariableNames: 'instruments tracks sequence label bpm swing level inputOctave cursorPattern cursorLine cursorTrack playheadPattern playheadLine followPlayhead playStartPattern playStartLine playEndPattern playEndLine playingMask loop anyTrackSoloed ticksToLine peakLeft peakRight buses random'
+	instanceVariableNames: 'instruments tracks sequence label bpm swing level inputOctave cursorPattern cursorLine cursorTrack playheadPattern playheadLine followPlayhead playStartPattern playStartLine playEndPattern playEndLine playingMask loop anyTrackSoloed ticksToNextLine peakLeft peakRight buses random undoStack redoStack'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Tracker-Kernel'!
@@ -654,6 +654,10 @@ swing: aNumber
 	swing := aNumber min: 1.0 max: 0.0.
 	self triggerEvent: #swingChanged: with: swing! !
 
+!Tracker methodsFor: 'accessing' stamp: 'len 4/Jul/2026, 3:47:00 pm (UTC)'!
+ticksToNextLine
+	^ ticksToNextLine! !
+
 !Tracker methodsFor: 'accessing' stamp: 'len 14/Mar/2026, 11:24:45 am (UTC)'!
 tpl
 	"Answer the number of ticks per line."
@@ -772,7 +776,7 @@ setCursorTrack: anInteger
 	self triggerEvent: #cursorChanged.
 	self triggerEvent: #selectedTrackTuningChanged: with: self selectedTrack tuning! !
 
-!Tracker methodsFor: 'initialization' stamp: 'len 28/Jun/2026, 8:21:01 am (UTC)'!
+!Tracker methodsFor: 'initialization' stamp: 'len 4/Jul/2026, 5:24:22 pm (UTC)'!
 initialize
 	instruments := Dictionary new.
 	tracks := #().
@@ -796,6 +800,9 @@ initialize
 	peakRight := 0.0.
 	random := Random new.
 
+	undoStack := OrderedCollection new.
+	redoStack := OrderedCollection new.
+	
 	self insertTrack: 1.
 	self insertPattern: 1.
 	self selectedPattern track: 1 at: 1 position: 2 put: 1 "set instrument to 1"! !
@@ -906,7 +913,7 @@ isPlayingFollowingPlayhead
 loop: aBoolean
 	loop := aBoolean! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 28/Jun/2026, 8:23:14 am (UTC)'!
+!Tracker methodsFor: 'playing' stamp: 'len 4/Jul/2026, 3:44:51 pm (UTC)'!
 play
 	self isPlaying ifTrue: [^ self].
 	playStartPattern := 1.
@@ -916,7 +923,7 @@ play
 	playingMask := nil.
 	playheadPattern := cursorPattern.
 	playheadLine := cursorLine - 1.
-	ticksToLine := 0.
+	ticksToNextLine := 0.
 	buses from: 2 to: buses size put: nil. "remove all buses except the master bus"
 	"if playing from the begining, reset all modules (for reproducibility):"
 	(playheadPattern = 1 and: [playheadLine = 0]) ifTrue: [instruments do: [:each| each reset]].
@@ -925,7 +932,7 @@ play
 	self triggerEvent: #playheadChanged.
 	self triggerEvent: #playingStatusChanged! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 28/Jun/2026, 8:22:48 am (UTC)'!
+!Tracker methodsFor: 'playing' stamp: 'len 4/Jul/2026, 3:44:51 pm (UTC)'!
 playFrom: startPattern line: startLine to: endPattern line: endLine tracks: tracksToPlay
 	self isPlaying ifTrue: [^ self].
 	playStartPattern := startPattern.
@@ -935,13 +942,13 @@ playFrom: startPattern line: startLine to: endPattern line: endLine tracks: trac
 	playingMask := tracksToPlay ifNotNil: [(1 to: tracks size) collect: [:i| tracksToPlay includes: i]].
 	playheadPattern := playStartPattern.
 	playheadLine := playStartLine - 1.
-	ticksToLine := 0.
+	ticksToNextLine := 0.
 	buses from: 2 to: buses size put: nil. "remove all buses except the master bus"
 	AudioPlayer startPlaying: self.
 	self triggerEvent: #playheadChanged.
 	self triggerEvent: #playingStatusChanged! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 13/Jun/2026, 4:36:52 pm (UTC)'!
+!Tracker methodsFor: 'playing' stamp: 'len 4/Jul/2026, 3:48:56 pm (UTC)'!
 playLine
 	| pattern mask ticksPerLine ticksSwing |
 	"Advance playhead:"
@@ -967,12 +974,13 @@ playLine
 		(mask at: i) ifTrue: [(pattern track: i at: playheadLine) ifNotNil: [:aTrigger|
 			((p := aTrigger probability) = 1.0 or: [random next <= p]) ifTrue: [track scheduleTrigger: aTrigger]]]].
 	ticksPerLine := self tpl.
-	ticksToLine := ticksToLine + ticksPerLine.
-	ticksSwing := ticksPerLine * 0.333 * swing squared.
-	(playheadLine \\ pattern lpb) even ifTrue: [ticksSwing := ticksSwing negated].
-	ticksToLine := ticksToLine + ticksSwing! !
+	ticksToNextLine := ticksToNextLine + ticksPerLine.
+	swing = 0.0 ifFalse:
+		[ticksSwing := ticksPerLine * 0.333 * swing squared.
+		(playheadLine \\ pattern lpb) even ifTrue: [ticksSwing := ticksSwing negated].
+		ticksToNextLine := ticksToNextLine + ticksSwing]! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 28/Jun/2026, 8:22:09 am (UTC)'!
+!Tracker methodsFor: 'playing' stamp: 'len 4/Jul/2026, 3:44:51 pm (UTC)'!
 playSampleCount: n into: anAudioBuffer startingAt: startIndex
 	| blockSize i masterGain mask masterBus |
 	blockSize := Module blockSize.
@@ -982,7 +990,7 @@ playSampleCount: n into: anAudioBuffer startingAt: startIndex
 	mask := self playingMask.
 	masterBus := buses at: 1.
 	n // blockSize timesRepeat:
-		[ticksToLine > 0 ifTrue: [ticksToLine := ticksToLine - 1] ifFalse: [self playLine. mask := self playingMask].
+		[ticksToNextLine > 0 ifTrue: [ticksToNextLine := ticksToNextLine - 1] ifFalse: [self playLine. mask := self playingMask].
 		buses do: [:each| each ifNotNil: [each clear]].
 		mask withIndexDo: [:enabled :trackIndex| enabled ifTrue: [(tracks at: trackIndex) tick]].
 		masterBus leftBuffer *= masterGain.
@@ -1093,17 +1101,19 @@ deleteTrack
 	tracks size > 1 ifFalse: [^ self]. "don't delete last track"
 	self deleteTrack: cursorTrack! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 22/Feb/2026, 12:53:48 pm (UTC)'!
+!Tracker methodsFor: 'tracks' stamp: 'len 4/Jul/2026, 5:05:49 pm (UTC)'!
 deleteTrack: anInteger
+	self clearUndoRedo.
 	tracks := (tracks copyFrom: 1 to: anInteger - 1), (tracks copyFrom: anInteger + 1 to: tracks size).
 	self sequenceUniquePatterns do: [:each| each deleteTrack: anInteger].
 	sequence := sequence collect: [:each| each key -> ((each value copyFrom: 1 to: anInteger - 1), (each value copyFrom: anInteger + 1 to: each value size))].
 	self setCursorTrack: (cursorTrack min: tracks size).
 	self triggerEvent: #tracksChanged! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 10/Jun/2026, 10:05:33 am (UTC)'!
+!Tracker methodsFor: 'tracks' stamp: 'len 4/Jul/2026, 5:05:58 pm (UTC)'!
 insertTrack: anInteger
 	| answer |
+	self clearUndoRedo.
 	answer := Track new setTracker: self.
 	tracks := (tracks copyFrom: 1 to: anInteger - 1), {answer}, (tracks copyFrom: anInteger to: tracks size).
 	self sequenceUniquePatterns do: [:each| each insertTrack: anInteger].
@@ -1124,9 +1134,10 @@ setSelectedTrackTuning: aTuningOrNil
 	self selectedTrack tuning: aTuningOrNil.
 	self triggerEvent: #selectedTrackTuningChanged: with: self selectedTrack tuning! !
 
-!Tracker methodsFor: 'tracks' stamp: 'len 10/Jun/2026, 10:05:54 am (UTC)'!
+!Tracker methodsFor: 'tracks' stamp: 'len 4/Jul/2026, 5:06:05 pm (UTC)'!
 swapTrack: anInteger with: anotherInteger
 	anInteger = anotherInteger ifTrue: [^ self].
+	self clearUndoRedo.
 	tracks swap: anInteger with: anotherInteger.
 	"swap pattern blocks:"
 	self sequenceUniquePatterns do: [:each| each swapTrack: anInteger with: anotherInteger].
@@ -1171,6 +1182,40 @@ toggleTrackSolo: trackIndex
 !Tracker methodsFor: 'ui' stamp: 'len 9/Apr/2026, 11:50:20 am (UTC)'!
 open
 	^ TrackerWindow open: self label: label! !
+
+!Tracker methodsFor: 'undo/redo' stamp: 'len 4/Jul/2026, 5:07:06 pm (UTC)'!
+clearUndoRedo
+	undoStack removeAll.
+	redoStack removeAll! !
+
+!Tracker methodsFor: 'undo/redo' stamp: 'len 4/Jul/2026, 5:53:44 pm (UTC)'!
+redo
+"	self isPlaying ifTrue: [^ self]."
+	redoStack ifEmpty: [^ self].
+	undoStack add: sequence.
+	sequence := redoStack removeLast.
+	cursorPattern := cursorPattern min: sequence size.
+	cursorLine := cursorLine min: (sequence at: cursorPattern) key length.
+	self triggerEvent: #cursorChanged! !
+
+!Tracker methodsFor: 'undo/redo' stamp: 'len 4/Jul/2026, 5:43:01 pm (UTC)'!
+snapshot
+	| selectedPattern selectedPatternCopy |
+	redoStack removeAll.
+	selectedPattern := (sequence at: cursorPattern) key.
+	selectedPatternCopy := selectedPattern copy.
+	undoStack add:
+		(sequence collect: [:each| each key == selectedPattern ifTrue: [selectedPatternCopy -> each value] ifFalse: [each]])! !
+
+!Tracker methodsFor: 'undo/redo' stamp: 'len 4/Jul/2026, 5:25:16 pm (UTC)'!
+undo
+"	self isPlaying ifTrue: [^ self]."
+	undoStack ifEmpty: [^ self].
+	redoStack add: sequence.
+	sequence := undoStack removeLast.
+	cursorPattern := cursorPattern min: sequence size.
+	cursorLine := cursorLine min: (sequence at: cursorPattern) key length.
+	self triggerEvent: #cursorChanged! !
 
 !Tracker class methodsFor: 'as yet unclassified' stamp: 'len 5/Apr/2026, 10:24:41 am (UTC)'!
 fileReaderServicesForFileEntry: filename suffix: suffix
@@ -1997,22 +2042,25 @@ clipboardCopy
 clipboardCut
 	self clipboardCopy; deleteSelection! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 8/Jun/2026, 8:28:49 am (UTC)'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 4/Jul/2026, 5:08:55 pm (UTC)'!
 clipboardPaste
 	| i0 k0 pattern |
 	selectionLineStart := selectionTrackStart := nil.
 	pattern := tracker selectedPattern.
 	k0 := tracker cursorTrack - 1.
 	i0 := tracker cursorLine - 1.
-	(ClipboardBuffer ifNil: [^ self]) withIndexDo: [:line :i|
+	ClipboardBuffer ifNil: [^ self].
+	tracker snapshot.
+	ClipboardBuffer withIndexDo: [:line :i|
 		line withIndexDo: [:trigger :k|
 			(k0 + k <= tracker tracks size and: [i0 + i <= pattern length])
 				ifTrue: [pattern track: k0 + k at: i0 + i put: trigger copy]]].
 	self redrawNeeded! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 26/Jun/2026, 9:39:25 pm (UTC)'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 4/Jul/2026, 5:04:12 pm (UTC)'!
 deleteSelection
 	| pattern |
+	tracker snapshot.
 	pattern := tracker selectedPattern.
 	selectionLineStart ifNil:
 		[pattern track: tracker cursorTrack at: tracker cursorLine put: nil.
@@ -2095,7 +2143,7 @@ moveSelectedTracksRight
 	tracker moveCursorTrackRight.
 	selectionTrackStart ifNotNil: [selectionTrackStart := selectionTrackStart + 1]! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026, 3:59:42 pm (UTC)'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 4/Jul/2026, 5:07:43 pm (UTC)'!
 moveSelectedTriggersDown
 	| pattern lineStart lineEnd trackStart trackEnd |
 	pattern := tracker selectedPattern.
@@ -2107,13 +2155,14 @@ moveSelectedTriggersDown
 		ifNil: [lineStart := lineEnd := tracker cursorLine.
 			trackStart := trackEnd := tracker cursorTrack].
 	lineEnd < pattern length ifFalse: [^ self].
+	tracker snapshot.
 	lineEnd to: lineStart by: -1 do: [:i|
 		trackStart to: trackEnd do: [:k|
 			pattern track: k swap: i with: i + 1]].
 	tracker moveCursorLineDown.
 	selectionLineStart ifNotNil: [selectionLineStart := selectionLineStart + 1]! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026, 3:59:53 pm (UTC)'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 4/Jul/2026, 5:07:53 pm (UTC)'!
 moveSelectedTriggersUp
 	| pattern lineStart lineEnd trackStart trackEnd |
 	pattern := tracker selectedPattern.
@@ -2125,6 +2174,7 @@ moveSelectedTriggersUp
 		ifNil: [lineStart := lineEnd := tracker cursorLine.
 			trackStart := trackEnd := tracker cursorTrack].
 	lineStart > 1 ifFalse: [^ self].
+	tracker snapshot.
 	lineStart to: lineEnd do: [:i|
 		trackStart to: trackEnd do: [:k|
 			pattern track: k swap: i with: i - 1]].
@@ -2162,27 +2212,26 @@ selectedTriggersDo: aBlock
 		self selectedTracks do: [:k|
 			(pattern track: k at: i) ifNotNil: aBlock]]! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 14/Mar/2026, 11:30:14 am (UTC)'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 4/Jul/2026, 5:14:13 pm (UTC)'!
 setPatternLPB
-	self request: 'LPB' initialAnswer: tracker selectedPattern lpb printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| tracker selectedPattern lpb: s asNumber. self redrawNeeded]! !
+	self request: 'LPB' initialAnswer: tracker selectedPattern lpb printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| (tracker snapshot; selectedPattern) lpb: s asNumber. self redrawNeeded]! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 4/Jan/2026, 8:52:47 am (UTC)'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 4/Jul/2026, 5:14:36 pm (UTC)'!
 setPatternLength
 	tracker isPlaying ifTrue: [^ self].
-	self request: 'Pattern length' initialAnswer: tracker selectedPattern length printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| tracker setSelectedPatternLength: s asNumber. self redrawNeeded]! !
-
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 10/Jun/2026, 7:01:54 pm (UTC)'!
-setTrackTuning
-	| menu |
-	menu := MenuMorph new.
-	Tuning library do: [:each| menu add: each label target: tracker action: #setSelectedTrackTuning: argument: each].
-	menu invokeModal! !
+	self request: 'Pattern length' initialAnswer: tracker selectedPattern length printString verifying: [:s| (s allSatisfy: [:x| x isDigit]) and: [s asNumber between: 1 and: 255]] do: [:s| tracker snapshot; setSelectedPatternLength: s asNumber. self redrawNeeded]! !
 
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026, 11:30:38 am (UTC)'!
 toggleShowFXColumns
 	showFXColumns := showFXColumns not.
 	cursorPosition := cursorPosition min: self lastPosition.
 	self showFXBalloon.
+	self redrawNeeded! !
+
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 4/Jul/2026, 5:20:54 pm (UTC)'!
+transposeSelectedTriggersBy: aNumber
+	tracker snapshot.
+	self selectedTriggersDo: [:each| each transposeBy: aNumber].
 	self redrawNeeded! !
 
 !PatternEditorMorph methodsFor: 'drawing' stamp: 'len 8/Jun/2026, 12:30:47 pm (UTC)'!
@@ -2357,7 +2406,7 @@ trackWidthInCharacters
 aboutToBeGrabbedBy: aHand
 	^ MovingHelperMorph new target: self; offset: (self owner internalizeFromWorld: aHand morphPosition) - self morphPosition! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 3/Jul/2026, 9:06:07 am (UTC)'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 4/Jul/2026, 5:03:08 pm (UTC)'!
 handleCommandHotkey: anEvent
 	"Font size:"
 	anEvent keyCharacter = $- ifTrue: [self adjustFontSizeBy: -1. ^ true].
@@ -2365,51 +2414,52 @@ handleCommandHotkey: anEvent
 	"Show/hide FX columns:"
 	anEvent keyCharacter = $' ifTrue: [self toggleShowFXColumns. ^ true].
 	"Pattern properties:"
-"	anEvent keyCharacter = $l ifTrue: [self setPatternLength. ^ true].
-	anEvent keyCharacter = $b ifTrue: [self setPatternLPB. ^ true]."
-	"Tuning:"
-"	anEvent keyCharacter = $u ifTrue: [self setTrackTuning. ^ true]."
+	anEvent keyCharacter = $l ifTrue: [self setPatternLength. ^ true].
+	anEvent keyCharacter = $b ifTrue: [self setPatternLPB. ^ true].
 	"Inspecting:"
 	anEvent keyCharacter = $i ifTrue: [tracker selectedTrigger ifNotNil: [:aTrigger| aTrigger inspect]. ^ true].
 	"Clipboard:"
-"	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
+	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
 	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
-	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true]."
+	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
 	anEvent keyCharacter = $a ifTrue: [self selectAll. ^ true].
+	"Undo/Redo:"
+	anEvent keyCharacter = $z ifTrue: [tracker undo. ^ true].
+	(anEvent keyCharacter = $Z or: [anEvent keyCharacter = $y]) ifTrue: [tracker redo. ^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 3/Jul/2026, 8:41:32 am (UTC)'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 4/Jul/2026, 5:22:52 pm (UTC)'!
 handleInputKey: anEvent
 	| c i |
 "	(tracker followPlayhead and: [tracker isPlaying]) ifTrue: [^ false]." "avoid input if following playhead"
 	anEvent isBackspace ifTrue:
 		[selectionLineStart isNil
-			ifTrue: [tracker selectedTriggerAt: cursorPosition put: nil. self redrawNeeded]
+			ifTrue: [tracker snapshot; selectedTriggerAt: cursorPosition put: nil. self redrawNeeded]
 			ifFalse: [self deleteSelection].
 		^ true].
-	anEvent keyCharacter = $] ifTrue: [self selectedTriggersDo: [:each| each transposeBy: (tracker selectedTrack tuning size)]. self redrawNeeded. ^ true].
-	anEvent keyCharacter = $[ ifTrue: [self selectedTriggersDo: [:each| each transposeBy: (tracker selectedTrack tuning size negated)]. self redrawNeeded. ^ true].
-	anEvent keyCharacter = $} ifTrue: [self selectedTriggersDo: [:each| each transposeBy: 1]. self redrawNeeded. ^ true].
-	anEvent keyCharacter = ${ ifTrue: [self selectedTriggersDo: [:each| each transposeBy: -1]. self redrawNeeded. ^ true].
+	anEvent keyCharacter = $] ifTrue: [self transposeSelectedTriggersBy: tracker selectedTrack tuning size. ^ true].
+	anEvent keyCharacter = $[ ifTrue: [self transposeSelectedTriggersBy: tracker selectedTrack tuning size negated. ^ true].
+	anEvent keyCharacter = $} ifTrue: [self transposeSelectedTriggersBy: 1. ^ true].
+	anEvent keyCharacter = ${ ifTrue: [self transposeSelectedTriggersBy: -1. ^ true].
 	cursorPosition = 3 ifTrue: "notes"
 		[c := anEvent keyCharacter.
 		c = $a ifTrue:
-			[tracker selectedTriggerAt: cursorPosition put: -1. "note off"
+			[tracker snapshot; selectedTriggerAt: cursorPosition put: -1. "note off"
 			tracker moveCursorLineDown: editStep.
 			^ true].
 		(i := 'zsxdcvgbhnjmq2w3er5t6y7ui9o0p' indexOf: c) > 0 ifTrue:
-			[tracker selectedTriggerAt: cursorPosition put: tracker selectedTrack inputCenterKey + i - 1.
+			[tracker snapshot; selectedTriggerAt: cursorPosition put: tracker selectedTrack inputCenterKey + i - 1.
 			tracker moveCursorLineDown: editStep.
 			^ true].
 		^ false].
 	(cursorPosition = 6 or: [cursorPosition = 9]) ifTrue: "FX commands"
 		[(Trigger allFXCommandCharacters includes: (c := anEvent keyCharacter asUppercase)) ifTrue:
-			[tracker selectedTriggerAt: cursorPosition put: c codePoint.
+			[tracker snapshot; selectedTriggerAt: cursorPosition put: c codePoint.
 			self moveCursorRight.
 			^ true].
 		^ false].
 	(i := '0123456789ABCDEF' indexOf: anEvent keyCharacter asUppercase) > 0 ifTrue:
-		[tracker selectedTriggerAt: cursorPosition put: i - 1.
+		[tracker snapshot; selectedTriggerAt: cursorPosition put: i - 1.
 		(#(2 5) includes: cursorPosition) ifTrue:
 			[cursorPosition := cursorPosition - 1.
 			self showFXBalloon.
@@ -2789,14 +2839,14 @@ handleFX: anInteger
 	"Control change commands:"
 	(command between: 48 and: 57) "0 to 9" ifTrue: [patch controlBus at: command - 47 put: v / 255.0. ^ self]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 3/Jul/2026, 4:30:50 pm (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 4/Jul/2026, 3:50:57 pm (UTC)'!
 handlePostNoteFX: anInteger
 	"Note: pitch slide effects must be handled *after* the note on, otherwise the slide gets overridden."
 	| command v |
 	command := anInteger bitShift: -8.
 	v := anInteger bitAnd: 16rFF.
-	command = 85 "U (slide pitch up)" ifTrue: [patch adjustNoteBy: v / 16.0 glide:  track tracker tpl. ^ self].
-	command = 68 "D (slide pitch down)" ifTrue: [patch adjustNoteBy: v / -16.0 glide:  track tracker tpl. ^ self].
+	command = 85 "U (slide pitch up)" ifTrue: [patch adjustNoteBy: v / 16.0 glide:  track tracker ticksToNextLine. ^ self].
+	command = 68 "D (slide pitch down)" ifTrue: [patch adjustNoteBy: v / -16.0 glide:  track tracker ticksToNextLine. ^ self].
 	command = 60 "< (speed backwards)" ifTrue: [patch setSpeed: (#[0.0 -0.125 -0.25 -0.375 -0.5 -0.66 -0.75 -0.9 -1.0 -1.25 -1.5 -1.75 -2.0 -3.0 -5.0 -8.0] at: (v bitShift: -4) + 1) glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
 	command = 62 "> (speed forward)" ifTrue: [patch setSpeed: (#[0.0 0.125 0.25 0.375 0.5 0.66 0.75 0.9 1.0 1.25 1.5 1.75 2.0 3.0 5.0 8.0] at: (v bitShift: -4) + 1) glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
 	command = 47 "/ (forward stroke)" ifTrue:

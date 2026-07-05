@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 5 July 2026 at 12:55:00 am'!
+'From Cuis7.9 [latest update: #8030] on 5 July 2026 at 5:09:47 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 633!
+!provides: 'Signals' 1 634!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1902,6 +1902,16 @@ Object subclass: #Polyphase13TapOversampler2x
 	category: 'Signals-Algorithms'!
 !classDefinition: 'Polyphase13TapOversampler2x class' category: #'Signals-Algorithms'!
 Polyphase13TapOversampler2x class
+	instanceVariableNames: ''!
+
+!classDefinition: #ResLPC16FileReader category: #'Signals-Algorithms'!
+Object subclass: #ResLPC16FileReader
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Algorithms'!
+!classDefinition: 'ResLPC16FileReader class' category: #'Signals-Algorithms'!
+ResLPC16FileReader class
 	instanceVariableNames: ''!
 
 !classDefinition: #STFT category: #'Signals-Algorithms'!
@@ -14351,31 +14361,33 @@ spectrum: aBuffer
 	spectrum := aBuffer.
 	self redrawNeeded! !
 
-!SpectrumMorph methodsFor: 'drawing' stamp: 'len 13/May/2026, 7:26:17 am (UTC)'!
+!SpectrumMorph methodsFor: 'drawing' stamp: 'len 5/Jul/2026, 10:07:11 am (UTC)'!
 drawBars: bins on: aCanvas
-	| step x h |
+	| step x h n strokeWidth |
 	step := self morphWidth / bins size asFloat.
+	strokeWidth := step max: 1.0.
 	h := self morphHeight.
 	x := 0.
+	n := Viridis size - 1.0.
 	1 to: bins size do: [:i|
 		| v y |
 		(v := bins at: i) > 0.0 ifTrue:
 			[y := (1.0 - v) * h.
-			aCanvas line: x@y to: x@h width: step color: (Viridis at: (v * Viridis size + 1.0) truncated)].
+			aCanvas line: x @ y to: x @ h width: strokeWidth color: (Viridis at: (v * n + 1.0) truncated)].
 		x := x + step]! !
 
-!SpectrumMorph methodsFor: 'drawing' stamp: 'len 13/May/2026, 7:26:25 am (UTC)'!
+!SpectrumMorph methodsFor: 'drawing' stamp: 'len 5/Jul/2026, 10:08:34 am (UTC)'!
 drawLogBars: bins on: aCanvas
-	| step x h |
+	| step x h n |
 	step := self morphWidth / 20.0.
 	h := self morphHeight.
 	x := 0.
+	n := Viridis size - 1.0.
 	1 to: bins size do: [:i|
 		| v y |
 		y := (1.0 - (v := bins at: i)) * h.
 		"v := v min: 0.99 max: 0.1." "make it a bit more visible on black background"
-		aCanvas fillRectangle: (x@y corner: x+step@h) color: (Viridis at: (v * Viridis size + 1.0) truncated).
-		x := x + step.
+		aCanvas fillRectangle: (x @ y corner: (x := x + step) @ h) color: (Viridis at: (v * n + 1.0) truncated).
 		step := step * 0.95]! !
 
 !SpectrumMorph methodsFor: 'drawing' stamp: 'len 13/May/2026, 7:26:30 am (UTC)'!
@@ -16660,6 +16672,22 @@ oversampling: x0 do: aBlock
 	d6 := d5. d5 := d4. d4 := d3. d3 := d2. d2 := d1. d1 := d0.
 	e1 := e0.
 	^ answer! !
+
+!ResLPC16FileReader methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:17:18 am (UTC)'!
+readFromFileEntry: fileEntry
+	^ fileEntry readStreamDo: [:strm| self readFromStream: strm]! !
+
+!ResLPC16FileReader methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:27:20 am (UTC)'!
+readFromStream: aStream
+"	aStream upToAll: 'EST_Header_End'.
+	diphones := OrderedDictionary new.
+	[(line := aStream nextLine) startsWith: 'EST_File_Track'] whileFalse:
+		[tokens := line findTokens: ' '.
+		diphones at: tokens first put: {tokens allButFirst collect: [:each| each asNumber]}].
+	[aStream atEnd] whileFalse:
+		[aStream upToAll: 'NumFrames '.
+		numberOfFrames := aStream nextLine asNumber.
+		...]"! !
 
 !STFT methodsFor: 'initialization' stamp: 'len 30/Mar/2026, 1:14:08 pm (UTC)'!
 window: anArray

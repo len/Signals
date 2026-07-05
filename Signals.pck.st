@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 5 July 2026 at 5:09:47 pm'!
+'From Cuis7.9 [latest update: #8030] on 6 July 2026 at 4:26:08 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 634!
+!provides: 'Signals' 1 635!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -316,7 +316,7 @@ Sample class
 
 !classDefinition: #Clip category: #'Signals-Samples'!
 Sample subclass: #Clip
-	instanceVariableNames: 'frames'
+	instanceVariableNames: 'strip height'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Samples'!
@@ -996,7 +996,7 @@ OberheimSVF class
 
 !classDefinition: #Patch category: #'Signals-Kernel'!
 ActiveModel subclass: #Patch
-	instanceVariableNames: 'modules receivers audioOutput buses controlBus note noteIncrement speed speedIncrement glideTicks'
+	instanceVariableNames: 'modules receivers audioOutput clip buses controlBus note noteIncrement speed speedIncrement glideTicks'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Kernel'!
@@ -5564,10 +5564,11 @@ waveform
 		canvas line: x @ y to: x @ (h // 2) width: 1 color: Color black].
 	^ answer! !
 
-!Sample methodsFor: 'private' stamp: 'len 11/Jun/2026, 8:28:40 pm (UTC)'!
+!Sample methodsFor: 'private' stamp: 'len 5/Jul/2026, 8:47:54 pm (UTC)'!
 buffer: aFloatArray rate: aNumber
 	buffer := aFloatArray.
 	rate := aNumber.
+	speed := 1.0.
 	offset := 0.0.
 	loopEnd := buffer size.
 	loopLength := 0.
@@ -5661,47 +5662,46 @@ serviceLoadSample
 		description:'load the sample to the samples library'
 		buttonLabel: 'load sample') argumentGetter: [:fileList| fileList selectedFileEntry]! !
 
-!Clip methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 4:43:44 pm (UTC)'!
+!Clip methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:19:41 pm (UTC)'!
 asJsonWithBuffers: aList
-	| frameBits frameBitsAsFloats |
-	frameBits := self framesAsSingleForm bits.
-	frameBitsAsFloats := Float32Array new: frameBits size.
-	frameBitsAsFloats replaceFrom: 1 to: frameBitsAsFloats size with: frameBits.
+	| stripBitsAsFloats |
+	stripBitsAsFloats := Float32Array new: strip bits size.
+	stripBitsAsFloats replaceFrom: 1 to: stripBitsAsFloats size with: strip bits.
 	^ (super asJsonWithBuffers: aList)
-		at: #width put: frames first width;
-		at: #height put: frames first height;
-		at: #depth put: frames first depth;
-		at: #frameCount put: frames size;
-		at: #frameBits put: (aList indexOf: frameBitsAsFloats ifAbsent: [aList add: frameBitsAsFloats. aList size]);
+		at: #width put: self width;
+		at: #height put: height;
+		at: #depth put: strip depth;
+		at: #frameCount put: strip height // height;
+		at: #frameBits put: (aList indexOf: stripBitsAsFloats ifAbsent: [aList add: stripBitsAsFloats. aList size]);
 		yourself! !
 
-!Clip methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:09:40 pm (UTC)'!
+!Clip methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:22:52 pm (UTC)'!
 copy
-	^ super copy frames: frames! !
+	^ super copy strip: strip! !
 
-!Clip methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:09:05 pm (UTC)'!
-currentFrame
-	^ frames at: (((position ifNil: [1.0]) - 1.0 max: 0.0) / buffer size * (frames size - 1) + 1.0) truncated! !
-
-!Clip methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 2:46:16 pm (UTC)'!
-frames
-	^ frames! !
-
-!Clip methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 2:46:08 pm (UTC)'!
+!Clip methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:17:24 pm (UTC)'!
 frames: anArray
-	frames := anArray! !
-
-!Clip methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 4:24:43 pm (UTC)'!
-framesAsSingleForm
-	| answer w h y |
-	w := frames first width.
-	h := frames first height.
-	answer := Form extent: frames first width @ (frames first height * frames size) depth: frames first depth.
+	| width y |
+	width := anArray first width.
+	height := anArray first height.
+	strip := Form extent: width @ (height * anArray size) depth: anArray first depth.
 	y := 0.
-	frames do: [:each|
-		answer copy: (0@y corner: w@(y+h)) from: 0 @ 0 in: each rule: Form over.
-		y := y + h].
-	^ answer! !
+	anArray do: [:each|
+		strip copy: (0 @ y corner: width @ (y + height)) from: 0 @ 0 in: each rule: Form over.
+		y := y + height]! !
+
+!Clip methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 8:08:10 pm (UTC)'!
+height
+	^ height! !
+
+!Clip methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:15:04 pm (UTC)'!
+line
+	| phase v line |
+	phase := ((position ifNil: [1.0]) - 1.0 max: 0.0) / buffer size.
+	(v := speed abs) >= 0.25 ifTrue: [^ (phase * strip height / height) truncated * height].
+	line := phase * strip height.
+	v := v * 4.0.
+	^ line * (1.0 - v) + ((line / height) truncated * height * v)! !
 
 !Clip methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:15:07 pm (UTC)'!
 rackable
@@ -5711,23 +5711,34 @@ rackable
 	answer flap addMorph: self panel.
 	^ answer! !
 
-!Clip methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 4:44:11 pm (UTC)'!
+!Clip methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:21:24 pm (UTC)'!
 readFromJson: json buffers: aList
-	| w h depth frameCount framesAsSingleForm frameBits frameBitsAsFloats |
+	| width depth frameCount stripBits stripBitsAsFloats |
 	super readFromJson: json buffers: aList.
-	w := json at: #width.
-	h := json at: #height.
+	width := json at: #width.
+	height := json at: #height.
 	depth  := json at: #depth.
 	frameCount := json at: #frameCount.
-	frameBitsAsFloats := aList at: (json at: #frameBits).
-	frameBits := Bitmap new: frameBitsAsFloats size.
-	frameBits replaceFrom: 1 to: frameBits size with: frameBitsAsFloats startingAt: 1.
-	framesAsSingleForm := Form extent: w @ (h * frameCount) depth: depth bits: frameBits.
-	frames := (0 to: h*frameCount - 1 by: h) collect: [:y| framesAsSingleForm copy: (0 @ y extent: w @ h)]! !
+	stripBitsAsFloats := aList at: (json at: #frameBits).
+	stripBits := Bitmap new: stripBitsAsFloats size.
+	stripBits replaceFrom: 1 to: stripBits size with: stripBitsAsFloats startingAt: 1.
+	strip := Form extent: width @ (height * frameCount) depth: depth bits: stripBits! !
 
 !Clip methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:08:03 pm (UTC)'!
 screen
 	^ ClipMorph new clip: self! !
+
+!Clip methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:22:07 pm (UTC)'!
+strip
+	^ strip! !
+
+!Clip methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:23:02 pm (UTC)'!
+strip: aForm
+	strip := aForm! !
+
+!Clip methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 8:08:30 pm (UTC)'!
+width
+	^ self strip width! !
 
 !Clip class methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 2:57:32 pm (UTC)'!
 clipsDirectory
@@ -10579,6 +10590,10 @@ buses: anArray
 	buses := anArray.
 	self setBuses! !
 
+!Patch methodsFor: 'accessing' stamp: 'len 5/Jul/2026, 3:51:00 pm (UTC)'!
+clip
+	^ clip! !
+
 !Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 9:57:52 pm (UTC)'!
 enabled: aBoolean
 	modules do: [:each| (each isMemberOf: AudioOut) ifTrue: [each enabled: aBoolean]]! !
@@ -10599,12 +10614,13 @@ meterValue
 modules
 	^ modules! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 28/Jun/2026, 7:35:14 pm (UTC)'!
+!Patch methodsFor: 'accessing' stamp: 'len 5/Jul/2026, 3:50:44 pm (UTC)'!
 modules: anArray
 	modules = anArray ifTrue: [^ self].
 	modules := anArray.
 	receivers := Dictionary new.
 	self setBuses.
+	clip := modules detect: [:one| one isMemberOf: Clip] ifNone: [].
 	self triggerEvent: #modulesChanged! !
 
 !Patch methodsFor: 'accessing' stamp: 'len 28/Jun/2026, 6:31:11 pm (UTC)'!
@@ -13825,25 +13841,23 @@ someSubmorphPositionOrExtentChanged
 wantsSteps
 	^ true! !
 
-!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:09:55 pm (UTC)'!
+!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 8:25:22 pm (UTC)'!
 clip: aClip
 	| isNewClip |
 	isNewClip := clip isNil or: [clip buffer ~= aClip buffer].
 	clip := aClip.
 	lastPosition := clip position.
-	self morphExtent: clip currentFrame extent.
+	self morphExtent: clip width @ clip height.
 	self redrawNeeded! !
 
 !ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:04:20 pm (UTC)'!
 defaultExtent
 	^ `128 @ 128`! !
 
-!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 23/Jun/2026, 12:09:14 pm (UTC)'!
+!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 8:15:22 pm (UTC)'!
 drawOn: aCanvas
 	clip ifNil: [^ self].
-	aCanvas image: clip currentFrame at: 0 @ 0
-"	aCanvas geometryTransformation: (aCanvas currentTransformation scaledBy: -1 @ 1).
-	aCanvas image: clip currentFrame at: extent x negated @ 0"! !
+	aCanvas image: clip strip at: 0 @ 0 sourceRect: (0 @ clip line extent: clip width @ clip height)! !
 
 !ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:03:56 pm (UTC)'!
 extentChanged: oldExtent

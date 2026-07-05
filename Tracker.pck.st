@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 5 July 2026 at 3:30:46 pm'!
+'From Cuis7.9 [latest update: #8030] on 6 July 2026 at 4:26:12 am'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 89!
+!provides: 'Tracker' 1 90!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -19,7 +19,7 @@ DarkerTheme class
 
 !classDefinition: #Tracker category: #'Tracker-Kernel'!
 ActiveModel subclass: #Tracker
-	instanceVariableNames: 'instruments tracks sequence label bpm swing level inputOctave cursorPattern cursorLine cursorTrack playheadPattern playheadLine followPlayhead playStartPattern playStartLine playEndPattern playEndLine playingMask loop anyTrackSoloed ticksToNextLine peakLeft peakRight buses random undoStack redoStack'
+	instanceVariableNames: 'instruments tracks sequence label bpm swing level inputOctave cursorPattern cursorLine cursorTrack playheadPattern playheadLine followPlayhead playStartPattern playStartLine playEndPattern playEndLine playingMask loop anyTrackSoloed ticksToNextLine peakLeft peakRight buses random undoStack redoStack videoTrackA videoTrackB videoOperation bitblt'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Tracker-Kernel'!
@@ -29,7 +29,7 @@ Tracker class
 
 !classDefinition: #TrackerWindow category: #'Tracker-Morphic'!
 SystemWindow subclass: #TrackerWindow
-	instanceVariableNames: 'instrumentEditor instrumentRack adjuster meter arranger patternEditor lowerPane'
+	instanceVariableNames: 'instrumentEditor instrumentRack videoMonitor adjuster meter arranger patternEditor lowerPane'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Tracker-Morphic'!
@@ -95,6 +95,16 @@ BoxMorph subclass: #TransportStatusMorph
 	category: 'Tracker-Morphic'!
 !classDefinition: 'TransportStatusMorph class' category: #'Tracker-Morphic'!
 TransportStatusMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #VideoMonitorMorph category: #'Tracker-Morphic'!
+BoxMorph subclass: #VideoMonitorMorph
+	instanceVariableNames: 'tracker'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Tracker-Morphic'!
+!classDefinition: 'VideoMonitorMorph class' category: #'Tracker-Morphic'!
+VideoMonitorMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #Instrument category: #'Tracker-Kernel'!
@@ -772,7 +782,7 @@ setCursorTrack: anInteger
 	self triggerEvent: #cursorChanged.
 	self triggerEvent: #selectedTrackTuningChanged: with: self selectedTrack tuning! !
 
-!Tracker methodsFor: 'initialization' stamp: 'len 4/Jul/2026, 5:24:22 pm (UTC)'!
+!Tracker methodsFor: 'initialization' stamp: 'len 5/Jul/2026, 6:43:12 pm (UTC)'!
 initialize
 	instruments := Dictionary new.
 	tracks := #().
@@ -798,6 +808,10 @@ initialize
 
 	undoStack := OrderedCollection new.
 	redoStack := OrderedCollection new.
+	
+	bitblt := BitBlt toForm: (Form extent: 205 @ 128 depth: Display depth).
+	videoTrackA := videoTrackB := 0.
+	videoOperation := 0.
 	
 	self insertTrack: 1.
 	self insertPattern: 1.
@@ -1213,6 +1227,40 @@ undo
 	cursorLine := cursorLine min: (sequence at: cursorPattern) key length.
 	self triggerEvent: #cursorChanged! !
 
+!Tracker methodsFor: 'video' stamp: 'len 5/Jul/2026, 8:16:22 pm (UTC)'!
+clipA
+	^ (tracks at: videoTrackA ifAbsent: [^ nil]) clip! !
+
+!Tracker methodsFor: 'video' stamp: 'len 5/Jul/2026, 8:28:32 pm (UTC)'!
+clipB
+	^ (tracks at: videoTrackB ifAbsent: [^ nil]) clip! !
+
+!Tracker methodsFor: 'video' stamp: 'len 5/Jul/2026, 8:23:24 pm (UTC)'!
+currentVideoFrame
+	self clipB ifNotNil: [:clipB| bitblt sourceForm: clipB strip; sourceX: 0; sourceY: clipB line; width: clipB width; height: clipB height; combinationRule: Form over; copyBits].
+	self clipA ifNotNil: [:clipA| bitblt sourceForm: clipA strip; sourceX: 0; sourceY: clipA line; width: clipA width; height: clipA height; combinationRule: videoOperation; copyBits].
+	^ bitblt destForm! !
+
+!Tracker methodsFor: 'video' stamp: 'len 5/Jul/2026, 1:30:43 pm (UTC)'!
+setVideoCombinationAlpha: aNumber
+	bitblt fillColor: (aNumber = 1.0 ifFalse: [Color black alpha: aNumber])! !
+
+!Tracker methodsFor: 'video' stamp: 'len 5/Jul/2026, 1:28:22 pm (UTC)'!
+setVideoCombinationRule: anInteger
+	bitblt combinationRule: anInteger! !
+
+!Tracker methodsFor: 'video' stamp: 'len 5/Jul/2026, 6:38:45 pm (UTC)'!
+setVideoOperation: anInteger
+	videoOperation := anInteger! !
+
+!Tracker methodsFor: 'video' stamp: 'len 5/Jul/2026, 1:27:32 pm (UTC)'!
+setVideoSourceA: trackNumber
+	videoTrackA := trackNumber! !
+
+!Tracker methodsFor: 'video' stamp: 'len 5/Jul/2026, 1:27:38 pm (UTC)'!
+setVideoSourceB: trackNumber
+	videoTrackB := trackNumber! !
+
 !Tracker class methodsFor: 'as yet unclassified' stamp: 'len 5/Apr/2026, 10:24:41 am (UTC)'!
 fileReaderServicesForFileEntry: filename suffix: suffix
 	suffix = 'song' ifTrue: [^ {self serviceLoadSong}].
@@ -1262,17 +1310,29 @@ saveProject
 		(self class package packageDirectory / 'data' / 'projects' // (newName, '.song')) writeStreamDo: [:s| model writeOn: s].
 		self setLabel: newName]! !
 
-!TrackerWindow methodsFor: 'actions' stamp: 'len 30/Jun/2026, 8:01:53 pm (UTC)'!
+!TrackerWindow methodsFor: 'actions' stamp: 'len 5/Jul/2026, 4:11:34 pm (UTC)'!
 setInstrumentEditorMode: editorMode
-	instrumentEditor visible = editorMode ifTrue: [^ self].
-	instrumentEditor visible: editorMode.
-	adjuster visible: editorMode.
-	instrumentRack visible: editorMode not.
-	editorMode ifFalse: [instrumentRack update]. "in case the order of the modules changed"
+	editorMode ifTrue: [^ self setMode: #editor].
+	videoMonitor visible ifFalse: [self setMode: #rack]! !
+
+!TrackerWindow methodsFor: 'actions' stamp: 'len 5/Jul/2026, 4:07:53 pm (UTC)'!
+setMode: mode
+	mode = (videoMonitor visible ifTrue: [#video] ifFalse: [instrumentEditor visible ifTrue: [#editor] ifFalse: [#rack]]) ifTrue: [^ self].
+	videoMonitor visible: mode = #video.
+	instrumentEditor visible: mode = #editor.
+	instrumentRack visible: mode = #rack.
+	adjuster visible: mode ~= #rack.
+	mode = #rack ifTrue: [instrumentRack update]. "in case the order of the modules changed"
 	"why need to do this? otherwise the lower pane doesn't expand properly when going to the smaller instrument rack:"
 	lowerPane delete.
-	layoutMorph addMorph: lowerPane proportionalHeight: (editorMode ifTrue: [0.5] ifFalse: [1.0]).
-	self triggerEvent: #instrumentEditorModeChanged: with: editorMode! !
+	layoutMorph addMorph: lowerPane proportionalHeight: (mode = #rack ifTrue: [1.0] ifFalse: [0.5]).
+	self triggerEvent: #instrumentEditorModeChanged: with: mode = #editor.
+	self triggerEvent: #videoModeChanged: with: mode = #video! !
+
+!TrackerWindow methodsFor: 'actions' stamp: 'len 5/Jul/2026, 4:09:57 pm (UTC)'!
+setVideoMode: videoMode
+	videoMode ifTrue: [^ self setMode: #video].
+	videoMonitor visible ifTrue: [self setMode: #rack]! !
 
 !TrackerWindow methodsFor: 'actions' stamp: 'len 23/Jun/2026, 3:46:55 pm (UTC)'!
 toggleInstrumentRackOrEditor
@@ -1316,7 +1376,7 @@ keyStroke: anEvent
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 30/Jun/2026, 8:06:33 pm (UTC)'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 5/Jul/2026, 4:18:40 pm (UTC)'!
 buildBar
 	| bar transport bpmControl swingControl barFont |
 	barFont := FontFamily defaultFamilyPointSize: 16.
@@ -1353,17 +1413,16 @@ buildBar
 		receive: #state: from: model when: #selectedTrackTuningChanged:;
 "		receive: #options: from: Tuning when: #tuningsLibraryChanged:;"
 		setBalloonText: 'Tuning system').
-	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setInstrumentEditorMode: to: self; receive: #state: from: self when: #instrumentEditorModeChanged:; icon: (IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M602.67-120v-123.33h-156V-650H358v126.67H80V-840h278v123.33h244.67V-840H880v316.67H602.67V-650h-89.34v340h89.34v-126.67H880V-120H602.67Zm-456-653.33V-590v-183.33ZM669.33-370v183.33V-370Zm0-403.33V-590v-183.33Zm0 183.33h144v-183.33h-144V-590Zm0 403.33h144V-370h-144v183.33ZM146.67-590h144.66v-183.33H146.67V-590Z'); setBalloonText: 'Instrument editor mode').
-"	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setGeneratorsMode: to: self; receive: #state: from: self when: #generatorsModeChanged:; icon: self class lineStartSquareIcon; setBalloonText: 'All generators').
-	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setMixerMode: to: self; receive: #state: from: self when: #mixerModeChanged:; icon: self class lineEndSquareIcon; setBalloonText: 'All outputs').
-	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setVisualizationsMode: to: self; receive: #state: from: self when: #visualizationsModeChanged:; icon: self class waveIcon2; setBalloonText: 'All visualizations')."
+	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setInstrumentEditorMode: to: self; receive: #state: from: self when: #instrumentEditorModeChanged:; icon: self class instrumentEditorIcon; setBalloonText: 'Instrument editor mode').
+	bar addMorph: (ToggleButtonMorph new font: barFont; state: false; when: #changed: send: #setVideoMode: to: self; receive: #state: from: self when: #videoModeChanged:; icon: self class tvIcon3; setBalloonText: 'Video monitor mode').
 	^ bar! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 30/Jun/2026, 7:41:01 pm (UTC)'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 5/Jul/2026, 4:18:11 pm (UTC)'!
 buildMorphicWindow
 	| lowerLeftPane sequencerScroller patternEditorScroller bar |
 	instrumentEditor := InstrumentEditorMorph new setTracker: model.
 	instrumentRack := InstrumentRackMorph new setTracker: model.
+	videoMonitor := VideoMonitorMorph new setTracker: model.
 	meter := MultitrackMeterMorph new setTracker: model.
 	arranger := ArrangerMorph new setTracker: model.
 	patternEditor := PatternEditorMorph new setTracker: model.
@@ -1381,11 +1440,13 @@ buildMorphicWindow
 		addMorph: patternEditorScroller layoutSpec: LayoutSizeSpec new.
 	layoutMorph
 		addMorph: bar fixedHeight: 36;
-		addMorph: instrumentRack fixedHeight: 180.
-	layoutMorph addMorph: instrumentEditor proportionalHeight: 0.5.
+		addMorph: instrumentRack fixedHeight: 180;
+		addMorph: instrumentEditor proportionalHeight: 0.5;
+		addMorph: videoMonitor proportionalHeight: 0.5.
 	adjuster := layoutMorph addAdjusterMorph submorphs first.
 	layoutMorph addMorph: lowerPane "proportionalHeight: 1.0".
 	instrumentEditor hide.
+	videoMonitor hide.
 	adjuster hide! !
 
 !TrackerWindow methodsFor: 'initialization' stamp: 'len 9/Apr/2026, 4:59:23 pm (UTC)'!
@@ -1449,6 +1510,10 @@ tvIcon
 !TrackerWindow class methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 7:45:27 pm (UTC)'!
 tvIcon2
 	^ IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M320-120v-80H160q-33 0-56.5-23.5T80-280v-480q0-33 23.5-56.5T160-840h640q33 0 56.5 23.5T880-760v480q0 33-23.5 56.5T800-200H640v80H320ZM160-280h640v-480H160v480Zm0 0v-480 480Z'! !
+
+!TrackerWindow class methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 3:45:38 pm (UTC)'!
+tvIcon3
+	^ IconMorph new viewBox: (0 @ 0 extent: 24 @ 24); pathData: 'M15.4142 4.99998H21.0082C21.556 4.99998 22 5.44461 22 6.00085V19.9991C22 20.5519 21.5447 21 21.0082 21H2.9918C2.44405 21 2 20.5553 2 19.9991V6.00085C2 5.44808 2.45531 4.99998 2.9918 4.99998H8.58579L6.05025 2.46445L7.46447 1.05023L11.4142 4.99998H12.5858L16.5355 1.05023L17.9497 2.46445L15.4142 4.99998ZM4 6.99998V19H20V6.99998H4Z'! !
 
 !TrackerWindow class methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 7:23:43 pm (UTC)'!
 waveIcon1
@@ -2756,6 +2821,39 @@ setTracker: aTracker
 	tracker := aTracker.
 	tracker when: #playingStatusChanged send: #redrawNeeded to: self! !
 
+!VideoMonitorMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 8:38:36 pm (UTC)'!
+drawOn: aCanvas
+	| frame |
+"	aCanvas fillRectangle: self localBounds color: Color black."
+	frame := tracker currentVideoFrame.
+	aCanvas
+		intoLocation: (AffineTransformation withScale: extent y / frame height asFloat)
+		do: [aCanvas image: frame at: 0 @ 0]! !
+
+!VideoMonitorMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 7:24:09 pm (UTC)'!
+requiresVectorCanvas
+	^ true! !
+
+!VideoMonitorMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 1:33:59 pm (UTC)'!
+setTracker: aTracker
+	tracker := aTracker! !
+
+!VideoMonitorMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 4:23:10 pm (UTC)'!
+step
+	self redrawNeeded! !
+
+!VideoMonitorMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 4:22:36 pm (UTC)'!
+stepTime
+	^ 30! !
+
+!VideoMonitorMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 4:22:46 pm (UTC)'!
+wantsSteps
+	^ true! !
+
+!Instrument methodsFor: 'accessing' stamp: 'len 5/Jul/2026, 8:25:45 pm (UTC)'!
+clip
+	^ patch clip! !
+
 !Instrument methodsFor: 'accessing' stamp: 'len 28/Dec/2025, 8:47:17 am (UTC)'!
 label
 	^ label! !
@@ -3119,6 +3217,10 @@ line: anInteger instrumentDo: instrumentBlock noteDo: noteBlock velocityDo: velo
 new: anInteger
 	^ self new initialize: anInteger! !
 
+!Track methodsFor: 'accessing' stamp: 'len 5/Jul/2026, 8:24:44 pm (UTC)'!
+clip
+	^ (instrument ifNil: [^ nil]) clip! !
+
 !Track methodsFor: 'accessing' stamp: 'len 9/Jan/2026, 8:09:05 am (UTC)'!
 enabled
 	^ soloed or: [muted not and: [tracker anyTrackSoloed not]]! !
@@ -3197,14 +3299,21 @@ forgetInstrument
 forgetScheduledTrigger
 	trigger := nil! !
 
-!Track methodsFor: 'playing' stamp: 'len 1/Jul/2026, 7:20:56 am (UTC)'!
+!Track methodsFor: 'playing' stamp: 'len 5/Jul/2026, 6:39:23 pm (UTC)'!
 handleGlobalFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
 	v := anInteger bitAnd: 16rFF.
 	"Global commands:"
 	command = 70 "F (set bpm)" ifTrue: [tracker bpm: (v max: 1). ^ self].
-	command = 84 "T (select track)" ifTrue: [tracker followPlayhead ifTrue: [tracker setCursorTrack: v]. ^ self]! !
+	command = 84 "T (select track)" ifTrue: [tracker followPlayhead ifTrue: [tracker setCursorTrack: v]. ^ self].
+	command = 65 "A (set video source A)" ifTrue: [tracker setVideoSourceA: v. ^ self].
+	command = 66 "B (set video source B)" ifTrue: [tracker setVideoSourceB: v. ^ self].
+	command = 90 "X (BitBlt combination rule)" ifTrue: [tracker setVideoOperation: v. ^ self].
+	command = 78 "N (BitBlt alpha)" ifTrue: [tracker setVideoCombinationAlpha: v. ^ self].
+	command = 88 "H (video horizontal offset)" ifTrue: [tracker setVideoHorizontalOffset: v. ^ self].
+	command = 89 "V (video vertical offset)" ifTrue: [tracker setVideoVerticalOffset: v. ^ self].
+! !
 
 !Track methodsFor: 'playing' stamp: 'len 1/Jul/2026, 7:21:07 am (UTC)'!
 playTrigger

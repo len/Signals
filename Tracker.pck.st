@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 5 July 2026 at 12:55:22 am'!
+'From Cuis7.9 [latest update: #8030] on 5 July 2026 at 3:30:46 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 88!
+!provides: 'Tracker' 1 89!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -707,19 +707,17 @@ moveCursorLineBottom
 moveCursorLineDown
 	self moveCursorLineDown: 1! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 13/Jun/2026, 5:47:25 pm (UTC)'!
+!Tracker methodsFor: 'cursor' stamp: 'len 5/Jul/2026, 8:29:35 am (UTC)'!
 moveCursorLineDown: anInteger
 	| n |
 	self isPlaying ifTrue: [self followPlayhead: false].
 	cursorLine := cursorLine + anInteger.
 	n := self selectedPattern length.
 	cursorLine > n ifTrue:
-		[cursorPattern < sequence size
-			ifTrue:
-				[cursorPattern := cursorPattern + 1.
-				cursorLine := cursorLine - n min: self selectedPattern length.
-				self triggerEvent: #cursorChanged]
-			ifFalse: [cursorLine := n]].
+		[cursorPattern := cursorPattern + 1.
+		cursorPattern > sequence size ifTrue: [cursorPattern := 1].
+		cursorLine := cursorLine - n min: self selectedPattern length.
+		self triggerEvent: #cursorChanged].
 	self triggerEvent: #cursorChanged! !
 
 !Tracker methodsFor: 'cursor' stamp: 'len 13/Jun/2026, 5:47:34 pm (UTC)'!
@@ -732,32 +730,30 @@ moveCursorLineTop
 moveCursorLineUp
 	self moveCursorLineUp: 1! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 13/Jun/2026, 5:47:20 pm (UTC)'!
+!Tracker methodsFor: 'cursor' stamp: 'len 5/Jul/2026, 8:28:53 am (UTC)'!
 moveCursorLineUp: anInteger
 	self isPlaying ifTrue: [self followPlayhead: false].
 	cursorLine := cursorLine - anInteger.
 	cursorLine < 1 ifTrue:
-		[cursorPattern > 1
-			ifTrue:
-				[cursorPattern := cursorPattern - 1.
-				cursorLine := self selectedPattern length + cursorLine max: 1.
-				self triggerEvent: #cursorPatternChanged: with: cursorPattern]
-			ifFalse: [cursorLine := 1]].
+		[cursorPattern := cursorPattern - 1.
+		cursorPattern < 1 ifTrue: [cursorPattern := sequence size].
+		cursorLine := self selectedPattern length + cursorLine max: 1.
+		self triggerEvent: #cursorPatternChanged: with: cursorPattern].
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 13/Jun/2026, 5:46:59 pm (UTC)'!
+!Tracker methodsFor: 'cursor' stamp: 'len 5/Jul/2026, 8:27:42 am (UTC)'!
 moveCursorPatternDown
 	self isPlaying ifTrue: [self followPlayhead: false].
-	cursorPattern < sequence size ifFalse: [^ self].
 	cursorPattern := cursorPattern + 1.
+	cursorPattern > sequence size ifTrue: [cursorPattern := 1].
 	cursorLine := cursorLine min: self selectedPattern length.
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 13/Jun/2026, 5:47:06 pm (UTC)'!
+!Tracker methodsFor: 'cursor' stamp: 'len 5/Jul/2026, 8:28:08 am (UTC)'!
 moveCursorPatternUp
 	self isPlaying ifTrue: [self followPlayhead: false].
-	cursorPattern > 1 ifFalse: [^ self].
 	cursorPattern := cursorPattern - 1.
+	cursorPattern < 1 ifTrue: [cursorPattern := sequence size].
 	cursorLine := cursorLine min: self selectedPattern length.
 	self triggerEvent: #cursorChanged! !
 

@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 6 July 2026 at 4:26:12 am'!
+'From Cuis7.9 [latest update: #8030] on 6 July 2026 at 6:29:55 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 90!
+!provides: 'Tracker' 1 91!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -782,7 +782,7 @@ setCursorTrack: anInteger
 	self triggerEvent: #cursorChanged.
 	self triggerEvent: #selectedTrackTuningChanged: with: self selectedTrack tuning! !
 
-!Tracker methodsFor: 'initialization' stamp: 'len 5/Jul/2026, 6:43:12 pm (UTC)'!
+!Tracker methodsFor: 'initialization' stamp: 'len 6/Jul/2026, 9:07:19 am (UTC)'!
 initialize
 	instruments := Dictionary new.
 	tracks := #().
@@ -809,7 +809,7 @@ initialize
 	undoStack := OrderedCollection new.
 	redoStack := OrderedCollection new.
 	
-	bitblt := BitBlt toForm: (Form extent: 205 @ 128 depth: Display depth).
+	bitblt := BitBlt toForm: (Form extent: 227 @ 128 "16:9" depth: Display depth).
 	videoTrackA := videoTrackB := 0.
 	videoOperation := 0.
 	
@@ -1227,39 +1227,38 @@ undo
 	cursorLine := cursorLine min: (sequence at: cursorPattern) key length.
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'video' stamp: 'len 5/Jul/2026, 8:16:22 pm (UTC)'!
-clipA
-	^ (tracks at: videoTrackA ifAbsent: [^ nil]) clip! !
-
-!Tracker methodsFor: 'video' stamp: 'len 5/Jul/2026, 8:28:32 pm (UTC)'!
-clipB
-	^ (tracks at: videoTrackB ifAbsent: [^ nil]) clip! !
-
-!Tracker methodsFor: 'video' stamp: 'len 5/Jul/2026, 8:23:24 pm (UTC)'!
+!Tracker methodsFor: 'video' stamp: 'len 6/Jul/2026, 11:13:23 am (UTC)'!
 currentVideoFrame
-	self clipB ifNotNil: [:clipB| bitblt sourceForm: clipB strip; sourceX: 0; sourceY: clipB line; width: clipB width; height: clipB height; combinationRule: Form over; copyBits].
-	self clipA ifNotNil: [:clipA| bitblt sourceForm: clipA strip; sourceX: 0; sourceY: clipA line; width: clipA width; height: clipA height; combinationRule: videoOperation; copyBits].
+	self videoA ifNotNil: [:clipA| bitblt sourceForm: clipA strip; sourceX: 0; sourceY: clipA line; width: clipA width; height: clipA height; destX: bitblt destForm width - clipA width // 2; combinationRule: Form over; copyBits].
+	self videoB ifNotNil: [:clipB| bitblt sourceForm: clipB strip; sourceX: 0; sourceY: clipB line; width: clipB width; height: clipB height; destX: bitblt destForm width - clipB width // 2; combinationRule: videoOperation; copyBits].
 	^ bitblt destForm! !
 
-!Tracker methodsFor: 'video' stamp: 'len 5/Jul/2026, 1:30:43 pm (UTC)'!
-setVideoCombinationAlpha: aNumber
+!Tracker methodsFor: 'video' stamp: 'len 5/Jul/2026, 10:05:00 pm (UTC)'!
+setVideoBlend: aNumber
 	bitblt fillColor: (aNumber = 1.0 ifFalse: [Color black alpha: aNumber])! !
-
-!Tracker methodsFor: 'video' stamp: 'len 5/Jul/2026, 1:28:22 pm (UTC)'!
-setVideoCombinationRule: anInteger
-	bitblt combinationRule: anInteger! !
 
 !Tracker methodsFor: 'video' stamp: 'len 5/Jul/2026, 6:38:45 pm (UTC)'!
 setVideoOperation: anInteger
 	videoOperation := anInteger! !
 
-!Tracker methodsFor: 'video' stamp: 'len 5/Jul/2026, 1:27:32 pm (UTC)'!
+!Tracker methodsFor: 'video' stamp: 'len 6/Jul/2026, 11:22:29 am (UTC)'!
 setVideoSourceA: trackNumber
-	videoTrackA := trackNumber! !
+	videoTrackA := trackNumber.
+	followPlayhead ifTrue: [self setCursorTrack: trackNumber].
+	bitblt destForm fillBlack! !
 
-!Tracker methodsFor: 'video' stamp: 'len 5/Jul/2026, 1:27:38 pm (UTC)'!
+!Tracker methodsFor: 'video' stamp: 'len 6/Jul/2026, 11:22:38 am (UTC)'!
 setVideoSourceB: trackNumber
-	videoTrackB := trackNumber! !
+	videoTrackB := trackNumber.
+	bitblt destForm fillBlack! !
+
+!Tracker methodsFor: 'video' stamp: 'len 6/Jul/2026, 11:13:05 am (UTC)'!
+videoA
+	^ (tracks at: videoTrackA ifAbsent: [^ nil]) video! !
+
+!Tracker methodsFor: 'video' stamp: 'len 6/Jul/2026, 11:13:23 am (UTC)'!
+videoB
+	^ (tracks at: videoTrackB ifAbsent: [^ nil]) video! !
 
 !Tracker class methodsFor: 'as yet unclassified' stamp: 'len 5/Apr/2026, 10:24:41 am (UTC)'!
 fileReaderServicesForFileEntry: filename suffix: suffix
@@ -2746,7 +2745,7 @@ updateTracks
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 3/Jul/2026, 8:42:31 am (UTC)'!
+!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 5/Jul/2026, 10:16:08 pm (UTC)'!
 initialize
 	"
 	self initialize
@@ -2767,8 +2766,10 @@ initialize
 	'UDG+-' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 280)].
 	"Volume and Pan:"
 	'LPIOJK' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 160)].
+	"Video:"
+	'ABXN' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 320)].
 	"Other:"
-	'FQRYT' do: [:c| FXColors at: c codePoint put: (Color okl: 0.95 c: 0 h: 0)]! !
+	'FQRY' do: [:c| FXColors at: c codePoint put: (Color okl: 0.95 c: 0 h: 0)]! !
 
 !PatternEditorMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026, 12:58:39 pm (UTC)'!
 cursorColor
@@ -2821,13 +2822,14 @@ setTracker: aTracker
 	tracker := aTracker.
 	tracker when: #playingStatusChanged send: #redrawNeeded to: self! !
 
-!VideoMonitorMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 8:38:36 pm (UTC)'!
+!VideoMonitorMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Jul/2026, 8:38:33 am (UTC)'!
 drawOn: aCanvas
-	| frame |
+	| frame scale |
 "	aCanvas fillRectangle: self localBounds color: Color black."
 	frame := tracker currentVideoFrame.
+	scale := extent y / frame height asFloat.
 	aCanvas
-		intoLocation: (AffineTransformation withScale: extent y / frame height asFloat)
+		intoLocation: (AffineTransformation withScale: scale position: extent x // 2 - (frame width * scale // 2) @ 0)
 		do: [aCanvas image: frame at: 0 @ 0]! !
 
 !VideoMonitorMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 7:24:09 pm (UTC)'!
@@ -2849,10 +2851,6 @@ stepTime
 !VideoMonitorMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 4:22:46 pm (UTC)'!
 wantsSteps
 	^ true! !
-
-!Instrument methodsFor: 'accessing' stamp: 'len 5/Jul/2026, 8:25:45 pm (UTC)'!
-clip
-	^ patch clip! !
 
 !Instrument methodsFor: 'accessing' stamp: 'len 28/Dec/2025, 8:47:17 am (UTC)'!
 label
@@ -2895,6 +2893,10 @@ setOwnerTrack: aTrack
 !Instrument methodsFor: 'accessing' stamp: 'len 3/Jan/2026, 8:40:08 am (UTC)'!
 track
 	^ track! !
+
+!Instrument methodsFor: 'accessing' stamp: 'len 6/Jul/2026, 11:12:44 am (UTC)'!
+video
+	^ patch video! !
 
 !Instrument methodsFor: 'copying' stamp: 'len 19/Apr/2026, 3:49:45 pm (UTC)'!
 copy
@@ -3217,10 +3219,6 @@ line: anInteger instrumentDo: instrumentBlock noteDo: noteBlock velocityDo: velo
 new: anInteger
 	^ self new initialize: anInteger! !
 
-!Track methodsFor: 'accessing' stamp: 'len 5/Jul/2026, 8:24:44 pm (UTC)'!
-clip
-	^ (instrument ifNil: [^ nil]) clip! !
-
 !Track methodsFor: 'accessing' stamp: 'len 9/Jan/2026, 8:09:05 am (UTC)'!
 enabled
 	^ soloed or: [muted not and: [tracker anyTrackSoloed not]]! !
@@ -3282,6 +3280,10 @@ tuning: aTuning
 tuningOrNil
 	^ tuning! !
 
+!Track methodsFor: 'accessing' stamp: 'len 6/Jul/2026, 11:12:44 am (UTC)'!
+video
+	^ (instrument ifNil: [^ nil]) video! !
+
 !Track methodsFor: 'initialization' stamp: 'len 26/Feb/2026, 10:36:32 am (UTC)'!
 initialize
 	muted := false.
@@ -3299,21 +3301,17 @@ forgetInstrument
 forgetScheduledTrigger
 	trigger := nil! !
 
-!Track methodsFor: 'playing' stamp: 'len 5/Jul/2026, 6:39:23 pm (UTC)'!
+!Track methodsFor: 'playing' stamp: 'len 5/Jul/2026, 10:05:45 pm (UTC)'!
 handleGlobalFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
 	v := anInteger bitAnd: 16rFF.
 	"Global commands:"
 	command = 70 "F (set bpm)" ifTrue: [tracker bpm: (v max: 1). ^ self].
-	command = 84 "T (select track)" ifTrue: [tracker followPlayhead ifTrue: [tracker setCursorTrack: v]. ^ self].
 	command = 65 "A (set video source A)" ifTrue: [tracker setVideoSourceA: v. ^ self].
 	command = 66 "B (set video source B)" ifTrue: [tracker setVideoSourceB: v. ^ self].
-	command = 90 "X (BitBlt combination rule)" ifTrue: [tracker setVideoOperation: v. ^ self].
-	command = 78 "N (BitBlt alpha)" ifTrue: [tracker setVideoCombinationAlpha: v. ^ self].
-	command = 88 "H (video horizontal offset)" ifTrue: [tracker setVideoHorizontalOffset: v. ^ self].
-	command = 89 "V (video vertical offset)" ifTrue: [tracker setVideoVerticalOffset: v. ^ self].
-! !
+	command = 88 "X (BitBlt combination rule)" ifTrue: [tracker setVideoOperation: v. ^ self].
+	command = 78 "N (BitBlt alpha)" ifTrue: [tracker setVideoBlend: v. ^ self]! !
 
 !Track methodsFor: 'playing' stamp: 'len 1/Jul/2026, 7:21:07 am (UTC)'!
 playTrigger

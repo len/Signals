@@ -25,6 +25,7 @@ The following are some of the features of Signals:
 * audio routing through buses (send effects, etc)
 * portamento and legato support
 * microtuning with arbitrary tuning systems per track
+* video (samples with video synchronized to the playhead) and video compositing with BitBlt
 * all code in pure Smalltalk, and available all the time for browsing or modification while running (lively environment)
 
 ### Smalltalk

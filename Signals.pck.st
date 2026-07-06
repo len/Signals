@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 6 July 2026 at 4:26:08 am'!
+'From Cuis7.9 [latest update: #8030] on 6 July 2026 at 6:29:51 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 635!
+!provides: 'Signals' 1 636!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -314,14 +314,14 @@ TunedGenerator subclass: #Sample
 Sample class
 	instanceVariableNames: ''!
 
-!classDefinition: #Clip category: #'Signals-Samples'!
-Sample subclass: #Clip
+!classDefinition: #Video category: #'Signals-Samples'!
+Sample subclass: #Video
 	instanceVariableNames: 'strip height'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Samples'!
-!classDefinition: 'Clip class' category: #'Signals-Samples'!
-Clip class
+!classDefinition: 'Video class' category: #'Signals-Samples'!
+Video class
 	instanceVariableNames: ''!
 
 !classDefinition: #Wavetable category: #'Signals-Samples'!
@@ -996,7 +996,7 @@ OberheimSVF class
 
 !classDefinition: #Patch category: #'Signals-Kernel'!
 ActiveModel subclass: #Patch
-	instanceVariableNames: 'modules receivers audioOutput clip buses controlBus note noteIncrement speed speedIncrement glideTicks'
+	instanceVariableNames: 'modules receivers audioOutput video buses controlBus note noteIncrement speed speedIncrement glideTicks'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Kernel'!
@@ -1464,16 +1464,6 @@ BoxMorph subclass: #ZoomerMorph
 ZoomerMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #ClipMorph category: #'Signals-Morphic-Widgets'!
-BoxMorph subclass: #ClipMorph
-	instanceVariableNames: 'clip color image lastPosition needsRecomputingImage'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-Morphic-Widgets'!
-!classDefinition: 'ClipMorph class' category: #'Signals-Morphic-Widgets'!
-ClipMorph class
-	instanceVariableNames: ''!
-
 !classDefinition: #LFOShapeMorph category: #'Signals-Morphic-Widgets'!
 BoxMorph subclass: #LFOShapeMorph
 	instanceVariableNames: 'color lfo'
@@ -1562,6 +1552,16 @@ BoxMorph subclass: #StripChartMorph
 	category: 'Signals-Morphic-Widgets'!
 !classDefinition: 'StripChartMorph class' category: #'Signals-Morphic-Widgets'!
 StripChartMorph class
+	instanceVariableNames: ''!
+
+!classDefinition: #VideoMorph category: #'Signals-Morphic-Widgets'!
+BoxMorph subclass: #VideoMorph
+	instanceVariableNames: 'clip color image lastPosition needsRecomputingImage'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Morphic-Widgets'!
+!classDefinition: 'VideoMorph class' category: #'Signals-Morphic-Widgets'!
+VideoMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #WaterfallMorph category: #'Signals-Morphic-Widgets'!
@@ -1654,14 +1654,14 @@ BoxMorph subclass: #TriangleButtonMorph
 TriangleButtonMorph class
 	instanceVariableNames: ''!
 
-!classDefinition: #VideoMorph category: #'Signals-Trash'!
-BoxMorph subclass: #VideoMorph
+!classDefinition: #VideoExperimentMorph category: #'Signals-Trash'!
+BoxMorph subclass: #VideoExperimentMorph
 	instanceVariableNames: 'screen bits video position increment'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Trash'!
-!classDefinition: 'VideoMorph class' category: #'Signals-Trash'!
-VideoMorph class
+!classDefinition: 'VideoExperimentMorph class' category: #'Signals-Trash'!
+VideoExperimentMorph class
 	instanceVariableNames: ''!
 
 !classDefinition: #WaveformMorph category: #'Signals-Trash'!
@@ -2075,8 +2075,8 @@ A multisample is the basis of a rompler (from "ROM" and "sampler"). It generates
 !Sample commentStamp: 'len 9/Apr/2026 23:16:22' prior: 0!
 A sample is a recorded signal. It has a buffer of recorded samples, a playback rate, and optional loop points. Samples can be played at different rates to produce different pitches.!
 
-!Clip commentStamp: '<historical>' prior: 0!
-Clips are just samples with video. In addition to the buffer of samples, they contain a list of video frames.!
+!Video commentStamp: '<historical>' prior: 0!
+Videos are just samples with not only audio but also video. In addition to the buffer of samples, they have a video strip, a single bitmap (a Form) containing all the video frames stacked vertically as a film strip.!
 
 !Wavetable commentStamp: '<historical>' prior: 0!
 Antialiased wavetable oscillator using spectral resynthesis.
@@ -5662,7 +5662,7 @@ serviceLoadSample
 		description:'load the sample to the samples library'
 		buttonLabel: 'load sample') argumentGetter: [:fileList| fileList selectedFileEntry]! !
 
-!Clip methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:19:41 pm (UTC)'!
+!Video methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:19:41 pm (UTC)'!
 asJsonWithBuffers: aList
 	| stripBitsAsFloats |
 	stripBitsAsFloats := Float32Array new: strip bits size.
@@ -5675,11 +5675,11 @@ asJsonWithBuffers: aList
 		at: #frameBits put: (aList indexOf: stripBitsAsFloats ifAbsent: [aList add: stripBitsAsFloats. aList size]);
 		yourself! !
 
-!Clip methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:22:52 pm (UTC)'!
+!Video methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 10:30:33 pm (UTC)'!
 copy
-	^ super copy strip: strip! !
+	^ super copy strip: strip height: height! !
 
-!Clip methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:17:24 pm (UTC)'!
+!Video methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:17:24 pm (UTC)'!
 frames: anArray
 	| width y |
 	width := anArray first width.
@@ -5690,20 +5690,20 @@ frames: anArray
 		strip copy: (0 @ y corner: width @ (y + height)) from: 0 @ 0 in: each rule: Form over.
 		y := y + height]! !
 
-!Clip methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 8:08:10 pm (UTC)'!
+!Video methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 8:08:10 pm (UTC)'!
 height
 	^ height! !
 
-!Clip methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:15:04 pm (UTC)'!
+!Video methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 10:49:40 pm (UTC)'!
 line
 	| phase v line |
 	phase := ((position ifNil: [1.0]) - 1.0 max: 0.0) / buffer size.
-	(v := speed abs) >= 0.25 ifTrue: [^ (phase * strip height / height) truncated * height].
+	(v := speed abs) >= 0.1 ifTrue: [^ (phase * strip height / height) truncated * height].
 	line := phase * strip height.
-	v := v * 4.0.
+	v := v * 10.0.
 	^ line * (1.0 - v) + ((line / height) truncated * height * v)! !
 
-!Clip methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:15:07 pm (UTC)'!
+!Video methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:15:07 pm (UTC)'!
 rackable
 	| answer |
 	answer := RackableMorph new model: self.
@@ -5711,7 +5711,7 @@ rackable
 	answer flap addMorph: self panel.
 	^ answer! !
 
-!Clip methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:21:24 pm (UTC)'!
+!Video methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:21:24 pm (UTC)'!
 readFromJson: json buffers: aList
 	| width depth frameCount stripBits stripBitsAsFloats |
 	super readFromJson: json buffers: aList.
@@ -5724,27 +5724,24 @@ readFromJson: json buffers: aList
 	stripBits replaceFrom: 1 to: stripBits size with: stripBitsAsFloats startingAt: 1.
 	strip := Form extent: width @ (height * frameCount) depth: depth bits: stripBits! !
 
-!Clip methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:08:03 pm (UTC)'!
+!Video methodsFor: 'as yet unclassified' stamp: 'len 6/Jul/2026, 11:16:59 am (UTC)'!
 screen
-	^ ClipMorph new clip: self! !
+	^ VideoMorph new clip: self! !
 
-!Clip methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:22:07 pm (UTC)'!
+!Video methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:22:07 pm (UTC)'!
 strip
 	^ strip! !
 
-!Clip methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:23:02 pm (UTC)'!
-strip: aForm
-	strip := aForm! !
+!Video methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 10:30:47 pm (UTC)'!
+strip: aForm height: anInteger
+	strip := aForm.
+	height := anInteger! !
 
-!Clip methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 8:08:30 pm (UTC)'!
+!Video methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 8:08:30 pm (UTC)'!
 width
 	^ self strip width! !
 
-!Clip class methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 2:57:32 pm (UTC)'!
-clipsDirectory
-	^ self package packageDirectory / 'data' / 'clips'! !
-
-!Clip class methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 2:56:22 pm (UTC)'!
+!Video class methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 2:56:22 pm (UTC)'!
 fromFileEntry: fileEntry
 	| answer frames |
 	answer := super fromFileEntry: fileEntry.
@@ -5755,11 +5752,15 @@ fromFileEntry: fileEntry
 	answer frames: frames.
 	^ answer! !
 
-!Clip class methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:02:40 pm (UTC)'!
-loadClipNamed: directoryName
-	| clip |
-	clip := self fromFileEntry: self clipsDirectory / directoryName // (directoryName, '.wav').
-	Library at: directoryName put: (clip label: directoryName)! !
+!Video class methodsFor: 'as yet unclassified' stamp: 'len 6/Jul/2026, 11:17:39 am (UTC)'!
+loadVideoNamed: directoryName
+	| video |
+	video := self fromFileEntry: self videosDirectory / directoryName // (directoryName, '.wav').
+	Library at: directoryName put: (video label: directoryName)! !
+
+!Video class methodsFor: 'as yet unclassified' stamp: 'len 6/Jul/2026, 11:17:57 am (UTC)'!
+videosDirectory
+	^ self package packageDirectory / 'data' / 'videos'! !
 
 !Wavetable methodsFor: 'accessing' stamp: 'len 29/Mar/2026, 8:29:29 am (UTC)'!
 frameCount
@@ -10590,10 +10591,6 @@ buses: anArray
 	buses := anArray.
 	self setBuses! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 5/Jul/2026, 3:51:00 pm (UTC)'!
-clip
-	^ clip! !
-
 !Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 9:57:52 pm (UTC)'!
 enabled: aBoolean
 	modules do: [:each| (each isMemberOf: AudioOut) ifTrue: [each enabled: aBoolean]]! !
@@ -10614,13 +10611,13 @@ meterValue
 modules
 	^ modules! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 5/Jul/2026, 3:50:44 pm (UTC)'!
+!Patch methodsFor: 'accessing' stamp: 'len 6/Jul/2026, 11:19:56 am (UTC)'!
 modules: anArray
 	modules = anArray ifTrue: [^ self].
 	modules := anArray.
 	receivers := Dictionary new.
 	self setBuses.
-	clip := modules detect: [:one| one isMemberOf: Clip] ifNone: [].
+	video := modules detect: [:one| one isMemberOf: Video] ifNone: [].
 	self triggerEvent: #modulesChanged! !
 
 !Patch methodsFor: 'accessing' stamp: 'len 28/Jun/2026, 6:31:11 pm (UTC)'!
@@ -10638,6 +10635,10 @@ speed: aNumber
 	speed := aNumber.
 	speedIncrement := 0.0.
 	glideTicks := 0! !
+
+!Patch methodsFor: 'accessing' stamp: 'len 6/Jul/2026, 11:12:44 am (UTC)'!
+video
+	^ video! !
 
 !Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:32 pm (UTC)'!
 adjustLevelBy: aNumber
@@ -13841,60 +13842,6 @@ someSubmorphPositionOrExtentChanged
 wantsSteps
 	^ true! !
 
-!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 8:25:22 pm (UTC)'!
-clip: aClip
-	| isNewClip |
-	isNewClip := clip isNil or: [clip buffer ~= aClip buffer].
-	clip := aClip.
-	lastPosition := clip position.
-	self morphExtent: clip width @ clip height.
-	self redrawNeeded! !
-
-!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:04:20 pm (UTC)'!
-defaultExtent
-	^ `128 @ 128`! !
-
-!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 8:15:22 pm (UTC)'!
-drawOn: aCanvas
-	clip ifNil: [^ self].
-	aCanvas image: clip strip at: 0 @ 0 sourceRect: (0 @ clip line extent: clip width @ clip height)! !
-
-!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:03:56 pm (UTC)'!
-extentChanged: oldExtent
-	needsRecomputingImage := true! !
-
-!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:03:56 pm (UTC)'!
-initialize
-	super initialize.
-	color := PatchMorph waveformColor.
-	image := Form extent: self defaultExtent depth: Display depth.
-	needsRecomputingImage := false! !
-
-!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:04:33 pm (UTC)'!
-sample: aSample
-	| isNewSample |
-	isNewSample := clip isNil or: [clip buffer ~= aSample buffer].
-	clip := aSample.
-	lastPosition := clip position.
-	needsRecomputingImage := needsRecomputingImage | isNewSample.
-	self redrawNeeded! !
-
-!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:04:33 pm (UTC)'!
-step
-	| position |
-	clip ifNil: [^ self].
-	(position := clip position) = lastPosition ifTrue: [^ self].
-	lastPosition := position.
-	self redrawNeeded! !
-
-!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:03:56 pm (UTC)'!
-stepTime
-	^ 30! !
-
-!ClipMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:03:56 pm (UTC)'!
-wantsSteps
-	^ true! !
-
 !LFOShapeMorph methodsFor: 'actions' stamp: 'len 22/Jun/2026, 9:05:25 pm (UTC)'!
 moveDown
 	| options |
@@ -14521,6 +14468,60 @@ drawOn: aCanvas
 requiresVectorCanvas
 	^ true! !
 
+!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 8:25:22 pm (UTC)'!
+clip: aClip
+	| isNewClip |
+	isNewClip := clip isNil or: [clip buffer ~= aClip buffer].
+	clip := aClip.
+	lastPosition := clip position.
+	self morphExtent: clip width @ clip height.
+	self redrawNeeded! !
+
+!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:04:20 pm (UTC)'!
+defaultExtent
+	^ `128 @ 128`! !
+
+!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 8:15:22 pm (UTC)'!
+drawOn: aCanvas
+	clip ifNil: [^ self].
+	aCanvas image: clip strip at: 0 @ 0 sourceRect: (0 @ clip line extent: clip width @ clip height)! !
+
+!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:03:56 pm (UTC)'!
+extentChanged: oldExtent
+	needsRecomputingImage := true! !
+
+!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:03:56 pm (UTC)'!
+initialize
+	super initialize.
+	color := PatchMorph waveformColor.
+	image := Form extent: self defaultExtent depth: Display depth.
+	needsRecomputingImage := false! !
+
+!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:04:33 pm (UTC)'!
+sample: aSample
+	| isNewSample |
+	isNewSample := clip isNil or: [clip buffer ~= aSample buffer].
+	clip := aSample.
+	lastPosition := clip position.
+	needsRecomputingImage := needsRecomputingImage | isNewSample.
+	self redrawNeeded! !
+
+!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:04:33 pm (UTC)'!
+step
+	| position |
+	clip ifNil: [^ self].
+	(position := clip position) = lastPosition ifTrue: [^ self].
+	lastPosition := position.
+	self redrawNeeded! !
+
+!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:03:56 pm (UTC)'!
+stepTime
+	^ 30! !
+
+!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:03:56 pm (UTC)'!
+wantsSteps
+	^ true! !
+
 !WaterfallMorph methodsFor: 'drawing' stamp: 'len 4/Feb/2026, 12:14:11 pm (UTC)'!
 drawOn: aCanvas
 	"Draw the form, wrapping, with the current row always at the top. This produces the the impression of infinite scrolling top to bottom (waterfall)."
@@ -14963,15 +14964,15 @@ mouseLeave: anEvent
 requiresVectorCanvas
 	^ true! !
 
-!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025, 9:45:00 am (UTC)'!
+!VideoExperimentMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025, 9:45:00 am (UTC)'!
 defaultExtent
 	^`256@192`! !
 
-!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025, 9:47:00 am (UTC)'!
+!VideoExperimentMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025, 9:47:00 am (UTC)'!
 drawOn: aCanvas
 	aCanvas image: video at: 0@0 sourceRect: (0@position extent: self morphExtent)! !
 
-!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025, 9:54:00 am (UTC)'!
+!VideoExperimentMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025, 9:54:00 am (UTC)'!
 initialize
 	super initialize.
 	bits := ByteArray new: 1024*1024*4.
@@ -14980,17 +14981,17 @@ initialize
 	self lineSize: self morphWidth.
 	increment := self morphHeight! !
 
-!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025, 9:41:00 am (UTC)'!
+!VideoExperimentMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025, 9:41:00 am (UTC)'!
 lineSize: anInteger
 	video := Form extent: anInteger @ (bits size // (anInteger * 4)) depth: 32 bits: bits! !
 
-!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025, 9:53:00 am (UTC)'!
+!VideoExperimentMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025, 9:53:00 am (UTC)'!
 step
 	position := position + increment.
 	position + self morphHeight > video height ifTrue: [position := position - video height].
 	self redrawNeeded! !
 
-!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025, 9:48:00 am (UTC)'!
+!VideoExperimentMorph methodsFor: 'as yet unclassified' stamp: 'len 6/Sep/2025, 9:48:00 am (UTC)'!
 stepTime
 	^ 25! !
 

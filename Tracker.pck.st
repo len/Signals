@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 6 July 2026 at 6:29:55 pm'!
+'From Cuis7.9 [latest update: #8030] on 7 July 2026 at 6:51:25 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 91!
+!provides: 'Tracker' 1 94!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -170,16 +170,16 @@ A pattern is a grid of triggers (notes and effect commands). The columns represe
 !Track commentStamp: '<historical>' prior: 0!
 A track can play one instrument at a time. It can be muted or soloed, and it can be set to an arbitrary tuning. If the tuning is other than the standard 12-EDO, it internally maps arbitrary notes to fractional 12-EDO notes (using floats instead of the standard MIDI 0 to 127 integers).!
 
-!Trigger commentStamp: 'len 3/Jul/2026, 4:50:28 pm (UTC)' prior: 0!
+!Trigger commentStamp: 'len 7/Jul/2026, 8:38:08 am (UTC)' prior: 0!
 A trigger is a cell in a pattern. It can contain any of the following (optional) parameters: an instrument number (1 to 255), a note to play (0 to 127 as MIDI, and -1 to represent note off), a velocity value (0 to 128), and two effect commands.
 
 Effect commands:
 ∙ Cxy cut to velocity x (0 = minimum, F = maximum) after y/12 of a line
-∙ Rxy retrigger every y/12 of a line, and change velocity according to x (see below)
 ∙ Gxx glide to note in xx/16 lines (01 = 1/16 of a line, 10 = 1 line, FF = almost 16 lines)
 ∙ Uxx / Dxx slide note up/down by xx/16 semitones (10 = 1 semitone)
 ∙ +xx / -xx finetune note up/down by xx/256 of a note depending on the selected tuning system
-∙ Sxx set sample offset (00 = start, FF = end)
+∙ !!xy retrigger every y/12 of a line, and change velocity according to x (see below)
+∙ @xx set sample offset (00 = start, FF = end)
 ∙ <xy / >xy slide speed to x in y lines and play backwards / forward (4 = ¹/₂×, 8 = 1×, C = 2×, F = 8×)
 ∙ /xy / \xy forward/backward stroke, move sample playhead by x lines in y lines
 ∙ Lxx set instrument volume level to xx (00 = minimum, FF = maximum)
@@ -188,8 +188,8 @@ Effect commands:
 ∙ Jxx / Kxx adjust instrument pan left/right
 ∙ 0xx to 9xx set control input
 ∙ Fxx set BPM to xx
-∙ Qxx delay trigger by xx/256 of a line (00 = no delay, 01 = 1/256 of a line, FF = 1/256 before next line)
-∙ Yxx set the probability of playing the trigger (00 = never, FF = always)
+∙ &xx delay trigger by xx/256 of a line (00 = no delay, 01 = 1/256 of a line, FF = 1/256 before next line)
+∙ ?xx set the probability of playing the trigger (00 = never, FF = always)
 
 Retrigger velocity change:
 ∙ 0 no velocity change
@@ -782,7 +782,7 @@ setCursorTrack: anInteger
 	self triggerEvent: #cursorChanged.
 	self triggerEvent: #selectedTrackTuningChanged: with: self selectedTrack tuning! !
 
-!Tracker methodsFor: 'initialization' stamp: 'len 6/Jul/2026, 9:07:19 am (UTC)'!
+!Tracker methodsFor: 'initialization' stamp: 'len 7/Jul/2026, 6:36:23 am (UTC)'!
 initialize
 	instruments := Dictionary new.
 	tracks := #().
@@ -811,7 +811,7 @@ initialize
 	
 	bitblt := BitBlt toForm: (Form extent: 227 @ 128 "16:9" depth: Display depth).
 	videoTrackA := videoTrackB := 0.
-	videoOperation := 0.
+	videoOperation := 16r11.
 	
 	self insertTrack: 1.
 	self insertPattern: 1.
@@ -1227,17 +1227,44 @@ undo
 	cursorLine := cursorLine min: (sequence at: cursorPattern) key length.
 	self triggerEvent: #cursorChanged! !
 
-!Tracker methodsFor: 'video' stamp: 'len 6/Jul/2026, 11:13:23 am (UTC)'!
+!Tracker methodsFor: 'video' stamp: 'len 6/Jul/2026, 5:35:45 pm (UTC)'!
 currentVideoFrame
-	self videoA ifNotNil: [:clipA| bitblt sourceForm: clipA strip; sourceX: 0; sourceY: clipA line; width: clipA width; height: clipA height; destX: bitblt destForm width - clipA width // 2; combinationRule: Form over; copyBits].
-	self videoB ifNotNil: [:clipB| bitblt sourceForm: clipB strip; sourceX: 0; sourceY: clipB line; width: clipB width; height: clipB height; destX: bitblt destForm width - clipB width // 2; combinationRule: videoOperation; copyBits].
+	| op |
+	(op := videoOperation bitShift: -4) > 0 ifTrue:
+		[self videoA ifNotNil: [:video| self drawVideo: video op: op]].
+	(op := videoOperation bitAnd: 16rF) > 0 ifTrue:
+		[self videoB ifNotNil: [:video| self drawVideo: video op: op]].
 	^ bitblt destForm! !
 
-!Tracker methodsFor: 'video' stamp: 'len 5/Jul/2026, 10:05:00 pm (UTC)'!
-setVideoBlend: aNumber
-	bitblt fillColor: (aNumber = 1.0 ifFalse: [Color black alpha: aNumber])! !
+!Tracker methodsFor: 'video' stamp: 'len 6/Jul/2026, 6:02:37 pm (UTC)'!
+drawVideo: video op: op
+	| rule |
+	rule := #(3 "src" 1 "and" 6 "xor" 7 "or" 8 "not(src) and dst" 9 "not(src) xor dst" 13 "not(src) or dst" 18 "int+" 19 "int-" 20 "rgb+" 21 "rgb-" 27 "rgb max" 28 "rgb min" 10 "not dst" 2 "not(src)") at: op ifAbsent: [0].
+	bitblt sourceForm: video strip; sourceX: 0; sourceY: video line; width: video width; height: video height; destX: bitblt destForm width - video width // 2; combinationRule: rule.
+	bitblt copyBits
+	
+	"Interesting BitBlt combination rules in hexa:
+	00	fill with 0
+	01	A and B; mix, high contrast, saturation, some weird colors)
+	02	A and not B; works with B=0, just inverts the current state; trails, colors, flickers
+	03	A only
+	05	B only
+	06	A xor B; works with B=0, xors A with the current state; trails, colors, digital, noise, flickers
+	07	A or B; nice disolve, bright, burning; with B=0 creates trails, burns, bumps of color; effect proportional to motion
+	09	not A xor B; mix with negative film colors; with B=0 negative colors, trails, flickers
+	0B	A or not B; noncommutative, negative colors, transluscent; with B=0 flickers, shapes
+	0D	not A or B; noncommutative, similar to 0B; but with B=0 works well, no flicker, shapes, trails
+	0E	not A or not B; only useful with B=0, similar to 0B, flickers
+	12	A word + B word; mix, weird colors; with B=0 fractal noise following shapes, color rotation
+	13	A word - B word; mix, saturated cartoon colors, or black masks (clips negatives to 0); with B=0 flickers, cartoonish
+	14	A RBG-add B (add color components); mix, natural; with B=0 slow film burn to white 
+	15	A RGB-sub B (substract color components)	; only with B=0, flickers, shows movement trails, dark
+	17	A blend B (alpha blending); doesn't work
+	1B	A RGB-max B (maximum of color components); nice mix, natural; with B=0 erases moving things
+	1C	A RGB-min B (minimum of color components); nice mix, similar to 1B but darker"
+! !
 
-!Tracker methodsFor: 'video' stamp: 'len 5/Jul/2026, 6:38:45 pm (UTC)'!
+!Tracker methodsFor: 'video' stamp: 'len 6/Jul/2026, 4:27:45 pm (UTC)'!
 setVideoOperation: anInteger
 	videoOperation := anInteger! !
 
@@ -2745,7 +2772,7 @@ updateTracks
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 5/Jul/2026, 10:16:08 pm (UTC)'!
+!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 7/Jul/2026, 11:49:16 am (UTC)'!
 initialize
 	"
 	self initialize
@@ -2761,7 +2788,7 @@ initialize
 	"Velocity:"
 	'C' do: [:c| FXColors at: c codePoint put: self velocityColor].
 	"Samples:"
-	'S<>/\' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 220)].
+	'@<>/\' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 220)].
 	"Pitch:"
 	'UDG+-' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 280)].
 	"Volume and Pan:"
@@ -2769,7 +2796,7 @@ initialize
 	"Video:"
 	'ABXN' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 320)].
 	"Other:"
-	'FQRY' do: [:c| FXColors at: c codePoint put: (Color okl: 0.95 c: 0 h: 0)]! !
+	'F!!?&' do: [:c| FXColors at: c codePoint put: (Color okl: 0.95 c: 0 h: 0)]! !
 
 !PatternEditorMorph class methodsFor: 'colors' stamp: 'len 22/Feb/2026, 12:58:39 pm (UTC)'!
 cursorColor
@@ -2916,12 +2943,12 @@ handleCut: anInteger
 	(time := anInteger bitAnd: 16rF) = 0 ifTrue: [^ patch setVelocity: velocity].
 	track scheduleTrigger: (Trigger new velocity: (velocity * 128.0) truncated) after: time / 12.0 * track tracker tpl! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 1/Jul/2026, 7:21:27 am (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 7/Jul/2026, 6:25:27 am (UTC)'!
 handleFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
 	command = 67 "C (cut)" ifTrue: [^ self handleCut: anInteger].
-	command = 82 "R (retrigger)" ifTrue: [^ self handleRetrigger: anInteger].
+	command = 33 "!! (retrigger)" ifTrue: [^ self handleRetrigger: anInteger].
 	v := anInteger bitAnd: 16rFF.
 	"Pre-mixer commands (modify the instrument output to the master bus only):"
 	command = 76 "L (volume level)" ifTrue: [patch setLevel:​ v / 255.0. ^ self].
@@ -2931,7 +2958,7 @@ handleFX: anInteger
 	command = 74 "J (pan left)" ifTrue: [patch adjustPanBy: v / -255.0].
 	command = 75 "K (pan right)" ifTrue: [patch adjustPanBy: v / 255.0].
 	"Sample commands:"
-	command = 83 "S (sample offset)" ifTrue: [patch setOffset: v / 255.0. ^ self].
+	command = 64 "@ (sample offset)" ifTrue: [patch setOffset: v / 255.0. ^ self].
 	"Control change commands:"
 	(command between: 48 and: 57) "0 to 9" ifTrue: [patch controlBus at: command - 47 put: v / 255.0. ^ self]! !
 
@@ -3301,7 +3328,7 @@ forgetInstrument
 forgetScheduledTrigger
 	trigger := nil! !
 
-!Track methodsFor: 'playing' stamp: 'len 5/Jul/2026, 10:05:45 pm (UTC)'!
+!Track methodsFor: 'playing' stamp: 'len 6/Jul/2026, 6:02:49 pm (UTC)'!
 handleGlobalFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
@@ -3310,8 +3337,7 @@ handleGlobalFX: anInteger
 	command = 70 "F (set bpm)" ifTrue: [tracker bpm: (v max: 1). ^ self].
 	command = 65 "A (set video source A)" ifTrue: [tracker setVideoSourceA: v. ^ self].
 	command = 66 "B (set video source B)" ifTrue: [tracker setVideoSourceB: v. ^ self].
-	command = 88 "X (BitBlt combination rule)" ifTrue: [tracker setVideoOperation: v. ^ self].
-	command = 78 "N (BitBlt alpha)" ifTrue: [tracker setVideoBlend: v. ^ self]! !
+	command = 88 "X (BitBlt combination rule)" ifTrue: [tracker setVideoOperation: v. ^ self]! !
 
 !Track methodsFor: 'playing' stamp: 'len 1/Jul/2026, 7:21:07 am (UTC)'!
 playTrigger
@@ -3374,11 +3400,11 @@ at: position put: value
 	position = 11 ifTrue: [^ fx2 := value ifNotNil: [((fx2 ifNil: [0]) bitAnd: 16rFFF0) bitOr: value]].
 	^ self error: 'out of bounds'! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 26/Feb/2026, 4:26:06 pm (UTC)'!
+!Trigger methodsFor: 'accessing' stamp: 'len 7/Jul/2026, 8:36:30 am (UTC)'!
 delay
-	"Answer the delay for this trigger, i.e. the parameter of the effect command Q."
-	fx1 ifNotNil: [(fx1 bitShift: -8) = 81 "Q" ifTrue: [^ fx1 bitAnd: 16rFF]].
-	fx2 ifNotNil: [(fx2 bitShift: -8) = 81 "Q" ifTrue: [^ fx2 bitAnd: 16rFF]].
+	"Answer the delay for this trigger, i.e. the parameter of the effect command &xx."
+	fx1 ifNotNil: [(fx1 bitShift: -8) = 38 "&" ifTrue: [^ fx1 bitAnd: 16rFF]].
+	fx2 ifNotNil: [(fx2 bitShift: -8) = 38 "&" ifTrue: [^ fx2 bitAnd: 16rFF]].
 	^ 0! !
 
 !Trigger methodsFor: 'accessing' stamp: 'len 16/Dec/2025, 2:03:26 pm (UTC)'!
@@ -3436,11 +3462,11 @@ noteShift
 			ifFalse: [cmd = 45 "-xx (finetune note down)" ifTrue: [answer := (fx2 bitAnd: 16rFF) / -256.0 + answer]]].
 	^ answer! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 9/Mar/2026, 10:28:01 am (UTC)'!
+!Trigger methodsFor: 'accessing' stamp: 'len 7/Jul/2026, 6:21:04 am (UTC)'!
 probability
-	"Answer the probability for this trigger, i.e. the parameter of the effect command Yxx."
-	fx1 ifNotNil: [(fx1 bitShift: -8) = 89 "Y" ifTrue: [^ (fx1 bitAnd: 16rFF) / 255.0]].
-	fx2 ifNotNil: [(fx2 bitShift: -8) = 89 "Y" ifTrue: [^ (fx2 bitAnd: 16rFF) / 255.0]].
+	"Answer the probability for this trigger, i.e. the parameter of the effect command ?xx."
+	fx1 ifNotNil: [(fx1 bitShift: -8) = 63 "?" ifTrue: [^ (fx1 bitAnd: 16rFF) / 255.0]].
+	fx2 ifNotNil: [(fx2 bitShift: -8) = 63 "?" ifTrue: [^ (fx2 bitAnd: 16rFF) / 255.0]].
 	^ 1.0! !
 
 !Trigger methodsFor: 'accessing' stamp: 'len 19/Dec/2025, 12:13:34 pm (UTC)'!
@@ -3491,17 +3517,17 @@ isReverse
 transposeBy: steps
 	self isNoteOn ifTrue: [(note + steps between: 0 and: 127) ifTrue: [note := note + steps]]! !
 
-!Trigger class methodsFor: 'as yet unclassified' stamp: 'len 3/Jul/2026, 4:44:20 pm (UTC)'!
+!Trigger class methodsFor: 'as yet unclassified' stamp: 'len 7/Jul/2026, 8:37:07 am (UTC)'!
 allFXCommandCharacters
-	^ '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>/\+-'! !
+	^ '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>/\+-?!!@&'! !
 
-!Trigger class methodsFor: 'as yet unclassified' stamp: 'len 3/Jul/2026, 4:39:46 pm (UTC)'!
+!Trigger class methodsFor: 'as yet unclassified' stamp: 'len 7/Jul/2026, 11:50:28 am (UTC)'!
 descriptionForFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
 	command = 67 "C (cut)" ifTrue:
 		[^ 'Cut velocity to ', (((anInteger bitShift: -4) bitAnd: 16rF) / 15.0 * 100.0) rounded printString, '% after ', ((anInteger bitAnd: 16rF)/12) printText, ' lines'].
-	command = 82 "R (retrigger)" ifTrue:
+	command = 33 "!! (retrigger)" ifTrue:
 		[| velocityChange |
 		velocityChange := #('' '-1/32' '-1/16' '-1/8' '-1/4' '-1/2' '×2/3' '×1/2' '' '+1/32' '+1/16' '+1/8' '+1/4' '+1/2' '×3/2' '×2') at: ((anInteger bitShift: -4) bitAnd: 16rF) + 1.
 		velocityChange ifNotEmpty: [velocityChange := ' changing velocity by ', velocityChange].
@@ -3519,7 +3545,7 @@ descriptionForFX: anInteger
 	command = 74 "J (pan left)" ifTrue: [^ 'Pan left by ', (v / 255.0 * 100.0) rounded printString, '%'].
 	command = 75 "K (pan right)" ifTrue: [^ 'Pan right by ', (v / 255.0 * 100.0) rounded printString, '%'].
 	"Sample commands:"
-	command = 83 "S (sample offset)" ifTrue: [^ 'Set sample offset to ', v printString, '/255'].
+	command = 64 "@ (sample offset)" ifTrue: [^ 'Set sample offset to ', v printString, '/255'].
 	command = 60 "< (speed backwards)" ifTrue:
 		[| speed lines |
 		speed := #[0.0 0.125 0.25 0.375 0.5 0.66 0.75 0.9 1.0 1.25 1.5 1.75 2.0 3.0 5.0 8.0] at: ((anInteger bitShift: -4)  bitAnd: 16rF)+ 1.
@@ -3538,8 +3564,8 @@ descriptionForFX: anInteger
 	(command between: 48 and: 57) "0 to 9" ifTrue: [^ 'Set control ', (command - 47) printString, ' to ', v printString].
 	"Global commands:"
 	command = 70 "F (set bpm)" ifTrue: [^ 'Set tempo to ', (v max: 1) printString, ' BPM'].
-	command = 89 "Y (trigger probability)" ifTrue: [^ 'Play trigger with ', (v / 255.0 * 100) rounded printString, '% probability'].
-	command = 81 "Q (trigger delay)" ifTrue: [^ 'Delay trigger by ', v printString, '/256 of a line'].
+	command = 63 "? (trigger probability)" ifTrue: [^ 'Play trigger with ', (v / 255.0 * 100) rounded printString, '% probability'].
+	command = 38 "& (trigger delay)" ifTrue: [^ 'Delay trigger by ', v printString, '/256 of a line'].
 	^ nil! !
 
 !Tuning methodsFor: 'accessing' stamp: 'len 9/Jun/2026, 7:00:32 pm (UTC)'!

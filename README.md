@@ -2,7 +2,7 @@
 Signals is a lively environment for real-time musical synthesis, 100% human-written in Smalltalk. It includes:
 * a modular framework for digital signal processing of audio signals;
 * a dataflow-oriented visual programming environment for building synthesizers and effects;
-* a tracker for sequencing synthesizers and effects
+* a tracker for sequencing synthesizers, effects and video
 
 ![Signals Tracker](screenshot.png)
 
@@ -51,12 +51,12 @@ On the screenshot above you can see an open tracker window. At the top there is 
 
 At the bottom left there is the "sequencer" or "arranger", that contains the list of patterns to be played. And at the bottom right the "pattern editor" that shows the current pattern and allows you to edit the triggers (notes and effect commands, like a typical tracker). Each track contains the following columns: instrument number, note, velocity, fx1 and fx2. The following are the fx commands currently implemented:
 * Cxy cut to velocity x (0 = minimum, F = maximum) after y/12 of a line
-* Rxy retrigger every y/12 of a line, and change velocity according to x (see below)
 * Gxx glide to note in xx/16 lines (01 = 1/16 of a line, 10 = 1 line, FF = almost 16 lines)
 * Uxx / Dxx slide note up/down by xx/16 semitones
 * +xx / -xx finetune note up/down by xx/256 of a note depending on the selected tuning (0 = no change, 80 = half note, FF = almost 1 note)
-* Sxx set sample start offset
-* >xy / <xy slide to play forward/backwards at speed x/8 (4 = half speed, 8 = normal, C = doubel speed, F = 8x) in y lines
+* !xy retrigger every y/12 of a line, and change velocity according to x (see below)
+* @xx set sample offset
+* \>xy / <xy slide to play forward/backwards at speed x/8 (4 = half speed, 8 = normal, C = doubel speed, F = 8x) in y lines
 * /xy / \xy forward/backward stroke, move sample playhead by x lines in y lines
 * Lxx set instrument volume level to xx (00 = minimum, FF = maximum)
 * Pxx set instrument pan (00 = left, 80 = center, FF = right)
@@ -64,8 +64,8 @@ At the bottom left there is the "sequencer" or "arranger", that contains the lis
 * Jxx / Kxx adjust instrument pan left/right
 * 0xx to 9xx set control input
 * Fxx set BPM to xx
-* Qxx delay trigger by xx/256 of a line (00 = no delay, FF = almost a full line)
-* Yxx set the probability of playing the trigger (00 = never, FF = always)
+* \&xx delay trigger by xx/256 of a line (00 = no delay, FF = almost a full line)
+* \?xx set the probability of playing the trigger (00 = never, FF = always)
 
 Retrigger velocity change:
 * 0 no velocity change

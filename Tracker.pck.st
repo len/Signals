@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 7 July 2026 at 6:51:25 pm'!
+'From Cuis7.9 [latest update: #8030] on 8 July 2026 at 2:46:42 am'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 94!
+!provides: 'Tracker' 1 95!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -170,7 +170,7 @@ A pattern is a grid of triggers (notes and effect commands). The columns represe
 !Track commentStamp: '<historical>' prior: 0!
 A track can play one instrument at a time. It can be muted or soloed, and it can be set to an arbitrary tuning. If the tuning is other than the standard 12-EDO, it internally maps arbitrary notes to fractional 12-EDO notes (using floats instead of the standard MIDI 0 to 127 integers).!
 
-!Trigger commentStamp: 'len 7/Jul/2026, 8:38:08 am (UTC)' prior: 0!
+!Trigger commentStamp: '<historical>' prior: 0!
 A trigger is a cell in a pattern. It can contain any of the following (optional) parameters: an instrument number (1 to 255), a note to play (0 to 127 as MIDI, and -1 to represent note off), a velocity value (0 to 128), and two effect commands.
 
 Effect commands:
@@ -180,12 +180,8 @@ Effect commands:
 ∙ +xx / -xx finetune note up/down by xx/256 of a note depending on the selected tuning system
 ∙ !!xy retrigger every y/12 of a line, and change velocity according to x (see below)
 ∙ @xx set sample offset (00 = start, FF = end)
-∙ <xy / >xy slide speed to x in y lines and play backwards / forward (4 = ¹/₂×, 8 = 1×, C = 2×, F = 8×)
+∙ <xy / >xy slide playback speed to x in y lines and play backwards / forward (4 = ¹/₂×, 8 = 1×, C = 2×, F = 8×)
 ∙ /xy / \xy forward/backward stroke, move sample playhead by x lines in y lines
-∙ Lxx set instrument volume level to xx (00 = minimum, FF = maximum)
-∙ Pxx set instrument pan (00 = left, 80 = center, FF = right)
-∙ Ixx / Oxx adjust intrument volume level up/down
-∙ Jxx / Kxx adjust instrument pan left/right
 ∙ 0xx to 9xx set control input
 ∙ Fxx set BPM to xx
 ∙ &xx delay trigger by xx/256 of a line (00 = no delay, 01 = 1/256 of a line, FF = 1/256 before next line)
@@ -199,7 +195,7 @@ Retrigger velocity change:
 ∙ 9, A, B, C, D increase velocity by adding 1/32, 1/16, 1/8, 1/4, 1/2
 ∙ E, F scale up velocity multiplying by 3/2, 2
 
-Commands Rxy and Cxy interpret the nibble x as a time span in units of 1/12 of a line (0 = instantly, B = 1/12 before next line).
+Commands !!xy and Cxy interpret the nibble x as a time duration in units of 1/12 of a line (0 = instantly, B = 1/12 before next line).
 !
 
 !Tuning commentStamp: '<historical>' prior: 0!
@@ -2772,7 +2768,7 @@ updateTracks
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 7/Jul/2026, 11:49:16 am (UTC)'!
+!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 7/Jul/2026, 7:44:05 pm (UTC)'!
 initialize
 	"
 	self initialize
@@ -2782,7 +2778,7 @@ initialize
 	(FontFamily availableFamilies includesKey: 'JetBrains Mono NL') ifFalse:
 		[TrueTypeFontFamily readAllTrueTypeFontsIn: DirectoryEntry trueTypeFontsDirectory / 'JetBrainsMono'].
 	TrackColors := (0 to: 6) collect: [:i| Color okl: 0.7 c: 0.4 h: i * (360.0 / 7) + 10.0]. "roygbiv shifted 10°"
-	FXColors := Array new: 256 withAll: self unsetColor.
+	FXColors := Array new: 256 withAll: Color red "self unsetColor".
 	"Controls:"
 	'0123456789' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 80)].
 	"Velocity:"
@@ -2790,11 +2786,9 @@ initialize
 	"Samples:"
 	'@<>/\' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 220)].
 	"Pitch:"
-	'UDG+-' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 280)].
-	"Volume and Pan:"
-	'LPIOJK' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 160)].
+	'UDG+-' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 340)].
 	"Video:"
-	'ABXN' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 320)].
+	'ABXN' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 160)].
 	"Other:"
 	'F!!?&' do: [:c| FXColors at: c codePoint put: (Color okl: 0.95 c: 0 h: 0)]! !
 
@@ -2943,23 +2937,14 @@ handleCut: anInteger
 	(time := anInteger bitAnd: 16rF) = 0 ifTrue: [^ patch setVelocity: velocity].
 	track scheduleTrigger: (Trigger new velocity: (velocity * 128.0) truncated) after: time / 12.0 * track tracker tpl! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 7/Jul/2026, 6:25:27 am (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 7/Jul/2026, 7:00:09 pm (UTC)'!
 handleFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
 	command = 67 "C (cut)" ifTrue: [^ self handleCut: anInteger].
 	command = 33 "!! (retrigger)" ifTrue: [^ self handleRetrigger: anInteger].
 	v := anInteger bitAnd: 16rFF.
-	"Pre-mixer commands (modify the instrument output to the master bus only):"
-	command = 76 "L (volume level)" ifTrue: [patch setLevel:​ v / 255.0. ^ self].
-	command = 80 "P (pan)" ifTrue: [patch setPan: v / 256.0 * 2.0 - 1.0. ^ self].
-	command = 73 "I (volume level up)" ifTrue: [patch adjustLevelBy: v / 255.0].
-	command = 79 "O (volume level down)" ifTrue: [patch adjustLevelBy: v / -255.0].
-	command = 74 "J (pan left)" ifTrue: [patch adjustPanBy: v / -255.0].
-	command = 75 "K (pan right)" ifTrue: [patch adjustPanBy: v / 255.0].
-	"Sample commands:"
 	command = 64 "@ (sample offset)" ifTrue: [patch setOffset: v / 255.0. ^ self].
-	"Control change commands:"
 	(command between: 48 and: 57) "0 to 9" ifTrue: [patch controlBus at: command - 47 put: v / 255.0. ^ self]! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 4/Jul/2026, 3:50:57 pm (UTC)'!
@@ -3517,11 +3502,11 @@ isReverse
 transposeBy: steps
 	self isNoteOn ifTrue: [(note + steps between: 0 and: 127) ifTrue: [note := note + steps]]! !
 
-!Trigger class methodsFor: 'as yet unclassified' stamp: 'len 7/Jul/2026, 8:37:07 am (UTC)'!
+!Trigger class methodsFor: 'as yet unclassified' stamp: 'len 7/Jul/2026, 6:58:20 pm (UTC)'!
 allFXCommandCharacters
-	^ '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>/\+-?!!@&'! !
+	^ '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>/\+-?!!@&~#$%^*_=|'! !
 
-!Trigger class methodsFor: 'as yet unclassified' stamp: 'len 7/Jul/2026, 11:50:28 am (UTC)'!
+!Trigger class methodsFor: 'as yet unclassified' stamp: 'len 7/Jul/2026, 6:57:38 pm (UTC)'!
 descriptionForFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
@@ -3538,12 +3523,6 @@ descriptionForFX: anInteger
 	command = 43 "+ (finetune note up)" ifTrue: [^ 'Finetune note up by ', (v / 256.0 printStringFractionDigits: 2)].
 	command = 45 "- (finetune note down)" ifTrue: [^ 'Finetune note down by ', (v / 256.0 printStringFractionDigits: 2)].
 	command = 71 "G (glide to note)" ifTrue: [^ 'Glide to note in ', (v / 16.0 printStringFractionDigits: 2), ' lines'].
-	command = 76 "L (volume level)" ifTrue: [^ 'Set volume level to ', (v / 255.0 * 100.0) rounded printString, '%'].
-	command = 80 "P (pan)" ifTrue: [^ 'Set pan to ', (v = 128 ifTrue: ['center'] ifFalse: [v < 128 ifTrue: [(128 - v / 128.0 * 100.0) rounded printString, '% left'] ifFalse: [(v - 128 / 127.0 * 100.0) rounded printString, '% right']])].
-	command = 73 "I (volume level up)" ifTrue: [^ 'Fade in by ', (v / 255.0 * 100.0) rounded printString, '%'].
-	command = 79 "O (volume level down)" ifTrue: [^ 'Fade out by ', (v / 255.0 * 100.0) rounded printString, '%'].
-	command = 74 "J (pan left)" ifTrue: [^ 'Pan left by ', (v / 255.0 * 100.0) rounded printString, '%'].
-	command = 75 "K (pan right)" ifTrue: [^ 'Pan right by ', (v / 255.0 * 100.0) rounded printString, '%'].
 	"Sample commands:"
 	command = 64 "@ (sample offset)" ifTrue: [^ 'Set sample offset to ', v printString, '/255'].
 	command = 60 "< (speed backwards)" ifTrue:

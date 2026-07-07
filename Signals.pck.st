@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 6 July 2026 at 6:29:51 pm'!
+'From Cuis7.9 [latest update: #8030] on 8 July 2026 at 2:46:38 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 636!
+!provides: 'Signals' 1 637!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -296,7 +296,7 @@ VOSIM class
 
 !classDefinition: #Multisample category: #'Signals-Samples'!
 TunedGenerator subclass: #Multisample
-	instanceVariableNames: 'keymap velocity offset sample tailSample legato label'
+	instanceVariableNames: 'keymap offset sample tailSample legato label'
 	classVariableNames: 'Library'
 	poolDictionaries: ''
 	category: 'Signals-Samples'!
@@ -1556,7 +1556,7 @@ StripChartMorph class
 
 !classDefinition: #VideoMorph category: #'Signals-Morphic-Widgets'!
 BoxMorph subclass: #VideoMorph
-	instanceVariableNames: 'clip color image lastPosition needsRecomputingImage'
+	instanceVariableNames: 'video color image lastPosition needsRecomputingImage'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Widgets'!
@@ -2069,7 +2069,7 @@ This is a monophonic simplified model of a transistor organ. It has the drawbars
 This is a VOSIM (VOcal SIMulation) oscillator based on the synthesis method developed by Kaegi and Tempelaars in the 1970s. The oscillator consists of two sine waves multiplied by and sync'ed to a carrier. Ported from plaits/dsp/oscillator/vosim_oscillator.h by Emilie Gillet.!
 
 !Multisample commentStamp: '<historical>' prior: 0!
-A multisample is the basis of a rompler (from "ROM" and "sampler"). It generates sounds from a set of recordings of an instrument playing different notes at different velocities. Given a MIDI note and velocity value, it chooses the sample closest to the desired note and velocity and repitches it by playing it faster or slower.
+A multisample is the basis of a rompler (from "ROM" and "sampler"). It generates sounds from a set of recordings of an instrument playing different notes. Given a MIDI note, it chooses the sample closest to the target note and repitches it by playing it faster or slower.
 !
 
 !Sample commentStamp: 'len 9/Apr/2026 23:16:22' prior: 0!
@@ -5133,14 +5133,14 @@ legato: aBoolean
 gateOff
 	sample ifNotNil: [sample gateOff]! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 19/Jun/2026, 7:38:07 am (UTC)'!
+!Multisample methodsFor: 'controlling' stamp: 'len 7/Jul/2026, 7:40:22 pm (UTC)'!
 gateOn
-	| closestKey speedFactor samplesByVelocity |
+	| closestKey closestSamples speedFactor |
 	sample ifNotNil: [(legato and: [sample isUnreleased]) ifTrue: [^ self]].
 	closestKey := keymap keys detectMin: [:x| (x - note) abs].
-	samplesByVelocity := keymap at: closestKey.
+	closestSamples := keymap at: closestKey.
 	(tailSample := sample) ifNotNil: [tailSample gateOn "to setup the tail position"].
-	sample := (samplesByVelocity atPin: (velocity * (samplesByVelocity size - 1)) truncated + 1) copy.
+	sample := closestSamples first copy. "should do round-robin"
 	sample controls at: #pitch put: (controls at: #pitch).
 	sample controls at: #speed put: (controls at: #speed).
 	speedFactor := 60 noteToHertz / closestKey noteToHertz.
@@ -5163,10 +5163,6 @@ setOffset: aNumber
 setSpeed: aNumber
 	self set: #speed to: aNumber! !
 
-!Multisample methodsFor: 'controlling' stamp: 'len 2/Dec/2025, 7:33:00 am (UTC)'!
-setVelocity: aNumber
-	velocity := aNumber! !
-
 !Multisample methodsFor: 'controlling' stamp: 'len 13/Apr/2026, 10:13:09 am (UTC)'!
 update
 	super update.
@@ -5177,10 +5173,9 @@ update
 copy
 	^ super copy keymap: keymap; label: label! !
 
-!Multisample methodsFor: 'initialization' stamp: 'len 2/Jun/2026, 8:09:23 pm (UTC)'!
+!Multisample methodsFor: 'initialization' stamp: 'len 7/Jul/2026, 7:40:40 pm (UTC)'!
 initialize
 	super initialize.
-	velocity := 0.5.
 	legato := false! !
 
 !Multisample methodsFor: 'initialization' stamp: 'len 2/Jul/2026, 10:48:45 am (UTC)'!
@@ -5724,9 +5719,9 @@ readFromJson: json buffers: aList
 	stripBits replaceFrom: 1 to: stripBits size with: stripBitsAsFloats startingAt: 1.
 	strip := Form extent: width @ (height * frameCount) depth: depth bits: stripBits! !
 
-!Video methodsFor: 'as yet unclassified' stamp: 'len 6/Jul/2026, 11:16:59 am (UTC)'!
+!Video methodsFor: 'as yet unclassified' stamp: 'len 7/Jul/2026, 12:40:52 pm (UTC)'!
 screen
-	^ VideoMorph new clip: self! !
+	^ VideoMorph new video: self! !
 
 !Video methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:22:07 pm (UTC)'!
 strip
@@ -10630,6 +10625,11 @@ send: aSelector with: anObject
 	(receivers at: aSelector ifAbsentPut: [modules select: [:each| each respondsTo: aSelector]])
 		do: [:each| each perform: aSelector with: anObject]! !
 
+!Patch methodsFor: 'accessing' stamp: 'len 7/Jul/2026, 7:06:40 pm (UTC)'!
+send: aSelector with: anObject ifNoReceiver: aBlock
+	(receivers at: aSelector ifAbsentPut: [modules select: [:each| each respondsTo: aSelector]])
+		ifEmpty: aBlock ifNotEmpty: [:anArray| anArray do: [:each| each perform: aSelector with: anObject]]! !
+
 !Patch methodsFor: 'accessing' stamp: 'len 2/Jul/2026, 11:11:07 am (UTC)'!
 speed: aNumber
 	speed := aNumber.
@@ -10726,9 +10726,9 @@ setSpeed: targetSpeed glide: numberOfTicks
 			speed := targetSpeed].
 	self setSpeed: speed! !
 
-!Patch methodsFor: 'controlling' stamp: 'len 28/Jun/2026, 6:20:06 pm (UTC)'!
+!Patch methodsFor: 'controlling' stamp: 'len 7/Jul/2026, 7:30:53 pm (UTC)'!
 setVelocity: aNumber
-	self send: #setVelocity: with: aNumber! !
+	self send: #setVelocity: with: aNumber "ifNoReceiver: [self setLevel: aNumber * 0.75]"! !
 
 !Patch methodsFor: 'initialization' stamp: 'len 29/Jun/2026, 7:46:08 am (UTC)'!
 initialize
@@ -14468,23 +14468,14 @@ drawOn: aCanvas
 requiresVectorCanvas
 	^ true! !
 
-!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 8:25:22 pm (UTC)'!
-clip: aClip
-	| isNewClip |
-	isNewClip := clip isNil or: [clip buffer ~= aClip buffer].
-	clip := aClip.
-	lastPosition := clip position.
-	self morphExtent: clip width @ clip height.
-	self redrawNeeded! !
-
 !VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:04:20 pm (UTC)'!
 defaultExtent
 	^ `128 @ 128`! !
 
-!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 8:15:22 pm (UTC)'!
+!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 7/Jul/2026, 12:40:21 pm (UTC)'!
 drawOn: aCanvas
-	clip ifNil: [^ self].
-	aCanvas image: clip strip at: 0 @ 0 sourceRect: (0 @ clip line extent: clip width @ clip height)! !
+	video ifNil: [^ self].
+	aCanvas image: video strip at: 0 @ 0 sourceRect: (0 @ video line extent: video width @ video height)! !
 
 !VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:03:56 pm (UTC)'!
 extentChanged: oldExtent
@@ -14497,26 +14488,35 @@ initialize
 	image := Form extent: self defaultExtent depth: Display depth.
 	needsRecomputingImage := false! !
 
-!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:04:33 pm (UTC)'!
+!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 7/Jul/2026, 12:40:21 pm (UTC)'!
 sample: aSample
 	| isNewSample |
-	isNewSample := clip isNil or: [clip buffer ~= aSample buffer].
-	clip := aSample.
-	lastPosition := clip position.
+	isNewSample := video isNil or: [video buffer ~= aSample buffer].
+	video := aSample.
+	lastPosition := video position.
 	needsRecomputingImage := needsRecomputingImage | isNewSample.
 	self redrawNeeded! !
 
-!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:04:33 pm (UTC)'!
+!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 7/Jul/2026, 12:40:21 pm (UTC)'!
 step
 	| position |
-	clip ifNil: [^ self].
-	(position := clip position) = lastPosition ifTrue: [^ self].
+	video ifNil: [^ self].
+	(position := video position) = lastPosition ifTrue: [^ self].
 	lastPosition := position.
 	self redrawNeeded! !
 
 !VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:03:56 pm (UTC)'!
 stepTime
 	^ 30! !
+
+!VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 7/Jul/2026, 12:41:08 pm (UTC)'!
+video: aVideo
+	| isNewClip |
+	isNewClip := video isNil or: [video buffer ~= aVideo buffer].
+	video := aVideo.
+	lastPosition := video position.
+	self morphExtent: video width @ video height.
+	self redrawNeeded! !
 
 !VideoMorph methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:03:56 pm (UTC)'!
 wantsSteps

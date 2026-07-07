@@ -58,10 +58,6 @@ At the bottom left there is the "sequencer" or "arranger", that contains the lis
 * @xx set sample offset
 * \>xy / <xy slide to play forward/backwards at speed x/8 (4 = half speed, 8 = normal, C = doubel speed, F = 8x) in y lines
 * /xy / \xy forward/backward stroke, move sample playhead by x lines in y lines
-* Lxx set instrument volume level to xx (00 = minimum, FF = maximum)
-* Pxx set instrument pan (00 = left, 80 = center, FF = right)
-* Ixx / Oxx adjust instrument volume level up/down
-* Jxx / Kxx adjust instrument pan left/right
 * 0xx to 9xx set control input
 * Fxx set BPM to xx
 * \&xx delay trigger by xx/256 of a line (00 = no delay, FF = almost a full line)

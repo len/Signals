@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 8 July 2026 at 3:14:51 am'!
+'From Cuis7.9 [latest update: #8030] on 8 July 2026 at 6:31:25 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 96!
+!provides: 'Tracker' 1 98!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -170,18 +170,19 @@ A pattern is a grid of triggers (notes and effect commands). The columns represe
 !Track commentStamp: '<historical>' prior: 0!
 A track can play one instrument at a time. It can be muted or soloed, and it can be set to an arbitrary tuning. If the tuning is other than the standard 12-EDO, it internally maps arbitrary notes to fractional 12-EDO notes (using floats instead of the standard MIDI 0 to 127 integers).!
 
-!Trigger commentStamp: '<historical>' prior: 0!
+!Trigger commentStamp: 'len 8/Jul/2026, 11:31:14 am (UTC)' prior: 0!
 A trigger is a cell in a pattern. It can contain any of the following (optional) parameters: an instrument number (1 to 255), a note to play (0 to 127 as MIDI, and -1 to represent note off), a velocity value (0 to 128), and two effect commands.
 
 Effect commands:
-∙ Gxx glide to note in xx/16 lines (01 = 1/16 of a line, 10 = 1 line, FF = almost 16 lines)
-∙ Uxx / Dxx slide note up/down by xx/16 semitones (10 = 1 semitone)
-∙ +xx / -xx finetune note up/down by xx/256 of a note depending on the selected tuning system
+∙ Vxy smoothly change velocity to x (0 = mininum, F = maximum) over y lines
 ∙ !!xy cut to velocity x (0 = minimum, F = maximum) after y/12 of a line
+∙ Gxx glide to note in xx/16 lines (01 = 1/16 of a line, 10 = 1 line, FF = almost 16 lines)
+∙ Uxx / Dxx slide note up/down by xx/16 semitones (10 = 1 semitone) over 1 line
+∙ +xx / -xx finetune note up/down by xx/256 of a note depending on the selected tuning system
 ∙ *xy retrigger every y/12 of a line, and change velocity according to x (see below)
 ∙ @xx set sample offset (00 = start, FF = end)
-∙ <xy / >xy slide playback speed to x in y lines and play backwards / forward (4 = ¹/₂×, 8 = 1×, C = 2×, F = 8×)
-∙ /xy / \xy forward/backward stroke, move sample playhead by x lines in y lines
+∙ <xy / >xy slide playback speed to x over y lines and play backwards / forward (4 = ¹/₂×, 8 = 1×, C = 2×, F = 8×)
+∙ /xy / \xy scratch forward/backward stroke, move sample playhead by the duration of x lines over y lines
 ∙ 0xx to 9xx set control input
 ∙ Fxx set BPM to xx
 ∙ &xx delay trigger by xx/256 of a line (00 = no delay, 01 = 1/256 of a line, FF = 1/256 before next line)
@@ -189,13 +190,13 @@ Effect commands:
 
 Retrigger velocity change:
 ∙ 0 no velocity change
-∙ 1, 2, 3, 4, 5 reduce velocity by substracting 1/32, 1/16, 1/8, 1/4, 1/2
+∙ 1, 2, 3, 4, 5 reduce velocity by subtracting 1/32, 1/16, 1/8, 1/4, 1/2
 ∙ 6, 7 scale down velocity multuplying by 2/3, 1/2
 ∙ 8 no velocity change
 ∙ 9, A, B, C, D increase velocity by adding 1/32, 1/16, 1/8, 1/4, 1/2
 ∙ E, F scale up velocity multiplying by 3/2, 2
 
-Commands *xy and !!xy interpret the nibble x as a time duration in units of 1/12 of a line (0 = instantly, B = 1/12 before next line).
+Commands !!xy and *xy work within the line where they are placed, and interpret the nibble x as a time duration in units of 1/12 of a line (0 = instantly, B = 1/12 before next line).
 !
 
 !Tuning commentStamp: '<historical>' prior: 0!
@@ -1232,7 +1233,7 @@ currentVideoFrame
 		[self videoB ifNotNil: [:video| self drawVideo: video op: op]].
 	^ bitblt destForm! !
 
-!Tracker methodsFor: 'video' stamp: 'len 6/Jul/2026, 6:02:37 pm (UTC)'!
+!Tracker methodsFor: 'video' stamp: 'len 8/Jul/2026, 11:30:32 am (UTC)'!
 drawVideo: video op: op
 	| rule |
 	rule := #(3 "src" 1 "and" 6 "xor" 7 "or" 8 "not(src) and dst" 9 "not(src) xor dst" 13 "not(src) or dst" 18 "int+" 19 "int-" 20 "rgb+" 21 "rgb-" 27 "rgb max" 28 "rgb min" 10 "not dst" 2 "not(src)") at: op ifAbsent: [0].
@@ -1254,7 +1255,7 @@ drawVideo: video op: op
 	12	A word + B word; mix, weird colors; with B=0 fractal noise following shapes, color rotation
 	13	A word - B word; mix, saturated cartoon colors, or black masks (clips negatives to 0); with B=0 flickers, cartoonish
 	14	A RBG-add B (add color components); mix, natural; with B=0 slow film burn to white 
-	15	A RGB-sub B (substract color components)	; only with B=0, flickers, shows movement trails, dark
+	15	A RGB-sub B (subtract color components)	; only with B=0, flickers, shows movement trails, dark
 	17	A blend B (alpha blending); doesn't work
 	1B	A RGB-max B (maximum of color components); nice mix, natural; with B=0 erases moving things
 	1C	A RGB-min B (minimum of color components); nice mix, similar to 1B but darker"
@@ -2768,7 +2769,7 @@ updateTracks
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 7/Jul/2026, 7:59:59 pm (UTC)'!
+!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 8/Jul/2026, 10:02:41 am (UTC)'!
 initialize
 	"
 	self initialize
@@ -2779,14 +2780,14 @@ initialize
 		[TrueTypeFontFamily readAllTrueTypeFontsIn: DirectoryEntry trueTypeFontsDirectory / 'JetBrainsMono'].
 	TrackColors := (0 to: 6) collect: [:i| Color okl: 0.7 c: 0.4 h: i * (360.0 / 7) + 10.0]. "roygbiv shifted 10°"
 	FXColors := Array new: 256 withAll: Color red "self unsetColor".
-	"Controls:"
-	'0123456789' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 80)].
 	"Velocity:"
-	'!!' do: [:c| FXColors at: c codePoint put: self velocityColor].
-	"Samples:"
-	'@<>/\' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 220)].
+	'V!!' do: [:c| FXColors at: c codePoint put: self velocityColor].
 	"Pitch:"
 	'UDG+-' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 340)].
+	"Samples:"
+	'@<>/\' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 220)].
+	"Controls:"
+	'0123456789' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 80)].
 	"Video:"
 	'ABX' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 160)].
 	"Other:"
@@ -2812,9 +2813,9 @@ trackColor: anInteger
 unsetColor
 	^ Color lightGray! !
 
-!PatternEditorMorph class methodsFor: 'colors' stamp: 'len 9/Mar/2026, 10:12:29 am (UTC)'!
+!PatternEditorMorph class methodsFor: 'colors' stamp: 'len 8/Jul/2026, 10:02:57 am (UTC)'!
 velocityColor
-	^ `Color okl: 0.95 c: 0.2 h: 120`! !
+	^ `Color okl: 0.85 c: 0.3 h: 120`! !
 
 !TransportStatusMorph methodsFor: 'drawing' stamp: 'len 23/Jun/2026, 3:54:25 pm (UTC)'!
 drawOn: aCanvas
@@ -2930,11 +2931,11 @@ initialize
 	patchMorph := PatchMorph new.
 	patch := patchMorph patch! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 27/Jun/2026, 9:37:04 pm (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 8/Jul/2026, 9:38:17 am (UTC)'!
 handleCut: anInteger
 	| velocity time |
 	velocity := ((anInteger bitShift: -4) bitAnd: 16rF) / 15.0.
-	(time := anInteger bitAnd: 16rF) = 0 ifTrue: [^ patch setVelocity: velocity].
+	(time := anInteger bitAnd: 16rF) = 0 ifTrue: [^ patch setVelocity: velocity glide: 0].
 	track scheduleTrigger: (Trigger new velocity: (velocity * 128.0) truncated) after: time / 12.0 * track tracker tpl! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 7/Jul/2026, 8:00:53 pm (UTC)'!
@@ -2947,14 +2948,15 @@ handleFX: anInteger
 	command = 64 "@ (sample offset)" ifTrue: [patch setOffset: v / 255.0. ^ self].
 	(command between: 48 and: 57) "0 to 9" ifTrue: [patch controlBus at: command - 47 put: v / 255.0. ^ self]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 4/Jul/2026, 3:50:57 pm (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 8/Jul/2026, 9:46:04 am (UTC)'!
 handlePostNoteFX: anInteger
 	"Note: pitch slide effects must be handled *after* the note on, otherwise the slide gets overridden."
 	| command v |
 	command := anInteger bitShift: -8.
 	v := anInteger bitAnd: 16rFF.
-	command = 85 "U (slide pitch up)" ifTrue: [patch adjustNoteBy: v / 16.0 glide:  track tracker ticksToNextLine. ^ self].
-	command = 68 "D (slide pitch down)" ifTrue: [patch adjustNoteBy: v / -16.0 glide:  track tracker ticksToNextLine. ^ self].
+	command = 86 "V (slide velocity/volume)" ifTrue: [patch setVelocity: (v bitShift: -4) / 15.0 glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
+	command = 85 "U (slide pitch up)" ifTrue: [patch adjustNoteBy: v / 16.0 glide: track tracker ticksToNextLine. ^ self].
+	command = 68 "D (slide pitch down)" ifTrue: [patch adjustNoteBy: v / -16.0 glide: track tracker ticksToNextLine. ^ self].
 	command = 60 "< (speed backwards)" ifTrue: [patch setSpeed: (#[0.0 -0.125 -0.25 -0.375 -0.5 -0.66 -0.75 -0.9 -1.0 -1.25 -1.5 -1.75 -2.0 -3.0 -5.0 -8.0] at: (v bitShift: -4) + 1) glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
 	command = 62 "> (speed forward)" ifTrue: [patch setSpeed: (#[0.0 0.125 0.25 0.375 0.5 0.66 0.75 0.9 1.0 1.25 1.5 1.75 2.0 3.0 5.0 8.0] at: (v bitShift: -4) + 1) glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
 	command = 47 "/ (forward stroke)" ifTrue:
@@ -2994,21 +2996,21 @@ noteOn: midiKey
 noteOn: midiKey glide: numberOfLines
 	patch noteOn: (track tuningOrNil ifNil: [midiKey] ifNotNil: [:aTuning| aTuning map: midiKey]) glide: (numberOfLines * track tracker tpl) truncated! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 27/Jun/2026, 9:50:15 pm (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 8/Jul/2026, 9:40:15 am (UTC)'!
 playTrigger
 	trigger isNoteOn
 		ifTrue:
-			[patch setVelocity: (trigger velocity ifNil: [128.0]) / 128.0.
+			[patch setVelocity: (trigger velocity ifNil: [128.0]) / 128.0 glide: 0.
 			trigger isReverse "new notes start at the begining with normal speed, or at the end if playing backwards"
-				ifTrue: [patch setOffset: 1.0; speed:​ -1.0]
-				ifFalse: [patch setOffset: 0.0; speed:​ 1.0].
+				ifTrue: [patch setOffset: 1.0; setSpeed:​ -1.0 glide: 0]
+				ifFalse: [patch setOffset: 0.0; setSpeed:​ 1.0 glide: 0].
 			trigger fx1 ifNotNil: [:fx| self handleFX: fx].
 			trigger fx2 ifNotNil: [:fx| self handleFX: fx].
 			self noteOn: trigger note + trigger noteShift glide: trigger glide.
 			trigger fx1 ifNotNil: [:fx| self handlePostNoteFX: fx].
 			trigger fx2 ifNotNil: [:fx| self handlePostNoteFX: fx]]
 		ifFalse:
-			[trigger velocity ifNotNil: [:vel| patch setVelocity: vel / 128.0].
+			[trigger velocity ifNotNil: [:vel| patch setVelocity: vel / 128.0 glide: 0].
 			trigger fx1 ifNotNil: [:fx| self handleFX: fx; handlePostNoteFX: fx].
 			trigger fx2 ifNotNil: [:fx| self handleFX: fx; handlePostNoteFX: fx].
 			trigger isNoteOff ifTrue: [patch noteOff]].
@@ -3506,10 +3508,12 @@ transposeBy: steps
 allFXCommandCharacters
 	^ '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>/\+-?!!@&~#$%^*_=|'! !
 
-!Trigger class methodsFor: 'as yet unclassified' stamp: 'len 7/Jul/2026, 8:02:51 pm (UTC)'!
+!Trigger class methodsFor: 'as yet unclassified' stamp: 'len 8/Jul/2026, 9:56:14 am (UTC)'!
 descriptionForFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
+	command = 86 "V (velocity/volume)" ifTrue:
+		[^ 'Change to velocity ', (((anInteger bitShift: -4) bitAnd: 16rF) / 15.0 * 100.0) rounded printString, '% over ', (anInteger bitAnd: 16rF) printString, ' lines'].
 	command = 33 "!! (cut)" ifTrue:
 		[^ 'Cut velocity to ', (((anInteger bitShift: -4) bitAnd: 16rF) / 15.0 * 100.0) rounded printString, '% after ', ((anInteger bitAnd: 16rF)/12) printText, ' lines'].
 	command = 42 "* (retrigger)" ifTrue:
@@ -3522,19 +3526,19 @@ descriptionForFX: anInteger
 	command = 68 "D (slide pitch down)" ifTrue: [^ 'Slide pitch down by ', (v / 16.0 printStringFractionDigits: 2), ' semitones'].
 	command = 43 "+ (finetune note up)" ifTrue: [^ 'Finetune note up by ', (v / 256.0 printStringFractionDigits: 2)].
 	command = 45 "- (finetune note down)" ifTrue: [^ 'Finetune note down by ', (v / 256.0 printStringFractionDigits: 2)].
-	command = 71 "G (glide to note)" ifTrue: [^ 'Glide to note in ', (v / 16.0 printStringFractionDigits: 2), ' lines'].
+	command = 71 "G (glide to note)" ifTrue: [^ 'Glide to note over ', (v / 16.0 printStringFractionDigits: 2), ' lines'].
 	"Sample commands:"
 	command = 64 "@ (sample offset)" ifTrue: [^ 'Set sample offset to ', v printString, '/255'].
 	command = 60 "< (speed backwards)" ifTrue:
 		[| speed lines |
 		speed := #[0.0 0.125 0.25 0.375 0.5 0.66 0.75 0.9 1.0 1.25 1.5 1.75 2.0 3.0 5.0 8.0] at: ((anInteger bitShift: -4)  bitAnd: 16rF)+ 1.
 		lines := anInteger bitAnd: 16rF.
-		^ lines = 0 ifTrue: ['Play backwards at speed ', (speed printStringFractionDigits: 2), '×'] ifFalse: ['Slide to play backwards at speed ', (speed printStringFractionDigits: 2), '× in ', lines printString, ' lines']].
+		^ lines = 0 ifTrue: ['Play backwards at speed ', (speed printStringFractionDigits: 2), '×'] ifFalse: ['Slide to play backwards at speed ', (speed printStringFractionDigits: 2), '× over ', lines printString, ' lines']].
 	command = 62 "< (speed forward)" ifTrue:
 		[| speed lines |
 		speed := #[0.0 0.125 0.25 0.375 0.5 0.66 0.75 0.9 1.0 1.25 1.5 1.75 2.0 3.0 5.0 8.0] at: ((anInteger bitShift: -4)  bitAnd: 16rF) + 1.
 		lines := anInteger bitAnd: 16rF.
-		^ lines = 0 ifTrue: ['Play forward at speed ', (speed printStringFractionDigits: 2), '×'] ifFalse: ['Slide to play forward at speed ', (speed printStringFractionDigits: 2), '× in ', lines printString, ' lines']].
+		^ lines = 0 ifTrue: ['Play forward at speed ', (speed printStringFractionDigits: 2), '×'] ifFalse: ['Slide to play forward at speed ', (speed printStringFractionDigits: 2), '× over ', lines printString, ' lines']].
 	command = 47 "/ (forward stroke)"
 		ifTrue: [^ 'Forward stroke of ', ((anInteger bitShift: -4) bitAnd: 16rF) printString, ' lines over ', (anInteger bitAnd: 16rF) printString, ' lines'].
 	command = 92 "\ (backward stroke)"

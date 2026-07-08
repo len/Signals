@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 8 July 2026 at 2:46:38 am'!
+'From Cuis7.9 [latest update: #8030] on 8 July 2026 at 6:26:12 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 637!
+!provides: 'Signals' 1 638!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -156,7 +156,7 @@ AudioIn class
 
 !classDefinition: #AudioOut category: #'Signals-IO'!
 Module subclass: #AudioOut
-	instanceVariableNames: 'buses port level levelLeft levelRight targetLevelLeft targetLevelRight inputL inputR meterLeftValue meterRightValue enabled'
+	instanceVariableNames: 'buses port volume level levelLeft levelRight targetLevelLeft targetLevelRight inputL inputR meterLeftValue meterRightValue enabled'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-IO'!
@@ -996,7 +996,7 @@ OberheimSVF class
 
 !classDefinition: #Patch category: #'Signals-Kernel'!
 ActiveModel subclass: #Patch
-	instanceVariableNames: 'modules receivers audioOutput video buses controlBus note noteIncrement speed speedIncrement glideTicks'
+	instanceVariableNames: 'modules receivers audioOutput video buses controlBus note noteIncrement speed speedIncrement velocity velocityIncrement glideTicks'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Kernel'!
@@ -4194,35 +4194,28 @@ port: anInteger
 	port := anInteger.
 	self triggerEvent: #portChanged: with: port! !
 
-!AudioOut methodsFor: 'controlling' stamp: 'len 28/Apr/2026, 10:31:11 am (UTC)'!
-adjustLevelBy: aNumber
-	(controls at: #level) adjustBy: aNumber! !
-
-!AudioOut methodsFor: 'controlling' stamp: 'len 28/Apr/2026, 10:30:57 am (UTC)'!
-adjustPanBy: aNumber
-	(controls at: #pan) adjustBy: aNumber! !
-
-!AudioOut methodsFor: 'controlling' stamp: 'len 17/Apr/2026, 12:30:58 pm (UTC)'!
-setLevel: aNumber
-	(controls at: #level) basePosition: aNumber! !
-
 !AudioOut methodsFor: 'controlling' stamp: 'len 17/Jan/2026, 7:32:25 pm (UTC)'!
 setPan: aNumber
 	self set: #pan to: aNumber! !
 
-!AudioOut methodsFor: 'controlling' stamp: 'len 3/May/2026, 3:41:50 pm (UTC)'!
+!AudioOut methodsFor: 'controlling' stamp: 'len 7/Jul/2026, 8:40:30 pm (UTC)'!
+setVolume: aNumber
+	volume := aNumber! !
+
+!AudioOut methodsFor: 'controlling' stamp: 'len 7/Jul/2026, 8:46:35 pm (UTC)'!
 update
 	| pan |
 	super update.
-	level := enabled ifTrue: [self get: #level] ifFalse: [0.0].
+	level := enabled ifTrue: [(self get: #level) * volume squared] ifFalse: [0.0].
 	pan := self get: #pan.
 	targetLevelLeft := targetLevelRight := level.
 	pan < 0.0 ifTrue: [targetLevelRight := targetLevelRight * (pan * Float halfPi) cos].
 	pan > 0.0 ifTrue: [targetLevelLeft := targetLevelLeft * (pan * Float halfPi) cos]! !
 
-!AudioOut methodsFor: 'initialization' stamp: 'len 2/Jun/2026, 7:10:29 pm (UTC)'!
+!AudioOut methodsFor: 'initialization' stamp: 'len 7/Jul/2026, 8:39:44 pm (UTC)'!
 initialize
 	super initialize.
+	volume := 1.0.
 	level := levelLeft := levelRight := 0.001. "-60 dB"
 	meterLeftValue := meterRightValue := 0.0.
 	enabled := true.
@@ -10630,29 +10623,15 @@ send: aSelector with: anObject ifNoReceiver: aBlock
 	(receivers at: aSelector ifAbsentPut: [modules select: [:each| each respondsTo: aSelector]])
 		ifEmpty: aBlock ifNotEmpty: [:anArray| anArray do: [:each| each perform: aSelector with: anObject]]! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 2/Jul/2026, 11:11:07 am (UTC)'!
-speed: aNumber
-	speed := aNumber.
-	speedIncrement := 0.0.
-	glideTicks := 0! !
-
 !Patch methodsFor: 'accessing' stamp: 'len 6/Jul/2026, 11:12:44 am (UTC)'!
 video
 	^ video! !
-
-!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:32 pm (UTC)'!
-adjustLevelBy: aNumber
-	audioOutput ifNotNil: [audioOutput adjustLevelBy: aNumber]! !
 
 !Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 7:28:17 pm (UTC)'!
 adjustNoteBy: aNumber glide: numberOfTicks
 	"Slide the given number of semitones."
 	glideTicks := numberOfTicks.
 	noteIncrement := aNumber / glideTicks asFloat! !
-
-!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:32 pm (UTC)'!
-adjustPanBy: aNumber
-	audioOutput ifNotNil: [audioOutput adjustPanBy: aNumber]! !
 
 !Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 7:18:43 pm (UTC)'!
 clear
@@ -10693,10 +10672,6 @@ noteOn: targetNote glide: numberOfTicks
 reset
 	modules do: [:each| each reset]! !
 
-!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:54:33 pm (UTC)'!
-setLevel: aNumber
-	audioOutput ifNotNil: [audioOutput setLevel: aNumber]! !
-
 !Patch methodsFor: 'controlling' stamp: 'len 28/Jun/2026, 6:18:52 pm (UTC)'!
 setNote: midiKey
 	self send: #setNote: with: midiKey! !
@@ -10726,9 +10701,28 @@ setSpeed: targetSpeed glide: numberOfTicks
 			speed := targetSpeed].
 	self setSpeed: speed! !
 
-!Patch methodsFor: 'controlling' stamp: 'len 7/Jul/2026, 7:30:53 pm (UTC)'!
+!Patch methodsFor: 'controlling' stamp: 'len 7/Jul/2026, 8:43:15 pm (UTC)'!
 setVelocity: aNumber
-	self send: #setVelocity: with: aNumber "ifNoReceiver: [self setLevel: aNumber * 0.75]"! !
+	"If no velocity handler is present, set volume instead (more basic than velocity, it's just the master output level)."
+	self send: #setVelocity: with: aNumber ifNoReceiver: [self setVolume: aNumber]! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 8/Jul/2026, 11:17:55 am (UTC)'!
+setVelocity: targetVelocity glide: numberOfTicks
+	(numberOfTicks > 0 and: [velocity notNil])
+		ifTrue:
+			[glideTicks := numberOfTicks truncated max: 1.
+			velocityIncrement := targetVelocity - velocity / glideTicks asFloat.
+			velocity := velocity + velocityIncrement]
+		ifFalse:
+			[glideTicks := 0.
+			velocityIncrement := 0.0.
+			velocity := targetVelocity].
+	self setVelocity: velocity! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 7/Jul/2026, 8:45:29 pm (UTC)'!
+setVolume: aNumber
+	"Volume is more basic than velocity, it just scales the master output level."
+	audioOutput ifNotNil: [audioOutput setVolume: aNumber]! !
 
 !Patch methodsFor: 'initialization' stamp: 'len 29/Jun/2026, 7:46:08 am (UTC)'!
 initialize
@@ -10738,15 +10732,16 @@ initialize
 	controlBus := Float32Array new: 10. "control ports go from 0 to 9"
 	glideTicks := 0! !
 
-!Patch methodsFor: 'processing' stamp: 'len 2/Jul/2026, 11:10:36 am (UTC)'!
+!Patch methodsFor: 'processing' stamp: 'len 8/Jul/2026, 11:16:44 am (UTC)'!
 tick
 	glideTicks > 0 ifTrue:
 		[noteIncrement = 0.0 ifFalse: [note := note + noteIncrement. self setNote: note].
 		speedIncrement = 0.0 ifFalse: [speed := speed + speedIncrement. self setSpeed: speed].
+		velocityIncrement = 0.0 ifFalse: [velocity := velocity + velocityIncrement. self setVelocity: velocity].
 		glideTicks := glideTicks - 1].
 	modules do: [:each| each update; tick]! !
 
-!Patch methodsFor: 'private' stamp: 'len 27/Jun/2026, 10:11:29 pm (UTC)'!
+!Patch methodsFor: 'private' stamp: 'len 7/Jul/2026, 9:05:02 pm (UTC)'!
 setBuses
 	audioOutput := nil.
 	modules do: [:each|
@@ -10758,7 +10753,10 @@ setBuses
 					ifFalse:
 						[(each isMemberOf: AudioOut) ifTrue:
 							[each setBuses: buses.
-							each port = 0 ifTrue: [audioOutput := each]]]]]! !
+							each port = 0 ifTrue: [audioOutput := each]]]]].
+	"if there are velocity handlers we assume gain is controlled by velocity and set the volume to normal:"
+	(audioOutput notNil and: [modules anySatisfy: [:any| any respondsTo: #setVelocity:]])
+		ifTrue: [audioOutput setVolume: 1.0]! !
 
 !ControlPanel methodsFor: 'building' stamp: 'len 12/Mar/2026, 10:50:50 am (UTC)'!
 addColumn

@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 8 July 2026 at 6:26:12 pm'!
+'From Cuis7.9 [latest update: #8030] on 9 July 2026 at 6:06:58 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 638!
+!provides: 'Signals' 1 639!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -10627,11 +10627,31 @@ send: aSelector with: anObject ifNoReceiver: aBlock
 video
 	^ video! !
 
-!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 7:28:17 pm (UTC)'!
+!Patch methodsFor: 'controlling' stamp: 'len 8/Jul/2026, 9:39:13 pm (UTC)'!
 adjustNoteBy: aNumber glide: numberOfTicks
 	"Slide the given number of semitones."
-	glideTicks := numberOfTicks.
-	noteIncrement := aNumber / glideTicks asFloat! !
+	note ifNil: [^ self].
+	numberOfTicks > 0
+		ifTrue: 
+			[glideTicks := numberOfTicks.
+			noteIncrement := aNumber / glideTicks asFloat]
+		ifFalse:
+			[glideTicks := 0.
+			noteIncrement := 0.0.
+			note := note + aNumber]! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 9/Jul/2026, 8:00:54 am (UTC)'!
+adjustVelocityBy: aNumber glide: numberOfTicks
+	velocity ifNil: [^ self].
+	numberOfTicks > 0
+		ifTrue:
+			[glideTicks := numberOfTicks.
+			velocityIncrement := aNumber / glideTicks asFloat]
+		ifFalse:
+			[glideTicks := 0.
+			velocityIncrement := 0.0.
+			velocity := velocity + aNumber.
+			self setVelocity: velocity]! !
 
 !Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 7:18:43 pm (UTC)'!
 clear

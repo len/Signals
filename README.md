@@ -50,15 +50,14 @@ Finally, open a FileList, go to Signals/data/projects/ and choose any of the exa
 On the screenshot above you can see an open tracker window. At the top there is the "instrument editor" that contains a patch of modules connected by wires (an instrument, or possibly an effect or other kind of audio processing patch). Each module morph contains controls (like knobs, sliders, a wave, etc) that can be changed with mouse scroll or the arrow keys (with shift pressed to do fine adjustments). The instrument editor is fully zoomable, you can zoom in/out with Cmd-mouse-scroll and pan by mouse-dragging the background. The instrument editor shows the patch for the instrument at current cursor position in the pattern editor below it; you have to move the cursor to see the different patches, or enter a new instrument number to create a new empty patch.
 
 At the bottom left there is the "sequencer" or "arranger", that contains the list of patterns to be played. And at the bottom right the "pattern editor" that shows the current pattern and allows you to edit the triggers (notes and effect commands, like a typical tracker). Each track contains the following columns: instrument number, note, velocity, fx1 and fx2. The following are the fx commands currently implemented:
-* Vxy change velocity to x (0 = minimum, F = maximum) over y lines
+* +xy / -xy fade in/out increasing/decreasing velocity by x over y lines (0 = 0%, F = 100%)
 * !xy cut to velocity x (0 = minimum, F = maximum) after y/12 of a line
 * Gxx glide to note over xx/16 lines (01 = 1/16 of a line, 10 = 1 line, FF = almost 16 lines)
-* Uxx / Dxx slide note up/down by xx/16 semitones for the duration of one line
-* +xx / -xx finetune note up/down by xx/256 of a note depending on the selected tuning (0 = no change, 80 = half note, FF = almost 1 note)
+* Uxx / Dxx finetune note up/down by xx/256 of a note (depending on the tuning system, 0 = no change, 80 = half note, FF = almost 1 note)
+* /xy / \xy slide pitch up/down by x notes over y lines (depending on the tuning system)
 * \*xy retrigger every y/12 of a line, and change velocity according to x (see below)
 * @xx set sample offset
 * \>xy / <xy slide to play forward/backwards at speed x (4 = half speed, 8 = normal, C = double speed, F = 8x) over y lines
-* /xy / \xy scratch forward/backward stroke, move sample playhead by the duration of x lines over y lines
 * 0xx to 9xx set control input
 * Fxx set BPM to xx
 * \&xx delay trigger by xx/256 of a line (00 = no delay, FF = almost a full line)
@@ -72,7 +71,7 @@ Retrigger velocity change:
 * 9, A, B, C, D increase velocity by adding 1/32, 1/16, 1/8, 1/4, 1/2
 * E, F scale up velocity multiplying by 3/2, 2
 
-Commands !xy and *xy work within the duration of the line where they are placed, and interpret the nibble x as a time duration in units of 1/12 of a line (0 = instantly, B = 1/12 before next line).
+Commands !xy and *xy work within the duration of the line where they are placed, and interpret the nibble y as a time duration in units of 1/12 of a line (0 = instantly, B = 1/12 before next line).
 
 ### Hotkeys and keyboard mapping
 Trackers are heavily keyboard-oriented. The following hotkeys are the most commonly used (in PC, Command and Option are Control and Alt).

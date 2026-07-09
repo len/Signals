@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 9 July 2026 at 6:09:43 pm'!
+'From Cuis7.9 [latest update: #8030] on 9 July 2026 at 6:24:14 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 100!
+!provides: 'Tracker' 1 101!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -915,9 +915,15 @@ isPlaying
 isPlayingFollowingPlayhead
 	^ followPlayhead and: [self isPlaying]! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 9/Mar/2026, 9:29:54 am (UTC)'!
+!Tracker methodsFor: 'playing' stamp: 'len 9/Jul/2026, 11:23:03 am (UTC)'!
+loop
+	^ loop! !
+
+!Tracker methodsFor: 'playing' stamp: 'len 9/Jul/2026, 11:23:25 am (UTC)'!
 loop: aBoolean
-	loop := aBoolean! !
+	loop = aBoolean ifTrue: [^ self].
+	loop := aBoolean.
+	self triggerEvent: #loopChanged: with: loop! !
 
 !Tracker methodsFor: 'playing' stamp: 'len 4/Jul/2026, 3:44:51 pm (UTC)'!
 play
@@ -1398,7 +1404,7 @@ keyStroke: anEvent
 		^ self].
 	^ super keyStroke: anEvent! !
 
-!TrackerWindow methodsFor: 'initialization' stamp: 'len 5/Jul/2026, 4:18:40 pm (UTC)'!
+!TrackerWindow methodsFor: 'initialization' stamp: 'len 9/Jul/2026, 11:22:52 am (UTC)'!
 buildBar
 	| bar transport bpmControl swingControl barFont |
 	barFont := FontFamily defaultFamilyPointSize: 16.
@@ -1420,7 +1426,8 @@ buildBar
 		receive: #baseValue: from: model when: #swingChanged:;
 		when: #changed: send: #swing: to: model.
 	bar addMorph: (TextualControlMorph new control: swingControl).
-	bar addMorph: (ToggleButtonMorph new font: barFont; state: model followPlayhead; when: #changed: send: #followPlayhead: to: model; receive: #state: from: model when: #followPlayheadChanged:; "label: '⇩';" icon: (IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M233.33-161.33 80-315.33l46.67-46L200-290v-470.67h66.67V-290l72.66-71.33 46.67 46-152.67 154Zm252.67-38V-266h394v66.67H486Zm0-247.34v-66.66h394v66.66H486ZM486-694v-66.67h394V-694H486Z'); setBalloonText: 'Follow playhead').
+	bar addMorph: (ToggleButtonMorph new font: barFont; state: model loop; when: #changed: send: #loop: to: model; receive: #state: from: model when: #loopChanged:; icon: self class repeatIcon; setBalloonText: 'Loop').
+	bar addMorph: (ToggleButtonMorph new font: barFont; state: model followPlayhead; when: #changed: send: #followPlayhead: to: model; receive: #state: from: model when: #followPlayheadChanged:; "label: '⇩';" icon: self class followPlayheadIcon; setBalloonText: 'Follow playhead').
 	bar addMorph: (PulldownListMorph new
 		options: (0 to: 9);
 		state: model inputOctave;
@@ -1492,6 +1499,10 @@ windowColor
 !TrackerWindow class methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 7:50:27 pm (UTC)'!
 filmIcon
 	^ IconMorph new pathData: 'M2 3.9934C2 3.44476 2.45531 3 2.9918 3H21.0082C21.556 3 22 3.44495 22 3.9934V20.0066C22 20.5552 21.5447 21 21.0082 21H2.9918C2.44405 21 2 20.5551 2 20.0066V3.9934ZM8 5V19H16V5H8ZM4 5V7H6V5H4ZM18 5V7H20V5H18ZM4 9V11H6V9H4ZM18 9V11H20V9H18ZM4 13V15H6V13H4ZM18 13V15H20V13H18ZM4 17V19H6V17H4ZM18 17V19H20V17H18Z'! !
+
+!TrackerWindow class methodsFor: 'as yet unclassified' stamp: 'len 9/Jul/2026, 11:21:32 am (UTC)'!
+followPlayheadIcon
+	^ IconMorph new viewBox: (0 @ -960 extent: 960 @ 960); pathData: 'M233.33-161.33 80-315.33l46.67-46L200-290v-470.67h66.67V-290l72.66-71.33 46.67 46-152.67 154Zm252.67-38V-266h394v66.67H486Zm0-247.34v-66.66h394v66.66H486ZM486-694v-66.67h394V-694H486Z'! !
 
 !TrackerWindow class methodsFor: 'as yet unclassified' stamp: 'len 29/Jun/2026, 9:28:23 pm (UTC)'!
 instrumentEditorIcon
@@ -2816,9 +2827,9 @@ unsetColor
 velocityColor
 	^ `Color okl: 0.85 c: 0.3 h: 120`! !
 
-!TransportStatusMorph methodsFor: 'drawing' stamp: 'len 23/Jun/2026, 3:54:25 pm (UTC)'!
+!TransportStatusMorph methodsFor: 'drawing' stamp: 'len 9/Jul/2026, 11:13:44 am (UTC)'!
 drawOn: aCanvas
-	aCanvas drawString: '▶' at: 4 @ 0 font: font color: (tracker isPlaying ifTrue: [PatchMorph waveformColor] ifFalse: [Color black])
+	aCanvas drawString: '▶' at: 4 @ 0 font: font color: (tracker isPlaying ifTrue: [Color white] ifFalse: [Color lightGray])
 		
 "	tracker isPlaying ifTrue:
 		[aCanvas drawString: '▶' '◼' at: 4 @ 0 font: font color: PatchMorph waveformColor]"! !
@@ -2947,9 +2958,9 @@ handleFX: anInteger
 	command = 64 "@ (sample offset)" ifTrue: [patch setOffset: v / 255.0. ^ self].
 	(command between: 48 and: 57) "0 to 9" ifTrue: [patch controlBus at: command - 47 put: v / 255.0. ^ self]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 9/Jul/2026, 7:48:13 am (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 9/Jul/2026, 11:19:52 am (UTC)'!
 handlePostNoteFX: anInteger
-	"Note: pitch slide effects must be handled *after* the note on, otherwise the slide gets overridden."
+	"Slide effects must be handled *after* the note on, otherwise the slide gets overridden."
 	| command v |
 	command := anInteger bitShift: -8.
 	v := anInteger bitAnd: 16rFF.

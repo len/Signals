@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 11 July 2026 at 6:17:07 pm'!
+'From Cuis7.9 [latest update: #8030] on 11 July 2026 at 8:11:25 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 640!
+!provides: 'Signals' 1 641!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -1056,7 +1056,7 @@ PluggableToggleMorph class
 
 !classDefinition: #ControlMorph category: #'Signals-Morphic-Controls'!
 BoxMorph subclass: #ControlMorph
-	instanceVariableNames: 'control color'
+	instanceVariableNames: 'control color mapped'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Controls'!
@@ -10592,10 +10592,11 @@ controlNumberForControl: aControl
 enabled: aBoolean
 	modules do: [:each| (each isMemberOf: AudioOut) ifTrue: [each enabled: aBoolean]]! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 10/Jul/2026, 3:23:01 pm (UTC)'!
+!Patch methodsFor: 'accessing' stamp: 'len 11/Jul/2026, 12:46:05 pm (UTC)'!
 map: controlNumber to: aControl
 	self unmap: aControl.
-	controlMap at: controlNumber + 1 put: (controlMap at: controlNumber + 1), {aControl}! !
+	controlMap at: controlNumber + 1 put: (controlMap at: controlNumber + 1), {aControl}.
+	self triggerEvent: #controlMapped: with: aControl! !
 
 !Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 9:35:06 pm (UTC)'!
 meterLeftValue
@@ -10638,10 +10639,11 @@ send: aSelector with: anObject ifNoReceiver: aBlock
 	(receivers at: aSelector ifAbsentPut: [modules select: [:each| each respondsTo: aSelector]])
 		ifEmpty: aBlock ifNotEmpty: [:anArray| anArray do: [:each| each perform: aSelector with: anObject]]! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 10/Jul/2026, 10:56:16 am (UTC)'!
+!Patch methodsFor: 'accessing' stamp: 'len 11/Jul/2026, 12:46:16 pm (UTC)'!
 unmap: aControl
 	(controlMap anySatisfy: [:anyList| anyList includes: aControl]) ifFalse: [^ false].
 	controlMap := controlMap collect: [:eachList| eachList select: [:each| each ~~ aControl]].
+	self triggerEvent: #controlUnmapped: with: aControl.
 	^ true! !
 
 !Patch methodsFor: 'accessing' stamp: 'len 6/Jul/2026, 11:12:44 am (UTC)'!
@@ -10907,14 +10909,16 @@ initialize
 addNewModule
 ! !
 
-!RackMorph methodsFor: 'private' stamp: 'len 30/Jun/2026, 7:59:51 pm (UTC)'!
+!RackMorph methodsFor: 'private' stamp: 'len 11/Jul/2026, 1:02:07 pm (UTC)'!
 patch: aPatch
 	patch = aPatch ifTrue: [^ self].
 	patch := aPatch.
 	aPatch when: #modulesChanged send: #update to: self.
+	aPatch when: #controlMapped: send: #updateControlMapped: to: self.
+	aPatch when: #controlUnmapped: send: #updateControlUnmapped: to: self.
 	self update! !
 
-!RackMorph methodsFor: 'private' stamp: 'len 30/Jun/2026, 8:14:55 pm (UTC)'!
+!RackMorph methodsFor: 'private' stamp: 'len 11/Jul/2026, 12:56:45 pm (UTC)'!
 update
 	| existingRackables |
 	existingRackables := submorphs select: [:each| each isKindOf: RackableMorph].
@@ -10924,6 +10928,18 @@ update
 		do: [:each| self addMorph: (existingRackables detect: [:one| one model = each] ifNone: [each rackable]) layoutSpec: LayoutSizeSpec new useMorphWidth "useMorphHeight"].
 	self addMorph: (PushButtonMorph new when: #buttonUp send: #addNewModule to: self; label: '+'; setBalloonText: 'Add new module'; morphExtent: 10 @ 10) layoutSpec: LayoutSizeSpec new useMorphWidth.
 	self redrawNeeded! !
+
+!RackMorph methodsFor: 'private' stamp: 'len 11/Jul/2026, 1:03:23 pm (UTC)'!
+updateControlMapped: aControl
+	self allSubmorphsDo: [:each|
+		((each isKindOf: ControlMorph) and: [each control = aControl])
+			ifTrue: [each mapped: true. ^ self]]! !
+
+!RackMorph methodsFor: 'private' stamp: 'len 11/Jul/2026, 1:03:35 pm (UTC)'!
+updateControlUnmapped: aControl
+	self allSubmorphsDo: [:each|
+		((each isKindOf: ControlMorph) and: [each control = aControl])
+			ifTrue: [each mapped: false. ^ self]]! !
 
 !RackMorph methodsFor: 'as yet unclassified' stamp: 'len 10/Jul/2026, 8:36:22 am (UTC)'!
 patch
@@ -11192,6 +11208,10 @@ withLabel: aString
 update: anObject
 	self redrawNeeded! !
 
+!ControlMorph methodsFor: 'drawing' stamp: 'len 11/Jul/2026, 12:42:33 pm (UTC)'!
+activeColor
+	^ mapped ifTrue: [PatchMorph controlWaveformColor2] ifFalse: [color]! !
+
 !ControlMorph methodsFor: 'drawing' stamp: 'len 19/Nov/2025, 12:08:00 pm (UTC)'!
 inactiveColor
 	^ self hasKeyboardFocus ifTrue: [Color veryLightGray] ifFalse: [Color lightGray]! !
@@ -11208,11 +11228,11 @@ handlesMouseOver: anEvent
 handlesMouseScroll: anEvent
 	^ anEvent anyModifierKeyPressed not! !
 
-!ControlMorph methodsFor: 'events' stamp: 'len 11/Jul/2026, 11:02:23 am (UTC)'!
+!ControlMorph methodsFor: 'events' stamp: 'len 11/Jul/2026, 12:59:48 pm (UTC)'!
 keyStroke: anEvent
 	anEvent isEsc ifTrue:
 		[anEvent wasHandled: true.
-		self patch ifNotNil: [:aPatch| (aPatch unmap: control) ifTrue: [self updateColor. ^ self]].
+		self patch ifNotNil: [:aPatch| (aPatch unmap: control) ifTrue: [self wantsBalloon ifTrue: [self showBalloon]. ^ self]].
 		control setBaseToDefault.
 		self wantsBalloon ifTrue: [self showBalloon].
 		^ self].
@@ -11229,7 +11249,6 @@ keyStroke: anEvent
 	(anEvent keyValue between: 48 and: 57) "0 to 9" ifTrue:
 	 	[anEvent wasHandled: true.
 		self patch ifNotNil: [:aPatch| aPatch map: anEvent keyValue - 48 to: control].
-		self updateColor.
 		self wantsBalloon ifTrue: [self showBalloon].
 		^ self].
 	^ super keyStroke: anEvent! !
@@ -11287,25 +11306,30 @@ defaultFontSize
 defaultLabelFontSize
 	^ (FontFamily defaultPointSize * 0.6) truncated! !
 
-!ControlMorph methodsFor: 'initialization' stamp: 'len 7/Jun/2026, 1:26:26 pm (UTC)'!
+!ControlMorph methodsFor: 'initialization' stamp: 'len 11/Jul/2026, 12:42:46 pm (UTC)'!
 initialize
 	super initialize.
-	color := self defaultColor! !
+	color := self defaultColor.
+	mapped := false! !
 
-!ControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Jul/2026, 11:04:32 am (UTC)'!
-intoWorld: aWorld
-	super intoWorld: aWorld.
-	self updateColor! !
+!ControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Jul/2026, 12:57:15 pm (UTC)'!
+control
+	^ control! !
+
+!ControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Jul/2026, 12:43:17 pm (UTC)'!
+mapped: aBoolean
+	mapped = aBoolean ifTrue: [^ self].
+	mapped := aBoolean.
+	self redrawNeeded! !
 
 !ControlMorph methodsFor: 'as yet unclassified' stamp: 'len 10/Jul/2026, 7:56:39 am (UTC)'!
 patch
 	self allOwnersDo: [:each| ((each isKindOf: PatchMorph) or: [each isKindOf: RackMorph]) ifTrue: [^ each patch]].
 	^ nil! !
 
-!ControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Jul/2026, 11:03:45 am (UTC)'!
-updateColor
-	self patch ifNotNil: [:aPatch| self color: ((aPatch controlNumberForControl: control) ifNil: [Color white] ifNotNil: [PatchMorph controlWaveformColor2])]
-! !
+!ControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Jul/2026, 12:58:11 pm (UTC)'!
+updateMappedFlag
+	self patch ifNotNil: [:aPatch| self mapped: (aPatch controlNumberForControl: control) notNil]! !
 
 !ControlMorph class methodsFor: 'instance creation' stamp: 'len 4/Nov/2025, 8:49:00 am (UTC)'!
 control: aControl
@@ -11315,13 +11339,13 @@ control: aControl
 defaultExtent
 	^ `24 @ 24`! !
 
-!AttackControlMorph methodsFor: 'drawing' stamp: 'len 28/Apr/2026, 12:17:03 pm (UTC)'!
+!AttackControlMorph methodsFor: 'drawing' stamp: 'len 11/Jul/2026, 12:46:32 pm (UTC)'!
 drawOn: aCanvas
 	| w h a |
 	w := extent x - 4.0.
 	h := extent y - 4.0.
 	a := control basePosition * w.
-	aCanvas strokeWidth: 2 color: color do:
+	aCanvas strokeWidth: 2 color: self activeColor do:
 		[aCanvas
 			moveTo: h + 2.0 @ 2.0;
 			quadraticBezierTo: h + 2.0 - a @ (h + 2.0) control: h + 2.0 - (a/3.0) @ (h + 2.0);
@@ -11331,7 +11355,7 @@ drawOn: aCanvas
 defaultExtent
 	^ `24 @ 24`! !
 
-!CircularControlMorph methodsFor: 'drawing' stamp: 'len 23/Jun/2026, 10:51:47 am (UTC)'!
+!CircularControlMorph methodsFor: 'drawing' stamp: 'len 11/Jul/2026, 12:46:41 pm (UTC)'!
 drawOn: aCanvas
 	| v center radius |
 	v := control basePosition + control modulation min: 1.0 max: 0.0.
@@ -11339,20 +11363,20 @@ drawOn: aCanvas
 	radius := center - 2.0.
 	aCanvas strokeWidth: 1.0 color: self inactiveColor do:
 		[aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: 0.0 sweep: Float twoPi].
-	aCanvas strokeWidth: 2.0 color: color do:
+	aCanvas strokeWidth: 2.0 color: self activeColor do:
 		[aCanvas arcCenter: center radius: radius - 0.5 rotationAngle: Float halfPi start: 0.0 sweep: Float twoPi * v]! !
 
 !DecayControlMorph methodsFor: 'initialization' stamp: 'len 28/Apr/2026, 12:03:25 pm (UTC)'!
 defaultExtent
 	^ `24 @ 24`! !
 
-!DecayControlMorph methodsFor: 'drawing' stamp: 'len 28/Apr/2026, 12:12:44 pm (UTC)'!
+!DecayControlMorph methodsFor: 'drawing' stamp: 'len 11/Jul/2026, 12:46:48 pm (UTC)'!
 drawOn: aCanvas
 	| w h d |
 	w := extent x - 4.0.
 	h := extent y - 4.0.
 	d := control basePosition * w.
-	aCanvas strokeWidth: 2 color: color do:
+	aCanvas strokeWidth: 2 color: self activeColor do:
 		[aCanvas
 			moveTo: 2.0@2.0;
 			quadraticBezierTo: d @ h + 2.0 control: d/3.0 @ h + 2.0;
@@ -11362,7 +11386,7 @@ drawOn: aCanvas
 defaultExtent
 	^ `24 @ 24`! !
 
-!FadeControlMorph methodsFor: 'drawing' stamp: 'len 25/Apr/2026, 10:57:31 am (UTC)'!
+!FadeControlMorph methodsFor: 'drawing' stamp: 'len 11/Jul/2026, 12:46:57 pm (UTC)'!
 drawOn: aCanvas
 	| v center radius zeroPosition endPosition startPosition |
 	v := control basePosition + control modulation min: 1.0 max: 0.0.
@@ -11371,13 +11395,13 @@ drawOn: aCanvas
 	zeroPosition := center + (0 @ radius y).
 	startPosition := (zeroPosition - center rotatedBy: Float pi * v) + center.
 	endPosition := (startPosition - center rotatedBy: Float pi) + center.
-	aCanvas strokeWidth: 2.0 color: color do: [aCanvas moveTo: 0 @ startPosition y; lineTo: startPosition; lineTo: endPosition; lineTo: self morphWidth @ endPosition y]! !
+	aCanvas strokeWidth: 2.0 color: self activeColor do: [aCanvas moveTo: 0 @ startPosition y; lineTo: startPosition; lineTo: endPosition; lineTo: self morphWidth @ endPosition y]! !
 
 !KnobControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026, 8:20:51 am (UTC)'!
 defaultExtent
 	^ `36 @ 36`! !
 
-!KnobControlMorph methodsFor: 'drawing' stamp: 'len 21/Jun/2026, 12:56:13 pm (UTC)'!
+!KnobControlMorph methodsFor: 'drawing' stamp: 'len 11/Jul/2026, 12:47:19 pm (UTC)'!
 drawOn: aCanvas
 	| v vMod center radius zeroPosition dialPosition borderWidth |
 "	self hasKeyboardFocus ifTrue: [self drawFocusIndicatorOn: aCanvas]."
@@ -11393,10 +11417,10 @@ drawOn: aCanvas
 	aCanvas strokeWidth: borderWidth color: self inactiveColor do:
 		[aCanvas arcCenter: center radius: radius rotationAngle: Float pi / 2.0 start: Float pi * 1.8 sweep: Float pi * -1.6].
 	"draw the dial on the base value:"
-	aCanvas strokeWidth: borderWidth color: (self hasKeyboardFocus ifTrue: [color] ifFalse: [self inactiveColor]) do:
+	aCanvas strokeWidth: borderWidth color: (self hasKeyboardFocus ifTrue: [self activeColor] ifFalse: [self inactiveColor]) do:
 		[aCanvas moveTo: dialPosition; lineTo: center].
 	"and here show the modulated value, not the base value:"
-	aCanvas strokeWidth: borderWidth color: color do:
+	aCanvas strokeWidth: borderWidth color: self activeColor do:
 		[control isBipolar
 			ifTrue: [aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: Float pi sweep: Float pi * 1.6 * (vMod - 0.5)]
 			ifFalse: [aCanvas arcCenter: center radius: radius rotationAngle: Float halfPi start: Float pi * 0.2 sweep: Float pi * 1.6 * vMod]]! !
@@ -11569,9 +11593,9 @@ toggleKey: key
 whiteKeyWidth
 	^ self morphWidth / 7.0! !
 
-!SliderControlMorph methodsFor: 'drawing' stamp: 'len 23/Jun/2026, 4:30:00 pm (UTC)'!
+!SliderControlMorph methodsFor: 'drawing' stamp: 'len 11/Jul/2026, 12:48:06 pm (UTC)'!
 drawHorizontalOn: aCanvas
-	| v vMod w h basePos modulatedPos mid |
+	| v vMod w h basePos modulatedPos mid activeColor |
 	v := control basePosition.
 	vMod := v + control modulation min: 1.0 max: 0.0.
 	w := self morphWidth.
@@ -11580,18 +11604,19 @@ drawHorizontalOn: aCanvas
 	basePos := w - 6 * v.
 	modulatedPos := w - 6 * vMod.
 	aCanvas line: 3 @ mid to: w - 3 @ mid width: 4 color: self inactiveColor.
+	activeColor := self activeColor.
 	control isBipolar
-		ifTrue: [aCanvas fillRectangle: (w / 2.0 @ (mid - 2) corner: modulatedPos + 3 @ (mid + 2)) color: color]
-		ifFalse: [aCanvas line: 3 @ mid to: modulatedPos + 3 @ mid width: 4 color: color].
-	aCanvas line: basePos + 3 @ 10 to: basePos + 3 @ (h - 10) width: 4 color: color! !
+		ifTrue: [aCanvas fillRectangle: (w / 2.0 @ (mid - 2) corner: modulatedPos + 3 @ (mid + 2)) color: activeColor]
+		ifFalse: [aCanvas line: 3 @ mid to: modulatedPos + 3 @ mid width: 4 color: activeColor].
+	aCanvas line: basePos + 3 @ 10 to: basePos + 3 @ (h - 10) width: 4 color: activeColor! !
 
 !SliderControlMorph methodsFor: 'drawing' stamp: 'len 14/Oct/2025, 8:55:00 am (UTC)'!
 drawOn: aCanvas
 	self isHorizontal ifTrue: [self drawHorizontalOn: aCanvas] ifFalse: [self drawVerticalOn: aCanvas]! !
 
-!SliderControlMorph methodsFor: 'drawing' stamp: 'len 23/Jun/2026, 4:36:56 pm (UTC)'!
+!SliderControlMorph methodsFor: 'drawing' stamp: 'len 11/Jul/2026, 12:48:29 pm (UTC)'!
 drawVerticalOn: aCanvas
-	| v vMod w h basePos modulatedPos mid |
+	| v vMod w h basePos modulatedPos mid activeColor |
 	v := control basePosition.
 	vMod := v + control modulation min: 1.0 max: 0.0.
 	w := self morphWidth.
@@ -11600,10 +11625,11 @@ drawVerticalOn: aCanvas
 	basePos := h - 6 * (1.0 - v).
 	modulatedPos := h - 6 * (1.0 - vMod).
 	aCanvas line: mid @ 3 to: mid @ (h - 3) width: 4 color: self inactiveColor.
+	activeColor := self activeColor.
 	control isBipolar
-		ifTrue: [aCanvas fillRectangle: (mid - 2 @ (h / 2.0) corner: mid + 2 @ (modulatedPos + 3)) color: color]
-		ifFalse: [aCanvas line: mid @ (h - 3) to: mid @ (modulatedPos + 3) width: 4 color: color].
-	aCanvas line: 10 @ (basePos + 3) to: (w - 10) @ (basePos + 3) width: 4 color: color! !
+		ifTrue: [aCanvas fillRectangle: (mid - 2 @ (h / 2.0) corner: mid + 2 @ (modulatedPos + 3)) color: activeColor]
+		ifFalse: [aCanvas line: mid @ (h - 3) to: mid @ (modulatedPos + 3) width: 4 color: activeColor].
+	aCanvas line: 10 @ (basePos + 3) to: (w - 10) @ (basePos + 3) width: 4 color: activeColor! !
 
 !SliderControlMorph methodsFor: 'initialization' stamp: 'len 23/Jun/2026, 4:17:26 pm (UTC)'!
 defaultExtent
@@ -11634,21 +11660,24 @@ bipolar: aBoolean
 	bipolar := aBoolean.
 	self redrawNeeded! !
 
+!StripChartControlMorph methodsFor: 'initialization' stamp: 'len 11/Jul/2026, 11:58:49 am (UTC)'!
+defaultColor
+	^​ PatchMorph controlWaveformColor! !
+
 !StripChartControlMorph methodsFor: 'initialization' stamp: 'len 12/May/2026, 7:59:43 am (UTC)'!
 defaultExtent
 	^`128 @ 64`! !
 
-!StripChartControlMorph methodsFor: 'initialization' stamp: 'len 29/Jun/2026, 6:53:34 pm (UTC)'!
+!StripChartControlMorph methodsFor: 'initialization' stamp: 'len 11/Jul/2026, 11:57:36 am (UTC)'!
 initialize
 	super initialize.
-	color := PatchMorph controlWaveformColor.
 	buffer := Float32Array new: 64.
 	writePosition := 1.
 	readPosition := 0.
 	bipolar := true.
 	downsampleFactor := 5! !
 
-!StripChartControlMorph methodsFor: 'drawing' stamp: 'len 19/Jun/2026, 6:03:08 pm (UTC)'!
+!StripChartControlMorph methodsFor: 'drawing' stamp: 'len 11/Jul/2026, 12:48:45 pm (UTC)'!
 drawOn: aCanvas
 	| step x y h offset slack y0 |
 	slack := 5.
@@ -11660,7 +11689,7 @@ drawOn: aCanvas
 		[aCanvas moveTo: 0 @ y0; lineTo: self morphWidth @ y0].
 	x := 1.0.
 	y := 1.0 - (buffer at: offset) * h.
-	aCanvas strokeWidth: 2.0 color: color do:
+	aCanvas strokeWidth: 2.0 color: self activeColor do:
 		[aCanvas moveTo: x @ y.
 		1 to: buffer size - slack do: [:i|
 			x := x + step.
@@ -11739,16 +11768,16 @@ update: anObject
 	super update: anObject.
 	self updateContents! !
 
-!TextualControlMorph methodsFor: 'drawing' stamp: 'len 24/Jun/2026, 2:14:56 pm (UTC)'!
+!TextualControlMorph methodsFor: 'drawing' stamp: 'len 11/Jul/2026, 12:49:39 pm (UTC)'!
 drawOn: aCanvas
 "	super drawOn: aCanvas."
 "	aCanvas roundRect: (0@0 extent: self minimumExtent) color: color radius: 6."
 "	self hasKeyboardFocus ifTrue: [aCanvas fillRectangle: self localBounds color: (Color redCathode alpha: 0.3)]."
-	aCanvas drawString: contents at: 3 @ 3 font: font color: color.
+	aCanvas drawString: contents at: 3 @ 3 font: font color: self activeColor.
 	self hasKeyboardFocus ifTrue:
 		[| y |
 		y := font ascent + 6.
-		aCanvas line: 3 @ y to: (font widthOfString: contents) + 6 @ y width: 2 color: color]
+		aCanvas line: 3 @ y to: (font widthOfString: contents) + 6 @ y width: 2 color: self activeColor]
 "	self hasKeyboardFocus ifTrue: [self drawFocusIndicatorOn: aCanvas]"! !
 
 !TextualControlMorph methodsFor: 'geometry' stamp: 'len 24/Jun/2026, 1:55:17 pm (UTC)'!
@@ -11802,23 +11831,25 @@ drawOn: aCanvas
 waveAt: phase shape: shape
 	^ waveBlock value: phase value: shape! !
 
+!VariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 11/Jul/2026, 12:51:20 pm (UTC)'!
+defaultColor
+	^​ PatchMorph waveformColor! !
+
 !VariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026, 8:21:22 am (UTC)'!
 defaultExtent
 	^ `128 @ 64`! !
 
-!VariableWaveControlMorph methodsFor: 'initialization' stamp: 'len 1/May/2026, 2:56:47 pm (UTC)'!
-initialize
-	super initialize.
-	color := PatchMorph waveformColor! !
+!SymmetricWaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 11/Jul/2026, 12:50:31 pm (UTC)'!
+defaultColor
+	^​ PatchMorph waveformColor2! !
 
 !SymmetricWaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 1/Mar/2026, 8:21:19 am (UTC)'!
 defaultExtent
 	^ `96 @ 64`! !
 
-!SymmetricWaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 5/May/2026, 2:15:25 pm (UTC)'!
+!SymmetricWaveshaperControlMorph methodsFor: 'initialization' stamp: 'len 11/Jul/2026, 12:50:42 pm (UTC)'!
 initialize
 	super initialize.
-	color := PatchMorph waveformColor2.
 	image := Form extent: self defaultExtent depth: 32.
 	image fillColor: PatchMorph panelColor.
 	(fillBlack := BitBlt toForm: image)
@@ -15232,10 +15263,12 @@ fullIncludesPixel: aPoint
 includesPixel: aPoint
 	^ submorphs noneSatisfy: [:m| m fullIncludesPixel: aPoint]! !
 
-!PatchMorph methodsFor: 'initialization' stamp: 'len 29/Jun/2026, 7:27:31 am (UTC)'!
+!PatchMorph methodsFor: 'initialization' stamp: 'len 11/Jul/2026, 1:09:28 pm (UTC)'!
 initialize
 	super initialize.
 	patch := Patch new.
+	patch when: #controlMapped: send: #updateControlMapped: to: self.
+	patch when: #controlUnmapped: send: #updateControlUnmapped: to: self.
 	dirty := false! !
 
 !PatchMorph methodsFor: 'layout' stamp: 'len 29/Jun/2026, 7:33:25 am (UTC)'!
@@ -15322,6 +15355,18 @@ uninstallDisconnectedSignals
 !PatchMorph methodsFor: 'private' stamp: 'len 29/Jun/2026, 7:25:11 am (UTC)'!
 uninstallDisconnectedSignalsNeeded
 	dirty := true! !
+
+!PatchMorph methodsFor: 'private' stamp: 'len 11/Jul/2026, 1:08:40 pm (UTC)'!
+updateControlMapped: aControl
+	self allSubmorphsDo: [:each|
+		((each isKindOf: ControlMorph) and: [each control = aControl])
+			ifTrue: [each mapped: true. ^ self]]! !
+
+!PatchMorph methodsFor: 'private' stamp: 'len 11/Jul/2026, 1:08:53 pm (UTC)'!
+updateControlUnmapped: aControl
+	self allSubmorphsDo: [:each|
+		((each isKindOf: ControlMorph) and: [each control = aControl])
+			ifTrue: [each mapped: false. ^ self]]! !
 
 !PatchMorph class methodsFor: 'colors' stamp: 'len 29/Jun/2026, 6:53:34 pm (UTC)'!
 controlWaveformColor

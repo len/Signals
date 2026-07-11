@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 9 July 2026 at 6:06:58 pm'!
+'From Cuis7.9 [latest update: #8030] on 11 July 2026 at 6:17:07 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 639!
+!provides: 'Signals' 1 640!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -384,16 +384,6 @@ Module subclass: #Modulator
 Modulator class
 	instanceVariableNames: ''!
 
-!classDefinition: #ControlIn category: #'Signals-IO'!
-Modulator subclass: #ControlIn
-	instanceVariableNames: 'bus port lastValue bipolar'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Signals-IO'!
-!classDefinition: 'ControlIn class' category: #'Signals-IO'!
-ControlIn class
-	instanceVariableNames: ''!
-
 !classDefinition: #Attenuator category: #'Signals-Modulation'!
 Modulator subclass: #Attenuator
 	instanceVariableNames: ''
@@ -542,6 +532,16 @@ Modulator subclass: #Wobble
 	category: 'Signals-Modulation'!
 !classDefinition: 'Wobble class' category: #'Signals-Modulation'!
 Wobble class
+	instanceVariableNames: ''!
+
+!classDefinition: #ControlIn category: #'Signals-Trash'!
+Modulator subclass: #ControlIn
+	instanceVariableNames: 'bus port lastValue bipolar'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Signals-Trash'!
+!classDefinition: 'ControlIn class' category: #'Signals-Trash'!
+ControlIn class
 	instanceVariableNames: ''!
 
 !classDefinition: #Transform category: #'Signals-Kernel'!
@@ -996,7 +996,7 @@ OberheimSVF class
 
 !classDefinition: #Patch category: #'Signals-Kernel'!
 ActiveModel subclass: #Patch
-	instanceVariableNames: 'modules receivers audioOutput video buses controlBus note noteIncrement speed speedIncrement velocity velocityIncrement glideTicks'
+	instanceVariableNames: 'modules receivers controlMap audioOutput video buses note noteIncrement speed speedIncrement velocity velocityIncrement glideTicks'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Kernel'!
@@ -2125,9 +2125,6 @@ State:
 !Modulator commentStamp: 'len 13/May/2026 17:58:08' prior: 0!
 Abstract superclass for control signal generators that can be used to modulate the controls of other modules. Modulators have one control output, and they trigger the event #output:. See also Generator.!
 
-!ControlIn commentStamp: '<historical>' prior: 0!
-This module produces a control signal from values received from an external source, for example MIDI CC messages.!
-
 !Attenuator commentStamp: '<historical>' prior: 0!
 An attenuator scales a control signal by a positive number. It is typically used to control modulation depth.!
 
@@ -2174,6 +2171,9 @@ A quantizer snaps a control signal to a musical scale.!
 
 !Wobble commentStamp: '<historical>' prior: 0!
 This module generates a control signal that emulates the wow and flutter of tape.!
+
+!ControlIn commentStamp: '<historical>' prior: 0!
+This module produces a control signal from values received from an external source, for example MIDI CC messages.!
 
 !Transform commentStamp: 'len 4/Feb/2026 00:25:27' prior: 0!
 Abstract superclass for unary transforms, i.e. modules with one audio input and one audio output, that transform the audio signal sample-by-sample (for each input sample, they apply a function to produce an output sample). Subclasses can just implement #value:.!
@@ -6227,65 +6227,6 @@ screen
 	self when: #output: send: #addSample: to: answer.
 	^ answer! !
 
-!ControlIn methodsFor: 'accessing' stamp: 'len 9/Jun/2026, 2:31:18 pm (UTC)'!
-bipolar
-	^ bipolar! !
-
-!ControlIn methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:17:34 pm (UTC)'!
-bipolar: aBoolean
-	bipolar := aBoolean.
-	self triggerEvent: #bipolarChanged: with: bipolar! !
-
-!ControlIn methodsFor: 'accessing' stamp: 'len 2/Jun/2026, 7:14:12 pm (UTC)'!
-port
-	^ port! !
-
-!ControlIn methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:17:22 pm (UTC)'!
-port: anInteger
-	port := anInteger.
-	self triggerEvent: #portChanged: with: port! !
-
-!ControlIn methodsFor: 'initialization' stamp: 'len 9/Jun/2026, 2:31:41 pm (UTC)'!
-initialize
-	super initialize.
-	port := 0.
-	bipolar := false.
-	lastValue := 0.0! !
-
-!ControlIn methodsFor: 'processing' stamp: 'len 27/Jun/2026, 9:38:38 pm (UTC)'!
-tick
-	lastValue := bus at: port + 1.
-	bipolar ifTrue: [lastValue := lastValue * 255.0 / 128.0 - 1.0].
-	lastValue = 0.0 ifFalse: [self send: lastValue]! !
-
-!ControlIn methodsFor: 'serialization' stamp: 'len 2/Jun/2026, 7:16:11 pm (UTC)'!
-settings
-	^ super settings at: #port put: port; yourself! !
-
-!ControlIn methodsFor: 'serialization' stamp: 'len 2/Jun/2026, 7:15:55 pm (UTC)'!
-settings: aDictionary
-	super settings: aDictionary.
-	aDictionary at: #port ifPresent: [:anInteger| port := anInteger]! !
-
-!ControlIn methodsFor: 'ui' stamp: 'len 29/Jun/2026, 6:53:34 pm (UTC)'!
-patchable
-	| answer screen |
-	answer := PatchableMorph new model: self.
-	screen := ControlPanel new gap: 0;
-		addMorph: (PulldownListMorph new color: PatchMorph controlWaveformColor; options: (0 to: 9); state: port; when: #changed: send: #port: to: self; receive: #state: from: self when: #portChanged:; setBalloonText: 'Port');
-		addMorph: (RollingMeterMorph new color: PatchMorph controlWaveformColor; meterBlock: [lastValue]);
-		addMorph: (ToggleButtonMorph new color: PatchMorph controlWaveformColor; state: bipolar; when: #changed: send: #bipolar: to: self; receive: #state: from: self when: #bipolarChanged:; label: '±'; setBalloonText: 'Bipolar').
-	answer body addMorph: screen.
-	^ answer! !
-
-!ControlIn methodsFor: 'ui' stamp: 'len 29/Jun/2026, 12:05:29 pm (UTC)'!
-title
-	^ 'CC In'! !
-
-!ControlIn methodsFor: 'wiring' stamp: 'len 27/Jun/2026, 9:39:11 pm (UTC)'!
-setBus: anArray
-	bus := anArray! !
-
 !Attenuator methodsFor: 'initialization' stamp: 'len 2/Jun/2026, 9:59:17 am (UTC)'!
 initializeControls
 	super initializeControls.
@@ -7369,6 +7310,65 @@ screen
 		controlY: (controls at: #flutter).
 	self when: #output: send: #addSample: to: answer.
 	^ answer! !
+
+!ControlIn methodsFor: 'accessing' stamp: 'len 9/Jun/2026, 2:31:18 pm (UTC)'!
+bipolar
+	^ bipolar! !
+
+!ControlIn methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:17:34 pm (UTC)'!
+bipolar: aBoolean
+	bipolar := aBoolean.
+	self triggerEvent: #bipolarChanged: with: bipolar! !
+
+!ControlIn methodsFor: 'accessing' stamp: 'len 2/Jun/2026, 7:14:12 pm (UTC)'!
+port
+	^ port! !
+
+!ControlIn methodsFor: 'accessing' stamp: 'len 21/Jun/2026, 9:17:22 pm (UTC)'!
+port: anInteger
+	port := anInteger.
+	self triggerEvent: #portChanged: with: port! !
+
+!ControlIn methodsFor: 'initialization' stamp: 'len 9/Jun/2026, 2:31:41 pm (UTC)'!
+initialize
+	super initialize.
+	port := 0.
+	bipolar := false.
+	lastValue := 0.0! !
+
+!ControlIn methodsFor: 'processing' stamp: 'len 27/Jun/2026, 9:38:38 pm (UTC)'!
+tick
+	lastValue := bus at: port + 1.
+	bipolar ifTrue: [lastValue := lastValue * 255.0 / 128.0 - 1.0].
+	lastValue = 0.0 ifFalse: [self send: lastValue]! !
+
+!ControlIn methodsFor: 'serialization' stamp: 'len 2/Jun/2026, 7:16:11 pm (UTC)'!
+settings
+	^ super settings at: #port put: port; yourself! !
+
+!ControlIn methodsFor: 'serialization' stamp: 'len 2/Jun/2026, 7:15:55 pm (UTC)'!
+settings: aDictionary
+	super settings: aDictionary.
+	aDictionary at: #port ifPresent: [:anInteger| port := anInteger]! !
+
+!ControlIn methodsFor: 'ui' stamp: 'len 29/Jun/2026, 6:53:34 pm (UTC)'!
+patchable
+	| answer screen |
+	answer := PatchableMorph new model: self.
+	screen := ControlPanel new gap: 0;
+		addMorph: (PulldownListMorph new color: PatchMorph controlWaveformColor; options: (0 to: 9); state: port; when: #changed: send: #port: to: self; receive: #state: from: self when: #portChanged:; setBalloonText: 'Port');
+		addMorph: (RollingMeterMorph new color: PatchMorph controlWaveformColor; meterBlock: [lastValue]);
+		addMorph: (ToggleButtonMorph new color: PatchMorph controlWaveformColor; state: bipolar; when: #changed: send: #bipolar: to: self; receive: #state: from: self when: #bipolarChanged:; label: '±'; setBalloonText: 'Bipolar').
+	answer body addMorph: screen.
+	^ answer! !
+
+!ControlIn methodsFor: 'ui' stamp: 'len 29/Jun/2026, 12:05:29 pm (UTC)'!
+title
+	^ 'CC In'! !
+
+!ControlIn methodsFor: 'wiring' stamp: 'len 27/Jun/2026, 9:39:11 pm (UTC)'!
+setBus: anArray
+	bus := anArray! !
 
 !Transform methodsFor: 'processing' stamp: 'len 2/Feb/2026, 9:15:17 am (UTC)'!
 tick
@@ -10579,9 +10579,23 @@ buses: anArray
 	buses := anArray.
 	self setBuses! !
 
+!Patch methodsFor: 'accessing' stamp: 'len 10/Jul/2026, 7:46:42 am (UTC)'!
+controlMap
+	^ controlMap! !
+
+!Patch methodsFor: 'accessing' stamp: 'len 10/Jul/2026, 3:20:01 pm (UTC)'!
+controlNumberForControl: aControl
+	controlMap withIndexDo: [:eachList :i| (eachList includes: aControl) ifTrue: [^ i - 1]].
+	^ nil! !
+
 !Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 9:57:52 pm (UTC)'!
 enabled: aBoolean
 	modules do: [:each| (each isMemberOf: AudioOut) ifTrue: [each enabled: aBoolean]]! !
+
+!Patch methodsFor: 'accessing' stamp: 'len 10/Jul/2026, 3:23:01 pm (UTC)'!
+map: controlNumber to: aControl
+	self unmap: aControl.
+	controlMap at: controlNumber + 1 put: (controlMap at: controlNumber + 1), {aControl}! !
 
 !Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 9:35:06 pm (UTC)'!
 meterLeftValue
@@ -10599,13 +10613,14 @@ meterValue
 modules
 	^ modules! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 6/Jul/2026, 11:19:56 am (UTC)'!
+!Patch methodsFor: 'accessing' stamp: 'len 10/Jul/2026, 7:40:11 am (UTC)'!
 modules: anArray
 	modules = anArray ifTrue: [^ self].
 	modules := anArray.
 	receivers := Dictionary new.
 	self setBuses.
 	video := modules detect: [:one| one isMemberOf: Video] ifNone: [].
+	self purgeControlMap.
 	self triggerEvent: #modulesChanged! !
 
 !Patch methodsFor: 'accessing' stamp: 'len 28/Jun/2026, 6:31:11 pm (UTC)'!
@@ -10622,6 +10637,12 @@ send: aSelector with: anObject
 send: aSelector with: anObject ifNoReceiver: aBlock
 	(receivers at: aSelector ifAbsentPut: [modules select: [:each| each respondsTo: aSelector]])
 		ifEmpty: aBlock ifNotEmpty: [:anArray| anArray do: [:each| each perform: aSelector with: anObject]]! !
+
+!Patch methodsFor: 'accessing' stamp: 'len 10/Jul/2026, 10:56:16 am (UTC)'!
+unmap: aControl
+	(controlMap anySatisfy: [:anyList| anyList includes: aControl]) ifFalse: [^ false].
+	controlMap := controlMap collect: [:eachList| eachList select: [:each| each ~~ aControl]].
+	^ true! !
 
 !Patch methodsFor: 'accessing' stamp: 'len 6/Jul/2026, 11:12:44 am (UTC)'!
 video
@@ -10657,10 +10678,6 @@ adjustVelocityBy: aNumber glide: numberOfTicks
 clear
 	modules do: [:each| each clear]! !
 
-!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 9:40:06 pm (UTC)'!
-controlBus
-	^ controlBus! !
-
 !Patch methodsFor: 'controlling' stamp: 'len 28/Jun/2026, 6:17:18 pm (UTC)'!
 gateOn
 	self send: #gateOn! !
@@ -10675,8 +10692,24 @@ noteOff
 noteOn: midiKey
 	self noteOn: midiKey glide: 0! !
 
-!Patch methodsFor: 'controlling' stamp: 'len 2/Jul/2026, 11:10:20 am (UTC)'!
+!Patch methodsFor: 'controlling' stamp: 'len 9/Jul/2026, 5:29:15 pm (UTC)'!
 noteOn: targetNote glide: numberOfTicks
+	self setNote: targetNote glide: numberOfTicks; setSpeed: speed; gateOn! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:58:43 pm (UTC)'!
+reset
+	modules do: [:each| each reset]! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 10/Jul/2026, 8:37:57 am (UTC)'!
+setControlNumber: controlNumber to: aNumber
+	(controlMap at: controlNumber+1) do: [:each| each basePosition: aNumber]! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 28/Jun/2026, 6:18:52 pm (UTC)'!
+setNote: midiKey
+	self send: #setNote: with: midiKey! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 9/Jul/2026, 5:10:33 pm (UTC)'!
+setNote: targetNote glide: numberOfTicks
 	(numberOfTicks > 0 and: [note notNil])
 		ifTrue:
 			[glideTicks := numberOfTicks truncated.
@@ -10686,15 +10719,7 @@ noteOn: targetNote glide: numberOfTicks
 			[glideTicks := 0.
 			noteIncrement := 0.0.
 			note := targetNote].
-	self setNote: note; setSpeed: speed; gateOn! !
-
-!Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 6:58:43 pm (UTC)'!
-reset
-	modules do: [:each| each reset]! !
-
-!Patch methodsFor: 'controlling' stamp: 'len 28/Jun/2026, 6:18:52 pm (UTC)'!
-setNote: midiKey
-	self send: #setNote: with: midiKey! !
+	self setNote: note! !
 
 !Patch methodsFor: 'controlling' stamp: 'len 28/Jun/2026, 6:19:16 pm (UTC)'!
 setOffset: aNumber
@@ -10744,12 +10769,12 @@ setVolume: aNumber
 	"Volume is more basic than velocity, it just scales the master output level."
 	audioOutput ifNotNil: [audioOutput setVolume: aNumber]! !
 
-!Patch methodsFor: 'initialization' stamp: 'len 29/Jun/2026, 7:46:08 am (UTC)'!
+!Patch methodsFor: 'initialization' stamp: 'len 10/Jul/2026, 7:38:42 am (UTC)'!
 initialize
 	modules := #().
+	controlMap := Array new: 10 withAll: #().
 	receivers := Dictionary new.
 	buses := Array new: 10. "buses go from 0 (master) to 9"
-	controlBus := Float32Array new: 10. "control ports go from 0 to 9"
 	glideTicks := 0! !
 
 !Patch methodsFor: 'processing' stamp: 'len 8/Jul/2026, 11:16:44 am (UTC)'!
@@ -10761,19 +10786,20 @@ tick
 		glideTicks := glideTicks - 1].
 	modules do: [:each| each update; tick]! !
 
-!Patch methodsFor: 'private' stamp: 'len 7/Jul/2026, 9:05:02 pm (UTC)'!
+!Patch methodsFor: 'private' stamp: 'len 10/Jul/2026, 7:41:35 am (UTC)'!
+purgeControlMap
+	controlMap := controlMap collect: [:eachList| eachList select: [:eachControl| modules anySatisfy: [:anyModule| anyModule controls includes: eachControl]]]! !
+
+!Patch methodsFor: 'private' stamp: 'len 9/Jul/2026, 5:03:42 pm (UTC)'!
 setBuses
 	audioOutput := nil.
 	modules do: [:each|
-		(each isMemberOf: ControlIn)
-			ifTrue: [each setBus: controlBus]
+		(each isMemberOf: AudioIn)
+			ifTrue: [each setBuses: buses]
 			ifFalse:
-				[(each isMemberOf: AudioIn)
-					ifTrue: [each setBuses: buses]
-					ifFalse:
-						[(each isMemberOf: AudioOut) ifTrue:
-							[each setBuses: buses.
-							each port = 0 ifTrue: [audioOutput := each]]]]].
+				[(each isMemberOf: AudioOut) ifTrue:
+					[each setBuses: buses.
+					each port = 0 ifTrue: [audioOutput := each]]]].
 	"if there are velocity handlers we assume gain is controlled by velocity and set the volume to normal:"
 	(audioOutput notNil and: [modules anySatisfy: [:any| any respondsTo: #setVelocity:]])
 		ifTrue: [audioOutput setVolume: 1.0]! !
@@ -10898,6 +10924,10 @@ update
 		do: [:each| self addMorph: (existingRackables detect: [:one| one model = each] ifNone: [each rackable]) layoutSpec: LayoutSizeSpec new useMorphWidth "useMorphHeight"].
 	self addMorph: (PushButtonMorph new when: #buttonUp send: #addNewModule to: self; label: '+'; setBalloonText: 'Add new module'; morphExtent: 10 @ 10) layoutSpec: LayoutSizeSpec new useMorphWidth.
 	self redrawNeeded! !
+
+!RackMorph methodsFor: 'as yet unclassified' stamp: 'len 10/Jul/2026, 8:36:22 am (UTC)'!
+patch
+	^ patch! !
 
 !RackMorph class methodsFor: 'as yet unclassified' stamp: 'len 20/Jun/2026, 8:51:00 pm (UTC)'!
 new
@@ -11178,10 +11208,11 @@ handlesMouseOver: anEvent
 handlesMouseScroll: anEvent
 	^ anEvent anyModifierKeyPressed not! !
 
-!ControlMorph methodsFor: 'events' stamp: 'len 4/Jul/2026, 1:13:34 pm (UTC)'!
+!ControlMorph methodsFor: 'events' stamp: 'len 11/Jul/2026, 11:02:23 am (UTC)'!
 keyStroke: anEvent
 	anEvent isEsc ifTrue:
 		[anEvent wasHandled: true.
+		self patch ifNotNil: [:aPatch| (aPatch unmap: control) ifTrue: [self updateColor. ^ self]].
 		control setBaseToDefault.
 		self wantsBalloon ifTrue: [self showBalloon].
 		^ self].
@@ -11193,6 +11224,12 @@ keyStroke: anEvent
 	(anEvent isArrowDown or: [anEvent isArrowLeft]) ifTrue:
 		[anEvent wasHandled: true.
 		anEvent shiftPressed ifTrue: [control adjustFineDown] ifFalse: [control adjustDown].
+		self wantsBalloon ifTrue: [self showBalloon].
+		^ self].
+	(anEvent keyValue between: 48 and: 57) "0 to 9" ifTrue:
+	 	[anEvent wasHandled: true.
+		self patch ifNotNil: [:aPatch| aPatch map: anEvent keyValue - 48 to: control].
+		self updateColor.
 		self wantsBalloon ifTrue: [self showBalloon].
 		^ self].
 	^ super keyStroke: anEvent! !
@@ -11220,9 +11257,12 @@ mouseScroll: anEvent localPosition: localEventPosition
 keyboardFocusChange: aBoolean
 	self redrawNeeded! !
 
-!ControlMorph methodsFor: 'halos and balloon help' stamp: 'len 27/Jan/2026, 9:34:52 am (UTC)'!
+!ControlMorph methodsFor: 'halos and balloon help' stamp: 'len 10/Jul/2026, 3:21:35 pm (UTC)'!
 balloonText
-	^ control printedBaseValueWithLabel! !
+	| answer |
+	answer := control printedBaseValueWithLabel.
+	self patch ifNotNil: [:aPatch| (aPatch controlNumberForControl: control) ifNotNil: [:anInteger| answer := '[', anInteger printString, '] ', answer]].
+	^ answer! !
 
 !ControlMorph methodsFor: 'initialization' stamp: 'len 11/May/2026, 6:40:13 pm (UTC)'!
 color: aColor
@@ -11251,6 +11291,21 @@ defaultLabelFontSize
 initialize
 	super initialize.
 	color := self defaultColor! !
+
+!ControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Jul/2026, 11:04:32 am (UTC)'!
+intoWorld: aWorld
+	super intoWorld: aWorld.
+	self updateColor! !
+
+!ControlMorph methodsFor: 'as yet unclassified' stamp: 'len 10/Jul/2026, 7:56:39 am (UTC)'!
+patch
+	self allOwnersDo: [:each| ((each isKindOf: PatchMorph) or: [each isKindOf: RackMorph]) ifTrue: [^ each patch]].
+	^ nil! !
+
+!ControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Jul/2026, 11:03:45 am (UTC)'!
+updateColor
+	self patch ifNotNil: [:aPatch| self color: ((aPatch controlNumberForControl: control) ifNil: [Color white] ifNotNil: [PatchMorph controlWaveformColor2])]
+! !
 
 !ControlMorph class methodsFor: 'instance creation' stamp: 'len 4/Nov/2025, 8:49:00 am (UTC)'!
 control: aControl
@@ -12664,10 +12719,6 @@ level: aNumber
 !PinMorph methodsFor: 'accessing' stamp: 'len 5/Feb/2026, 9:06:16 am (UTC)'!
 model
 	^ self patchableOwner model! !
-
-!PinMorph methodsFor: 'accessing' stamp: 'len 20/Nov/2025, 3:02:00 pm (UTC)'!
-patch
-	^ self firstOwnerSuchThat: [:m| m isKindOf: PatchMorph]! !
 
 !PinMorph methodsFor: 'accessing' stamp: 'len 28/Jun/2026, 6:33:35 pm (UTC)'!
 patchMorph
@@ -15203,7 +15254,7 @@ addModuleCopying: aModule
 addModuleInstantiating: aClass
 	self addMorph: aClass new patchable position: (self valueOfProperty: #lastMenuOpeningPosition)! !
 
-!PatchMorph methodsFor: 'menu' stamp: 'len 28/Jun/2026, 6:43:54 pm (UTC)'!
+!PatchMorph methodsFor: 'menu' stamp: 'len 9/Jul/2026, 5:05:03 pm (UTC)'!
 getMenu
 	| menu submenu |
 	self setProperty: #lastMenuOpeningPosition toValue: (self internalizeFromWorld: self activeHand morphPosition).
@@ -15216,7 +15267,6 @@ getMenu
 
 	submenu := MenuMorph new defaultTarget: self.
 	submenu
-		add: 'Control In' action: #addModuleInstantiating: argument: ControlIn;
 		add: 'Audio In' action: #addModuleInstantiating: argument: AudioIn;
 		add: 'Audio Out' action: #addModuleInstantiating: argument: AudioOut.
 	menu add: 'I/O' subMenu: submenu.

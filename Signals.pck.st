@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 11 July 2026 at 8:11:25 pm'!
+'From Cuis7.9 [latest update: #8030] on 12 July 2026 at 2:56:35 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 641!
+!provides: 'Signals' 1 642!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -10679,6 +10679,19 @@ adjustVelocityBy: aNumber glide: numberOfTicks
 !Patch methodsFor: 'controlling' stamp: 'len 27/Jun/2026, 7:18:43 pm (UTC)'!
 clear
 	modules do: [:each| each clear]! !
+
+!Patch methodsFor: 'controlling' stamp: 'len 12/Jul/2026, 7:39:38 am (UTC)'!
+flipSpeed: targetSpeedAbs glide: numberOfTicks
+	(numberOfTicks > 0 and: [speed notNil])
+		ifTrue:
+			[glideTicks := numberOfTicks truncated max: 1.
+			speedIncrement := targetSpeedAbs * speed sign negated - speed / glideTicks asFloat.
+			speed := speed + speedIncrement]
+		ifFalse:
+			[glideTicks := 0.
+			speedIncrement := 0.0.
+			speed := targetSpeedAbs].
+	self setSpeed: speed! !
 
 !Patch methodsFor: 'controlling' stamp: 'len 28/Jun/2026, 6:17:18 pm (UTC)'!
 gateOn

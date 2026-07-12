@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 11 July 2026 at 8:11:29 pm'!
+'From Cuis7.9 [latest update: #8030] on 12 July 2026 at 6:00:30 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 103!
+!provides: 'Tracker' 1 105!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -170,18 +170,19 @@ A pattern is a grid of triggers (notes and effect commands). The columns represe
 !Track commentStamp: '<historical>' prior: 0!
 A track can play one instrument at a time. It can be muted or soloed, and it can be set to an arbitrary tuning. If the tuning is other than the standard 12-EDO, it internally maps arbitrary notes to fractional 12-EDO notes (using floats instead of the standard MIDI 0 to 127 integers).!
 
-!Trigger commentStamp: '<historical>' prior: 0!
+!Trigger commentStamp: 'len 12/Jul/2026, 10:59:51 am (UTC)' prior: 0!
 A trigger is a cell in the grid of a pattern. It can contain any of the following (optional) parameters: an instrument number (1 to 255), a note to play (0 to 127 as MIDI, and -1 to represent note off), a velocity value (0 to 128), and two effect commands.
 
 Effect commands:
-∙ +xy / -xy fade in/out increasing/decreasing velocity by x over y lines (0 = 0%, F = 100%)
+∙ <xy / >xy crescendo/diminuendo, fade in/out increasing/decreasing velocity by x over y lines (0 = 0%, F = 100%)
 ∙ !!xy cut to velocity x (0 = minimum, F = maximum) after y/16 of a line
 ∙ #xx finetune note up by xx/256 of a note (depending on the track's tuning system)
 ∙ Gxx glide to note over xx/16 lines (01 = 1/16 of a line, 10 = 1 line, FF = almost 16 lines)
-∙ >xy / <xy slide pitch up/down by x notes over y lines (depending on the track's tuning system)
+∙ +xy / -xy slide pitch up/down by x notes over y lines (depending on the track's tuning system)
 ∙ *xy retrigger every y/16 of a line, and change velocity according to x (see below)
 ∙ @xx set sample offset (00 = start, FF = end)
 ∙ /xy / \xy slide playback speed to x over y lines and play forward / backwards (4 = ¹/₂×, 8 = 1×, C = 2×, F = 8×)
+∙ ~xy scribble (oscillate playback forward/backwards) at peak speed x every y/16 of a line
 ∙ 0xx to 9xx set control value
 ∙ Fxx set tempo to xx BPM
 ∙ &xx delay trigger by xx/256 of a line (00 = no delay, 01 = 1/256 of a line, FF = 1/256 before next line)
@@ -2784,7 +2785,7 @@ updateTracks
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 10/Jul/2026, 10:24:30 am (UTC)'!
+!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 12/Jul/2026, 7:47:51 am (UTC)'!
 initialize
 	"
 	self initialize
@@ -2800,9 +2801,9 @@ initialize
 	"Pitch:"
 	'G><' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 80 "340")].
 	"Samples:"
-	'@/\' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 220)].
+	'@/\~' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 220)].
 	"Controls:"
-	'0123456789~' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 160 "80")].
+	'0123456789' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 160 "80")].
 	"Video:"
 	'ABX' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 340 "160")].
 	"Other:"
@@ -2953,7 +2954,7 @@ handleCut: anInteger
 	(time := anInteger bitAnd: 16rF) = 0 ifTrue: [^ patch setVelocity: velocity].
 	track scheduleTrigger: (Trigger new velocity: (velocity * 128.0) truncated) after: time / 16.0 * track tracker tpl! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 10/Jul/2026, 7:36:52 am (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 12/Jul/2026, 7:44:11 am (UTC)'!
 handleFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
@@ -2961,25 +2962,19 @@ handleFX: anInteger
 	command = 42 "* (retrigger)" ifTrue: [^ self handleRetrigger: anInteger].
 	v := anInteger bitAnd: 16rFF.
 	command = 64 "@ (sample offset)" ifTrue: [patch setOffset: v / 255.0. ^ self].
-	(command between: 48 and: 57) "0 to 9 (control change)" ifTrue: [patch setControlNumber: command - 48 to: v / 255.0. ^ self].
-	command = 126 "~ (LFO)" ifTrue:
-		[patch modules do: [:m|
-			(m isMemberOf: LFO) ifTrue:
-				[(m controls at: #speed) baseValue:  track tracker lps / ((v bitAnd: 16rF) + 1).
-				m shape: (m shapeOptions atPin: (v bitShift: -4) + 1).
-				^ self]].
-		^ self]! !
+	command = 126 "~ (scribble)" ifTrue: [^ self handleScribble: anInteger].
+	(command between: 48 and: 57) "0 to 9 (control change)" ifTrue: [patch setControlNumber: command - 48 to: v / 255.0. ^ self]! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 10/Jul/2026, 10:22:20 am (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 12/Jul/2026, 9:31:15 am (UTC)'!
 handlePostNoteFX: anInteger
 	"Slide effects must be handled *after* the note on, otherwise the slide gets overridden."
 	| command v |
 	command := anInteger bitShift: -8.
 	v := anInteger bitAnd: 16rFF.
-	command = 43 "+ (fade volume in)" ifTrue: [patch adjustVelocityBy: (v bitShift: -4) / 15.0 glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
-	command = 45 "- (fade volume out)" ifTrue: [patch adjustVelocityBy: (v bitShift: -4) / -15.0 glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
-	command = 62 "> (slide pitch up)" ifTrue: [patch adjustNoteBy: (v bitShift: -4) glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
-	command = 60 "< (slide pitch down)" ifTrue: [patch adjustNoteBy: (v bitShift: -4) negated glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
+	command = 60 "< (crescendo, fade volume in)" ifTrue: [patch adjustVelocityBy: (v bitShift: -4) / 15.0 glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
+	command = 62 "> (diminuendo, fade volume out)" ifTrue: [patch adjustVelocityBy: (v bitShift: -4) / -15.0 glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
+	command = 43 "+ (slide pitch up)" ifTrue: [patch adjustNoteBy: (v bitShift: -4) glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
+	command = 45 "- (slide pitch down)" ifTrue: [patch adjustNoteBy: (v bitShift: -4) negated glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
 	command = 47 "/ (speed forward)" ifTrue: [patch setSpeed: (#[0.0 0.125 0.25 0.375 0.5 0.66 0.75 0.9 1.0 1.25 1.5 1.75 2.0 3.0 5.0 8.0] at: (v bitShift: -4) + 1) glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
 	command = 92 "\ (speed backwards)" ifTrue: [patch setSpeed: (#[0.0 -0.125 -0.25 -0.375 -0.5 -0.66 -0.75 -0.9 -1.0 -1.25 -1.5 -1.75 -2.0 -3.0 -5.0 -8.0] at: (v bitShift: -4) + 1) glide: (v bitAnd: 16rF) * track tracker tpl. ^ self]! !
 
@@ -2994,6 +2989,15 @@ handleRetrigger: anInteger
 	(x between: 8 and: 13) ifTrue: [velocity := velocity + (#(0 0.03 0.06 0.12 0.25 0.5) at: x - 7)].
 	(x between: 14 and: 15) ifTrue: [velocity := velocity / (#(0.666 0.5) at: x - 13)].
 	track scheduleTrigger: (trigger copy velocity: (velocity * 128.0) truncated) after: time / 16.0 * track tracker tpl! !
+
+!Instrument methodsFor: 'playing' stamp: 'len 12/Jul/2026, 7:43:00 am (UTC)'!
+handleScribble: anInteger
+	| x y glide |
+	x := (anInteger bitShift: -4) bitAnd: 16rF.
+	(y := anInteger bitAnd: 16rF) = 0 ifTrue: [^ self].
+	glide := y / 16.0 * track tracker tpl.
+	patch flipSpeed: (#[0.0 0.125 0.25 0.375 0.5 0.66 0.75 0.9 1.0 1.25 1.5 1.75 2.0 3.0 5.0 8.0] at: x + 1) glide: glide.
+	track scheduleTrigger: trigger after: glide! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 27/Jun/2026, 9:42:13 pm (UTC)'!
 noteOff
@@ -3529,7 +3533,7 @@ transposeBy: steps
 allFXCommandCharacters
 	^ '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>/\+-?!!@&~#$%^*_=|'! !
 
-!Trigger class methodsFor: 'as yet unclassified' stamp: 'len 11/Jul/2026, 11:51:22 am (UTC)'!
+!Trigger class methodsFor: 'as yet unclassified' stamp: 'len 12/Jul/2026, 9:36:39 am (UTC)'!
 descriptionForFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
@@ -3541,10 +3545,10 @@ descriptionForFX: anInteger
 		velocityChange ifNotEmpty: [velocityChange := ' changing velocity by ', velocityChange].
 		^ 'Retrigger every ', ((anInteger bitAnd: 16rF)/16) printText, ' of a line', velocityChange].
 	v := anInteger bitAnd: 16rFF.
-	command = 43 "+ (fade in)" ifTrue: [^ 'Fade in ', ((v bitShift: -4) / 15.0 * 100) rounded printString, '% over ', (v bitAnd: 16rF) printString, ' lines'].
-	command = 45 "- (fade out)" ifTrue: [^ 'Fade out ', ((v bitShift: -4) / 15.0 * 100) rounded printString, '% over ', (v bitAnd: 16rF) printString, ' lines'].
-	command = 62 "> (slide pitch up)" ifTrue: [^ 'Slide pitch up by ', (v bitShift: -4) printString, ' notes over ', (v bitAnd: 16rF) printString, ' lines'].
-	command = 60 "< (slide pitch down)" ifTrue: [^ 'Slide pitch down by ', (v bitShift: -4) printString, ' notes over ', (v bitAnd: 16rF) printString, ' lines'].
+	command = 60 "< (crescendo, fade in)" ifTrue: [^ 'Fade in ', ((v bitShift: -4) / 15.0 * 100) rounded printString, '% over ', (v bitAnd: 16rF) printString, ' lines'].
+	command = 62 "> (diminuendo, fade out)" ifTrue: [^ 'Fade out ', ((v bitShift: -4) / 15.0 * 100) rounded printString, '% over ', (v bitAnd: 16rF) printString, ' lines'].
+	command = 43 "+ (slide pitch up)" ifTrue: [^ 'Slide pitch up by ', (v bitShift: -4) printString, ' notes over ', (v bitAnd: 16rF) printString, ' lines'].
+	command = 45 "- (slide pitch down)" ifTrue: [^ 'Slide pitch down by ', (v bitShift: -4) printString, ' notes over ', (v bitAnd: 16rF) printString, ' lines'].
 	command = 35 "# (finetune note up)" ifTrue: [^ 'Finetune note up by ', (v / 256.0 printStringFractionDigits: 2)].
 	command = 71 "G (glide to note)" ifTrue: [^ 'Glide to note over ', (v / 16.0 printStringFractionDigits: 2), ' lines'].
 	"Sample commands:"
@@ -3553,12 +3557,16 @@ descriptionForFX: anInteger
 		[| speed lines |
 		speed := #[0.0 0.125 0.25 0.375 0.5 0.66 0.75 0.9 1.0 1.25 1.5 1.75 2.0 3.0 5.0 8.0] at: ((anInteger bitShift: -4)  bitAnd: 16rF) + 1.
 		lines := anInteger bitAnd: 16rF.
-		^ lines = 0 ifTrue: ['Play forward at speed ', (speed printStringFractionDigits: 2), '×'] ifFalse: ['Slide to play forward at speed ', (speed printStringFractionDigits: 2), '× over ', lines printString, ' lines']].
+		^ lines = 0 ifTrue: ['Play forward at ', (speed printStringFractionDigits: 2), '×'] ifFalse: ['Slide to play forward at ', (speed printStringFractionDigits: 2), '× over ', lines printString, ' lines']].
 	command = 92 "\ (speed backwards)" ifTrue:
 		[| speed lines |
 		speed := #[0.0 0.125 0.25 0.375 0.5 0.66 0.75 0.9 1.0 1.25 1.5 1.75 2.0 3.0 5.0 8.0] at: ((anInteger bitShift: -4)  bitAnd: 16rF)+ 1.
 		lines := anInteger bitAnd: 16rF.
-		^ lines = 0 ifTrue: ['Play backwards at speed ', (speed printStringFractionDigits: 2), '×'] ifFalse: ['Slide to play backwards at speed ', (speed printStringFractionDigits: 2), '× over ', lines printString, ' lines']].
+		^ lines = 0 ifTrue: ['Play backwards at ', (speed printStringFractionDigits: 2), '×'] ifFalse: ['Slide to play backwards at ', (speed printStringFractionDigits: 2), '× over ', lines printString, ' lines']].
+	command = 126 "~ (scribble)" ifTrue:
+		[| speed |
+		speed := #[0.0 0.125 0.25 0.375 0.5 0.66 0.75 0.9 1.0 1.25 1.5 1.75 2.0 3.0 5.0 8.0] at: ((anInteger bitShift: -4)  bitAnd: 16rF)+ 1.
+		^ 'Scribble at ', (speed printStringFractionDigits: 2), '× every ', ((anInteger bitAnd: 16rF)/16) printText, ' of a line'].
 	"Control change commands:"
 	(command between: 48 and: 57) "0 to 9" ifTrue: [^ 'Set control [', (command - 48) printString, '] to ', (v / 255.0 * 100) rounded printString, '%'].
 	"Global commands:"

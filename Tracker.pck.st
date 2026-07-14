@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 12 July 2026 at 6:00:30 pm'!
+'From Cuis7.9 [latest update: #8030] on 14 July 2026 at 6:24:19 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 105!
+!provides: 'Tracker' 1 108!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -162,7 +162,7 @@ Tuning class
 This is the model of a tracker. It holds a whole song or project (instruments, tracks and sequence of patterns, and global settings like BPM, swing, etc), and it also keeps track of runtime state (cursor position, playhead position, etc).!
 
 !Instrument commentStamp: '<historical>' prior: 0!
-An instrument has a patch of signal processing modules, and interprets tracker triggers by sending messages to the patch to play notes or change parameters like velocity, volume, panning, etc. The patch of an instrument can be a musical instrument like a synthesizer or it could also be a send effect (like a reverb) that processes the output of other instruments. Instruments are designed to be monophonic (they play one note at a time).!
+An instrument has a patch of signal-processing modules, and interprets tracker triggers by sending messages to the patch to play notes or change parameters like velocity, volume, panning, etc. The patch of an instrument can be a musical instrument like a synthesizer or it could also be a send effect (like a reverb) that processes the output of other instruments. Instruments are designed to be monophonic (they play one note at a time).!
 
 !Pattern commentStamp: '<historical>' prior: 0!
 A pattern is a grid of triggers (notes and effect commands). The columns represet tracks (or channels).!
@@ -170,23 +170,25 @@ A pattern is a grid of triggers (notes and effect commands). The columns represe
 !Track commentStamp: '<historical>' prior: 0!
 A track can play one instrument at a time. It can be muted or soloed, and it can be set to an arbitrary tuning. If the tuning is other than the standard 12-EDO, it internally maps arbitrary notes to fractional 12-EDO notes (using floats instead of the standard MIDI 0 to 127 integers).!
 
-!Trigger commentStamp: 'len 12/Jul/2026, 10:59:51 am (UTC)' prior: 0!
+!Trigger commentStamp: 'len 14/Jul/2026, 11:22:05 am (UTC)' prior: 0!
 A trigger is a cell in the grid of a pattern. It can contain any of the following (optional) parameters: an instrument number (1 to 255), a note to play (0 to 127 as MIDI, and -1 to represent note off), a velocity value (0 to 128), and two effect commands.
 
 Effect commands:
 ∙ <xy / >xy crescendo/diminuendo, fade in/out increasing/decreasing velocity by x over y lines (0 = 0%, F = 100%)
 ∙ !!xy cut to velocity x (0 = minimum, F = maximum) after y/16 of a line
 ∙ #xx finetune note up by xx/256 of a note (depending on the track's tuning system)
-∙ Gxx glide to note over xx/16 lines (01 = 1/16 of a line, 10 = 1 line, FF = almost 16 lines)
 ∙ +xy / -xy slide pitch up/down by x notes over y lines (depending on the track's tuning system)
+∙ Gxx glide to note over xx/16 lines (01 = 1/16 of a line, 10 = 1 line, FF = almost 16 lines)
 ∙ *xy retrigger every y/16 of a line, and change velocity according to x (see below)
 ∙ @xx set sample offset (00 = start, FF = end)
 ∙ /xy / \xy slide playback speed to x over y lines and play forward / backwards (4 = ¹/₂×, 8 = 1×, C = 2×, F = 8×)
-∙ ~xy scribble (oscillate playback forward/backwards) at peak speed x every y/16 of a line
+∙ ~xy scribble, oscillate playback direction forward/backwards every y/16 of a line, at peak speed x
 ∙ 0xx to 9xx set control value
 ∙ Fxx set tempo to xx BPM
 ∙ &xx delay trigger by xx/256 of a line (00 = no delay, 01 = 1/256 of a line, FF = 1/256 before next line)
 ∙ ?xx set the probability of playing the trigger (00 = never, FF = always)
+∙ Axx / Bxx set video source A/B to track xx
+∙ Xxy apply BitBlt rule x on video source A and y on video source B
 
 Retrigger velocity change:
 ∙ 0 no velocity change
@@ -195,8 +197,6 @@ Retrigger velocity change:
 ∙ 8 no velocity change
 ∙ 9, A, B, C, D increase velocity by adding 1/32, 1/16, 1/8, 1/4, 1/2
 ∙ E, F scale up velocity multiplying by 3/2, 2
-
-Commands !!xy and *xy work within the line where they are placed, and interpret the nibble y as a time duration in units of 1/16 of a line (0 = instantly, F = 1/16 just before next line).
 !
 
 !Tuning commentStamp: '<historical>' prior: 0!
@@ -966,7 +966,7 @@ playFrom: startPattern line: startLine to: endPattern line: endLine tracks: trac
 	self triggerEvent: #playheadChanged.
 	self triggerEvent: #playingStatusChanged! !
 
-!Tracker methodsFor: 'playing' stamp: 'len 4/Jul/2026, 3:48:56 pm (UTC)'!
+!Tracker methodsFor: 'playing' stamp: 'len 14/Jul/2026, 11:08:50 am (UTC)'!
 playLine
 	| pattern mask ticksPerLine ticksSwing |
 	"Advance playhead:"
@@ -988,7 +988,6 @@ playLine
 	mask := self playingMask.
 	tracks withIndexDo: [:track :i|
 		| p |
-		track forgetScheduledTrigger. "this prevents commands like Rxy and Cxy from bleeding into the next line"
 		(mask at: i) ifTrue: [(pattern track: i at: playheadLine) ifNotNil: [:aTrigger|
 			((p := aTrigger probability) = 1.0 or: [random next <= p]) ifTrue: [track scheduleTrigger: aTrigger]]]].
 	ticksPerLine := self tpl.
@@ -2785,7 +2784,7 @@ updateTracks
 	self ensureMinimumExtent.
 	self redrawNeeded! !
 
-!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 12/Jul/2026, 7:47:51 am (UTC)'!
+!PatternEditorMorph class methodsFor: 'class initialization' stamp: 'len 12/Jul/2026, 11:57:26 am (UTC)'!
 initialize
 	"
 	self initialize
@@ -2797,9 +2796,9 @@ initialize
 	TrackColors := (0 to: 6) collect: [:i| Color okl: 0.7 c: 0.4 h: i * (360.0 / 7) + 10.0]. "roygbiv shifted 10°"
 	FXColors := Array new: 256 withAll: Color red "self unsetColor".
 	"Velocity/Volume:"
-	'+-!!' do: [:c| FXColors at: c codePoint put: self velocityColor].
+	'<>!!' do: [:c| FXColors at: c codePoint put: self velocityColor].
 	"Pitch:"
-	'G><' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 80 "340")].
+	'G+-' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 80 "340")].
 	"Samples:"
 	'@/\~' do: [:c| FXColors at: c codePoint put: (Color okl: 0.85 c: 0.3 h: 220)].
 	"Controls:"
@@ -2954,22 +2953,14 @@ handleCut: anInteger
 	(time := anInteger bitAnd: 16rF) = 0 ifTrue: [^ patch setVelocity: velocity].
 	track scheduleTrigger: (Trigger new velocity: (velocity * 128.0) truncated) after: time / 16.0 * track tracker tpl! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 12/Jul/2026, 7:44:11 am (UTC)'!
-handleFX: anInteger
-	| command v |
-	command := anInteger bitShift: -8.
-	command = 33 "!! (cut)" ifTrue: [^ self handleCut: anInteger].
-	command = 42 "* (retrigger)" ifTrue: [^ self handleRetrigger: anInteger].
-	v := anInteger bitAnd: 16rFF.
-	command = 64 "@ (sample offset)" ifTrue: [patch setOffset: v / 255.0. ^ self].
-	command = 126 "~ (scribble)" ifTrue: [^ self handleScribble: anInteger].
-	(command between: 48 and: 57) "0 to 9 (control change)" ifTrue: [patch setControlNumber: command - 48 to: v / 255.0. ^ self]! !
-
-!Instrument methodsFor: 'playing' stamp: 'len 12/Jul/2026, 9:31:15 am (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 13/Jul/2026, 9:39:50 am (UTC)'!
 handlePostNoteFX: anInteger
 	"Slide effects must be handled *after* the note on, otherwise the slide gets overridden."
 	| command v |
 	command := anInteger bitShift: -8.
+	command = 33 "!! (cut)" ifTrue: [^ self handleCut: anInteger].
+	command = 42 "* (retrigger)" ifTrue: [^ self handleRetrigger: anInteger].
+	command = 126 "~ (scribble)" ifTrue: [^ self handleScribble: anInteger].
 	v := anInteger bitAnd: 16rFF.
 	command = 60 "< (crescendo, fade volume in)" ifTrue: [patch adjustVelocityBy: (v bitShift: -4) / 15.0 glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
 	command = 62 "> (diminuendo, fade volume out)" ifTrue: [patch adjustVelocityBy: (v bitShift: -4) / -15.0 glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
@@ -2977,6 +2968,14 @@ handlePostNoteFX: anInteger
 	command = 45 "- (slide pitch down)" ifTrue: [patch adjustNoteBy: (v bitShift: -4) negated glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
 	command = 47 "/ (speed forward)" ifTrue: [patch setSpeed: (#[0.0 0.125 0.25 0.375 0.5 0.66 0.75 0.9 1.0 1.25 1.5 1.75 2.0 3.0 5.0 8.0] at: (v bitShift: -4) + 1) glide: (v bitAnd: 16rF) * track tracker tpl. ^ self].
 	command = 92 "\ (speed backwards)" ifTrue: [patch setSpeed: (#[0.0 -0.125 -0.25 -0.375 -0.5 -0.66 -0.75 -0.9 -1.0 -1.25 -1.5 -1.75 -2.0 -3.0 -5.0 -8.0] at: (v bitShift: -4) + 1) glide: (v bitAnd: 16rF) * track tracker tpl. ^ self]! !
+
+!Instrument methodsFor: 'playing' stamp: 'len 13/Jul/2026, 9:40:24 am (UTC)'!
+handlePreNoteFX: anInteger
+	| command v |
+	command := anInteger bitShift: -8.
+	v := anInteger bitAnd: 16rFF.
+	command = 64 "@ (sample offset)" ifTrue: [patch setOffset: v / 255.0. ^ self].
+	(command between: 48 and: 57) "0 to 9 (control change)" ifTrue: [patch setControlNumber: command - 48 to: v / 255.0. ^ self]! !
 
 !Instrument methodsFor: 'playing' stamp: 'len 11/Jul/2026, 11:33:05 am (UTC)'!
 handleRetrigger: anInteger
@@ -3011,22 +3010,24 @@ noteOn: midiKey
 noteOn: midiKey glide: numberOfLines
 	patch noteOn: (track tuningOrNil ifNil: [midiKey] ifNotNil: [:aTuning| aTuning map: midiKey]) glide: (numberOfLines * track tracker tpl) truncated! !
 
-!Instrument methodsFor: 'playing' stamp: 'len 11/Jul/2026, 11:21:02 am (UTC)'!
+!Instrument methodsFor: 'playing' stamp: 'len 14/Jul/2026, 10:28:13 am (UTC)'!
 playTrigger
 	trigger isNoteOn
 		ifTrue:
 			[patch setVelocity: (trigger velocity ifNil: [128.0]) / 128.0 glide: 0.
-			patch setOffset: (trigger isReverse ifTrue: [1.0] ifFalse: [0.0]). 
-			patch setSpeed: (trigger hasSpeedChange ifTrue: [0.0] ifFalse: [1.0]) glide: 0.
-			trigger fx1 ifNotNil: [:fx| self handleFX: fx].
-			trigger fx2 ifNotNil: [:fx| self handleFX: fx].
-			self noteOn: trigger note + trigger noteShift glide: trigger glide.
+			"start at begining if playing forward, end if playing backwards; override with @xx:"
+			patch setOffset: (trigger isReverse ifTrue: [1.0] ifFalse: [0.0]).
+			"start new notes at speed 1× forward; override with /x0 or \x0:"
+			patch setSpeed: 1.0 glide: 0.
+			trigger fx1 ifNotNil: [:fx| self handlePreNoteFX: fx].
+			trigger fx2 ifNotNil: [:fx| self handlePreNoteFX: fx].
+			self noteOn: trigger note + trigger noteShift glide: trigger noteGlide.
 			trigger fx1 ifNotNil: [:fx| self handlePostNoteFX: fx].
 			trigger fx2 ifNotNil: [:fx| self handlePostNoteFX: fx]]
 		ifFalse:
 			[trigger velocity ifNotNil: [:vel| patch setVelocity: vel / 128.0].
-			trigger fx1 ifNotNil: [:fx| self handleFX: fx; handlePostNoteFX: fx].
-			trigger fx2 ifNotNil: [:fx| self handleFX: fx; handlePostNoteFX: fx].
+			trigger fx1 ifNotNil: [:fx| self handlePreNoteFX: fx; handlePostNoteFX: fx].
+			trigger fx2 ifNotNil: [:fx| self handlePreNoteFX: fx; handlePostNoteFX: fx].
 			trigger isNoteOff ifTrue: [patch noteOff]].
 	trigger := nil! !
 
@@ -3331,20 +3332,16 @@ setTracker: aTracker
 forgetInstrument
 	instrument := nil! !
 
-!Track methodsFor: 'playing' stamp: 'len 13/Jun/2026, 4:34:28 pm (UTC)'!
-forgetScheduledTrigger
-	trigger := nil! !
-
-!Track methodsFor: 'playing' stamp: 'len 6/Jul/2026, 6:02:49 pm (UTC)'!
+!Track methodsFor: 'playing' stamp: 'len 14/Jul/2026, 7:47:26 am (UTC)'!
 handleGlobalFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
 	v := anInteger bitAnd: 16rFF.
 	"Global commands:"
-	command = 70 "F (set bpm)" ifTrue: [tracker bpm: (v max: 1). ^ self].
+	command = 70 "F (set tempo)" ifTrue: [tracker bpm: (v max: 1). ^ self].
 	command = 65 "A (set video source A)" ifTrue: [tracker setVideoSourceA: v. ^ self].
 	command = 66 "B (set video source B)" ifTrue: [tracker setVideoSourceB: v. ^ self].
-	command = 88 "X (BitBlt combination rule)" ifTrue: [tracker setVideoOperation: v. ^ self]! !
+	command = 88 "X (set BitBlt combination rules)" ifTrue: [tracker setVideoOperation: v. ^ self]! !
 
 !Track methodsFor: 'playing' stamp: 'len 1/Jul/2026, 7:21:07 am (UTC)'!
 playTrigger
@@ -3430,14 +3427,6 @@ fx2
 fx2: anInteger
 	fx2 := anInteger! !
 
-!Trigger methodsFor: 'accessing' stamp: 'len 26/Jun/2026, 10:06:58 am (UTC)'!
-glide
-	"Answer the glide or portamento effect for this trigger in number of lines.
-	This is the value of the parameter of the effect command G."
-	fx1 ifNotNil: [(fx1 bitShift: -8) = 71 "G" ifTrue: [^ (fx1 bitAnd: 16rFF) / 16.0]].
-	fx2 ifNotNil: [(fx2 bitShift: -8) = 71 "G" ifTrue: [^ (fx2 bitAnd: 16rFF) / 16.0]].
-	^ 0! !
-
 !Trigger methodsFor: 'accessing' stamp: 'len 24/Dec/2025, 8:57:45 am (UTC)'!
 instrument
 	^ instrument! !
@@ -3453,6 +3442,14 @@ note
 !Trigger methodsFor: 'accessing' stamp: 'len 16/Dec/2025, 1:34:28 pm (UTC)'!
 note: anInteger
 	note := anInteger! !
+
+!Trigger methodsFor: 'accessing' stamp: 'len 14/Jul/2026, 10:27:44 am (UTC)'!
+noteGlide
+	"Answer the glide or portamento effect for this trigger in number of lines.
+	This is the value of the parameter of the effect command G."
+	fx1 ifNotNil: [(fx1 bitShift: -8) = 71 "G" ifTrue: [^ (fx1 bitAnd: 16rFF) / 16.0]].
+	fx2 ifNotNil: [(fx2 bitShift: -8) = 71 "G" ifTrue: [^ (fx2 bitAnd: 16rFF) / 16.0]].
+	^ 0! !
 
 !Trigger methodsFor: 'accessing' stamp: 'len 9/Jul/2026, 9:59:56 pm (UTC)'!
 noteShift

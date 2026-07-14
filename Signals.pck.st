@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 12 July 2026 at 2:56:35 pm'!
+'From Cuis7.9 [latest update: #8030] on 14 July 2026 at 6:24:15 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 642!
+!provides: 'Signals' 1 644!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -5362,12 +5362,11 @@ warp: aBoolean
 gateOff
 	released := true! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 25/Jun/2026, 12:48:46 pm (UTC)'!
+!Sample methodsFor: 'controlling' stamp: 'len 13/Jul/2026, 9:22:51 am (UTC)'!
 gateOn
 	increment := nil. "this forces to jump instantly to new note in >>#update"
 	(legato and: [self isUnreleased]) ifTrue: [^ self].
-	tailPosition ifNil: [tailPosition := position].
-	position := (buffer size - 1) * offset + 1.0.
+	position ifNil: [self setOffset: 0.0].
 	released := false
 ! !
 
@@ -5380,12 +5379,13 @@ reset
 	position := tailPosition := nil.
 	released := false! !
 
-!Sample methodsFor: 'controlling' stamp: 'len 25/Jun/2026, 12:48:28 pm (UTC)'!
+!Sample methodsFor: 'controlling' stamp: 'len 13/Jul/2026, 9:23:17 am (UTC)'!
 setOffset: aNumber
-	offset = aNumber ifTrue: [^ self].
-	offset := aNumber.
+	| newPosition |
+	newPosition := (buffer size - 1) * aNumber + 1.0.
+	position = newPosition ifTrue: [^ self].
 	tailPosition ifNil: [tailPosition := position].
-	position := (buffer size - 1) * aNumber + 1.0! !
+	position := newPosition! !
 
 !Sample methodsFor: 'controlling' stamp: 'len 23/Jan/2026, 7:28:16 am (UTC)'!
 setSpeed: aNumber
@@ -5485,11 +5485,10 @@ asJsonWithBuffers: aList
 		at: #label put: (label ifNil: ['']);
 		yourself! !
 
-!Sample methodsFor: 'serialization' stamp: 'len 9/Apr/2026, 4:18:44 pm (UTC)'!
+!Sample methodsFor: 'serialization' stamp: 'len 14/Jul/2026, 7:46:27 am (UTC)'!
 readFromJson: json buffers: aList
 	super readFromJson: json buffers: aList.
-	self flag: #deprecated. "remove baseRate"
-	self buffer: (aList at: (json at: #buffer)) rate: (json at: #rate ifAbsent: [json at: #baseRate]).
+	self buffer: (aList at: (json at: #buffer)) rate: (json at: #rate).
 	loopLength := json at: #loopLength.
 	loopEnd := json at: #loopEnd.
 	label := json at: #label ifAbsent: [''].
@@ -5552,12 +5551,11 @@ waveform
 		canvas line: x @ y to: x @ (h // 2) width: 1 color: Color black].
 	^ answer! !
 
-!Sample methodsFor: 'private' stamp: 'len 5/Jul/2026, 8:47:54 pm (UTC)'!
+!Sample methodsFor: 'private' stamp: 'len 13/Jul/2026, 9:23:22 am (UTC)'!
 buffer: aFloatArray rate: aNumber
 	buffer := aFloatArray.
 	rate := aNumber.
 	speed := 1.0.
-	offset := 0.0.
 	loopEnd := buffer size.
 	loopLength := 0.
 	warp := false.
@@ -5650,7 +5648,33 @@ serviceLoadSample
 		description:'load the sample to the samples library'
 		buttonLabel: 'load sample') argumentGetter: [:fileList| fileList selectedFileEntry]! !
 
-!Video methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:19:41 pm (UTC)'!
+!Video methodsFor: 'accessing' stamp: 'len 5/Jul/2026, 8:08:10 pm (UTC)'!
+height
+	^ height! !
+
+!Video methodsFor: 'accessing' stamp: 'len 14/Jul/2026, 7:34:29 am (UTC)'!
+line
+	| phase line v |
+	phase := ((position ifNil: [1.0]) - 1.0 max: 0.0) / buffer size.
+"	^ (phase * strip height / height) truncated * height
+"	(v := speed abs) >= 0.1 ifTrue: [^ (phase * strip height / height) truncated * height].
+	line := phase * strip height.
+	v := (v * 10.0) squared.
+	^ line * (1.0 - v) + ((line / height) truncated * height * v)! !
+
+!Video methodsFor: 'accessing' stamp: 'len 5/Jul/2026, 9:22:07 pm (UTC)'!
+strip
+	^ strip! !
+
+!Video methodsFor: 'accessing' stamp: 'len 5/Jul/2026, 8:08:30 pm (UTC)'!
+width
+	^ self strip width! !
+
+!Video methodsFor: 'copying' stamp: 'len 5/Jul/2026, 10:30:33 pm (UTC)'!
+copy
+	^ super copy strip: strip height: height! !
+
+!Video methodsFor: 'serialization' stamp: 'len 5/Jul/2026, 9:19:41 pm (UTC)'!
 asJsonWithBuffers: aList
 	| stripBitsAsFloats |
 	stripBitsAsFloats := Float32Array new: strip bits size.
@@ -5663,43 +5687,7 @@ asJsonWithBuffers: aList
 		at: #frameBits put: (aList indexOf: stripBitsAsFloats ifAbsent: [aList add: stripBitsAsFloats. aList size]);
 		yourself! !
 
-!Video methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 10:30:33 pm (UTC)'!
-copy
-	^ super copy strip: strip height: height! !
-
-!Video methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:17:24 pm (UTC)'!
-frames: anArray
-	| width y |
-	width := anArray first width.
-	height := anArray first height.
-	strip := Form extent: width @ (height * anArray size) depth: anArray first depth.
-	y := 0.
-	anArray do: [:each|
-		strip copy: (0 @ y corner: width @ (y + height)) from: 0 @ 0 in: each rule: Form over.
-		y := y + height]! !
-
-!Video methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 8:08:10 pm (UTC)'!
-height
-	^ height! !
-
-!Video methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 10:49:40 pm (UTC)'!
-line
-	| phase v line |
-	phase := ((position ifNil: [1.0]) - 1.0 max: 0.0) / buffer size.
-	(v := speed abs) >= 0.1 ifTrue: [^ (phase * strip height / height) truncated * height].
-	line := phase * strip height.
-	v := v * 10.0.
-	^ line * (1.0 - v) + ((line / height) truncated * height * v)! !
-
-!Video methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 3:15:07 pm (UTC)'!
-rackable
-	| answer |
-	answer := RackableMorph new model: self.
-	answer body addMorph: self screen.
-	answer flap addMorph: self panel.
-	^ answer! !
-
-!Video methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:21:24 pm (UTC)'!
+!Video methodsFor: 'serialization' stamp: 'len 5/Jul/2026, 9:21:24 pm (UTC)'!
 readFromJson: json buffers: aList
 	| width depth frameCount stripBits stripBitsAsFloats |
 	super readFromJson: json buffers: aList.
@@ -5712,22 +5700,33 @@ readFromJson: json buffers: aList
 	stripBits replaceFrom: 1 to: stripBits size with: stripBitsAsFloats startingAt: 1.
 	strip := Form extent: width @ (height * frameCount) depth: depth bits: stripBits! !
 
-!Video methodsFor: 'as yet unclassified' stamp: 'len 7/Jul/2026, 12:40:52 pm (UTC)'!
+!Video methodsFor: 'ui' stamp: 'len 22/Jun/2026, 3:15:07 pm (UTC)'!
+rackable
+	| answer |
+	answer := RackableMorph new model: self.
+	answer body addMorph: self screen.
+	answer flap addMorph: self panel.
+	^ answer! !
+
+!Video methodsFor: 'ui' stamp: 'len 7/Jul/2026, 12:40:52 pm (UTC)'!
 screen
 	^ VideoMorph new video: self! !
 
-!Video methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 9:22:07 pm (UTC)'!
-strip
-	^ strip! !
+!Video methodsFor: 'private' stamp: 'len 5/Jul/2026, 9:17:24 pm (UTC)'!
+frames: anArray
+	| width y |
+	width := anArray first width.
+	height := anArray first height.
+	strip := Form extent: width @ (height * anArray size) depth: anArray first depth.
+	y := 0.
+	anArray do: [:each|
+		strip copy: (0 @ y corner: width @ (y + height)) from: 0 @ 0 in: each rule: Form over.
+		y := y + height]! !
 
-!Video methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 10:30:47 pm (UTC)'!
+!Video methodsFor: 'private' stamp: 'len 5/Jul/2026, 10:30:47 pm (UTC)'!
 strip: aForm height: anInteger
 	strip := aForm.
 	height := anInteger! !
-
-!Video methodsFor: 'as yet unclassified' stamp: 'len 5/Jul/2026, 8:08:30 pm (UTC)'!
-width
-	^ self strip width! !
 
 !Video class methodsFor: 'as yet unclassified' stamp: 'len 22/Jun/2026, 2:56:22 pm (UTC)'!
 fromFileEntry: fileEntry

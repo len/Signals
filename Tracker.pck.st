@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 14 July 2026 at 6:24:19 pm'!
+'From Cuis7.9 [latest update: #8030] on 15 July 2026 at 1:42:28 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 108!
+!provides: 'Tracker' 1 109!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -170,7 +170,7 @@ A pattern is a grid of triggers (notes and effect commands). The columns represe
 !Track commentStamp: '<historical>' prior: 0!
 A track can play one instrument at a time. It can be muted or soloed, and it can be set to an arbitrary tuning. If the tuning is other than the standard 12-EDO, it internally maps arbitrary notes to fractional 12-EDO notes (using floats instead of the standard MIDI 0 to 127 integers).!
 
-!Trigger commentStamp: 'len 14/Jul/2026, 11:22:05 am (UTC)' prior: 0!
+!Trigger commentStamp: '<historical>' prior: 0!
 A trigger is a cell in the grid of a pattern. It can contain any of the following (optional) parameters: an instrument number (1 to 255), a note to play (0 to 127 as MIDI, and -1 to represent note off), a velocity value (0 to 128), and two effect commands.
 
 Effect commands:
@@ -182,7 +182,7 @@ Effect commands:
 ∙ *xy retrigger every y/16 of a line, and change velocity according to x (see below)
 ∙ @xx set sample offset (00 = start, FF = end)
 ∙ /xy / \xy slide playback speed to x over y lines and play forward / backwards (4 = ¹/₂×, 8 = 1×, C = 2×, F = 8×)
-∙ ~xy scribble, oscillate playback direction forward/backwards every y/16 of a line, at peak speed x
+∙ ~xy scribble (oscillate playback direction) at peak speed x every y/16 of a line
 ∙ 0xx to 9xx set control value
 ∙ Fxx set tempo to xx BPM
 ∙ &xx delay trigger by xx/256 of a line (00 = no delay, 01 = 1/256 of a line, FF = 1/256 before next line)
@@ -3530,7 +3530,7 @@ transposeBy: steps
 allFXCommandCharacters
 	^ '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>/\+-?!!@&~#$%^*_=|'! !
 
-!Trigger class methodsFor: 'as yet unclassified' stamp: 'len 12/Jul/2026, 9:36:39 am (UTC)'!
+!Trigger class methodsFor: 'as yet unclassified' stamp: 'len 14/Jul/2026, 6:05:27 pm (UTC)'!
 descriptionForFX: anInteger
 	| command v |
 	command := anInteger bitShift: -8.
@@ -3570,6 +3570,11 @@ descriptionForFX: anInteger
 	command = 70 "F (set bpm)" ifTrue: [^ 'Set tempo to ', (v max: 1) printString, ' BPM'].
 	command = 63 "? (trigger probability)" ifTrue: [^ 'Play trigger with ', (v / 255.0 * 100) rounded printString, '% probability'].
 	command = 38 "& (trigger delay)" ifTrue: [^ 'Delay trigger by ', v printString, '/256 of a line'].
+	
+	command = 88 "X (bitblt rules)" ifTrue:
+		[| rules |
+		rules := #('black' 'src' 'and' 'xor' 'or' 'not and' 'not xor' 'not or' 'int+' 'int-' 'rgb+' 'rgb-' 'rgb max' 'rgb min' 'not(dst)' 'not(src)').
+		^ 'BitBlt: ', (rules at: (v bitShift: -4) + 1), ', ', (rules at: (v bitAnd: 16rF) + 1)].
 	^ nil! !
 
 !Tuning methodsFor: 'accessing' stamp: 'len 9/Jun/2026, 7:00:32 pm (UTC)'!

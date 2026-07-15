@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 14 July 2026 at 6:24:15 pm'!
+'From Cuis7.9 [latest update: #8030] on 15 July 2026 at 1:42:24 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 644!
+!provides: 'Signals' 1 645!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -26,7 +26,7 @@ SystemOrganization addCategory: #'Signals-Trash'!
 
 !classDefinition: #Control category: #'Signals-Kernel'!
 ActiveModel subclass: #Control
-	instanceVariableNames: 'base modulation lastValue min max curve coarseStep fineStep printer default label'
+	instanceVariableNames: 'base modulation lastValue min max curve coarseStep fineStep printer defaultValue label cc'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Kernel'!
@@ -1056,7 +1056,7 @@ PluggableToggleMorph class
 
 !classDefinition: #ControlMorph category: #'Signals-Morphic-Controls'!
 BoxMorph subclass: #ControlMorph
-	instanceVariableNames: 'control color mapped'
+	instanceVariableNames: 'control color'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Signals-Morphic-Controls'!
@@ -2494,6 +2494,16 @@ baseValue
 baseValue: anObject
 	self basePosition: (self positionFromValue: anObject)! !
 
+!Control methodsFor: 'accessing' stamp: 'len 15/Jul/2026, 6:24:50 am (UTC)'!
+cc
+	^ cc! !
+
+!Control methodsFor: 'accessing' stamp: 'len 15/Jul/2026, 6:28:43 am (UTC)'!
+cc: aNumberOrNil
+	cc = aNumberOrNil ifTrue: [^ self].
+	cc := aNumberOrNil.
+	self changed: self baseValue "just to force any ControlMorph to redraw if the cc changes"! !
+
 !Control methodsFor: 'accessing' stamp: 'len 3/Jun/2026, 9:57:09 am (UTC)'!
 coarseStep
 	^ coarseStep! !
@@ -2557,13 +2567,13 @@ modulatedValue
 modulation
 	^ modulation! !
 
-!Control methodsFor: 'control and modulation' stamp: 'len 4/Jul/2026, 1:13:34 pm (UTC)'!
+!Control methodsFor: 'control and modulation' stamp: 'len 15/Jul/2026, 6:24:02 am (UTC)'!
 setBaseToDefault
-	self baseValue: default! !
+	self baseValue: defaultValue! !
 
-!Control methodsFor: 'control and modulation' stamp: 'len 4/Jul/2026, 1:14:10 pm (UTC)'!
+!Control methodsFor: 'control and modulation' stamp: 'len 15/Jul/2026, 6:24:02 am (UTC)'!
 setDefaultToBase
-	default := self baseValue! !
+	defaultValue := self baseValue! !
 
 !Control methodsFor: 'control and modulation' stamp: 'len 8/Mar/2026, 8:25:25 am (UTC)'!
 value
@@ -2599,9 +2609,9 @@ printOn: aStream
 printedBaseValue
 	^ printer ifNil: [self baseValue printStringFractionDigits: 2] ifNotNil: [printer value: self baseValue]! !
 
-!Control methodsFor: 'printing' stamp: 'len 8/Mar/2026, 8:24:20 am (UTC)'!
+!Control methodsFor: 'printing' stamp: 'len 15/Jul/2026, 6:38:16 am (UTC)'!
 printedBaseValueWithLabel
-	^ (label ifNil: [''] ifNotNil: [label, ': ']), self printedBaseValue! !
+	^ (cc ifNil: [''] ifNotNil: ['[', cc printString, '] ']), (label ifNil: [''] ifNotNil: [label, ': ']), self printedBaseValue! !
 
 !Control methodsFor: 'printing' stamp: 'len 8/Mar/2026, 8:24:27 am (UTC)'!
 printer: aSymbol
@@ -2642,16 +2652,16 @@ positionFromValue: aNumber
 	v := v min: max max: min.
 	^ self curveInverseAt: v! !
 
-!Control methodsFor: 'private' stamp: 'len 3/Jun/2026, 9:59:10 am (UTC)'!
-setMin: minValue max: maxValue curve: aSymbol value: defaultValue
-	self assert: (defaultValue between: minValue and: maxValue).
+!Control methodsFor: 'private' stamp: 'len 15/Jul/2026, 6:24:02 am (UTC)'!
+setMin: minValue max: maxValue curve: aSymbol value: aNumber
+	self assert: (aNumber between: minValue and: maxValue).
 	min := minValue.
 	max := maxValue.
 	curve := aSymbol.
-	lastValue := defaultValue.
-	base := self positionFromValue: defaultValue.
+	lastValue := aNumber.
+	base := self positionFromValue: aNumber.
 	modulation := 0.0.
-	default := defaultValue! !
+	defaultValue := aNumber! !
 
 !Control methodsFor: 'private' stamp: 'len 3/Jun/2026, 9:58:59 am (UTC)'!
 valueFromPosition: aNumber
@@ -10591,11 +10601,11 @@ controlNumberForControl: aControl
 enabled: aBoolean
 	modules do: [:each| (each isMemberOf: AudioOut) ifTrue: [each enabled: aBoolean]]! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 11/Jul/2026, 12:46:05 pm (UTC)'!
+!Patch methodsFor: 'accessing' stamp: 'len 15/Jul/2026, 6:31:06 am (UTC)'!
 map: controlNumber to: aControl
 	self unmap: aControl.
 	controlMap at: controlNumber + 1 put: (controlMap at: controlNumber + 1), {aControl}.
-	self triggerEvent: #controlMapped: with: aControl! !
+	aControl cc: controlNumber! !
 
 !Patch methodsFor: 'accessing' stamp: 'len 27/Jun/2026, 9:35:06 pm (UTC)'!
 meterLeftValue
@@ -10638,11 +10648,11 @@ send: aSelector with: anObject ifNoReceiver: aBlock
 	(receivers at: aSelector ifAbsentPut: [modules select: [:each| each respondsTo: aSelector]])
 		ifEmpty: aBlock ifNotEmpty: [:anArray| anArray do: [:each| each perform: aSelector with: anObject]]! !
 
-!Patch methodsFor: 'accessing' stamp: 'len 11/Jul/2026, 12:46:16 pm (UTC)'!
+!Patch methodsFor: 'accessing' stamp: 'len 15/Jul/2026, 6:32:22 am (UTC)'!
 unmap: aControl
 	(controlMap anySatisfy: [:anyList| anyList includes: aControl]) ifFalse: [^ false].
 	controlMap := controlMap collect: [:eachList| eachList select: [:each| each ~~ aControl]].
-	self triggerEvent: #controlUnmapped: with: aControl.
+	aControl cc: nil.
 	^ true! !
 
 !Patch methodsFor: 'accessing' stamp: 'len 6/Jul/2026, 11:12:44 am (UTC)'!
@@ -10921,13 +10931,11 @@ initialize
 addNewModule
 ! !
 
-!RackMorph methodsFor: 'private' stamp: 'len 11/Jul/2026, 1:02:07 pm (UTC)'!
+!RackMorph methodsFor: 'private' stamp: 'len 15/Jul/2026, 6:33:31 am (UTC)'!
 patch: aPatch
 	patch = aPatch ifTrue: [^ self].
 	patch := aPatch.
 	aPatch when: #modulesChanged send: #update to: self.
-	aPatch when: #controlMapped: send: #updateControlMapped: to: self.
-	aPatch when: #controlUnmapped: send: #updateControlUnmapped: to: self.
 	self update! !
 
 !RackMorph methodsFor: 'private' stamp: 'len 11/Jul/2026, 12:56:45 pm (UTC)'!
@@ -10940,18 +10948,6 @@ update
 		do: [:each| self addMorph: (existingRackables detect: [:one| one model = each] ifNone: [each rackable]) layoutSpec: LayoutSizeSpec new useMorphWidth "useMorphHeight"].
 	self addMorph: (PushButtonMorph new when: #buttonUp send: #addNewModule to: self; label: '+'; setBalloonText: 'Add new module'; morphExtent: 10 @ 10) layoutSpec: LayoutSizeSpec new useMorphWidth.
 	self redrawNeeded! !
-
-!RackMorph methodsFor: 'private' stamp: 'len 11/Jul/2026, 1:03:23 pm (UTC)'!
-updateControlMapped: aControl
-	self allSubmorphsDo: [:each|
-		((each isKindOf: ControlMorph) and: [each control = aControl])
-			ifTrue: [each mapped: true. ^ self]]! !
-
-!RackMorph methodsFor: 'private' stamp: 'len 11/Jul/2026, 1:03:35 pm (UTC)'!
-updateControlUnmapped: aControl
-	self allSubmorphsDo: [:each|
-		((each isKindOf: ControlMorph) and: [each control = aControl])
-			ifTrue: [each mapped: false. ^ self]]! !
 
 !RackMorph methodsFor: 'as yet unclassified' stamp: 'len 10/Jul/2026, 8:36:22 am (UTC)'!
 patch
@@ -11220,9 +11216,9 @@ withLabel: aString
 update: anObject
 	self redrawNeeded! !
 
-!ControlMorph methodsFor: 'drawing' stamp: 'len 11/Jul/2026, 12:42:33 pm (UTC)'!
+!ControlMorph methodsFor: 'drawing' stamp: 'len 15/Jul/2026, 6:35:26 am (UTC)'!
 activeColor
-	^ mapped ifTrue: [PatchMorph controlWaveformColor2] ifFalse: [color]! !
+	^ control cc ifNil: [color] ifNotNil: [PatchMorph controlWaveformColor2]! !
 
 !ControlMorph methodsFor: 'drawing' stamp: 'len 19/Nov/2025, 12:08:00 pm (UTC)'!
 inactiveColor
@@ -11288,12 +11284,9 @@ mouseScroll: anEvent localPosition: localEventPosition
 keyboardFocusChange: aBoolean
 	self redrawNeeded! !
 
-!ControlMorph methodsFor: 'halos and balloon help' stamp: 'len 10/Jul/2026, 3:21:35 pm (UTC)'!
+!ControlMorph methodsFor: 'halos and balloon help' stamp: 'len 15/Jul/2026, 6:38:29 am (UTC)'!
 balloonText
-	| answer |
-	answer := control printedBaseValueWithLabel.
-	self patch ifNotNil: [:aPatch| (aPatch controlNumberForControl: control) ifNotNil: [:anInteger| answer := '[', anInteger printString, '] ', answer]].
-	^ answer! !
+	^ control printedBaseValueWithLabel! !
 
 !ControlMorph methodsFor: 'initialization' stamp: 'len 11/May/2026, 6:40:13 pm (UTC)'!
 color: aColor
@@ -11318,30 +11311,19 @@ defaultFontSize
 defaultLabelFontSize
 	^ (FontFamily defaultPointSize * 0.6) truncated! !
 
-!ControlMorph methodsFor: 'initialization' stamp: 'len 11/Jul/2026, 12:42:46 pm (UTC)'!
+!ControlMorph methodsFor: 'initialization' stamp: 'len 15/Jul/2026, 6:35:32 am (UTC)'!
 initialize
 	super initialize.
-	color := self defaultColor.
-	mapped := false! !
+	color := self defaultColor! !
 
 !ControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Jul/2026, 12:57:15 pm (UTC)'!
 control
 	^ control! !
 
-!ControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Jul/2026, 12:43:17 pm (UTC)'!
-mapped: aBoolean
-	mapped = aBoolean ifTrue: [^ self].
-	mapped := aBoolean.
-	self redrawNeeded! !
-
 !ControlMorph methodsFor: 'as yet unclassified' stamp: 'len 10/Jul/2026, 7:56:39 am (UTC)'!
 patch
 	self allOwnersDo: [:each| ((each isKindOf: PatchMorph) or: [each isKindOf: RackMorph]) ifTrue: [^ each patch]].
 	^ nil! !
-
-!ControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Jul/2026, 12:58:11 pm (UTC)'!
-updateMappedFlag
-	self patch ifNotNil: [:aPatch| self mapped: (aPatch controlNumberForControl: control) notNil]! !
 
 !ControlMorph class methodsFor: 'instance creation' stamp: 'len 4/Nov/2025, 8:49:00 am (UTC)'!
 control: aControl
@@ -15275,12 +15257,10 @@ fullIncludesPixel: aPoint
 includesPixel: aPoint
 	^ submorphs noneSatisfy: [:m| m fullIncludesPixel: aPoint]! !
 
-!PatchMorph methodsFor: 'initialization' stamp: 'len 11/Jul/2026, 1:09:28 pm (UTC)'!
+!PatchMorph methodsFor: 'initialization' stamp: 'len 15/Jul/2026, 6:33:37 am (UTC)'!
 initialize
 	super initialize.
 	patch := Patch new.
-	patch when: #controlMapped: send: #updateControlMapped: to: self.
-	patch when: #controlUnmapped: send: #updateControlUnmapped: to: self.
 	dirty := false! !
 
 !PatchMorph methodsFor: 'layout' stamp: 'len 29/Jun/2026, 7:33:25 am (UTC)'!
@@ -15367,18 +15347,6 @@ uninstallDisconnectedSignals
 !PatchMorph methodsFor: 'private' stamp: 'len 29/Jun/2026, 7:25:11 am (UTC)'!
 uninstallDisconnectedSignalsNeeded
 	dirty := true! !
-
-!PatchMorph methodsFor: 'private' stamp: 'len 11/Jul/2026, 1:08:40 pm (UTC)'!
-updateControlMapped: aControl
-	self allSubmorphsDo: [:each|
-		((each isKindOf: ControlMorph) and: [each control = aControl])
-			ifTrue: [each mapped: true. ^ self]]! !
-
-!PatchMorph methodsFor: 'private' stamp: 'len 11/Jul/2026, 1:08:53 pm (UTC)'!
-updateControlUnmapped: aControl
-	self allSubmorphsDo: [:each|
-		((each isKindOf: ControlMorph) and: [each control = aControl])
-			ifTrue: [each mapped: false. ^ self]]! !
 
 !PatchMorph class methodsFor: 'colors' stamp: 'len 29/Jun/2026, 6:53:34 pm (UTC)'!
 controlWaveformColor

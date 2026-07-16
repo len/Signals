@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 15 July 2026 at 1:42:24 pm'!
+'From Cuis7.9 [latest update: #8030] on 16 July 2026 at 3:37:52 pm'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 645!
+!provides: 'Signals' 1 646!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -10659,9 +10659,8 @@ unmap: aControl
 video
 	^ video! !
 
-!Patch methodsFor: 'controlling' stamp: 'len 8/Jul/2026, 9:39:13 pm (UTC)'!
+!Patch methodsFor: 'controlling' stamp: 'len 16/Jul/2026, 8:16:35 am (UTC)'!
 adjustNoteBy: aNumber glide: numberOfTicks
-	"Slide the given number of semitones."
 	note ifNil: [^ self].
 	numberOfTicks > 0
 		ifTrue: 
@@ -10938,7 +10937,7 @@ patch: aPatch
 	aPatch when: #modulesChanged send: #update to: self.
 	self update! !
 
-!RackMorph methodsFor: 'private' stamp: 'len 11/Jul/2026, 12:56:45 pm (UTC)'!
+!RackMorph methodsFor: 'private' stamp: 'len 16/Jul/2026, 8:24:05 am (UTC)'!
 update
 	| existingRackables |
 	existingRackables := submorphs select: [:each| each isKindOf: RackableMorph].
@@ -10946,7 +10945,7 @@ update
 	self morphExtent: 10@10. "and let it grow from that"
 	(patch ifNil: [^ self]) modules
 		do: [:each| self addMorph: (existingRackables detect: [:one| one model = each] ifNone: [each rackable]) layoutSpec: LayoutSizeSpec new useMorphWidth "useMorphHeight"].
-	self addMorph: (PushButtonMorph new when: #buttonUp send: #addNewModule to: self; label: '+'; setBalloonText: 'Add new module'; morphExtent: 10 @ 10) layoutSpec: LayoutSizeSpec new useMorphWidth.
+"	self addMorph: (PushButtonMorph new when: #buttonUp send: #addNewModule to: self; label: '+'; setBalloonText: 'Add new module'; morphExtent: 10 @ 10) layoutSpec: LayoutSizeSpec new useMorphWidth."
 	self redrawNeeded! !
 
 !RackMorph methodsFor: 'as yet unclassified' stamp: 'len 10/Jul/2026, 8:36:22 am (UTC)'!
@@ -11204,6 +11203,15 @@ initialize
 	font := FontFamily defaultFamilyPointSize: self defaultFontSize.
 	extent := self minimumExtent! !
 
+!ControlMorph methodsFor: 'accessing' stamp: 'len 11/Jul/2026, 12:57:15 pm (UTC)'!
+control
+	^ control! !
+
+!ControlMorph methodsFor: 'accessing' stamp: 'len 10/Jul/2026, 7:56:39 am (UTC)'!
+patch
+	self allOwnersDo: [:each| ((each isKindOf: PatchMorph) or: [each isKindOf: RackMorph]) ifTrue: [^ each patch]].
+	^ nil! !
+
 !ControlMorph methodsFor: 'building' stamp: 'len 9/Apr/2026, 5:12:03 pm (UTC)'!
 withLabel: aString
 	^ LinearLayoutMorph newColumn
@@ -11271,13 +11279,11 @@ mouseLeave: anEvent
 	super mouseLeave: anEvent.
 	Cursor defaultCursor activateCursor! !
 
-!ControlMorph methodsFor: 'events' stamp: 'len 28/Apr/2026, 9:47:03 am (UTC)'!
+!ControlMorph methodsFor: 'events' stamp: 'len 15/Jul/2026, 10:09:15 am (UTC)'!
 mouseScroll: anEvent localPosition: localEventPosition
 	(anEvent direction = #down or: [anEvent direction = #left])
-		ifTrue:
-			[anEvent shiftPressed ifTrue: [control adjustFineUp] ifFalse: [control adjustUp]]
-		ifFalse:
-			[anEvent shiftPressed ifTrue: [control adjustFineDown] ifFalse: [control adjustDown]].
+		ifTrue: [anEvent shiftPressed ifTrue: [control adjustFineUp] ifFalse: [control adjustUp]]
+		ifFalse: [anEvent shiftPressed ifTrue: [control adjustFineDown] ifFalse: [control adjustDown]].
 	self wantsBalloon ifTrue: [self showBalloon]! !
 
 !ControlMorph methodsFor: 'focus handling' stamp: 'len 19/Nov/2025, 12:02:00 pm (UTC)'!
@@ -11315,15 +11321,6 @@ defaultLabelFontSize
 initialize
 	super initialize.
 	color := self defaultColor! !
-
-!ControlMorph methodsFor: 'as yet unclassified' stamp: 'len 11/Jul/2026, 12:57:15 pm (UTC)'!
-control
-	^ control! !
-
-!ControlMorph methodsFor: 'as yet unclassified' stamp: 'len 10/Jul/2026, 7:56:39 am (UTC)'!
-patch
-	self allOwnersDo: [:each| ((each isKindOf: PatchMorph) or: [each isKindOf: RackMorph]) ifTrue: [^ each patch]].
-	^ nil! !
 
 !ControlMorph class methodsFor: 'instance creation' stamp: 'len 4/Nov/2025, 8:49:00 am (UTC)'!
 control: aControl
@@ -13182,7 +13179,7 @@ minimumExtent
 	m2 := title minimumExtent.
 	^ (m1 x max: m2 x) @ (m1 y + m2 y)! !
 
-!RackableMorph methodsFor: 'initialization' stamp: 'len 29/Jun/2026, 12:19:40 pm (UTC)'!
+!RackableMorph methodsFor: 'initialization' stamp: 'len 16/Jul/2026, 8:27:33 am (UTC)'!
 initialize
 	super initialize.
 "	self gap: 1; color: Color transparent; borderWidth: 0."
@@ -13190,7 +13187,7 @@ initialize
 	self addMorph: title position: 0 @ 0.
 	body := RoundedLinearLayoutMorph newColumn gap: 10; padding: 4 @ 0; borderWidth: 1; borderColor: Color lightGray; color: PatchMorph panelColor; axisEdgeWeight: 0.5.
 	self addMorph: body position: 0 @ title minimumExtent y.
-	flap := RoundedLinearLayoutMorph newColumn gap: 10; padding: 4 @ 8; "borderWidth: 0; borderColor: Color lightGray; color: PatchMorph panelColor" color: (Color darkGray alpha: 0.7).
+	flap := RoundedLinearLayoutMorph newColumn gap: 10; padding: 4 @ 8; color: (Color darkGray alpha: 0.7).
 	self addMorph: flap.
 	flap hide! !
 
@@ -15491,7 +15488,7 @@ mouseLeave: anEvent
 	body borderColor: body defaultBorderColor.
 	self addAlarm: #hideFlapAndTitle after: 300 "wait 300 ms before actually hiding them"! !
 
-!PatchableMorph methodsFor: 'initialization' stamp: 'len 29/Jun/2026, 12:20:17 pm (UTC)'!
+!PatchableMorph methodsFor: 'initialization' stamp: 'len 16/Jul/2026, 8:27:24 am (UTC)'!
 initialize
 	| container |
 	super initialize.
@@ -15503,7 +15500,7 @@ initialize
 	self addMorph: container.
 	self addMorph: (title := LabelMorph contents: '' fontSize: 12 emphasis: 1) position: 0 @ -24.
 	title color: Color white; hide.
-	flap := RoundedLinearLayoutMorph newColumn gap: 10; padding: 4 @ 8; "borderWidth: 0; borderColor: Color lightGray; color: PatchMorph panelColor" color: (Color darkGray alpha: 0.8).
+	flap := RoundedLinearLayoutMorph newColumn gap: 10; padding: 4 @ 8; color: (Color darkGray alpha: 0.8).
 	self addMorph: flap.
 	flap hide! !
 

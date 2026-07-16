@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 15 July 2026 at 1:42:28 pm'!
+'From Cuis7.9 [latest update: #8030] on 16 July 2026 at 3:37:57 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 109!
+!provides: 'Tracker' 1 110!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -177,8 +177,8 @@ Effect commands:
 ∙ <xy / >xy crescendo/diminuendo, fade in/out increasing/decreasing velocity by x over y lines (0 = 0%, F = 100%)
 ∙ !!xy cut to velocity x (0 = minimum, F = maximum) after y/16 of a line
 ∙ #xx finetune note up by xx/256 of a note (depending on the track's tuning system)
-∙ +xy / -xy slide pitch up/down by x notes over y lines (depending on the track's tuning system)
 ∙ Gxx glide to note over xx/16 lines (01 = 1/16 of a line, 10 = 1 line, FF = almost 16 lines)
+∙ +xy / -xy slide pitch up/down by x notes over y lines (depending on the track's tuning system)
 ∙ *xy retrigger every y/16 of a line, and change velocity according to x (see below)
 ∙ @xx set sample offset (00 = start, FF = end)
 ∙ /xy / \xy slide playback speed to x over y lines and play forward / backwards (4 = ¹/₂×, 8 = 1×, C = 2×, F = 8×)
@@ -1901,12 +1901,12 @@ drawOn: aCanvas
 requiresVectorCanvas
 	^ true! !
 
-!ArrangerMorph methodsFor: 'events' stamp: 'len 24/Jun/2026, 6:55:38 am (UTC)'!
+!ArrangerMorph methodsFor: 'events' stamp: 'len 16/Jul/2026, 8:34:22 am (UTC)'!
 handleCommandHotkey: anEvent
-"	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
+	anEvent keyCharacter = $c ifTrue: [self clipboardCopy. ^ true].
 	anEvent keyCharacter = $x ifTrue: [self clipboardCut. ^ true].
 	anEvent keyCharacter = $v ifTrue: [self clipboardPaste. ^ true].
-	anEvent keyCharacter = $V ifTrue: [self clipboardPasteNew. ^ true]."
+	anEvent keyCharacter = $V ifTrue: [self clipboardPasteNew. ^ true].
 	anEvent keyCharacter = $i ifTrue: [tracker selectedPattern ifNotNil: [:aPattern| aPattern inspect]. ^ true].
 	^ false! !
 
@@ -1977,15 +1977,6 @@ setTracker: aTracker
 	aTracker when: #cursorChanged send: #redrawNeeded to: self.
 	aTracker when: #playheadChanged send: #redrawNeeded to: self.
 	self update! !
-
-!ArrangerMorph methodsFor: 'menu' stamp: 'len 24/Jun/2026, 6:56:23 am (UTC)'!
-menuNshortcutsSpecsDo: aBlock
-	#(
-		#(120	'Copy (c)'	 	$c 	nil 	clipboardCopy 		nil 	'Copy selection')
-		#(130	'Cut (x)' 			$x 	nil 	clipboardCut		nil 	'Cut selection')
-		#(140	'Paste (v)' 		$v 	nil 	clipboardPaste		nil 	'Paste references')
-		#(150	'Paste copy (V)' 	$V 	nil 	clipboardPasteNew	nil 	'Paste new copies')
-	) do: aBlock! !
 
 !ArrangerMorph methodsFor: 'private' stamp: 'len 24/Feb/2026, 8:38:55 am (UTC)'!
 onBlinkCursor
@@ -2372,7 +2363,7 @@ drawOn: aCanvas
 	self drawCursorOn: aCanvas.
 	self drawPatternOn: aCanvas! !
 
-!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 13/Jun/2026, 5:35:31 pm (UTC)'!
+!PatternEditorMorph methodsFor: 'drawing' stamp: 'len 15/Jul/2026, 11:19:34 am (UTC)'!
 drawPatternOn: aCanvas
 	| lineSpacing charWidth y unsetColor noteColor velocityColor pattern endLine middle startLine darkColor lightColor xLeft xRight beatColor trackWidth |
 	pattern := tracker selectedPattern.
@@ -2390,7 +2381,7 @@ drawPatternOn: aCanvas
 	xRight := self morphWidth - ((font widthOf: $X)*2) - xLeft.
 	lightColor := Color veryLightGray.
 	darkColor := Color lightGray.
-	beatColor := Color white alpha: 0.08.
+	beatColor := pattern lpb > 1 ifTrue: [Color white alpha: 0.06] ifFalse: [Color transparent].
 	"Draw playhead line:"
 	(tracker isPlaying and: [tracker playheadPattern = tracker cursorPattern and: [tracker playheadLine between: startLine and: endLine]])
 		ifTrue: [aCanvas fillRectangle: (0@(tracker playheadLine - startLine * lineSpacing + y) extent: extent x @ lineSpacing) color: self class playheadColor].
@@ -2692,16 +2683,6 @@ setTracker: aTracker
 	aTracker when: #instrumentLabelChanged send: #redrawNeeded to: self.
 	aTracker when: #selectedTrackTuningChanged: send: #redrawNeeded to: self.
 	self updateTracks! !
-
-!PatternEditorMorph methodsFor: 'menu' stamp: 'len 24/Jun/2026, 6:59:06 am (UTC)'!
-menuNshortcutsSpecsDo: aBlock
-	#(
-		#(100	'Set Length (l)' 	$l 	nil 	setPatternLength 	nil 	'Set pattern length')
-		#(110	'Set LPB (b)' 		$b 	nil 	setPatternLPB 		nil 	'Set pattern lines per beat')
-		#(120	'Copy (c)'	 	$c 	nil 	clipboardCopy 		nil 	'Copy selection to clipboard')
-		#(130	'Cut (x)' 			$x 	nil 	clipboardCut		nil 	'Cut selection to clipboard')
-		#(140	'Paste (v)' 		$v 	nil 	clipboardPaste		nil 	'Paste from clipboard')
-	) do: aBlock! !
 
 !PatternEditorMorph methodsFor: 'private' stamp: 'len 30/Dec/2025, 6:25:06 pm (UTC)'!
 headerHeight
@@ -3217,6 +3198,10 @@ readFromJson: json
 hasReferenceToInstrument: anInteger
 	^ blocks anySatisfy: [:block| block notNil and: [block anySatisfy: [:trigger| trigger notNil and: [trigger instrument = anInteger]]]]! !
 
+!Pattern methodsFor: 'testing' stamp: 'len 15/Jul/2026, 10:35:51 am (UTC)'!
+isEmpty
+	^ blocks allSatisfy: [:each| each isNil]! !
+
 !Pattern methodsFor: 'testing' stamp: 'len 27/Dec/2025, 7:24:12 pm (UTC)'!
 isEmptyTrack: anInteger
 	^ (blocks at: anInteger) isNil! !
@@ -3497,13 +3482,6 @@ readFromJson: json
 	velocity := json at: #velocity ifAbsent: [].
 	fx1 := json at: #fx1 ifAbsent: [].
 	fx2 := json at: #fx2 ifAbsent: []! !
-
-!Trigger methodsFor: 'testing' stamp: 'len 10/Jul/2026, 5:55:55 pm (UTC)'!
-hasSpeedChange
-	| c |
-	fx1 ifNotNil: [((c := fx1 bitShift: -8) = 47 "/" or: [c = 92 "\"]) ifTrue: [^ true]].
-	fx2 ifNotNil: [((c := fx2 bitShift: -8) = 47 "/" or: [c = 92 "\"]) ifTrue: [^ true]].
-	^ false! !
 
 !Trigger methodsFor: 'testing' stamp: 'len 27/Dec/2025, 1:32:35 pm (UTC)'!
 isEmpty

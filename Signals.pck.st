@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 16 July 2026 at 3:37:52 pm'!
+'From Cuis7.9 [latest update: #8030] on 21 July 2026 at 1:37:45 am'!
 'Description Lively dataflow programming environment for real-time musical synthesis.'!
-!provides: 'Signals' 1 646!
+!provides: 'Signals' 1 647!
 !requires: 'Audio' 1 1 nil!
 !requires: 'JSON' 1 29 nil!
 SystemOrganization addCategory: #'Signals-Kernel'!
@@ -2354,12 +2354,12 @@ Virtual analog model of the Oberheim state variable filter. It has low-pass, hig
 
 See also https://github.com/grame-cncm/faustlibraries/blob/master/vaeffects.lib!
 
-!Patch commentStamp: '<historical>' prior: 0!
+!Patch commentStamp: 'len 17/Jul/2026, 7:26:03 am (UTC)' prior: 0!
 A patch is a list of interconnected modules. They are executed (update+tick) in sequential order.
 
 The patch provides a protocol for general instruments and effects. It can handle notes and changes in velocity, pitch, volume, panning, sample playhead position and playback speed and direction, etc.
 
-A patch also has 10 global buses for audio (0 = master) that are accessed within the patch by the AudioIn and AudioOut modules (see >>#buses:). There is also a control bus with 10 control values (like MIDI CC), local to each patch, that are accessed by the ControlIn module (see >>#controlBus).!
+A patch also has 10 global buses for audio (0 = master) that are accessed within the patch by the AudioIn and AudioOut modules (see >>#buses:). There is also a mapping of 10 control numbers (like MIDI CC) to controls, local to each patch (see >>#controlMap and Control>>#cc).!
 
 !AllpassComb commentStamp: '<historical>' prior: 0!
 Schroeder allpass filter.!
@@ -10659,8 +10659,9 @@ unmap: aControl
 video
 	^ video! !
 
-!Patch methodsFor: 'controlling' stamp: 'len 16/Jul/2026, 8:16:35 am (UTC)'!
+!Patch methodsFor: 'controlling' stamp: 'len 20/Jul/2026, 12:01:13 pm (UTC)'!
 adjustNoteBy: aNumber glide: numberOfTicks
+"	note printString, '+', aNumber printString, ' over ', numberOfTicks printString :: print."
 	note ifNil: [^ self].
 	numberOfTicks > 0
 		ifTrue: 
@@ -10669,7 +10670,8 @@ adjustNoteBy: aNumber glide: numberOfTicks
 		ifFalse:
 			[glideTicks := 0.
 			noteIncrement := 0.0.
-			note := note + aNumber]! !
+			note := note + aNumber.
+			self setNote: note]! !
 
 !Patch methodsFor: 'controlling' stamp: 'len 9/Jul/2026, 8:00:54 am (UTC)'!
 adjustVelocityBy: aNumber glide: numberOfTicks

@@ -1,6 +1,6 @@
-'From Cuis7.9 [latest update: #8030] on 21 July 2026 at 1:37:48 am'!
+'From Cuis7.9 [latest update: #8030] on 23 July 2026 at 9:50:59 pm'!
 'Description A tracker implemented with Signals.'!
-!provides: 'Tracker' 1 111!
+!provides: 'Tracker' 1 112!
 !requires: 'Signals' 1 490 nil!
 SystemOrganization addCategory: #'Tracker-Kernel'!
 SystemOrganization addCategory: #'Tracker-Morphic'!
@@ -719,7 +719,7 @@ moveCursorLineBottom
 moveCursorLineDown
 	self moveCursorLineDown: 1! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 13/Jun/2026, 5:47:25 pm (UTC)'!
+!Tracker methodsFor: 'cursor' stamp: 'len 23/Jul/2026, 2:33:14 pm (UTC)'!
 moveCursorLineDown: anInteger
 	| n |
 	self isPlaying ifTrue: [self followPlayhead: false].
@@ -729,8 +729,7 @@ moveCursorLineDown: anInteger
 		[cursorPattern < sequence size
 			ifTrue:
 				[cursorPattern := cursorPattern + 1.
-				cursorLine := cursorLine - n min: self selectedPattern length.
-				self triggerEvent: #cursorChanged]
+				cursorLine := cursorLine - n min: self selectedPattern length]
 			ifFalse: [cursorLine := n]].
 	self triggerEvent: #cursorChanged! !
 
@@ -744,7 +743,7 @@ moveCursorLineTop
 moveCursorLineUp
 	self moveCursorLineUp: 1! !
 
-!Tracker methodsFor: 'cursor' stamp: 'len 13/Jun/2026, 5:47:20 pm (UTC)'!
+!Tracker methodsFor: 'cursor' stamp: 'len 23/Jul/2026, 2:33:06 pm (UTC)'!
 moveCursorLineUp: anInteger
 	self isPlaying ifTrue: [self followPlayhead: false].
 	cursorLine := cursorLine - anInteger.
@@ -752,8 +751,7 @@ moveCursorLineUp: anInteger
 		[cursorPattern > 1
 			ifTrue:
 				[cursorPattern := cursorPattern - 1.
-				cursorLine := self selectedPattern length + cursorLine max: 1.
-				self triggerEvent: #cursorPatternChanged: with: cursorPattern]
+				cursorLine := self selectedPattern length + cursorLine max: 1]
 			ifFalse: [cursorLine := 1]].
 	self triggerEvent: #cursorChanged! !
 
@@ -1610,11 +1608,11 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $i ifTrue: [tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument inspect]. ^ true].
 	^ false! !
 
-!InstrumentRackMorph methodsFor: 'events' stamp: 'len 20/Jun/2026, 8:31:27 pm (UTC)'!
+!InstrumentRackMorph methodsFor: 'events' stamp: 'len 21/Jul/2026, 6:04:38 am (UTC)'!
 handleOptionHotkey: anEvent
 	anEvent shiftPressed ifTrue:
-		[anEvent isArrowDown ifTrue: [tracker moveInstrumentDown. ^ true].
-		anEvent isArrowUp ifTrue: [tracker moveInstrumentUp. ^ true]].
+		[anEvent isArrowDown ifTrue: [self moveInstrumentDown. ^ true].
+		anEvent isArrowUp ifTrue: [self moveInstrumentUp. ^ true]].
 	^ false! !
 
 !InstrumentRackMorph methodsFor: 'events' stamp: 'len 10/Jul/2026, 9:00:58 am (UTC)'!
@@ -1743,11 +1741,11 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $i ifTrue: [tracker selectedInstrument ifNotNil: [:anInstrument| anInstrument inspect]. ^ true].
 	^ false! !
 
-!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026, 4:20:23 pm (UTC)'!
+!InstrumentEditorMorph methodsFor: 'events' stamp: 'len 21/Jul/2026, 6:04:30 am (UTC)'!
 handleOptionHotkey: anEvent
 	anEvent shiftPressed ifTrue:
-		[anEvent isArrowDown ifTrue: [tracker moveInstrumentDown. ^ true].
-		anEvent isArrowUp ifTrue: [tracker moveInstrumentUp. ^ true]].
+		[anEvent isArrowDown ifTrue: [self moveInstrumentDown. ^ true].
+		anEvent isArrowUp ifTrue: [self moveInstrumentUp. ^ true]].
 	^ false! !
 
 !InstrumentEditorMorph methodsFor: 'events' stamp: 'len 14/Jun/2026, 7:43:19 pm (UTC)'!
@@ -1799,7 +1797,7 @@ clipboardCopy
 		ifTrue: [{tracker sequence at: tracker cursorPattern}]
 		ifFalse: [((selectionStart min: tracker cursorPattern) to: (selectionStart max: tracker cursorPattern)) collect: [:i| tracker sequence at: i]]! !
 
-!ArrangerMorph methodsFor: 'actions' stamp: 'len 23/Feb/2026, 9:10:50 am (UTC)'!
+!ArrangerMorph methodsFor: 'actions' stamp: 'len 21/Jul/2026, 4:05:07 pm (UTC)'!
 clipboardCut
 	| cursor |
 	selectionStart isNil ifTrue: "cut the pattern at cursor"
@@ -1809,16 +1807,19 @@ clipboardCut
 	cursor := tracker cursorPattern.
 	clipboard := ((selectionStart min: cursor) to: (selectionStart max: cursor)) collect: [:i| tracker sequence at: i].
 	(selectionStart max: cursor) to: (selectionStart min: cursor) by: -1 do: [:i| tracker deletePattern: i].
-	selectionStart := nil! !
+	selectionStart := nil.
+	self redrawNeeded! !
 
-!ArrangerMorph methodsFor: 'actions' stamp: 'len 21/Feb/2026, 11:59:25 am (UTC)'!
+!ArrangerMorph methodsFor: 'actions' stamp: 'len 23/Jul/2026, 2:36:51 pm (UTC)'!
 clipboardPaste
 	selectionStart := nil.
+	self redrawNeeded.
 	clipboard ifNotNil: [tracker insertSequence: (clipboard collect: [:each| each key -> each value])]! !
 
-!ArrangerMorph methodsFor: 'actions' stamp: 'len 21/Feb/2026, 11:59:27 am (UTC)'!
+!ArrangerMorph methodsFor: 'actions' stamp: 'len 23/Jul/2026, 2:37:04 pm (UTC)'!
 clipboardPasteNew
 	selectionStart := nil.
+	self redrawNeeded.
 	clipboard ifNotNil: [tracker insertSequence: (clipboard collect: [:each| each key copy -> each value])]! !
 
 !ArrangerMorph methodsFor: 'actions' stamp: 'len 15/Jun/2026, 4:15:15 pm (UTC)'!
@@ -1914,9 +1915,10 @@ handleCommandHotkey: anEvent
 	anEvent keyCharacter = $i ifTrue: [tracker selectedPattern ifNotNil: [:aPattern| aPattern inspect]. ^ true].
 	^ false! !
 
-!ArrangerMorph methodsFor: 'events' stamp: 'len 22/Feb/2026, 9:31:30 am (UTC)'!
+!ArrangerMorph methodsFor: 'events' stamp: 'len 23/Jul/2026, 2:37:14 pm (UTC)'!
 handleNavigationKey: anEvent
 	selectionStart := nil.
+	self redrawNeeded.
 	anEvent isArrowUp ifTrue: [tracker moveCursorPatternUp].
 	anEvent isArrowDown ifTrue: [tracker moveCursorPatternDown]! !
 
@@ -1927,9 +1929,9 @@ handleOptionHotkey: anEvent
 		anEvent isArrowDown ifTrue: [self moveSelectedPatternsDown. ^ true]].
 	^ false! !
 
-!ArrangerMorph methodsFor: 'events' stamp: 'len 23/Feb/2026, 9:09:28 am (UTC)'!
+!ArrangerMorph methodsFor: 'events' stamp: 'len 23/Jul/2026, 2:37:29 pm (UTC)'!
 handleSelectionKey: anEvent
-	selectionStart isNil ifTrue: [selectionStart := tracker cursorPattern].
+	selectionStart isNil ifTrue: [selectionStart := tracker cursorPattern. self redrawNeeded].
 	anEvent isArrowUp ifTrue: [tracker moveCursorPatternUp].
 	anEvent isArrowDown ifTrue: [tracker moveCursorPatternDown]! !
 
@@ -1937,7 +1939,7 @@ handleSelectionKey: anEvent
 handlesMouseDown: anEvent
 	^ anEvent mouseButton2Pressed or: [anEvent mouseButton1Pressed]! !
 
-!ArrangerMorph methodsFor: 'events' stamp: 'len 14/Jun/2026, 8:21:44 pm (UTC)'!
+!ArrangerMorph methodsFor: 'events' stamp: 'len 21/Jul/2026, 3:59:13 pm (UTC)'!
 keyStroke: anEvent
 	(anEvent secondaryModifierPressed and: [self handleOptionHotkey: anEvent]) ifTrue:
 		[anEvent wasHandled: true.
@@ -1947,8 +1949,7 @@ keyStroke: anEvent
 		^ self].
 	anEvent isArrow ifTrue:
 		[anEvent wasHandled: true.
-		anEvent shiftPressed ifTrue: [self handleSelectionKey: anEvent. ^ self].
-		self handleNavigationKey: anEvent.
+		anEvent shiftPressed ifTrue: [self handleSelectionKey: anEvent] ifFalse: [self handleNavigationKey: anEvent].
 		^ self].
 	^ super keyStroke: anEvent! !
 
@@ -2136,10 +2137,11 @@ clipboardCopy
 clipboardCut
 	self clipboardCopy; deleteSelection! !
 
-!PatternEditorMorph methodsFor: 'actions' stamp: 'len 4/Jul/2026, 5:08:55 pm (UTC)'!
+!PatternEditorMorph methodsFor: 'actions' stamp: 'len 23/Jul/2026, 2:29:58 pm (UTC)'!
 clipboardPaste
 	| i0 k0 pattern |
 	selectionLineStart := selectionTrackStart := nil.
+	self redrawNeeded. "because cleared selection"
 	pattern := tracker selectedPattern.
 	k0 := tracker cursorTrack - 1.
 	i0 := tracker cursorLine - 1.
@@ -2148,8 +2150,7 @@ clipboardPaste
 	ClipboardBuffer withIndexDo: [:line :i|
 		line withIndexDo: [:trigger :k|
 			(k0 + k <= tracker tracks size and: [i0 + i <= pattern length])
-				ifTrue: [pattern track: k0 + k at: i0 + i put: trigger copy]]].
-	self redrawNeeded! !
+				ifTrue: [pattern track: k0 + k at: i0 + i put: trigger copy]]]! !
 
 !PatternEditorMorph methodsFor: 'actions' stamp: 'len 4/Jul/2026, 5:04:12 pm (UTC)'!
 deleteSelection
@@ -2578,23 +2579,20 @@ handleKeyStroke: anEvent
 	(anEvent anyModifierKeyPressed not and: [self handleInputKey: anEvent]) ifTrue: [^ true].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 3/Jul/2026, 8:58:06 am (UTC)'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 23/Jul/2026, 2:29:06 pm (UTC)'!
 handleNavigationKey: anEvent
 	selectionLineStart := selectionTrackStart := nil.
-	anEvent isArrowUp ifTrue: [tracker moveCursorLineUp. ^ true].
-	anEvent isArrowDown ifTrue: [tracker moveCursorLineDown. ^ true].
+	self redrawNeeded. "because cleared selection"
+	anEvent isArrowUp ifTrue: [tracker moveCursorLineUp].
+	anEvent isArrowDown ifTrue: [tracker moveCursorLineDown].
 	anEvent isArrowLeft ifTrue:
-		[anEvent primaryModifierPressed ifTrue: [self moveCursorColumnLeft] ifFalse: [self moveCursorLeft].
-		^ true].
+		[anEvent primaryModifierPressed ifTrue: [self moveCursorColumnLeft] ifFalse: [self moveCursorLeft]].
 	anEvent isArrowRight ifTrue:
-		[anEvent primaryModifierPressed ifTrue: [self moveCursorColumnRight] ifFalse: [self moveCursorRight].
-		^ true].
-	anEvent isArrowRight ifTrue: [self moveCursorRight. ^ true].
-	anEvent isPageUp ifTrue: [tracker moveCursorBeatUp. ^ true].
-	anEvent isPageDown ifTrue: [tracker moveCursorBeatDown. ^ true].
-	anEvent isHome ifTrue: [tracker moveCursorLineTop. ^ true].
-	anEvent isEnd ifTrue: [tracker moveCursorLineBottom. ^ true].
-	^ false! !
+		[anEvent primaryModifierPressed ifTrue: [self moveCursorColumnRight] ifFalse: [self moveCursorRight]].
+	anEvent isPageUp ifTrue: [tracker moveCursorBeatUp].
+	anEvent isPageDown ifTrue: [tracker moveCursorBeatDown].
+	anEvent isHome ifTrue: [tracker moveCursorLineTop].
+	anEvent isEnd ifTrue: [tracker moveCursorLineBottom]! !
 
 !PatternEditorMorph methodsFor: 'events' stamp: 'len 3/Jul/2026, 9:07:04 am (UTC)'!
 handleOptionHotkey: anEvent
@@ -2615,11 +2613,12 @@ handleOptionHotkey: anEvent
 		anEvent keyCharacter = $ß "opt-s on macos"ifTrue: [tracker toggleTrackSolo. ^ true]].
 	^ false! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 13/Jun/2026, 5:42:28 pm (UTC)'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 23/Jul/2026, 2:34:39 pm (UTC)'!
 handleSelectionKey: anEvent
 	selectionLineStart isNil ifTrue:
 		[selectionLineStart := tracker cursorLine.
-		selectionTrackStart := tracker cursorTrack].
+		selectionTrackStart := tracker cursorTrack.
+		self redrawNeeded].
 	(anEvent isArrowUp and: [tracker cursorLine > 1]) ifTrue: [tracker moveCursorLineUp].
 	(anEvent isArrowDown and: [tracker cursorLine < tracker selectedPattern length]) ifTrue: [tracker moveCursorLineDown].
 	anEvent isArrowLeft ifTrue: [tracker moveCursorTrackLeft].
@@ -2638,7 +2637,7 @@ keyStroke: anEvent
 	(self handleKeyStroke: anEvent) ifTrue: [anEvent wasHandled: true. ^ self].
 	^ super keyStroke: anEvent! !
 
-!PatternEditorMorph methodsFor: 'events' stamp: 'len 8/Jun/2026, 12:30:47 pm (UTC)'!
+!PatternEditorMorph methodsFor: 'events' stamp: 'len 23/Jul/2026, 2:29:27 pm (UTC)'!
 mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
 	| charWidth trackWidth x |
 	charWidth := font widthOf: $X.
@@ -2646,7 +2645,9 @@ mouseButton1Down: aMouseButtonEvent localPosition: localEventPosition
 	x := localEventPosition x - (charWidth * 2.5).
 	x < 0.0 ifTrue: [^ self].
 	tracker setCursorTrack: (x / trackWidth) truncated + 1.
-	selectionLineStart := nil! !
+	selectionLineStart := nil.
+	self redrawNeeded "because cleared selection"
+! !
 
 !PatternEditorMorph methodsFor: 'events' stamp: 'len 15/Jun/2026, 1:47:28 pm (UTC)'!
 mouseScroll: anEvent localPosition: localEventPosition
@@ -3102,6 +3103,14 @@ writeOn: aStream
 	bufferList do: [:each| each writeOn: aStream].
 	json jsonWriteOn: aStream! !
 
+!Pattern methodsFor: 'accessing' stamp: 'len 22/Jul/2026, 8:59:30 am (UTC)'!
+instruments
+	"Answer all instrument numbers referenced by this pattern."
+	| answer |
+	answer := Set new.
+	self do: [:each| each instrument ifNotNil: [:anInteger| answer add: anInteger]].
+	^ answer! !
+
 !Pattern methodsFor: 'accessing' stamp: 'len 18/Dec/2025, 9:32:38 am (UTC)'!
 length
 	^ length! !
@@ -3163,6 +3172,10 @@ track: trackIndex swap: index1 with: index2
 !Pattern methodsFor: 'copying' stamp: 'len 26/Dec/2025, 7:01:58 pm (UTC)'!
 postCopy
 	blocks := blocks collect: [:eachBlock| eachBlock ifNotNil: [eachBlock collect: [:each| each copy]]]! !
+
+!Pattern methodsFor: 'enumerating' stamp: 'len 22/Jul/2026, 8:56:46 am (UTC)'!
+do: aBlock
+	blocks do: [:eachBlock| eachBlock ifNotNil: [eachBlock do: [:eachTrigger| eachTrigger ifNotNil: [aBlock value: eachTrigger]]]]! !
 
 !Pattern methodsFor: 'initialization' stamp: 'len 14/Mar/2026, 11:26:57 am (UTC)'!
 initialize: anInteger
